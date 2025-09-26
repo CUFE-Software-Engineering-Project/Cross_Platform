@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:lite_x/core/routes/Route_Constants.dart';
 import 'package:lite_x/core/theme/Palette.dart';
 
 class Test extends StatelessWidget {
@@ -19,6 +21,13 @@ class Test extends StatelessWidget {
                 fontSize: 40,
                 fontWeight: FontWeight.bold,
               ),
+            ),
+            const SizedBox(height: 10),
+            ElevatedButton(
+              onPressed: () {
+                context.pushNamed(RouteConstants.test2);
+              },
+              child: Text(" Go to Test_2"),
             ),
           ],
         ),
