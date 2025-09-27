@@ -1,4 +1,4 @@
 class RouteConstants {
-  static String test = "test";
-  static String test2 = "test2";
+  static String introscreen = "introscreen";
+  static String createaccountscreen = "createaccountscreen";
 }
