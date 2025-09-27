@@ -189,8 +189,6 @@ class IntoScreen extends StatelessWidget {
           ),
           const SizedBox(height: 12),
         ],
-
-        // Divider with exact X styling
         Row(
           children: [
             Expanded(
