@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:lite_x/core/routes/Route_Constants.dart';
 import 'package:lite_x/core/theme/palette.dart';
 import 'package:lite_x/features/auth/view/widgets/buildTermsText.dart';
 import 'package:lite_x/features/auth/view/widgets/buildXLogo.dart';
@@ -26,14 +28,14 @@ class IntoScreen extends StatelessWidget {
         ),
         child: SafeArea(
           child: isWeb
-              ? _buildWebLayout(size)
-              : _buildMobileLayout(size, isMobile),
+              ? _buildWebLayout(size, context)
+              : _buildMobileLayout(size, isMobile, context),
         ),
       ),
     );
   }
 
-  Widget _buildMobileLayout(Size size, bool isMobile) {
+  Widget _buildMobileLayout(Size size, bool isMobile, BuildContext context) {
     return SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -58,7 +60,7 @@ class IntoScreen extends StatelessWidget {
             ),
 
             SizedBox(height: size.height * 0.15),
-            _buildAuthButtons(isWeb: false),
+            _buildAuthButtons(isWeb: false, context: context),
             const SizedBox(height: 25),
             buildTermsText(),
             SizedBox(height: size.height * 0.05),
@@ -69,7 +71,7 @@ class IntoScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildWebLayout(Size size) {
+  Widget _buildWebLayout(Size size, BuildContext context) {
     return Row(
       children: [
         Expanded(
@@ -115,7 +117,7 @@ class IntoScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 20),
-                _buildAuthButtons(isWeb: true),
+                _buildAuthButtons(isWeb: true, context: context),
                 const SizedBox(height: 20),
                 buildTermsText(),
                 const SizedBox(height: 20),
@@ -128,7 +130,10 @@ class IntoScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildAuthButtons({required bool isWeb}) {
+  Widget _buildAuthButtons({
+    required bool isWeb,
+    required BuildContext context,
+  }) {
     return Column(
       children: [
         SizedBox(
@@ -189,21 +194,17 @@ class IntoScreen extends StatelessWidget {
           ),
           const SizedBox(height: 12),
         ],
-
-        // Divider with exact X styling
         Row(
           children: [
-            Expanded(
-              child: Container(height: 1, color: Palette.inputBackground),
-            ),
-            const Padding(
+            Expanded(child: Container(height: 1, color: Colors.grey[800])),
+            Padding(
               padding: EdgeInsets.symmetric(horizontal: 10),
               child: Text(
                 'or',
-                style: TextStyle(color: Colors.grey, fontSize: 14),
+                style: TextStyle(color: Colors.grey[500], fontSize: 14),
               ),
             ),
-            Expanded(child: Container(height: 1, color: Colors.grey[600])),
+            Expanded(child: Container(height: 1, color: Colors.grey[800])),
           ],
         ),
         const SizedBox(height: 12),
@@ -212,11 +213,11 @@ class IntoScreen extends StatelessWidget {
           height: 50,
           child: ElevatedButton(
             onPressed: () {
-              //to do : Handle create account
+              context.pushNamed(RouteConstants.createaccountscreen);
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1D9BF0),
-              foregroundColor: Colors.white,
+              backgroundColor: Colors.white,
+              foregroundColor: Colors.black,
               elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(25),
