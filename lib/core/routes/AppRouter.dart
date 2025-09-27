@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
-import 'package:lite_x/features/auth/view/widgets/test.dart';
-import 'package:lite_x/features/auth/view/widgets/test_2.dart';
+import 'package:lite_x/features/auth/view/screens/Intro_Screen.dart';
 
 class Approuter {
   static final GoRouter router = GoRouter(
@@ -11,15 +10,7 @@ class Approuter {
         name: RouteConstants.test,
         path: "/",
         pageBuilder: (context, state) => CustomTransitionPage(
-          child: const Test(),
-          transitionsBuilder: _slideRightTransitionBuilder,
-        ),
-      ),
-      GoRoute(
-        name: RouteConstants.test2,
-        path: "/test2",
-        pageBuilder: (context, state) => CustomTransitionPage(
-          child: const Test2(),
+          child: const IntoScreen(),
           transitionsBuilder: _slideRightTransitionBuilder,
         ),
       ),
