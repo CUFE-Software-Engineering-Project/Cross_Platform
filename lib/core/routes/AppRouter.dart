@@ -23,6 +23,14 @@ class Approuter {
           transitionsBuilder: _slideRightTransitionBuilder,
         ),
       ),
+      GoRoute(
+        name: RouteConstants.verificationscreen,
+        path: "/verification",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: const CreateAccountScreen(),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
     ],
     redirect: (context, state) {
       return null;
