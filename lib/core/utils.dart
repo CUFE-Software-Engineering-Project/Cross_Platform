@@ -61,3 +61,14 @@ String? nameValidator(String? value) {
 
   return null;
 }
+
+String? verificationCodeValidator(String? value) {
+  if (value == null || value.trim().isEmpty) {
+    return 'Verification code can\'t be empty';
+  } else if (value.trim().length != 6) {
+    return 'Verification code must be exactly 6 digits';
+  } else if (!RegExp(r'^[0-9]{6}$').hasMatch(value.trim())) {
+    return 'Verification code must contain only digits';
+  }
+  return null;
+}
