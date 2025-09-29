@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
 import 'package:lite_x/features/auth/view/screens/CreateAccount_Screen.dart';
 import 'package:lite_x/features/auth/view/screens/Intro_Screen.dart';
+import 'package:lite_x/features/auth/view/screens/Verification_Screen.dart';
 
 class Approuter {
   static final GoRouter router = GoRouter(
@@ -27,7 +28,7 @@ class Approuter {
         name: RouteConstants.verificationscreen,
         path: "/verification",
         pageBuilder: (context, state) => CustomTransitionPage(
-          child: const CreateAccountScreen(),
+          child: const VerificationScreen(),
           transitionsBuilder: _slideRightTransitionBuilder,
         ),
       ),
