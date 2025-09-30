@@ -1,0 +1,74 @@
+String? emailValidator(String? value) {
+  const String emailPattern =
+      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$';
+  final RegExp regex = RegExp(emailPattern);
+
+  if (value == null || value.isEmpty) {
+    return 'Email is required';
+  } else if (value.length > 254) {
+    return 'Email can\'t be longer than 254 characters';
+  } else if (!regex.hasMatch(value)) {
+    return 'Enter a valid email address';
+  }
+  return null;
+}
+
+String? dobValidator(String? value) {
+  if (value == null || value.trim().isEmpty) {
+    return 'Date of birth can\'t be empty';
+  }
+
+  try {
+    final parts = value.split('/');
+    if (parts.length != 3) {
+      return 'enter a valid date';
+    }
+
+    final day = int.parse(parts[0]);
+    final month = int.parse(parts[1]);
+    final year = int.parse(parts[2]);
+    final dob = DateTime(year, month, day);
+    final now = DateTime.now();
+
+    if (dob.isAfter(now)) {
+      return 'Date of birth can\'t be in the future';
+    }
+
+    final minage = DateTime(now.year - 13, now.month, now.day);
+    if (dob.isAfter(minage)) {
+      return 'You must be at least 13 years old';
+    }
+  } catch (e) {
+    return 'Enter a valid date';
+  }
+
+  return null;
+}
+
+String? nameValidator(String? value) {
+  if (value == null || value.trim().isEmpty) {
+    return 'Name can\'t be empty';
+  } else if (value.trim().length < 2) {
+    return 'Name must be at least 2 characters';
+  } else if (value.trim().length > 50) {
+    return 'Name can\'t be longer than 50 characters';
+  }
+  final pattern = r'^[a-zA-Z0-9]+$';
+
+  if (!RegExp(pattern).hasMatch(value.trim())) {
+    return 'Name can only contain letters and numbers (no spaces)';
+  }
+
+  return null;
+}
+
+String? verificationCodeValidator(String? value) {
+  if (value == null || value.trim().isEmpty) {
+    return 'Verification code can\'t be empty';
+  } else if (value.trim().length != 6) {
+    return 'Verification code must be exactly 6 digits';
+  } else if (!RegExp(r'^[0-9]{6}$').hasMatch(value.trim())) {
+    return 'Verification code must contain only digits';
+  }
+  return null;
+}
