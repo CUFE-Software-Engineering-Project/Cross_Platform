@@ -155,8 +155,6 @@ class _AccountFormState extends State<_AccountForm> {
       print('Email: ${_emailController.text}');
       print('DOB: ${_dobController.text}');
       context.pushNamed(RouteConstants.verificationscreen);
-      //Navigate to the next screen
-      // to do
     }
   }
 
@@ -184,7 +182,7 @@ class _AccountFormState extends State<_AccountForm> {
 
     if (picked != null) {
       setState(() {
-        var selectedDate = picked; // store selected date
+        var selectedDate = picked;
         _dobController.text = '${picked.month}/${picked.day}/${picked.year}';
       });
     }

@@ -132,8 +132,6 @@ class _VerificationFormState extends ConsumerState<_VerificationForm> {
     if (_formKey.currentState!.validate()) {
       print('Verification code: ${_codeController.text}');
       print('Email: $email');
-      // Navigate to next screen
-      // context.go('/home');
     }
   }
 
