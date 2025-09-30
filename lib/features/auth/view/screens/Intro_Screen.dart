@@ -140,9 +140,7 @@ class IntoScreen extends StatelessWidget {
           width: double.infinity,
           height: 50,
           child: ElevatedButton.icon(
-            onPressed: () {
-              //to do : Handle Google sign up
-            },
+            onPressed: () {},
             style: ElevatedButton.styleFrom(
               backgroundColor: Palette.textWhite,
               foregroundColor: Colors.black,
@@ -170,9 +168,7 @@ class IntoScreen extends StatelessWidget {
             width: double.infinity,
             height: 50,
             child: ElevatedButton.icon(
-              onPressed: () {
-                //to do : Handle Apple sign up
-              },
+              onPressed: () {},
               style: ElevatedButton.styleFrom(
                 backgroundColor: Palette.textWhite,
                 foregroundColor: Colors.black,
@@ -244,9 +240,7 @@ class IntoScreen extends StatelessWidget {
             style: TextStyle(color: Colors.grey, fontSize: 14),
           ),
           GestureDetector(
-            onTap: () {
-              // to do hazem : Handle login page
-            },
+            onTap: () {},
             child: const Text(
               'Log in',
               style: TextStyle(

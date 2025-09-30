@@ -3,7 +3,7 @@
 // Check in to version control
 
 import 'package:hive_ce/hive.dart';
-import 'package:lite_x/features/auth/models/usermodel.dart';
+import 'package:lite_x/core/models/usermodel.dart';
 
 extension HiveRegistrar on HiveInterface {
   void registerAdapters() {
