@@ -8,12 +8,16 @@ import 'package:lite_x/features/shared/widgets/bottom_navigation.dart';
 // Provider for managing which tab is selected
 final shellNavigationProvider = StateProvider<int>((ref) => 0);
 
+// Provider for bottom navigation visibility
+final bottomNavVisibilityProvider = StateProvider<bool>((ref) => true);
+
 class AppShell extends ConsumerWidget {
   const AppShell({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedIndex = ref.watch(shellNavigationProvider);
+    final isBottomNavVisible = ref.watch(bottomNavVisibilityProvider);
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -27,7 +31,18 @@ class AppShell extends ConsumerWidget {
           _buildMessagesScreen(), // Index 4 - Messages
         ],
       ),
-      bottomNavigationBar: const XBottomNavigation(),
+      bottomNavigationBar: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+        height: isBottomNavVisible ? 60 : 0,
+        clipBehavior: Clip.hardEdge,
+        decoration: const BoxDecoration(),
+        child: AnimatedOpacity(
+          duration: const Duration(milliseconds: 300),
+          opacity: isBottomNavVisible ? 1.0 : 0.0,
+          child: OverflowBox(maxHeight: 60, child: const XBottomNavigation()),
+        ),
+      ),
     );
   }
 

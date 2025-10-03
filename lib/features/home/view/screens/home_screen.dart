@@ -1,6 +1,8 @@
 // lib/features/home/view/screens/home_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
+import 'package:lite_x/core/routes/app_shell.dart';
 import 'package:lite_x/features/home/repositories/home_repository.dart';
 import 'package:lite_x/features/home/view/widgets/home_app_bar.dart';
 import 'package:lite_x/features/home/view/widgets/home_tab_bar.dart';
@@ -17,17 +19,39 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   late PageController _pageController;
+  late ScrollController _scrollController;
+  double _lastScrollOffset = 0.0;
+  bool _isScrollingDown = false;
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: 0);
+    _scrollController = ScrollController();
+    _scrollController.addListener(_onScroll);
   }
 
   @override
   void dispose() {
     _pageController.dispose();
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  void _onScroll() {
+    final currentOffset = _scrollController.offset;
+    final isScrollingDown =
+        currentOffset > _lastScrollOffset && currentOffset > 50;
+
+    if (isScrollingDown != _isScrollingDown) {
+      setState(() {
+        _isScrollingDown = isScrollingDown;
+      });
+      // Update bottom navigation visibility
+      ref.read(bottomNavVisibilityProvider.notifier).state = !isScrollingDown;
+    }
+    _lastScrollOffset = currentOffset;
   }
 
   @override
@@ -57,7 +81,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: const HomeAppBar(),
       body: PageView(
         controller: _pageController,
         onPageChanged: (index) {
@@ -68,32 +91,72 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           }
         },
         children: [
-          _buildForYouFeed(homeState, ref),
-          _buildFollowingFeed(homeState, ref),
+          _buildForYouFeedWithSliverAppBar(homeState, ref),
+          _buildFollowingFeedWithSliverAppBar(homeState, ref),
         ],
       ),
     );
   }
 
-  Widget _buildForYouFeed(homeState, WidgetRef ref) {
+  Widget _buildForYouFeedWithSliverAppBar(homeState, WidgetRef ref) {
     return RefreshIndicator(
       onRefresh: () => ref.read(homeViewModelProvider.notifier).refreshTweets(),
       backgroundColor: Colors.grey[900],
       color: Colors.white,
-      child: _buildTweetList(homeState, 'For You'),
+      child: CustomScrollView(
+        controller: _scrollController,
+        slivers: [
+          SliverAppBar(
+            expandedHeight: 120.0, // Height for app bar + tab bar
+            floating: true, // App bar will show when scrolling up
+            snap: true, // App bar will snap to visible/hidden states
+            pinned: false, // App bar will completely hide when scrolling down
+            backgroundColor: Colors.black,
+            elevation: 0,
+            automaticallyImplyLeading: false,
+            flexibleSpace: FlexibleSpaceBar(
+              background: Container(
+                color: Colors.black,
+                child: const HomeAppBar(),
+              ),
+            ),
+          ),
+          _buildSliverTweetList(homeState, 'For You'),
+        ],
+      ),
     );
   }
 
-  Widget _buildFollowingFeed(homeState, WidgetRef ref) {
+  Widget _buildFollowingFeedWithSliverAppBar(homeState, WidgetRef ref) {
     return RefreshIndicator(
       onRefresh: () => ref.read(homeViewModelProvider.notifier).refreshTweets(),
       backgroundColor: Colors.grey[900],
       color: Colors.white,
-      child: _buildTweetList(homeState, 'Following'),
+      child: CustomScrollView(
+        controller: _scrollController,
+        slivers: [
+          SliverAppBar(
+            expandedHeight: 120.0, // Height for app bar + tab bar
+            floating: true, // App bar will show when scrolling up
+            snap: true, // App bar will snap to visible/hidden states
+            pinned: false, // App bar will completely hide when scrolling down
+            backgroundColor: Colors.black,
+            elevation: 0,
+            automaticallyImplyLeading: false,
+            flexibleSpace: FlexibleSpaceBar(
+              background: Container(
+                color: Colors.black,
+                child: const HomeAppBar(),
+              ),
+            ),
+          ),
+          _buildSliverTweetList(homeState, 'Following'),
+        ],
+      ),
     );
   }
 
-  Widget _buildTweetList(homeState, String feedType) {
+  Widget _buildSliverTweetList(homeState, String feedType) {
     print(
       'Building tweet list for $feedType - tweets count: ${homeState.tweets.length}',
     );
@@ -106,9 +169,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     if (staticTweets.isNotEmpty) {
       print('Displaying ${staticTweets.length} static sample tweets');
-      return ListView.builder(
-        itemCount: staticTweets.length,
-        itemBuilder: (context, index) {
+      return SliverList(
+        delegate: SliverChildBuilderDelegate((context, index) {
           final tweet = staticTweets[index];
           return TweetWidget(
             userDisplayName: tweet.authorName,
@@ -142,40 +204,41 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               print('View reach analytics for tweet: ${tweet.id}');
             },
           );
-        },
+        }, childCount: staticTweets.length),
       );
     }
 
     if (homeState.isLoading && homeState.tweets.isEmpty) {
-      return const Center(
-        child: CircularProgressIndicator(color: Colors.white),
+      return const SliverToBoxAdapter(
+        child: Center(child: CircularProgressIndicator(color: Colors.white)),
       );
     }
 
     if (homeState.tweets.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.timeline, size: 64, color: Colors.grey[600]),
-            const SizedBox(height: 16),
-            Text(
-              'No tweets in $feedType feed',
-              style: TextStyle(color: Colors.grey[400], fontSize: 18),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Pull to refresh or start following accounts',
-              style: TextStyle(color: Colors.grey[500], fontSize: 14),
-            ),
-          ],
+      return SliverToBoxAdapter(
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.timeline, size: 64, color: Colors.grey[600]),
+              const SizedBox(height: 16),
+              Text(
+                'No tweets in $feedType feed',
+                style: TextStyle(color: Colors.grey[400], fontSize: 18),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Pull to refresh or start following accounts',
+                style: TextStyle(color: Colors.grey[500], fontSize: 14),
+              ),
+            ],
+          ),
         ),
       );
     }
 
-    return ListView.builder(
-      itemCount: homeState.tweets.length,
-      itemBuilder: (context, index) {
+    return SliverList(
+      delegate: SliverChildBuilderDelegate((context, index) {
         final tweet = homeState.tweets[index];
         return TweetWidget(
           userDisplayName: tweet.authorName,
@@ -216,7 +279,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             print('View reach analytics for tweet: ${tweet.id}');
           },
         );
-      },
+      }, childCount: homeState.tweets.length),
     );
   }
 }
