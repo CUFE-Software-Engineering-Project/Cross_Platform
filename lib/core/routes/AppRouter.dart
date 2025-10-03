@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
+import 'package:lite_x/core/routes/app_shell.dart';
 import 'package:lite_x/features/auth/view/screens/CreateAccount_Screen.dart';
 import 'package:lite_x/features/auth/view/screens/Intro_Screen.dart';
 import 'package:lite_x/features/auth/view/screens/Verification_Screen.dart';
+import 'package:lite_x/features/home/view/screens/home_screen.dart';
 
 class Approuter {
   static final GoRouter router = GoRouter(
@@ -12,7 +14,7 @@ class Approuter {
         name: RouteConstants.introscreen,
         path: "/",
         pageBuilder: (context, state) => CustomTransitionPage(
-          child: const IntoScreen(),
+          child: const AppShell(),
           transitionsBuilder: _slideRightTransitionBuilder,
         ),
       ),
@@ -29,6 +31,14 @@ class Approuter {
         path: "/verification",
         pageBuilder: (context, state) => CustomTransitionPage(
           child: const VerificationScreen(),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
+        name: RouteConstants.homescreen,
+        path: "/home",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: const HomeScreen(),
           transitionsBuilder: _slideRightTransitionBuilder,
         ),
       ),
