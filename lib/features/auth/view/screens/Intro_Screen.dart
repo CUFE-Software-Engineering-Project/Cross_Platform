@@ -45,7 +45,7 @@ class IntoScreen extends StatelessWidget {
           children: [
             SizedBox(height: 2),
             Center(child: buildXLogo(size: 50)),
-            SizedBox(height: size.height * 0.25),
+            SizedBox(height: size.height * 0.15),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 5.0),
               child: Text(
@@ -63,7 +63,7 @@ class IntoScreen extends StatelessWidget {
             _buildAuthButtons(isWeb: false, context: context),
             const SizedBox(height: 25),
             buildTermsText(),
-            SizedBox(height: size.height * 0.05),
+            SizedBox(height: 5),
             _buildLoginSection(),
           ],
         ),

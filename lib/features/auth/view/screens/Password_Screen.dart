@@ -1,57 +1,60 @@
+// ignore_for_file: unused_field
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lite_x/core/providers/signup_provider.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
 import 'package:lite_x/core/theme/palette.dart';
 import 'package:lite_x/core/utils.dart';
 import 'package:lite_x/features/auth/view/widgets/CustomTextField.dart';
+import 'package:lite_x/features/auth/view/widgets/buildTermsTextP.dart';
 import 'package:lite_x/features/auth/view/widgets/buildXLogo.dart';
 
-class VerificationScreen extends ConsumerStatefulWidget {
-  const VerificationScreen({super.key});
+class PasswordScreen extends ConsumerStatefulWidget {
+  const PasswordScreen({super.key});
 
   @override
-  ConsumerState<VerificationScreen> createState() => _VerificationScreenState();
+  ConsumerState<PasswordScreen> createState() => _PasswordScreenState();
 }
 
-class _VerificationScreenState extends ConsumerState<VerificationScreen> {
+class _PasswordScreenState extends ConsumerState<PasswordScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _codeController = TextEditingController();
-  final _isFormValid = ValueNotifier(false);
-  late String email;
+  final _passwordController = TextEditingController();
+  final _passFocus = FocusNode();
+  final _isFormValid = ValueNotifier<bool>(false);
+
+  bool _isPassFocused = false;
 
   @override
   void initState() {
     super.initState();
-    email = ref.read(emailProvider);
-    _codeController.addListener(_validateForm);
+    _passwordController.addListener(_validateForm);
+    _passFocus.addListener(() {
+      setState(() {
+        _isPassFocused = _passFocus.hasFocus;
+      });
+    });
   }
 
   void _validateForm() {
-    _isFormValid.value = _codeController.text.trim().isNotEmpty;
+    final passwordValid =
+        _passwordController.text.trim().isNotEmpty &&
+        _passwordController.text.length >= 8;
+    _isFormValid.value = passwordValid;
   }
 
-  void _handleNext() {
+  void _handleSignUp() {
     if (_formKey.currentState!.validate()) {
-      context.goNamed(RouteConstants.passwordscreen);
+      print('Password: ${_passwordController.text}');
+      context.goNamed(RouteConstants.uploadProfilePhotoScreen);
     }
-  }
-
-  void _resendCode() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Verification code sent!'),
-        backgroundColor: Palette.success,
-        duration: Duration(seconds: 2),
-      ),
-    );
   }
 
   @override
   void dispose() {
-    _codeController.dispose();
+    _passwordController.dispose();
+    _passFocus.dispose();
     _isFormValid.dispose();
     super.dispose();
   }
@@ -104,45 +107,42 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text(
-                          'We sent you a code',
+                          'You\'ll need a password',
                           style: TextStyle(
-                            fontSize: 28,
+                            fontSize: 26,
                             fontWeight: FontWeight.w800,
                             color: Palette.textWhite,
                           ),
                         ),
-                        const SizedBox(height: 12),
-                        Text(
-                          'Enter it below to verify $email.',
-                          style: const TextStyle(
-                            fontSize: 15,
-                            color: Palette.textSecondary,
+                        const SizedBox(height: 10),
+                        const Text(
+                          'Make sure it\'s 8 characters or more.',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Palette.greycolor,
                           ),
                         ),
-                        const SizedBox(height: 32),
+                        const SizedBox(height: 16),
                         CustomTextField(
-                          controller: _codeController,
-                          labelText: 'Verification code',
-                          keyboardType: TextInputType.number,
-                          validator: verificationCodeValidator,
+                          controller: _passwordController,
+                          focusNode: _passFocus,
+                          labelText: 'Password',
+                          isPassword: true,
+                          validator: passwordValidator,
+                          onFieldSubmitted: (_) {
+                            if (_isFormValid.value) {
+                              _handleSignUp();
+                            }
+                          },
                         ),
-                        const SizedBox(height: 24),
-                        GestureDetector(
-                          onTap: _resendCode,
-                          child: const Text(
-                            'Didn\'t receive an email?',
-                            style: TextStyle(
-                              fontSize: 15,
-                              color: Palette.primary,
-                            ),
-                          ),
-                        ),
+                        const SizedBox(height: 70),
+                        buildTermsTextP(),
                       ],
                     ),
                   ),
                 ),
               ),
-              _buildNextButton(isWeb),
+              _buildSignUpButton(isWeb),
               const SizedBox(height: 15),
             ],
           ),
@@ -151,7 +151,7 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
     );
   }
 
-  Widget _buildNextButton(bool isWeb) {
+  Widget _buildSignUpButton(bool isWeb) {
     return Container(
       padding: EdgeInsets.all(isWeb ? 32 : 10),
       width: isWeb ? double.infinity : null,
@@ -160,19 +160,19 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
         valueListenable: _isFormValid,
         builder: (context, isValid, child) {
           return SizedBox(
-            width: isWeb ? double.infinity : 90,
+            width: isWeb ? double.infinity : 120,
             child: ElevatedButton(
-              onPressed: isValid ? _handleNext : null,
+              onPressed: isValid ? _handleSignUp : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Palette.textWhite,
                 disabledBackgroundColor: Palette.textWhite.withOpacity(0.5),
                 foregroundColor: Palette.background,
                 disabledForegroundColor: Palette.border,
-                minimumSize: isWeb ? const Size(0, 60) : const Size(0, 40),
+                minimumSize: isWeb ? const Size(0, 60) : const Size(0, 38),
               ),
               child: const Text(
-                'Next',
-                style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                'Sign up',
+                style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
               ),
             ),
           );

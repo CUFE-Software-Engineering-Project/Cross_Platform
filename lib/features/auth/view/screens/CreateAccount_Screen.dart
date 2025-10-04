@@ -1,7 +1,7 @@
-// ignore_for_file: unused_local_variable
-
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lite_x/core/providers/signup_provider.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
 import 'package:lite_x/core/theme/palette.dart';
 import 'package:lite_x/core/utils.dart';
@@ -73,7 +73,7 @@ class _buildWebLayout extends StatelessWidget {
                       icon: const Icon(Icons.close, color: Palette.textWhite),
                       onPressed: () => Navigator.of(context).pop(),
                     ),
-                    Expanded(child: Center(child: buildXLogo(size: 32))),
+                    Expanded(child: Center(child: buildXLogo(size: 40))),
                     const SizedBox(width: 48),
                   ],
                 ),
@@ -87,15 +87,15 @@ class _buildWebLayout extends StatelessWidget {
   }
 }
 
-class _AccountForm extends StatefulWidget {
+class _AccountForm extends ConsumerStatefulWidget {
   final bool isWeb;
   const _AccountForm({required this.isWeb});
 
   @override
-  State<_AccountForm> createState() => _AccountFormState();
+  ConsumerState<_AccountForm> createState() => _AccountFormState();
 }
 
-class _AccountFormState extends State<_AccountForm> {
+class _AccountFormState extends ConsumerState<_AccountForm> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
@@ -154,6 +154,7 @@ class _AccountFormState extends State<_AccountForm> {
       print('Name: ${_nameController.text}');
       print('Email: ${_emailController.text}');
       print('DOB: ${_dobController.text}');
+      ref.read(emailProvider.notifier).update((_) => _emailController.text);
       context.pushNamed(RouteConstants.verificationscreen);
     }
   }
@@ -242,6 +243,7 @@ class _AccountFormState extends State<_AccountForm> {
             ),
           ),
           _buildNextButton(widget.isWeb),
+          const SizedBox(height: 15),
         ],
       ),
     );
@@ -249,14 +251,14 @@ class _AccountFormState extends State<_AccountForm> {
 
   Widget _buildNextButton(bool isWeb) {
     return Container(
-      padding: EdgeInsets.all(isWeb ? 32 : 12),
+      padding: EdgeInsets.all(isWeb ? 32 : 10),
       width: isWeb ? double.infinity : null,
       alignment: isWeb ? Alignment.center : Alignment.centerRight,
       child: ValueListenableBuilder<bool>(
         valueListenable: _isFormValid,
         builder: (context, isValid, child) {
           return SizedBox(
-            width: isWeb ? double.infinity : 85,
+            width: isWeb ? double.infinity : 90,
             child: ElevatedButton(
               onPressed: isValid ? _handleNext : null,
               style: ElevatedButton.styleFrom(
@@ -264,7 +266,7 @@ class _AccountFormState extends State<_AccountForm> {
                 disabledBackgroundColor: Palette.textWhite.withOpacity(0.5),
                 foregroundColor: Palette.background,
                 disabledForegroundColor: Palette.border,
-                minimumSize: const Size(0, 40),
+                minimumSize: isWeb ? const Size(0, 60) : const Size(0, 40),
               ),
               child: const Text(
                 'Next',

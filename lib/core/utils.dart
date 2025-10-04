@@ -1,3 +1,6 @@
+import 'dart:io';
+import "package:file_picker/file_picker.dart";
+
 String? emailValidator(String? value) {
   const String emailPattern =
       r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$';
@@ -69,6 +72,19 @@ String? verificationCodeValidator(String? value) {
     return 'Verification code must be exactly 6 digits';
   } else if (!RegExp(r'^[0-9]{6}$').hasMatch(value.trim())) {
     return 'Verification code must contain only digits';
+  }
+  return null;
+}
+
+String? passwordValidator(String? value) {
+  if (value == null || value.isEmpty) {
+    return 'Password is required';
+  }
+  if (value.length < 8) {
+    return 'Password must be at least 8 characters';
+  }
+  if (value.length > 256) {
+    return 'Password must be less than 256 characters';
   }
   return null;
 }
