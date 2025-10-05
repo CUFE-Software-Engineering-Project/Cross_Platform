@@ -6,4 +6,6 @@ class RouteConstants {
   static String passwordscreen = "passwordscreen";
   static String uploadProfilePhotoScreen = "uploadprofilephotoscreen";
   static String UserNameScreen = "UserNameScreen";
+  static String Loginscreen = "loginscreen";
+  static String LoginPasswordScreen = "loginPasswordScreen";
 }

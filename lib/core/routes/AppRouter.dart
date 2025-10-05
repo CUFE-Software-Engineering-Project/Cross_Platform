@@ -4,6 +4,7 @@ import 'package:lite_x/core/routes/Route_Constants.dart';
 import 'package:lite_x/core/view/screen/Splash_Screen.dart';
 import 'package:lite_x/features/auth/view/screens/CreateAccount_Screen.dart';
 import 'package:lite_x/features/auth/view/screens/Intro_Screen.dart';
+import 'package:lite_x/features/auth/view/screens/Login_Screen.dart';
 import 'package:lite_x/features/auth/view/screens/Password_Screen.dart';
 import 'package:lite_x/features/auth/view/screens/Upload_Profile_Photo_Screen.dart';
 import 'package:lite_x/features/auth/view/screens/UserName_Screen.dart';
@@ -25,7 +26,7 @@ class Approuter {
         name: RouteConstants.introscreen,
         path: "/",
         pageBuilder: (context, state) => CustomTransitionPage(
-          child: const IntoScreen(),
+          child: const IntroScreen(),
           transitionsBuilder: _slideRightTransitionBuilder,
         ),
       ),
@@ -66,6 +67,14 @@ class Approuter {
         path: "/username",
         pageBuilder: (context, state) => CustomTransitionPage(
           child: const UsernameScreen(),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
+        name: RouteConstants.Loginscreen,
+        path: "/LoginScreen",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: const LoginScreen(),
           transitionsBuilder: _slideRightTransitionBuilder,
         ),
       ),

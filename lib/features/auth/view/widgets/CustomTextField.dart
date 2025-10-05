@@ -16,9 +16,14 @@ class CustomTextField extends StatefulWidget {
   final String? Function(String?)? validator;
   final FocusNode? focusNode;
   final void Function(String)? onFieldSubmitted;
+  final void Function(String)? onChanged;
   final bool isPassword;
+  final String? prefixText;
+  final Widget? prefixIcon;
+  final Widget? suffixIcon;
 
   const CustomTextField({
+    super.key,
     required this.controller,
     required this.labelText,
     this.maxLength,
@@ -28,7 +33,11 @@ class CustomTextField extends StatefulWidget {
     this.validator,
     this.focusNode,
     this.onFieldSubmitted,
+    this.onChanged,
     this.isPassword = false,
+    this.prefixText,
+    this.prefixIcon,
+    this.suffixIcon,
   });
 
   @override
@@ -49,6 +58,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
       onTap: widget.onTap,
       validator: widget.validator,
       onFieldSubmitted: widget.onFieldSubmitted,
+      onChanged: widget.onChanged,
       obscureText: widget.isPassword ? _obscureText : false,
       autovalidateMode: AutovalidateMode.onUserInteraction,
       style: const TextStyle(color: Palette.textWhite, fontSize: 18),
@@ -65,6 +75,9 @@ class _CustomTextFieldState extends State<CustomTextField> {
         focusedErrorBorder: border_sign(Palette.error, 2),
         filled: true,
         fillColor: Palette.overlay,
+        prefixText: widget.prefixText,
+        prefixIcon: widget.prefixIcon,
+
         suffixIcon: widget.isPassword
             ? IconButton(
                 icon: Icon(
@@ -77,7 +90,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
                   });
                 },
               )
-            : null,
+            : widget.suffixIcon,
       ),
     );
   }

@@ -1,6 +1,3 @@
-import 'dart:io';
-import "package:file_picker/file_picker.dart";
-
 String? emailValidator(String? value) {
   const String emailPattern =
       r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$';
@@ -87,4 +84,17 @@ String? passwordValidator(String? value) {
     return 'Password must be less than 256 characters';
   }
   return null;
+}
+
+String? usernameValidator(String? value) {
+  if (value == null || value.isEmpty) {
+    return null;
+  }
+  if (value.length < 4) {
+    return 'Username must be at least 4 characters';
+  }
+  if (!RegExp(r'^[a-zA-Z0-9_]+$').hasMatch(value)) {
+    return 'Only letters, numbers and underscore are allowed';
+  }
+  return null; // valid locally
 }

@@ -306,8 +306,8 @@ class _UploadProfilePhotoScreenState
                   onPressed: isValid ? _handleNext : null,
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 8,
+                      horizontal: 10,
+                      vertical: 5,
                     ),
                     backgroundColor: Palette.textWhite,
                     disabledBackgroundColor: Palette.textWhite.withOpacity(0.6),
