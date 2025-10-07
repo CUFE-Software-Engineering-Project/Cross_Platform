@@ -2,7 +2,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lite_x/core/providers/signup_provider.dart';
+import 'package:lite_x/core/routes/Route_Constants.dart';
 import 'package:lite_x/core/theme/palette.dart';
+import 'package:lite_x/core/utils.dart';
 import 'package:lite_x/features/auth/view/widgets/CustomTextField.dart';
 import 'package:lite_x/features/auth/view/widgets/buildXLogo.dart';
 
@@ -15,36 +18,39 @@ class LoginScreen extends ConsumerStatefulWidget {
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _identifierController = TextEditingController();
+  final _identifiercontroller = TextEditingController();
   final _isFormValid = ValueNotifier<bool>(false);
 
   @override
   void initState() {
     super.initState();
-    _identifierController.addListener(_validateForm);
+    _identifiercontroller.addListener(_validateForm);
   }
 
   void _validateForm() {
-    _isFormValid.value = _identifierController.text.trim().isNotEmpty;
+    _isFormValid.value = _identifiercontroller.text.trim().isNotEmpty;
   }
 
   void _handleNext() {
     if (_formKey.currentState!.validate()) {
-      print('Login identifier: ${_identifierController.text}');
-      // context.pushNamed(RouteConstants.loginPasswordScreen);
+      ref
+          .read(emailProvider.notifier)
+          .update((_) => _identifiercontroller.text);
+      print('Login identifier: ${_identifiercontroller.text}');
+      context.goNamed(RouteConstants.LoginPasswordScreen);
     }
   }
 
   void _handleForgotPassword() {
     print('Forgot password clicked');
 
-    // context.pushNamed(RouteConstants.forgotPasswordScreen);
+    context.pushNamed(RouteConstants.ForgotpasswordScreen);
   }
 
   @override
   void dispose() {
-    _identifierController.removeListener(_validateForm);
-    _identifierController.dispose();
+    _identifiercontroller.removeListener(_validateForm);
+    _identifiercontroller.dispose();
     _isFormValid.dispose();
     super.dispose();
   }
@@ -86,10 +92,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     children: [
                       IconButton(
                         icon: const Icon(Icons.close, color: Palette.textWhite),
-                        onPressed: () => Navigator.of(context).pop(),
+                        onPressed: () => context.pop(),
                       ),
                       Expanded(child: Center(child: buildXLogo(size: 40))),
-                      const SizedBox(width: 48),
                     ],
                   ),
                 ),
@@ -114,15 +119,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                         const SizedBox(height: 20),
                         CustomTextField(
-                          controller: _identifierController,
+                          controller: _identifiercontroller,
                           labelText: 'Phone, email address, or username',
                           keyboardType: TextInputType.emailAddress,
-                          validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return 'Please enter your phone, email or username';
-                            }
-                            return null;
-                          },
+                          validator: emailValidator,
                           onFieldSubmitted: (_) {
                             if (_isFormValid.value) {
                               _handleNext();
@@ -153,7 +153,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             style: OutlinedButton.styleFrom(
               foregroundColor: Palette.textWhite,
               side: const BorderSide(color: Palette.textWhite, width: 1),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(25),
               ),
@@ -167,7 +167,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             valueListenable: _isFormValid,
             builder: (context, isValid, child) {
               return SizedBox(
-                width: isWeb ? 120 : 90,
+                width: isWeb ? 120 : 80,
                 child: ElevatedButton(
                   onPressed: isValid ? _handleNext : null,
                   style: ElevatedButton.styleFrom(

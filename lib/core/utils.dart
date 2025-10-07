@@ -96,5 +96,5 @@ String? usernameValidator(String? value) {
   if (!RegExp(r'^[a-zA-Z0-9_]+$').hasMatch(value)) {
     return 'Only letters, numbers and underscore are allowed';
   }
-  return null; // valid locally
+  return null;
 }

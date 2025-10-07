@@ -8,4 +8,9 @@ class RouteConstants {
   static String UserNameScreen = "UserNameScreen";
   static String Loginscreen = "loginscreen";
   static String LoginPasswordScreen = "loginPasswordScreen";
+  static String ForgotpasswordScreen = "ForgotpasswordScreen";
+  static String ConfirmationCodeLocScreen = "ConfirmationCodeLocScreen";
+  static String VerificationforgotScreen = "VerificationforgotScreen";
+  static String ChooseNewPasswordScreen = "ChooseNewPasswordScreen";
+  static String ChangePasswordFeedback = "ChangePasswordFeedback";
 }

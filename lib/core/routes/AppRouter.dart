@@ -2,13 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
 import 'package:lite_x/core/view/screen/Splash_Screen.dart';
-import 'package:lite_x/features/auth/view/screens/CreateAccount_Screen.dart';
+import 'package:lite_x/features/auth/view/screens/Create_Account/CreateAccount_Screen.dart';
 import 'package:lite_x/features/auth/view/screens/Intro_Screen.dart';
-import 'package:lite_x/features/auth/view/screens/Login_Screen.dart';
-import 'package:lite_x/features/auth/view/screens/Password_Screen.dart';
-import 'package:lite_x/features/auth/view/screens/Upload_Profile_Photo_Screen.dart';
-import 'package:lite_x/features/auth/view/screens/UserName_Screen.dart';
-import 'package:lite_x/features/auth/view/screens/Verification_Screen.dart';
+import 'package:lite_x/features/auth/view/screens/Log_In/Change_Password_Feedback.dart';
+import 'package:lite_x/features/auth/view/screens/Log_In/Choose_New_Password_Screen.dart';
+import 'package:lite_x/features/auth/view/screens/Log_In/Confirmation_code_Loc_Screen.dart';
+import 'package:lite_x/features/auth/view/screens/Log_In/ForgotPassword_Screen.dart';
+import 'package:lite_x/features/auth/view/screens/Log_In/LoginPasswordScreen.dart';
+import 'package:lite_x/features/auth/view/screens/Log_In/Login_Screen.dart';
+import 'package:lite_x/features/auth/view/screens/Create_Account/Password_Screen.dart';
+import 'package:lite_x/features/auth/view/screens/Create_Account/Upload_Profile_Photo_Screen.dart';
+import 'package:lite_x/features/auth/view/screens/Create_Account/UserName_Screen.dart';
+import 'package:lite_x/features/auth/view/screens/Create_Account/Verification_Screen.dart';
+import 'package:lite_x/features/auth/view/screens/Log_In/VerificationForgot_Screen.dart';
 
 class Approuter {
   static final GoRouter router = GoRouter(
@@ -75,6 +81,54 @@ class Approuter {
         path: "/LoginScreen",
         pageBuilder: (context, state) => CustomTransitionPage(
           child: const LoginScreen(),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
+        name: RouteConstants.LoginPasswordScreen,
+        path: "/LoginPasswordScreen",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: const LoginPasswordScreen(),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
+        name: RouteConstants.ForgotpasswordScreen,
+        path: "/ForgotpasswordScreen",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: const ForgotpasswordScreen(),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
+        name: RouteConstants.ConfirmationCodeLocScreen,
+        path: "/ConfirmationCodeLocScreen",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: const ConfirmationCodeLocScreen(),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
+        name: RouteConstants.VerificationforgotScreen,
+        path: "/VerificationforgotScreen",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: const VerificationforgotScreen(),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
+        name: RouteConstants.ChooseNewPasswordScreen,
+        path: "/ChooseNewPasswordScreen",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: const ChooseNewPasswordScreen(),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
+        name: RouteConstants.ChangePasswordFeedback,
+        path: "/ChangePasswordFeedback",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: const ChangePasswordFeedback(),
           transitionsBuilder: _slideRightTransitionBuilder,
         ),
       ),
