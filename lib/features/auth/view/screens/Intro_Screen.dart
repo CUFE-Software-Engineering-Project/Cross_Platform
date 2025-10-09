@@ -82,7 +82,7 @@ class IntroScreen extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SizedBox(width: 300, height: 300, child: buildXLogo(size: 300)),
+                SizedBox(child: buildXLogo(size: 300)),
                 const SizedBox(height: 10),
                 const Text(
                   'Happening now',
@@ -168,8 +168,7 @@ class IntroScreen extends ConsumerWidget {
   Widget _buildLoginSection(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 5),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.start,
+      child: Wrap(
         children: [
           const Text(
             'Have an account already? ',
@@ -221,18 +220,26 @@ class AuthButton extends StatelessWidget {
       child: ElevatedButton(
         onPressed: onPressed,
         style: buttonStyle,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            if (icon != null) ...[
-              Image.asset(icon!, width: 24, height: 24),
-              const SizedBox(width: 12),
+        child: Center(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (icon != null) ...[
+                Image.asset(icon!, width: 24, height: 24),
+                const SizedBox(width: 12),
+              ],
+              Flexible(
+                child: Text(
+                  label,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
             ],
-            Text(
-              label,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-            ),
-          ],
+          ),
         ),
       ),
     );
