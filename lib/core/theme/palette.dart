@@ -8,6 +8,7 @@ class Palette {
     0,
     1.0,
   ); // Pure black background
+  static const Color greycolor = Color.fromARGB(255, 151, 152, 153);
   static const Color cardBackground = Color.fromRGBO(
     22,
     24,

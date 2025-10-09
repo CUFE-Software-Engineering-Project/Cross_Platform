@@ -6,6 +6,6 @@ part 'auth_view_model.g.dart';
 class AuthViewModel extends _$AuthViewModel {
   @override
   AuthState build() {
-    return AuthState.initial();
+    return AuthState.unauthenticated();
   }
 }

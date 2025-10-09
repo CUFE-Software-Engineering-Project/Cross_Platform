@@ -72,3 +72,29 @@ String? verificationCodeValidator(String? value) {
   }
   return null;
 }
+
+String? passwordValidator(String? value) {
+  if (value == null || value.isEmpty) {
+    return 'Password is required';
+  }
+  if (value.length < 8) {
+    return 'Password must be at least 8 characters';
+  }
+  if (value.length > 256) {
+    return 'Password must be less than 256 characters';
+  }
+  return null;
+}
+
+String? usernameValidator(String? value) {
+  if (value == null || value.isEmpty) {
+    return null;
+  }
+  if (value.length < 4) {
+    return 'Username must be at least 4 characters';
+  }
+  if (!RegExp(r'^[a-zA-Z0-9_]+$').hasMatch(value)) {
+    return 'Only letters, numbers and underscore are allowed';
+  }
+  return null;
+}
