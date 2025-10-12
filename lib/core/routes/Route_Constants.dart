@@ -1,6 +1,17 @@
 class RouteConstants {
   static String homescreen = "AppShell";
+  static const String splash = "splash";
   static String introscreen = "introscreen";
   static String createaccountscreen = "createaccountscreen";
   static String verificationscreen = "verificationscreen";
+  static String passwordscreen = "passwordscreen";
+  static String uploadProfilePhotoScreen = "uploadprofilephotoscreen";
+  static String UserNameScreen = "UserNameScreen";
+  static String Loginscreen = "loginscreen";
+  static String LoginPasswordScreen = "loginPasswordScreen";
+  static String ForgotpasswordScreen = "ForgotpasswordScreen";
+  static String ConfirmationCodeLocScreen = "ConfirmationCodeLocScreen";
+  static String VerificationforgotScreen = "VerificationforgotScreen";
+  static String ChooseNewPasswordScreen = "ChooseNewPasswordScreen";
+  static String ChangePasswordFeedback = "ChangePasswordFeedback";
 }
