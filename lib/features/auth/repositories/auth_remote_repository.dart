@@ -12,4 +12,5 @@ class AuthRemoteRepository {
   // ignore: unused_field
   final Dio _dio;
   AuthRemoteRepository({required Dio dio}) : _dio = dio;
+  // end points
 }

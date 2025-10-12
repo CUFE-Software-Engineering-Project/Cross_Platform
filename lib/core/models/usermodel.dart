@@ -17,12 +17,18 @@ class UserModel {
   final String username;
   @HiveField(4)
   final String? photo;
+  @HiveField(5)
+  final String? bio;
+  @HiveField(6)
+  final String id;
   UserModel({
     required this.name,
     required this.email,
     required this.dob,
     required this.username,
     this.photo,
+    this.bio,
+    required this.id,
   });
 
   UserModel copyWith({
@@ -31,6 +37,8 @@ class UserModel {
     String? dob,
     String? username,
     String? photo,
+    String? bio,
+    String? id,
   }) {
     return UserModel(
       name: name ?? this.name,
@@ -38,6 +46,8 @@ class UserModel {
       dob: dob ?? this.dob,
       username: username ?? this.username,
       photo: photo ?? this.photo,
+      bio: bio ?? this.bio,
+      id: id ?? this.id,
     );
   }
 
@@ -48,16 +58,20 @@ class UserModel {
       'dob': dob,
       'username': username,
       'photo': photo,
+      'bio': bio,
+      'id': id,
     };
   }
 
   factory UserModel.fromMap(Map<String, dynamic> map) {
     return UserModel(
-      name: map['name'] ?? "",
-      email: map['email'] ?? "",
-      dob: map['dob'] ?? "",
-      username: map['username'] ?? "",
+      name: map['name'] as String,
+      email: map['email'] as String,
+      dob: map['dob'] as String,
+      username: map['username'] as String,
       photo: map['photo'] != null ? map['photo'] as String : null,
+      bio: map['bio'] != null ? map['bio'] as String : null,
+      id: map['id'] as String,
     );
   }
 
@@ -68,7 +82,7 @@ class UserModel {
 
   @override
   String toString() {
-    return 'UserModel(name: $name, email: $email, dob: $dob, username: $username, photo: $photo)';
+    return 'UserModel(name: $name, email: $email, dob: $dob, username: $username, photo: $photo, bio: $bio, id: $id)';
   }
 
   @override
@@ -79,7 +93,9 @@ class UserModel {
         other.email == email &&
         other.dob == dob &&
         other.username == username &&
-        other.photo == photo;
+        other.photo == photo &&
+        other.bio == bio &&
+        other.id == id;
   }
 
   @override
@@ -88,6 +104,8 @@ class UserModel {
         email.hashCode ^
         dob.hashCode ^
         username.hashCode ^
-        photo.hashCode;
+        photo.hashCode ^
+        bio.hashCode ^
+        id.hashCode;
   }
 }

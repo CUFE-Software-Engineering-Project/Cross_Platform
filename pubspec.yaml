@@ -59,6 +59,7 @@ dependencies:
   image_cropper_for_web: ^7.0.0
   dotted_border: ^3.1.0
   socket_io_client: ^3.1.2
+  mockito: ^5.5.0
 
 dev_dependencies:
   build_runner: ^2.7.1
