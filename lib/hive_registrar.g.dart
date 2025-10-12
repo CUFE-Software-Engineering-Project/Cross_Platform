@@ -4,15 +4,18 @@
 
 import 'package:hive_ce/hive.dart';
 import 'package:lite_x/core/models/usermodel.dart';
+import 'package:lite_x/features/home/models/tweet_model.dart';
 
 extension HiveRegistrar on HiveInterface {
   void registerAdapters() {
+    registerAdapter(TweetModelAdapter());
     registerAdapter(UserModelAdapter());
   }
 }
 
 extension IsolatedHiveRegistrar on IsolatedHiveInterface {
   void registerAdapters() {
+    registerAdapter(TweetModelAdapter());
     registerAdapter(UserModelAdapter());
   }
 }
