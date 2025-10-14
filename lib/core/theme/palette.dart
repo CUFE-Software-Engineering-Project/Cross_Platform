@@ -90,12 +90,7 @@ class Palette {
 
   // Border Colors
   static const Color border = Color.fromRGBO(47, 51, 54, 1.0); // Default border
-  static const Color borderHover = Color.fromRGBO(
-    64,
-    68,
-    75,
-    1.0,
-  ); // Border on hover
+  static const Color borderHover = Color.fromARGB(255, 85, 88, 92);
   static const Color divider = Color.fromRGBO(47, 51, 54, 1.0); // Divider lines
 
   // Interaction Colors

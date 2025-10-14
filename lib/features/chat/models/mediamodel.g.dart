@@ -1,50 +1,41 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'usermodel.dart';
+part of 'mediamodel.dart';
 
 // **************************************************************************
 // TypeAdapterGenerator
 // **************************************************************************
 
-class UserModelAdapter extends TypeAdapter<UserModel> {
+class MediaModelAdapter extends TypeAdapter<MediaModel> {
   @override
-  final typeId = 0;
+  final typeId = 3;
 
   @override
-  UserModel read(BinaryReader reader) {
+  MediaModel read(BinaryReader reader) {
     final numOfFields = reader.readByte();
     final fields = <int, dynamic>{
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
-    return UserModel(
-      name: fields[0] as String,
-      email: fields[1] as String,
-      dob: fields[2] as String,
-      username: fields[3] as String,
-      photo: fields[4] as String?,
-      bio: fields[5] as String?,
-      id: fields[6] as String,
+    return MediaModel(
+      id: fields[0] as String,
+      url: fields[1] as String,
+      type: fields[2] as String,
+      size: (fields[3] as num?)?.toInt(),
     );
   }
 
   @override
-  void write(BinaryWriter writer, UserModel obj) {
+  void write(BinaryWriter writer, MediaModel obj) {
     writer
-      ..writeByte(7)
-      ..writeByte(0)
-      ..write(obj.name)
-      ..writeByte(1)
-      ..write(obj.email)
-      ..writeByte(2)
-      ..write(obj.dob)
-      ..writeByte(3)
-      ..write(obj.username)
       ..writeByte(4)
-      ..write(obj.photo)
-      ..writeByte(5)
-      ..write(obj.bio)
-      ..writeByte(6)
-      ..write(obj.id);
+      ..writeByte(0)
+      ..write(obj.id)
+      ..writeByte(1)
+      ..write(obj.url)
+      ..writeByte(2)
+      ..write(obj.type)
+      ..writeByte(3)
+      ..write(obj.size);
   }
 
   @override
@@ -53,7 +44,7 @@ class UserModelAdapter extends TypeAdapter<UserModel> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is UserModelAdapter &&
+      other is MediaModelAdapter &&
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }
