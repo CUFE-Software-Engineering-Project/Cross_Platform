@@ -4,6 +4,9 @@ import 'package:lite_x/core/routes/Route_Constants.dart';
 import 'package:lite_x/features/auth/view/screens/CreateAccount_Screen.dart';
 import 'package:lite_x/features/auth/view/screens/Intro_Screen.dart';
 import 'package:lite_x/features/auth/view/screens/Verification_Screen.dart';
+import 'package:lite_x/features/profile/models/profile_model.dart';
+import 'package:lite_x/features/profile/view/screens/edit_profile_screen.dart';
+import 'package:lite_x/features/profile/view/screens/profile_screen.dart';
 
 class Approuter {
   static final GoRouter router = GoRouter(
@@ -31,6 +34,25 @@ class Approuter {
           child: const VerificationScreen(),
           transitionsBuilder: _slideRightTransitionBuilder,
         ),
+      ),
+      GoRoute(
+        name: RouteConstants.profileScreen,
+        path: "/profilescreen",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: const ProfilePage(),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
+        name: RouteConstants.editProfileScreen,
+        path: "/editProfile",
+        pageBuilder: (context, state) {
+          final profileData = state.extra as ProfileModel;
+          return CustomTransitionPage(
+            child: EditProfileScreen(profileData: profileData),
+            transitionsBuilder: _slideRightTransitionBuilder,
+          );
+        },
       ),
     ],
     redirect: (context, state) {
