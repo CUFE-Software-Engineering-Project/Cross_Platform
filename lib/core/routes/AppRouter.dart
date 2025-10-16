@@ -19,7 +19,7 @@ import 'package:lite_x/features/auth/view/screens/Create_Account/Upload_Profile_
 import 'package:lite_x/features/auth/view/screens/Create_Account/UserName_Screen.dart';
 import 'package:lite_x/features/auth/view/screens/Create_Account/Verification_Screen.dart';
 import 'package:lite_x/features/auth/view/screens/Log_In/VerificationForgot_Screen.dart';
-import 'package:lite_x/features/auth/view/screens/Verification_Screen.dart';
+// import 'package:lite_x/features/auth/view/screens/Verification_Screen.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
 import 'package:lite_x/features/profile/view/screens/edit_profile_screen.dart';
 import 'package:lite_x/features/profile/view/screens/profile_screen.dart';
@@ -70,7 +70,7 @@ class Approuter {
       ),
 
       GoRoute(
-        name: RouteConstants.passwordscreen,
+        name: RouteConstants.homescreen,
         path: "/home",
         pageBuilder: (context, state) => CustomTransitionPage(
           child: const HomeScreen(),

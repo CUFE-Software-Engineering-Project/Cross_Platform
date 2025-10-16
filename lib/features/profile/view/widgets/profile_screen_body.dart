@@ -20,7 +20,7 @@ class ProfileScreenBody extends StatelessWidget {
             floating: true,
             pinned: true,
             snap: false,
-            expandedHeight: 410,
+            expandedHeight: 450,
             backgroundColor: Colors.black,
             elevation: 0,
             leading: Padding(
@@ -90,7 +90,7 @@ class ProfileScreenBody extends StatelessWidget {
                               child: OutlinedButton(
                                 onPressed: () {
                                   context.go(
-                                    RouteConstants.editProfileScreen,
+                                    "/editProfile",
                                     extra: profileData,
                                   );
                                 },
