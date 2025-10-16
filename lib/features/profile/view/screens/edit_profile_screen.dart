@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
 
 class EditProfileScreen extends StatefulWidget {
@@ -56,7 +57,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             leading: IconButton(
               onPressed: () {
                 //   TODO: return to profile screen
-                Navigator.pop(context);
+                context.go('/profilescreen');
               },
               icon: Icon(Icons.arrow_back_sharp, size: 22),
             ),
