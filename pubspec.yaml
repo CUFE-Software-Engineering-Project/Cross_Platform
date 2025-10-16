@@ -62,6 +62,15 @@ dependencies:
   dotted_border: ^3.1.0
   socket_io_client: ^3.1.2
 
+  dartz: ^0.10.1
+
+  readmore: 3.0.0
+
+  provider:
+
+
+  intl_utils:
+
 dev_dependencies:
   build_runner: ^2.7.1
   flutter_test:
