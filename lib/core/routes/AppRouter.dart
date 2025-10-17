@@ -13,7 +13,7 @@ class Approuter {
         name: RouteConstants.introscreen,
         path: "/",
         pageBuilder: (context, state) => CustomTransitionPage(
-          child: const NotificationScreen(),
+           child: const IntoScreen(),
           transitionsBuilder: _slideRightTransitionBuilder,
         ),
       ),
