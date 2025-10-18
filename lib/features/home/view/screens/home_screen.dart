@@ -1,13 +1,13 @@
-// lib/features/home/view/screens/home_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
 import 'package:lite_x/core/routes/app_shell.dart';
-import 'package:lite_x/features/home/repositories/home_repository.dart';
+import 'package:lite_x/features/home/models/tweet_model.dart';
+import 'package:lite_x/features/home/view/screens/tweet_screen.dart';
+import 'package:lite_x/features/home/view_model/home_state.dart';
+import 'package:lite_x/features/home/view_model/home_view_model.dart';
 import 'package:lite_x/features/home/view/widgets/home_app_bar.dart';
 import 'package:lite_x/features/home/view/widgets/home_tab_bar.dart';
 import 'package:lite_x/features/home/view/widgets/tweet_widget.dart';
-import 'package:lite_x/features/home/view_model/home_view_model.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -48,7 +48,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       setState(() {
         _isScrollingDown = isScrollingDown;
       });
-      // Update bottom navigation visibility
       ref.read(bottomNavVisibilityProvider.notifier).state = !isScrollingDown;
     }
     _lastScrollOffset = currentOffset;
@@ -59,15 +58,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final selectedTab = ref.watch(homeTabProvider);
     final homeState = ref.watch(homeViewModelProvider);
 
-    // Debug: Create a test repository to check if sample tweets work
-    final testRepo = HomeRepository();
-    final testTweets = testRepo.getSampleTweets();
-    print('Test tweets count: ${testTweets.length}');
-    if (testTweets.isNotEmpty) {
-      print('First tweet: ${testTweets.first.content}');
-    }
-
-    // Listen to tab changes and animate to the correct page
+    // Listen to tab changes and animate the PageView
     ref.listen<HomeTab>(homeTabProvider, (previous, next) {
       if (_pageController.hasClients) {
         final pageIndex = next == HomeTab.forYou ? 0 : 1;
@@ -84,21 +75,27 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       body: PageView(
         controller: _pageController,
         onPageChanged: (index) {
-          // Update tab state when user swipes between pages
           final newTab = index == 0 ? HomeTab.forYou : HomeTab.following;
           if (selectedTab != newTab) {
             ref.read(homeTabProvider.notifier).state = newTab;
           }
         },
+        // **REFACTORED:** Use the new, reusable builder for each page
         children: [
-          _buildForYouFeedWithSliverAppBar(homeState, ref),
-          _buildFollowingFeedWithSliverAppBar(homeState, ref),
+          _buildFeedPage(ref, homeState, "For You"),
+          _buildFeedPage(ref, homeState, "Following"),
         ],
       ),
     );
   }
 
-  Widget _buildForYouFeedWithSliverAppBar(homeState, WidgetRef ref) {
+  // **NEW REUSABLE METHOD:** Replaces the two duplicated feed methods
+  Widget _buildFeedPage(WidgetRef ref, HomeState homeState, String feedType) {
+    // In a real app, you might have separate lists in your state,
+    // e.g., homeState.forYouTweets and homeState.followingTweets.
+    // For now, we use the main list for both feeds.
+    final tweets = homeState.tweets;
+
     return RefreshIndicator(
       onRefresh: () => ref.read(homeViewModelProvider.notifier).refreshTweets(),
       backgroundColor: Colors.grey[900],
@@ -106,140 +103,71 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       child: CustomScrollView(
         controller: _scrollController,
         slivers: [
-          SliverAppBar(
-            expandedHeight: 120.0, // Height for app bar + tab bar
-            floating: true, // App bar will show when scrolling up
-            snap: true, // App bar will snap to visible/hidden states
-            pinned: false, // App bar will completely hide when scrolling down
+          const SliverAppBar(
+            expandedHeight: 120.0,
+            floating: true,
+            snap: true,
+            pinned: false,
             backgroundColor: Colors.black,
             elevation: 0,
             automaticallyImplyLeading: false,
-            flexibleSpace: FlexibleSpaceBar(
-              background: Container(
-                color: Colors.black,
-                child: const HomeAppBar(),
-              ),
-            ),
+            flexibleSpace: FlexibleSpaceBar(background: HomeAppBar()),
           ),
-          _buildSliverTweetList(homeState, 'For You'),
+          // Pass the specific list of tweets to the list builder
+          _buildSliverTweetList(context, tweets, homeState.isLoading, feedType),
         ],
       ),
     );
   }
 
-  Widget _buildFollowingFeedWithSliverAppBar(homeState, WidgetRef ref) {
-    return RefreshIndicator(
-      onRefresh: () => ref.read(homeViewModelProvider.notifier).refreshTweets(),
-      backgroundColor: Colors.grey[900],
-      color: Colors.white,
-      child: CustomScrollView(
-        controller: _scrollController,
-        slivers: [
-          SliverAppBar(
-            expandedHeight: 120.0, // Height for app bar + tab bar
-            floating: true, // App bar will show when scrolling up
-            snap: true, // App bar will snap to visible/hidden states
-            pinned: false, // App bar will completely hide when scrolling down
-            backgroundColor: Colors.black,
-            elevation: 0,
-            automaticallyImplyLeading: false,
-            flexibleSpace: FlexibleSpaceBar(
-              background: Container(
-                color: Colors.black,
-                child: const HomeAppBar(),
-              ),
-            ),
-          ),
-          _buildSliverTweetList(homeState, 'Following'),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSliverTweetList(homeState, String feedType) {
-    print(
-      'Building tweet list for $feedType - tweets count: ${homeState.tweets.length}',
-    );
-    print('Loading state: ${homeState.isLoading}');
-    print('Error: ${homeState.error}');
-
-    // Force display of sample tweets for demo
-    final testRepo = HomeRepository();
-    final staticTweets = testRepo.getSampleTweets();
-
-    if (staticTweets.isNotEmpty) {
-      print('Displaying ${staticTweets.length} static sample tweets');
-      return SliverList(
-        delegate: SliverChildBuilderDelegate((context, index) {
-          final tweet = staticTweets[index];
-          return TweetWidget(
-            userDisplayName: tweet.authorName,
-            username: tweet.authorUsername,
-            timeAgo: timeago.format(tweet.createdAt),
-            content: tweet.content,
-            imageUrl: tweet.images.isNotEmpty ? tweet.images.first : null,
-            replyCount: tweet.replies,
-            retweetCount: tweet.retweets,
-            likeCount: tweet.likes,
-            shareCount: 0,
-            reachCount: (tweet.likes * 2.5)
-                .round(), // Estimated reach based on likes
-            isSaved: false, // Default to not saved
-            onReply: () {
-              print('Reply to tweet: ${tweet.id}');
-            },
-            onRetweet: () {
-              print('Retweet: ${tweet.id}');
-            },
-            onLike: () {
-              print('Like: ${tweet.id}');
-            },
-            onShare: () {
-              print('Share tweet: ${tweet.id}');
-            },
-            onSave: () {
-              print('Save tweet: ${tweet.id}');
-            },
-            onReach: () {
-              print('View reach analytics for tweet: ${tweet.id}');
-            },
-          );
-        }, childCount: staticTweets.length),
-      );
-    }
-
-    if (homeState.isLoading && homeState.tweets.isEmpty) {
+  // **CORRECTED METHOD:** This now correctly uses the state passed into it
+  Widget _buildSliverTweetList(
+    BuildContext context,
+    List<TweetModel> tweets,
+    bool isLoading,
+    String feedType,
+  ) {
+    // 1. Handle loading state
+    if (isLoading && tweets.isEmpty) {
       return const SliverToBoxAdapter(
-        child: Center(child: CircularProgressIndicator(color: Colors.white)),
+        child: Padding(
+          padding: EdgeInsets.only(top: 50.0),
+          child: Center(child: CircularProgressIndicator(color: Colors.white)),
+        ),
       );
     }
 
-    if (homeState.tweets.isEmpty) {
+    // 2. Handle empty state (after loading is finished)
+    if (tweets.isEmpty) {
       return SliverToBoxAdapter(
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.timeline, size: 64, color: Colors.grey[600]),
-              const SizedBox(height: 16),
-              Text(
-                'No tweets in $feedType feed',
-                style: TextStyle(color: Colors.grey[400], fontSize: 18),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Pull to refresh or start following accounts',
-                style: TextStyle(color: Colors.grey[500], fontSize: 14),
-              ),
-            ],
+        child: Padding(
+          padding: const EdgeInsets.only(top: 50.0),
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.timeline, size: 64, color: Colors.grey[600]),
+                const SizedBox(height: 16),
+                Text(
+                  'No tweets in $feedType feed',
+                  style: TextStyle(color: Colors.grey[400], fontSize: 18),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Pull to refresh or check back later.',
+                  style: TextStyle(color: Colors.grey[500], fontSize: 14),
+                ),
+              ],
+            ),
           ),
         ),
       );
     }
 
+    // 3. Display the list of tweets
     return SliverList(
       delegate: SliverChildBuilderDelegate((context, index) {
-        final tweet = homeState.tweets[index];
+        final tweet = tweets[index];
         return TweetWidget(
           userDisplayName: tweet.authorName,
           username: tweet.authorUsername,
@@ -249,37 +177,34 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           replyCount: tweet.replies,
           retweetCount: tweet.retweets,
           likeCount: tweet.likes,
-          shareCount: 0,
-          reachCount: (tweet.likes * 2.5)
-              .round(), // Estimated reach based on likes
-          isSaved: tweet.isLiked, // Use like status as save status for demo
+
+          isSaved: false, // Placeholder for save state
+
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => TweetDetailScreen(tweetId: 't1'),
+              ),
+            );
+          },
           onReply: () {
-            // Handle reply action
-            print('Reply to tweet: ${tweet.id}');
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => TweetDetailScreen(tweetId: tweet.id),
+              ),
+            );
           },
           onRetweet: () {
-            // Handle retweet action
             ref.read(homeViewModelProvider.notifier).toggleRetweet(tweet.id);
           },
           onLike: () {
-            // Handle like action
             ref.read(homeViewModelProvider.notifier).toggleLike(tweet.id);
           },
-          onShare: () {
-            // Handle share action
-            print('Share tweet: ${tweet.id}');
-          },
-          onSave: () {
-            // Handle save action
-            print('Save tweet: ${tweet.id}');
-            // TODO: Implement save functionality in view model
-          },
-          onReach: () {
-            // Handle reach analytics action
-            print('View reach analytics for tweet: ${tweet.id}');
-          },
+          onShare: () => print('Share tweet: ${tweet.id}'),
+          onSave: () => print('Save tweet: ${tweet.id}'),
+          onReach: () => print('View reach analytics for tweet: ${tweet.id}'),
         );
-      }, childCount: homeState.tweets.length),
+      }, childCount: tweets.length),
     );
   }
 }

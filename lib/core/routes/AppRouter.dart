@@ -32,10 +32,10 @@ class Approuter {
         ),
       ),
       GoRoute(
-        name: RouteConstants.introscreen,
+        name: RouteConstants.appShell,
         path: "/",
         pageBuilder: (context, state) => CustomTransitionPage(
-          child: const IntroScreen(),
+          child: const AppShell(),
           transitionsBuilder: _slideRightTransitionBuilder,
         ),
       ),
@@ -57,7 +57,7 @@ class Approuter {
       ),
 
       GoRoute(
-        name: RouteConstants.passwordscreen,
+        name: RouteConstants.homescreen,
         path: "/home",
         pageBuilder: (context, state) => CustomTransitionPage(
           child: const HomeScreen(),

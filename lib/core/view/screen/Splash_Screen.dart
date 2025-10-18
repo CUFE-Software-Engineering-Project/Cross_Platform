@@ -25,7 +25,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       if (state == AuthState.authenticated) {
         // context.go(RouteConstants.home);
       } else {
-        context.goNamed(RouteConstants.introscreen);
+        context.goNamed(RouteConstants.appShell);
       }
     });
   }

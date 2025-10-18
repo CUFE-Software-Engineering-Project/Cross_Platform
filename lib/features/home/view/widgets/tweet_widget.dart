@@ -20,7 +20,7 @@ class TweetWidget extends StatelessWidget {
   final VoidCallback? onShare;
   final VoidCallback? onSave;
   final VoidCallback? onReach;
-
+  final VoidCallback? onTap;
   const TweetWidget({
     super.key,
     required this.userDisplayName,
@@ -42,50 +42,54 @@ class TweetWidget extends StatelessWidget {
     this.onShare,
     this.onSave,
     this.onReach,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.black,
-        border: Border(
-          bottom: BorderSide(color: Colors.grey[800]!, width: 0.5),
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.black,
+          border: Border(
+            bottom: BorderSide(color: Colors.grey[800]!, width: 0.5),
+          ),
         ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Profile Picture
-          CircleAvatar(
-            radius: 20,
-            backgroundColor: Colors.grey[700],
-            child: const Icon(Icons.person, color: Colors.white, size: 24),
-          ),
-          const SizedBox(width: 12),
-          // Tweet Content
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // User Info Row
-                _buildUserInfoRow(),
-                const SizedBox(height: 8),
-                // Tweet Text
-                _buildTweetText(),
-                const SizedBox(height: 12),
-                // Media Content (Image/Video)
-                if (imageUrl != null || videoUrl != null) ...[
-                  _buildMediaContent(),
-                  const SizedBox(height: 12),
-                ],
-                // Action Buttons
-                _buildActionButtons(),
-              ],
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Profile Picture
+            CircleAvatar(
+              radius: 20,
+              backgroundColor: Colors.grey[700],
+              child: const Icon(Icons.person, color: Colors.white, size: 24),
             ),
-          ),
-        ],
+            const SizedBox(width: 12),
+            // Tweet Content
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // User Info Row
+                  _buildUserInfoRow(),
+                  const SizedBox(height: 8),
+                  // Tweet Text
+                  _buildTweetText(),
+                  const SizedBox(height: 12),
+                  // Media Content (Image/Video)
+                  if (imageUrl != null || videoUrl != null) ...[
+                    _buildMediaContent(),
+                    const SizedBox(height: 12),
+                  ],
+                  // Action Buttons
+                  _buildActionButtons(),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

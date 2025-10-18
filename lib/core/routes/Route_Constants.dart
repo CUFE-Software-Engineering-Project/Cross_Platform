@@ -1,5 +1,6 @@
 class RouteConstants {
-  static String homescreen = "AppShell";
+  static String appShell = "AppShell";
+  static String homescreen = "HomeScreen";
   static const String splash = "splash";
   static String introscreen = "introscreen";
   static String createaccountscreen = "createaccountscreen";

@@ -3,7 +3,7 @@ import 'package:hive_ce/hive.dart';
 part 'tweet_model.g.dart';
 
 @HiveType(typeId: 0)
-class TweetModel {
+class TweetModel extends HiveObject {
   @HiveField(0)
   final String id;
 
@@ -23,22 +23,28 @@ class TweetModel {
   final DateTime createdAt;
 
   @HiveField(6)
-  final int likes;
+  int likes;
 
   @HiveField(7)
-  final int retweets;
+  int retweets;
 
   @HiveField(8)
   final int replies;
 
   @HiveField(9)
-  final List<String> images; // For tweet images
+  final List<String> images;
 
   @HiveField(10)
-  final bool isLiked;
+  bool isLiked;
 
   @HiveField(11)
-  final bool isRetweeted;
+  bool isRetweeted;
+
+  @HiveField(12)
+  final String? replyToId;
+
+  @HiveField(13)
+  List<String> replyIds;
 
   TweetModel({
     required this.id,
@@ -53,6 +59,8 @@ class TweetModel {
     this.images = const [],
     this.isLiked = false,
     this.isRetweeted = false,
+    this.replyToId,
+    this.replyIds = const [],
   });
 
   TweetModel copyWith({
@@ -68,6 +76,8 @@ class TweetModel {
     List<String>? images,
     bool? isLiked,
     bool? isRetweeted,
+    String? replyToId,
+    List<String>? replyIds,
   }) {
     return TweetModel(
       id: id ?? this.id,
@@ -82,6 +92,8 @@ class TweetModel {
       images: images ?? this.images,
       isLiked: isLiked ?? this.isLiked,
       isRetweeted: isRetweeted ?? this.isRetweeted,
+      replyToId: replyToId ?? this.replyToId,
+      replyIds: replyIds ?? this.replyIds,
     );
   }
 
@@ -99,6 +111,8 @@ class TweetModel {
       'images': images,
       'isLiked': isLiked,
       'isRetweeted': isRetweeted,
+      'replyToId': replyToId,
+      'replyIds': replyIds,
     };
   }
 
@@ -116,6 +130,8 @@ class TweetModel {
       images: List<String>.from(json['images'] ?? []),
       isLiked: json['isLiked'] ?? false,
       isRetweeted: json['isRetweeted'] ?? false,
+      replyToId: json['replyToId'],
+      replyIds: List<String>.from(json['replyIds'] ?? []),
     );
   }
 }
