@@ -25,9 +25,7 @@ class ConversationAppBar extends ConsumerWidget implements PreferredSizeWidget {
             Padding(
               padding: const EdgeInsets.only(right: 8),
               child: GestureDetector(
-                onTap: () {
-                  // TODO: Open drawer or navigate to profile
-                },
+                onTap: () {},
                 child: Hero(
                   tag: "user_avatar",
                   child: CircleAvatar(
@@ -49,9 +47,7 @@ class ConversationAppBar extends ConsumerWidget implements PreferredSizeWidget {
             Expanded(
               child: SearchField(
                 hintText: 'Search Direct Messages',
-                onTap: () {
-                  // Navigate to search screen
-                },
+                onTap: () {},
               ),
             ),
             IconButton(
@@ -59,9 +55,7 @@ class ConversationAppBar extends ConsumerWidget implements PreferredSizeWidget {
                 Icons.settings_outlined,
                 color: Color.fromARGB(174, 255, 255, 255),
               ),
-              onPressed: () {
-                // Navigate to notification settings
-              },
+              onPressed: () {},
             ),
           ],
         ),

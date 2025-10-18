@@ -21,13 +21,14 @@ class MediaModelAdapter extends TypeAdapter<MediaModel> {
       url: fields[1] as String,
       type: fields[2] as String,
       size: (fields[3] as num?)?.toInt(),
+      name: fields[4] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, MediaModel obj) {
     writer
-      ..writeByte(4)
+      ..writeByte(5)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -35,7 +36,9 @@ class MediaModelAdapter extends TypeAdapter<MediaModel> {
       ..writeByte(2)
       ..write(obj.type)
       ..writeByte(3)
-      ..write(obj.size);
+      ..write(obj.size)
+      ..writeByte(4)
+      ..write(obj.name);
   }
 
   @override

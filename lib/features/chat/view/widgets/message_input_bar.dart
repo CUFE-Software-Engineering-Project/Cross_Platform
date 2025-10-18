@@ -40,7 +40,6 @@ class _MessageInputBarState extends ConsumerState<MessageInputBar> {
   @override
   void initState() {
     super.initState();
-    // Removed listener, will use ValueListenableBuilder for performance
     _initializeRecorder();
   }
 

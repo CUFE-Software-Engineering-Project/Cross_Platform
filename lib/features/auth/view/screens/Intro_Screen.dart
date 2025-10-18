@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
 import 'package:lite_x/core/theme/palette.dart';
+import 'package:lite_x/features/auth/repositories/auth_remote_repository.dart';
 import 'package:lite_x/features/auth/view/widgets/buildTermsText.dart';
 import 'package:lite_x/features/auth/view/widgets/buildXLogo.dart';
 
@@ -20,23 +21,17 @@ class IntroScreen extends ConsumerWidget {
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF101010), Palette.background],
-          ),
-        ),
+        decoration: const BoxDecoration(),
         child: SafeArea(
           child: isWeb
-              ? _buildWebLayout(size, context)
-              : _buildMobileLayout(size, context),
+              ? _buildWebLayout(size, context, ref)
+              : _buildMobileLayout(size, context, ref),
         ),
       ),
     );
   }
 
-  Widget _buildMobileLayout(Size size, BuildContext context) {
+  Widget _buildMobileLayout(Size size, BuildContext context, WidgetRef ref) {
     return SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -60,7 +55,7 @@ class IntroScreen extends ConsumerWidget {
               ),
             ),
             SizedBox(height: size.height * 0.15),
-            _buildAuthButtons(context),
+            _buildAuthButtons(context, ref),
             const SizedBox(height: 25),
             buildTermsText(),
             const SizedBox(height: 5),
@@ -71,7 +66,7 @@ class IntroScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildWebLayout(Size size, BuildContext context) {
+  Widget _buildWebLayout(Size size, BuildContext context, WidgetRef ref) {
     return Row(
       children: [
         Expanded(
@@ -113,7 +108,7 @@ class IntroScreen extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 20),
-                _buildAuthButtons(context),
+                _buildAuthButtons(context, ref),
                 const SizedBox(height: 20),
                 buildTermsText(),
                 const SizedBox(height: 20),
@@ -126,19 +121,23 @@ class IntroScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildAuthButtons(BuildContext context) {
+  Widget _buildAuthButtons(BuildContext context, WidgetRef ref) {
     return Column(
       children: [
         AuthButton(
           icon: 'assets/images/google.png',
           label: 'Continue with Google',
-          onPressed: () {},
+          onPressed: () async {
+            await ref.read(authRemoteRepositoryProvider).signup();
+          },
         ),
         const SizedBox(height: 10),
         AuthButton(
-          icon: 'assets/images/facebook.png',
-          label: 'Continue with Facebook',
-          onPressed: () {},
+          icon: 'assets/images/github.png',
+          label: 'Continue with GitHub',
+          onPressed: () {
+            context.pushNamed(RouteConstants.ConversationsScreen);
+          },
         ),
         const SizedBox(height: 12),
         Row(

@@ -18,36 +18,48 @@ class ConversationModelAdapter extends TypeAdapter<ConversationModel> {
     };
     return ConversationModel(
       id: fields[0] as String,
-      isGroup: fields[1] as bool,
-      name: fields[2] as String?,
-      photo: fields[3] as String?,
-      participants: (fields[4] as List).cast<UserModel>(),
-      lastMessageId: fields[5] as String?,
-      unseenCount: fields[6] == null ? 0 : (fields[6] as num).toInt(),
-      updatedAt: fields[7] as DateTime,
+      isDMChat: fields[1] as bool,
+      createdAt: fields[2] as DateTime,
+      updatedAt: fields[3] as DateTime,
+      groupName: fields[4] as String?,
+      groupPhoto: fields[5] as String?,
+      groupDescription: fields[6] as String?,
+      participantIds: (fields[7] as List).cast<String>(),
+      lastMessageContent: fields[8] as String?,
+      lastMessageTime: fields[9] as DateTime?,
+      lastMessageSenderId: fields[10] as String?,
+      unseenCount: fields[11] == null ? 0 : (fields[11] as num).toInt(),
     );
   }
 
   @override
   void write(BinaryWriter writer, ConversationModel obj) {
     writer
-      ..writeByte(8)
+      ..writeByte(12)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
-      ..write(obj.isGroup)
+      ..write(obj.isDMChat)
       ..writeByte(2)
-      ..write(obj.name)
+      ..write(obj.createdAt)
       ..writeByte(3)
-      ..write(obj.photo)
+      ..write(obj.updatedAt)
       ..writeByte(4)
-      ..write(obj.participants)
+      ..write(obj.groupName)
       ..writeByte(5)
-      ..write(obj.lastMessageId)
+      ..write(obj.groupPhoto)
       ..writeByte(6)
-      ..write(obj.unseenCount)
+      ..write(obj.groupDescription)
       ..writeByte(7)
-      ..write(obj.updatedAt);
+      ..write(obj.participantIds)
+      ..writeByte(8)
+      ..write(obj.lastMessageContent)
+      ..writeByte(9)
+      ..write(obj.lastMessageTime)
+      ..writeByte(10)
+      ..write(obj.lastMessageSenderId)
+      ..writeByte(11)
+      ..write(obj.unseenCount);
   }
 
   @override

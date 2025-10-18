@@ -33,9 +33,7 @@ class EmptyInbox extends StatelessWidget {
             ),
             const SizedBox(height: 22),
             ElevatedButton(
-              onPressed: () {
-                //Navigate to new message screen
-              },
+              onPressed: () {},
               style: ElevatedButton.styleFrom(
                 backgroundColor: Palette.textWhite,
                 foregroundColor: Palette.background,

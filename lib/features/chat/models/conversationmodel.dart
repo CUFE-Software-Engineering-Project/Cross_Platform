@@ -1,102 +1,144 @@
-// ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:convert';
-
-import 'package:collection/collection.dart';
 import 'package:hive_ce/hive.dart';
-
-import 'package:lite_x/core/models/usermodel.dart';
-
 part 'conversationmodel.g.dart';
 
 @HiveType(typeId: 1)
 class ConversationModel extends HiveObject {
   @HiveField(0)
   String id;
-
   @HiveField(1)
-  bool isGroup;
-
+  bool isDMChat;
   @HiveField(2)
-  String? name; // group name or null for DM
-
+  DateTime createdAt;
   @HiveField(3)
-  String? photo;
-
-  @HiveField(4)
-  List<UserModel> participants;
-
-  @HiveField(5)
-  String? lastMessageId;
-
-  @HiveField(6)
-  int unseenCount;
-
-  @HiveField(7)
   DateTime updatedAt;
+  @HiveField(4)
+  String? groupName;
+  @HiveField(5)
+  String? groupPhoto;
+  @HiveField(6)
+  String? groupDescription;
+  @HiveField(7)
+  List<String> participantIds;
+  @HiveField(8)
+  String? lastMessageContent;
+  @HiveField(9)
+  DateTime? lastMessageTime;
+  @HiveField(10)
+  String? lastMessageSenderId;
+  @HiveField(11)
+  int unseenCount;
 
   ConversationModel({
     required this.id,
-    required this.isGroup,
-    this.name,
-    this.photo,
-    required this.participants,
-    this.lastMessageId,
-    this.unseenCount = 0,
+    required this.isDMChat,
+    required this.createdAt,
     required this.updatedAt,
+    this.groupName,
+    this.groupPhoto,
+    this.groupDescription,
+    required this.participantIds,
+    this.lastMessageContent,
+    this.lastMessageTime,
+    this.lastMessageSenderId,
+    this.unseenCount = 0,
   });
+  factory ConversationModel.fromApiResponse(Map<String, dynamic> json) {
+    final chatUsers = json['chatUsers'] as List<dynamic>? ?? [];
+    final participantIds = chatUsers
+        .map((cu) => cu['userId'] as String)
+        .toList();
+    final messages = json['messages'] as List<dynamic>? ?? [];
+    String? lastMessageContent;
+    DateTime? lastMessageTime;
+    String? lastMessageSenderId;
+    if (messages.isNotEmpty) {
+      final lastMsg = messages.first;
+      lastMessageContent = lastMsg['content'] as String?;
+      lastMessageTime = DateTime.parse(lastMsg['createdAt'] as String);
+      lastMessageSenderId = lastMsg['userId'] as String;
+    }
+    final chatGroup = json['chatGroup'] as Map<String, dynamic>?;
+
+    return ConversationModel(
+      id: json['id'] as String,
+      isDMChat: json['DMChat'] as bool,
+      createdAt: DateTime.parse(json['createdAt'] as String),
+      updatedAt: DateTime.parse(json['updatedAt'] as String),
+      groupName: chatGroup?['name'] as String?,
+      groupPhoto: chatGroup?['photo'] as String?,
+      groupDescription: chatGroup?['description'] as String?,
+      participantIds: participantIds,
+      lastMessageContent: lastMessageContent,
+      lastMessageTime: lastMessageTime,
+      lastMessageSenderId: lastMessageSenderId,
+      unseenCount: 0,
+    );
+  }
 
   ConversationModel copyWith({
     String? id,
-    bool? isGroup,
-    String? name,
-    String? photo,
-    List<UserModel>? participants,
-    String? lastMessageId,
-    int? unseenCount,
+    bool? isDMChat,
+    DateTime? createdAt,
     DateTime? updatedAt,
+    String? groupName,
+    String? groupPhoto,
+    String? groupDescription,
+    List<String>? participantIds,
+    String? lastMessageContent,
+    DateTime? lastMessageTime,
+    String? lastMessageSenderId,
+    int? unseenCount,
   }) {
     return ConversationModel(
       id: id ?? this.id,
-      isGroup: isGroup ?? this.isGroup,
-      name: name ?? this.name,
-      photo: photo ?? this.photo,
-      participants: participants ?? this.participants,
-      lastMessageId: lastMessageId ?? this.lastMessageId,
-      unseenCount: unseenCount ?? this.unseenCount,
+      isDMChat: isDMChat ?? this.isDMChat,
+      createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      groupName: groupName ?? this.groupName,
+      groupPhoto: groupPhoto ?? this.groupPhoto,
+      groupDescription: groupDescription ?? this.groupDescription,
+      participantIds: participantIds ?? this.participantIds,
+      lastMessageContent: lastMessageContent ?? this.lastMessageContent,
+      lastMessageTime: lastMessageTime ?? this.lastMessageTime,
+      lastMessageSenderId: lastMessageSenderId ?? this.lastMessageSenderId,
+      unseenCount: unseenCount ?? this.unseenCount,
     );
   }
 
   Map<String, dynamic> toMap() {
-    return <String, dynamic>{
+    return {
       'id': id,
-      'isGroup': isGroup,
-      'name': name,
-      'photo': photo,
-      'participants': participants.map((x) => x.toMap()).toList(),
-      'lastMessageId': lastMessageId,
+      'isDMChat': isDMChat,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
+      'groupName': groupName,
+      'groupPhoto': groupPhoto,
+      'groupDescription': groupDescription,
+      'participantIds': participantIds,
+      'lastMessageContent': lastMessageContent,
+      'lastMessageTime': lastMessageTime?.toIso8601String(),
+      'lastMessageSenderId': lastMessageSenderId,
       'unseenCount': unseenCount,
-      'updatedAt': updatedAt.millisecondsSinceEpoch,
     };
   }
 
   factory ConversationModel.fromMap(Map<String, dynamic> map) {
     return ConversationModel(
       id: map['id'] as String,
-      isGroup: map['isGroup'] as bool,
-      name: map['name'] != null ? map['name'] as String : null,
-      photo: map['photo'] != null ? map['photo'] as String : null,
-      // FIX: Changed 'as List<int>' to 'as List<dynamic>'
-      participants: List<UserModel>.from(
-        (map['participants'] as List<dynamic>).map<UserModel>(
-          (x) => UserModel.fromMap(x as Map<String, dynamic>),
-        ),
-      ),
-      lastMessageId: map['lastMessageId'] != null
-          ? map['lastMessageId'] as String
+      isDMChat: map['isDMChat'] as bool,
+      createdAt: DateTime.parse(map['createdAt'] as String),
+      updatedAt: DateTime.parse(map['updatedAt'] as String),
+      groupName: map['groupName'] as String?,
+      groupPhoto: map['groupPhoto'] as String?,
+      groupDescription: map['groupDescription'] as String?,
+      participantIds: List<String>.from(map['participantIds'] as List),
+      lastMessageContent: map['lastMessageContent'] as String?,
+      lastMessageTime: map['lastMessageTime'] != null
+          ? DateTime.parse(map['lastMessageTime'] as String)
           : null,
-      unseenCount: map['unseenCount'] as int,
-      updatedAt: DateTime.fromMillisecondsSinceEpoch(map['updatedAt'] as int),
+      lastMessageSenderId: map['lastMessageSenderId'] as String?,
+      unseenCount: map['unseenCount'] as int? ?? 0,
     );
   }
 
@@ -105,35 +147,32 @@ class ConversationModel extends HiveObject {
   factory ConversationModel.fromJson(String source) =>
       ConversationModel.fromMap(json.decode(source) as Map<String, dynamic>);
 
+  bool get isGroup => !isDMChat;
+
+  String? getOtherParticipantId(String currentUserId) {
+    if (!isDMChat) return null;
+    return participantIds.firstWhere(
+      (id) => id != currentUserId,
+      orElse: () => participantIds.first,
+    );
+  }
+
   @override
   String toString() {
-    return 'ConversationModel(id: $id, isGroup: $isGroup, name: $name, photo: $photo, participants: $participants, lastMessageId: $lastMessageId, unseenCount: $unseenCount, updatedAt: $updatedAt)';
+    return 'ConversationModel(id: $id, isDMChat: $isDMChat, groupName: $groupName, participants: ${participantIds.length}, unseenCount: $unseenCount)';
   }
 
   @override
   bool operator ==(covariant ConversationModel other) {
     if (identical(this, other)) return true;
-    final listEquals = const DeepCollectionEquality().equals;
 
     return other.id == id &&
-        other.isGroup == isGroup &&
-        other.name == name &&
-        other.photo == photo &&
-        listEquals(other.participants, participants) &&
-        other.lastMessageId == lastMessageId &&
-        other.unseenCount == unseenCount &&
+        other.isDMChat == isDMChat &&
         other.updatedAt == updatedAt;
   }
 
   @override
   int get hashCode {
-    return id.hashCode ^
-        isGroup.hashCode ^
-        name.hashCode ^
-        photo.hashCode ^
-        participants.hashCode ^
-        lastMessageId.hashCode ^
-        unseenCount.hashCode ^
-        updatedAt.hashCode;
+    return id.hashCode ^ isDMChat.hashCode ^ updatedAt.hashCode;
   }
 }

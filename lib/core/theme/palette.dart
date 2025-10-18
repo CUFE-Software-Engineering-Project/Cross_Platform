@@ -21,7 +21,8 @@ class Palette {
     39,
     1.0,
   ); // Bottom sheets / modals
-
+  static const Color chatme = const Color.fromARGB(255, 79, 174, 238);
+  static const Color chathim = const Color.fromARGB(255, 54, 59, 63);
   // Primary Colors
   static const Color primary = Color.fromRGBO(
     29,
