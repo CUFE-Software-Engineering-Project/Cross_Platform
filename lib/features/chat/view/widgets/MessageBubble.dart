@@ -44,59 +44,16 @@ class MessageBubble extends StatelessWidget {
           crossAxisAlignment: alignment,
           children: [
             if (showSenderName && !isMe && message.senderName != null)
-              Padding(
-                padding: const EdgeInsets.only(left: 16, bottom: 4),
-                child: Text(
-                  message.senderName!,
-                  style: TextStyle(
-                    color: Colors.grey[400],
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
+              _SenderName(senderName: message.senderName!),
+
             if (replyTo != null)
               _ReplyPreview(repliedMessage: replyTo!, isMe: isMe),
-            Container(
-              constraints: BoxConstraints(
-                maxWidth: MediaQuery.of(context).size.width * 0.75,
-              ),
-              decoration: BoxDecoration(
-                color: bubbleColor,
-                borderRadius: BorderRadius.only(
-                  topLeft: const Radius.circular(20),
-                  topRight: const Radius.circular(20),
-                  bottomLeft: isMe
-                      ? const Radius.circular(20)
-                      : const Radius.circular(4),
-                  bottomRight: isMe
-                      ? const Radius.circular(4)
-                      : const Radius.circular(20),
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (message.hasMedia) _buildMediaContent(),
-                  if (message.content != null && message.content!.isNotEmpty)
-                    Padding(
-                      padding: EdgeInsets.fromLTRB(
-                        16,
-                        message.hasMedia ? 8 : 12,
-                        16,
-                        12,
-                      ),
-                      child: Text(
-                        message.content!,
-                        style: const TextStyle(
-                          color: Palette.textWhite,
-                          fontSize: 15,
-                          height: 1.4,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
+
+            _MessageContentBubble(
+              message: message,
+              isMe: isMe,
+              bubbleColor: bubbleColor,
+              onMediaTap: onMediaTap,
             ),
 
             const SizedBox(height: 3),
@@ -106,9 +63,106 @@ class MessageBubble extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _buildMediaContent() {
-    if (message.media == null || message.media!.isEmpty) {
+class _SenderName extends StatelessWidget {
+  final String senderName;
+  const _SenderName({required this.senderName});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 16, bottom: 4),
+      child: Text(
+        senderName,
+        style: TextStyle(
+          color: Colors.grey[400],
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+    );
+  }
+}
+
+class _MessageContentBubble extends StatelessWidget {
+  final MessageModel message;
+  final bool isMe;
+  final Color bubbleColor;
+  final Function(int index)? onMediaTap;
+
+  const _MessageContentBubble({
+    required this.message,
+    required this.isMe,
+    required this.bubbleColor,
+    this.onMediaTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: BoxConstraints(
+        maxWidth: MediaQuery.of(context).size.width * 0.75,
+      ),
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: bubbleColor,
+        borderRadius: BorderRadius.only(
+          topLeft: const Radius.circular(20),
+          topRight: const Radius.circular(20),
+          bottomLeft: isMe
+              ? const Radius.circular(20)
+              : const Radius.circular(4),
+          bottomRight: isMe
+              ? const Radius.circular(4)
+              : const Radius.circular(20),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (message.hasMedia)
+            _MediaContent(message: message, onMediaTap: onMediaTap),
+
+          if (message.content?.isNotEmpty ?? false)
+            _TextContent(content: message.content!, hasMedia: message.hasMedia),
+        ],
+      ),
+    );
+  }
+}
+
+class _TextContent extends StatelessWidget {
+  final String content;
+  final bool hasMedia;
+
+  const _TextContent({required this.content, required this.hasMedia});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16, hasMedia ? 8 : 12, 16, 12),
+      child: Text(
+        content,
+        style: const TextStyle(
+          color: Palette.textWhite,
+          fontSize: 15,
+          height: 1.4,
+        ),
+      ),
+    );
+  }
+}
+
+class _MediaContent extends StatelessWidget {
+  final MessageModel message;
+  final Function(int index)? onMediaTap;
+
+  const _MediaContent({required this.message, this.onMediaTap});
+
+  @override
+  Widget build(BuildContext context) {
+    if (message.media?.isEmpty ?? true) {
       return const SizedBox.shrink();
     }
     final media = message.media!;
@@ -119,18 +173,9 @@ class MessageBubble extends StatelessWidget {
   }
 
   Widget _buildSingleMedia(dynamic mediaItem, int index) {
-    final type = mediaItem.type as String;
-    return ClipRRect(
-      borderRadius: const BorderRadius.only(
-        topLeft: Radius.circular(20),
-        topRight: Radius.circular(20),
-        bottomLeft: Radius.circular(20),
-        bottomRight: Radius.circular(20),
-      ),
-      child: GestureDetector(
-        onTap: () => onMediaTap?.call(index),
-        child: _buildMediaWidget(mediaItem, type),
-      ),
+    return GestureDetector(
+      onTap: () => onMediaTap?.call(index),
+      child: _buildMediaWidget(mediaItem),
     );
   }
 
@@ -139,52 +184,48 @@ class MessageBubble extends StatelessWidget {
     final displayCount = itemCount > 4 ? 4 : itemCount;
     final hasMore = itemCount > 4;
 
-    return ClipRRect(
-      borderRadius: const BorderRadius.only(
-        topLeft: Radius.circular(20),
-        topRight: Radius.circular(20),
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: displayCount == 1 ? 1 : 2,
+        crossAxisSpacing: 2,
+        mainAxisSpacing: 2,
       ),
-      child: GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: displayCount == 1 ? 1 : 2,
-          crossAxisSpacing: 2,
-          mainAxisSpacing: 2,
-        ),
-        itemCount: displayCount,
-        itemBuilder: (context, index) {
-          final isLast = index == displayCount - 1;
-          return GestureDetector(
-            onTap: () => onMediaTap?.call(index),
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                _buildMediaWidget(mediaList[index], mediaList[index].type),
-                if (hasMore && isLast)
-                  Container(
-                    color: Colors.black54,
-                    child: Center(
-                      child: Text(
-                        '+${itemCount - 4}',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
+      itemCount: displayCount,
+      itemBuilder: (context, index) {
+        final isLast = index == displayCount - 1;
+        return GestureDetector(
+          onTap: () => onMediaTap?.call(index),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              _buildMediaWidget(mediaList[index]),
+              if (hasMore && isLast)
+                Container(
+                  color: Colors.black54,
+                  child: Center(
+                    child: Text(
+                      '+${itemCount - 4}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
-              ],
-            ),
-          );
-        },
-      ),
+                ),
+            ],
+          ),
+        );
+      },
     );
   }
 
-  Widget _buildMediaWidget(dynamic mediaItem, String type) {
-    switch (type.toUpperCase()) {
+  Widget _buildMediaWidget(dynamic mediaItem) {
+    final type = (mediaItem.type as String).toUpperCase();
+
+    switch (type) {
       case 'IMAGE':
       case 'GIF':
         return CachedNetworkImage(
@@ -221,7 +262,7 @@ class MessageBubble extends StatelessWidget {
             Center(
               child: Container(
                 padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   color: Colors.black54,
                   shape: BoxShape.circle,
                 ),
@@ -325,7 +366,6 @@ class _ReplyPreview extends StatelessWidget {
                 fontWeight: FontWeight.w600,
               ),
             ),
-
           const SizedBox(height: 2),
           Row(
             children: [

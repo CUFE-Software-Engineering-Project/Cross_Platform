@@ -50,9 +50,7 @@ class SocketRepository {
   }
 
   void joinChat(String chatId) {}
-  void leaveChat(String chatId) {
-    // ...
-  }
+  void leaveChat(String chatId) {}
 
   void onNewMessage(Function(dynamic data) callback) {
     _socket?.on('new-message', (data) => callback(data));

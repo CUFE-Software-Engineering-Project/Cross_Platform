@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lite_x/TestChatScreen.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
 import 'package:lite_x/core/view/screen/Splash_Screen.dart';
 import 'package:lite_x/features/auth/view/screens/Create_Account/CreateAccount_Screen.dart';
@@ -138,6 +139,14 @@ class Approuter {
         path: "/ConversationsScreen",
         pageBuilder: (context, state) => CustomTransitionPage(
           child: const ConversationsScreen(),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
+        name: RouteConstants.TestChatScreen,
+        path: "/TestChatScreen",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: const TestChatScreen(),
           transitionsBuilder: _slideRightTransitionBuilder,
         ),
       ),

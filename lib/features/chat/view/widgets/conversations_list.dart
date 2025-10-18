@@ -4,24 +4,33 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lite_x/features/chat/view/widgets/conversation_tile.dart';
 import 'package:lite_x/features/chat/view/widgets/empty_inbox.dart';
-import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
-class ConversationsList extends ConsumerWidget {
+class ConversationsList extends ConsumerStatefulWidget {
   const ConversationsList({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ConversationsList> createState() => _ConversationsListState();
+}
+
+class _ConversationsListState extends ConsumerState<ConversationsList> {
+  final ScrollController _scrollController = ScrollController();
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final hasConversations = true;
+
     if (!hasConversations) {
       return const EmptyInbox();
     }
 
-    final itemScrollController = ItemScrollController();
-    final itemPositionsListener = ItemPositionsListener.create();
-
-    return ScrollablePositionedList.builder(
-      itemScrollController: itemScrollController,
-      itemPositionsListener: itemPositionsListener,
+    return ListView.builder(
+      controller: _scrollController,
+      reverse: true,
       itemCount: 20,
       itemBuilder: (context, index) {
         return ConversationTile(

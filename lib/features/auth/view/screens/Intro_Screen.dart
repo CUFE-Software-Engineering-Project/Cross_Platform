@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
 import 'package:lite_x/core/theme/palette.dart';
-import 'package:lite_x/features/auth/repositories/auth_remote_repository.dart';
+// import 'package:lite_x/features/auth/repositories/auth_remote_repository.dart';
 import 'package:lite_x/features/auth/view/widgets/buildTermsText.dart';
 import 'package:lite_x/features/auth/view/widgets/buildXLogo.dart';
 
@@ -128,7 +128,7 @@ class IntroScreen extends ConsumerWidget {
           icon: 'assets/images/google.png',
           label: 'Continue with Google',
           onPressed: () async {
-            await ref.read(authRemoteRepositoryProvider).signup();
+            context.pushNamed(RouteConstants.TestChatScreen);
           },
         ),
         const SizedBox(height: 10),

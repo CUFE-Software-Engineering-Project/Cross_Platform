@@ -21,6 +21,14 @@ class UserModel {
   final String? bio;
   @HiveField(6)
   final String id;
+  @HiveField(7)
+  final bool isEmailVerified;
+
+  @HiveField(8)
+  final bool isVerified;
+
+  @HiveField(9)
+  final bool loginCodesSet;
   UserModel({
     required this.name,
     required this.email,
@@ -29,6 +37,9 @@ class UserModel {
     this.photo,
     this.bio,
     required this.id,
+    required this.isEmailVerified,
+    required this.isVerified,
+    required this.loginCodesSet,
   });
 
   UserModel copyWith({
@@ -39,6 +50,9 @@ class UserModel {
     String? photo,
     String? bio,
     String? id,
+    bool? isEmailVerified,
+    bool? isVerified,
+    bool? loginCodesSet,
   }) {
     return UserModel(
       name: name ?? this.name,
@@ -48,6 +62,9 @@ class UserModel {
       photo: photo ?? this.photo,
       bio: bio ?? this.bio,
       id: id ?? this.id,
+      isEmailVerified: isEmailVerified ?? this.isEmailVerified,
+      isVerified: isVerified ?? this.isVerified,
+      loginCodesSet: loginCodesSet ?? this.loginCodesSet,
     );
   }
 
@@ -60,6 +77,9 @@ class UserModel {
       'photo': photo,
       'bio': bio,
       'id': id,
+      'isEmailVerified': isEmailVerified,
+      'isVerified': isVerified,
+      'loginCodesSet': loginCodesSet,
     };
   }
 
@@ -72,6 +92,9 @@ class UserModel {
       photo: map['photo'] != null ? map['photo'] as String : null,
       bio: map['bio'] != null ? map['bio'] as String : null,
       id: map['id'] as String,
+      isEmailVerified: map['isEmailVerified'] as bool,
+      isVerified: map['isVerified'] as bool,
+      loginCodesSet: map['loginCodesSet'] as bool,
     );
   }
 
@@ -82,7 +105,7 @@ class UserModel {
 
   @override
   String toString() {
-    return 'UserModel(name: $name, email: $email, dob: $dob, username: $username, photo: $photo, bio: $bio, id: $id)';
+    return 'UserModel(name: $name, email: $email, dob: $dob, username: $username, photo: $photo, bio: $bio, id: $id, isEmailVerified: $isEmailVerified, isVerified: $isVerified, loginCodesSet: $loginCodesSet)';
   }
 
   @override
@@ -95,7 +118,10 @@ class UserModel {
         other.username == username &&
         other.photo == photo &&
         other.bio == bio &&
-        other.id == id;
+        other.id == id &&
+        other.isEmailVerified == isEmailVerified &&
+        other.isVerified == isVerified &&
+        other.loginCodesSet == loginCodesSet;
   }
 
   @override
@@ -106,6 +132,9 @@ class UserModel {
         username.hashCode ^
         photo.hashCode ^
         bio.hashCode ^
-        id.hashCode;
+        id.hashCode ^
+        isEmailVerified.hashCode ^
+        isVerified.hashCode ^
+        loginCodesSet.hashCode;
   }
 }

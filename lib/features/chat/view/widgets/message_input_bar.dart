@@ -1,5 +1,6 @@
-import 'dart:async';
+// ignore_for_file: unused_element, unused_field
 
+import 'dart:async';
 import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:flutter/material.dart';
@@ -24,10 +25,14 @@ class MessageInputBar extends ConsumerStatefulWidget {
 }
 
 class _MessageInputBarState extends ConsumerState<MessageInputBar> {
-  static const _kEmojiPickerHeight = 250.0;
-  static const _kRecordIndicatorSize = 12.0;
+  static const _kEmojiPickerHeight = 240.0;
   static const _kSmallSpacing = 8.0;
   static const _kMediumSpacing = 12.0;
+  static const Color _kBrandBlue = Color(0xFF1D9BF0);
+  static const Color _kBrandPurple = Color(0xFF8B5CF6);
+  static const Color _kDimIconGray = Color(0xFF71767B);
+  static const Color _kBackgroundGray = Color(0xFF2F3336);
+  static const Color _kBrandRed = Color(0xFFF4212E);
 
   final TextEditingController _textController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
@@ -71,12 +76,7 @@ class _MessageInputBarState extends ConsumerState<MessageInputBar> {
     }
   }
 
-  Future<void> _handlePickImage() async {
-    final image = await pickImage();
-    if (image != null) {
-      widget.onSendImage?.call(image);
-    }
-  }
+  Future<void> _handlePickImage() async {}
 
   Future<void> _startRecording() async {
     if (!_isRecordingInitialized) return;
@@ -148,16 +148,10 @@ class _MessageInputBarState extends ConsumerState<MessageInputBar> {
       children: [
         if (_showEmojiPicker) _buildEmojiPicker(theme),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
           decoration: BoxDecoration(
-            color: theme.scaffoldBackgroundColor,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 10,
-                offset: const Offset(0, -2),
-              ),
-            ],
+            color: _kBackgroundGray,
+            borderRadius: BorderRadius.circular(28),
           ),
           child: audioState.isRecording
               ? _buildRecordingView(audioState, theme)
@@ -170,61 +164,75 @@ class _MessageInputBarState extends ConsumerState<MessageInputBar> {
   Widget _buildNormalView(ThemeData theme) {
     return Row(
       children: [
-        IconButton(
-          icon: Icon(
-            _showEmojiPicker ? Icons.keyboard : Icons.emoji_emotions_outlined,
-            color: Colors.grey[600],
+        Container(
+          margin: const EdgeInsets.only(left: 4),
+          child: IconButton(
+            icon: const Icon(
+              Icons.image_outlined,
+              color: _kDimIconGray,
+              size: 24,
+            ),
+            onPressed: _handlePickImage,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
           ),
-          onPressed: _toggleEmojiPicker,
         ),
-        IconButton(
-          icon: Icon(Icons.image_outlined, color: Colors.grey[600]),
-          onPressed: _handlePickImage,
+
+        Container(
+          child: IconButton(
+            icon: const Icon(
+              Icons.gif_box_outlined,
+              color: _kDimIconGray,
+              size: 28,
+            ),
+            onPressed: () {},
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+          ),
         ),
+
         Expanded(
-          child: Container(
-            decoration: BoxDecoration(
-              color: theme.brightness == Brightness.dark
-                  ? Colors.grey[800]
-                  : Colors.grey[200],
-              borderRadius: BorderRadius.circular(24),
+          child: TextField(
+            controller: _textController,
+            focusNode: _focusNode,
+            decoration: const InputDecoration(
+              filled: false,
+              hintText: 'Start a message',
+              hintStyle: TextStyle(color: _kDimIconGray, fontSize: 16),
+              border: InputBorder.none,
+              focusedBorder: InputBorder.none,
+              enabledBorder: InputBorder.none,
+              errorBorder: InputBorder.none,
+              disabledBorder: InputBorder.none,
+              focusedErrorBorder: InputBorder.none,
+              contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 10),
             ),
-            child: TextField(
-              controller: _textController,
-              focusNode: _focusNode,
-              decoration: const InputDecoration(
-                hintText: 'Start a message',
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 10,
-                ),
-              ),
-              maxLines: 5,
-              minLines: 1,
-              textCapitalization: TextCapitalization.sentences,
-            ),
+            style: const TextStyle(color: Color(0xFFFFFFFF), fontSize: 16),
+            maxLines: 5,
+            minLines: 1,
+            textCapitalization: TextCapitalization.sentences,
           ),
         ),
-        const SizedBox(width: _kSmallSpacing),
         ValueListenableBuilder<TextEditingValue>(
           valueListenable: _textController,
           builder: (context, value, child) {
             final hasText = value.text.trim().isNotEmpty;
-            return GestureDetector(
-              onLongPress: !hasText && _isRecordingInitialized
-                  ? _startRecording
-                  : null,
-              onTap: hasText ? _handleSendMessage : null,
-              child: CircleAvatar(
-                backgroundColor: hasText
-                    ? theme.primaryColor
-                    : Colors.grey[600],
-                child: Icon(
-                  hasText ? Icons.send : Icons.mic,
-                  color: Colors.white,
-                  size: 20,
+            return Container(
+              margin: const EdgeInsets.only(right: 4),
+              child: IconButton(
+                icon: Icon(
+                  hasText ? Icons.send : Icons.graphic_eq,
+                  color: hasText ? _kBrandBlue : _kBrandPurple,
+                  size: 24,
                 ),
+                onPressed: hasText
+                    ? _handleSendMessage
+                    : (_isRecordingInitialized ? _startRecording : null),
+                onLongPress: !hasText && _isRecordingInitialized
+                    ? _startRecording
+                    : null,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
               ),
             );
           },
@@ -235,35 +243,35 @@ class _MessageInputBarState extends ConsumerState<MessageInputBar> {
 
   Widget _buildRecordingView(AudioRecorderState audioState, ThemeData theme) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.red.withOpacity(0.1),
+        color: _kBrandRed.withOpacity(0.15),
         borderRadius: BorderRadius.circular(24),
       ),
       child: Row(
         children: [
           _buildRecordControlButton(
             icon: Icons.delete_outline,
-            backgroundColor: Colors.red.withOpacity(0.2),
-            iconColor: Colors.red,
+            backgroundColor: _kBrandRed.withOpacity(0.3),
+            iconColor: _kBrandRed,
             onTap: _cancelRecording,
           ),
           const SizedBox(width: _kMediumSpacing),
           Container(
-            width: _kRecordIndicatorSize,
-            height: _kRecordIndicatorSize,
+            width: 8,
+            height: 8,
             decoration: const BoxDecoration(
-              color: Colors.red,
+              color: _kBrandRed,
               shape: BoxShape.circle,
             ),
           ),
           const SizedBox(width: _kMediumSpacing),
           Expanded(
             child: AudioWaveforms(
-              size: Size(MediaQuery.of(context).size.width * 0.5, 50),
+              size: Size(MediaQuery.of(context).size.width * 0.5, 40),
               recorderController: _recorderController,
-              waveStyle: WaveStyle(
-                waveColor: theme.primaryColor,
+              waveStyle: const WaveStyle(
+                waveColor: _kBrandBlue,
                 extendWaveform: true,
                 showMiddleLine: false,
               ),
@@ -273,17 +281,17 @@ class _MessageInputBarState extends ConsumerState<MessageInputBar> {
           const SizedBox(width: _kMediumSpacing),
           Text(
             _formatDuration(audioState.recordingDuration),
-            style: TextStyle(
-              fontSize: 16,
+            style: const TextStyle(
+              fontSize: 14,
               fontWeight: FontWeight.w500,
-              color: theme.textTheme.bodyLarge?.color,
+              color: Color(0xFFFFFFFF),
             ),
           ),
           const SizedBox(width: _kMediumSpacing),
           _buildRecordControlButton(
             icon: Icons.send,
-            backgroundColor: theme.primaryColor,
-            iconColor: Colors.white,
+            backgroundColor: _kBrandBlue,
+            iconColor: const Color(0xFFFFFFFF),
             onTap: _stopRecording,
           ),
         ],
@@ -300,12 +308,12 @@ class _MessageInputBarState extends ConsumerState<MessageInputBar> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(8),
+        padding: const EdgeInsets.all(6),
         decoration: BoxDecoration(
           color: backgroundColor,
           shape: BoxShape.circle,
         ),
-        child: Icon(icon, color: iconColor),
+        child: Icon(icon, color: iconColor, size: 20),
       ),
     );
   }
@@ -318,17 +326,17 @@ class _MessageInputBarState extends ConsumerState<MessageInputBar> {
             _textController.text += emoji.emoji,
         config: Config(
           emojiViewConfig: EmojiViewConfig(
-            emojiSizeMax: 32,
-            columns: 7,
-            backgroundColor: theme.scaffoldBackgroundColor,
+            emojiSizeMax: 28,
+            columns: 8,
+            backgroundColor: const Color(0xFF1D1D1D),
           ),
           categoryViewConfig: CategoryViewConfig(
-            iconColor: Colors.grey,
-            iconColorSelected: theme.primaryColor,
-            indicatorColor: theme.primaryColor,
+            iconColor: _kDimIconGray,
+            iconColorSelected: _kBrandBlue,
+            indicatorColor: _kBrandBlue,
           ),
           bottomActionBarConfig: BottomActionBarConfig(
-            backgroundColor: theme.scaffoldBackgroundColor,
+            backgroundColor: const Color(0xFF1D1D1D),
           ),
         ),
       ),

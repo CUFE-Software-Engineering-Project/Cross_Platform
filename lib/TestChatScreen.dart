@@ -2,13 +2,42 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
 import 'package:lite_x/core/theme/palette.dart';
+import 'dart:async';
+import 'package:lite_x/features/chat/view/widgets/message_input_bar.dart';
+
+class PickedImage {
+  final String path;
+  PickedImage(this.path);
+}
+
+Future<PickedImage?> pickImage() async {
+  print('--- [MOCK] User tapped Pick Image ---');
+  return null;
+}
+
+class AudioRecorderState {
+  final bool isRecording;
+  final Duration recordingDuration;
+  AudioRecorderState({
+    this.isRecording = false,
+    this.recordingDuration = Duration.zero,
+  });
+  AudioRecorderState copyWith({
+    bool? isRecording,
+    Duration? recordingDuration,
+  }) {
+    return AudioRecorderState(
+      isRecording: isRecording ?? this.isRecording,
+      recordingDuration: recordingDuration ?? this.recordingDuration,
+    );
+  }
+}
 
 class MediaModel {
   final String url;
   final String type;
   final String? name;
   final String? displaySize;
-
   MediaModel({
     required this.url,
     required this.type,
@@ -55,37 +84,64 @@ class TestChatScreen extends StatelessWidget {
     final List<MessageModel> mockMessages = _getMockMessages();
 
     return Scaffold(
-      backgroundColor: Palette.background,
       appBar: AppBar(
-        title: const Text('Bubble Test'),
-        backgroundColor: Palette.background,
+        title: const Text('Aser'),
+        backgroundColor: Palette.chathim,
         elevation: 0.5,
       ),
-      body: ListView.builder(
-        reverse: true, // Chats typically show the newest message at the bottom
-        itemCount: mockMessages.length,
-        itemBuilder: (context, index) {
-          final message = mockMessages[index];
-          final isMe = message.userId == currentUserId;
-          // Find the message being replied to for the reply preview
-          final replyTo = (index == 2) ? mockMessages[5] : null;
+      body: Column(
+        children: [
+          // 1. The Message List (takes all available space)
+          Expanded(
+            child: ListView.builder(
+              reverse: true,
+              padding: const EdgeInsets.symmetric(vertical: 10.0),
+              itemCount: mockMessages.length,
+              itemBuilder: (context, index) {
+                final message = mockMessages[index];
+                final isMe = message.userId == currentUserId;
 
-          return MessageBubble(
-            message: message,
-            isMe: isMe,
-            replyTo: replyTo,
-            showSenderName: message.senderName != null && !isMe,
-            onLongPress: () => print('Long pressed message: ${message.id}'),
-            onMediaTap: (mediaIndex) =>
-                print('Tapped media $mediaIndex in message ${message.id}'),
-          );
-        },
+                MessageModel? replyTo;
+                if (message.id == '7') {
+                  replyTo = mockMessages.firstWhere((m) => m.id == '6');
+                }
+                if (message.id == '4') {
+                  replyTo = mockMessages.firstWhere((m) => m.id == '3');
+                }
+
+                return MessageBubble(
+                  message: message,
+                  isMe: isMe,
+                  replyTo: replyTo,
+                  showSenderName: message.senderName != null && !isMe,
+                  onLongPress: () =>
+                      print('Long pressed message: ${message.id}'),
+                  onTap: () => print('Tapped message: ${message.id}'),
+                  onMediaTap: (mediaIndex) => print(
+                    'Tapped media $mediaIndex in message ${message.id}',
+                  ),
+                );
+              },
+            ),
+          ),
+
+          // 2. The Message Input Bar (fixed at the bottom)
+          MessageInputBar(
+            onSendMessage: (text) {
+              print('--- [MOCK] Send Text Tapped: $text ---');
+            },
+            onSendAudio: (path) {
+              print('--- [MOCK] Send Audio Tapped: $path ---');
+            },
+            onSendImage: (image) {
+              print('--- [MOCK] Send Image Tapped: ${image.path} ---');
+            },
+          ),
+        ],
       ),
     );
   }
 }
-
-// --- MOCK DATA GENERATION ---
 
 List<MessageModel> _getMockMessages() {
   final now = DateTime.now();
@@ -96,6 +152,7 @@ List<MessageModel> _getMockMessages() {
       createdAt: now.subtract(const Duration(minutes: 10)),
       status: 'READ',
       userId: 'them',
+      senderName: 'John Doe',
     ),
     MessageModel(
       id: '2',
@@ -110,6 +167,7 @@ List<MessageModel> _getMockMessages() {
       createdAt: now.subtract(const Duration(minutes: 8)),
       status: 'READ',
       userId: 'them',
+      senderName: 'John Doe',
       media: [
         MediaModel(url: 'https://picsum.photos/seed/1/600/800', type: 'IMAGE'),
       ],
@@ -137,7 +195,7 @@ List<MessageModel> _getMockMessages() {
       ],
     ),
     MessageModel(
-      id: '6', // This is the message we will reply to
+      id: '6',
       content: "Amazing pictures! The third one is my favorite.",
       createdAt: now.subtract(const Duration(minutes: 5)),
       status: 'READ',
@@ -145,7 +203,7 @@ List<MessageModel> _getMockMessages() {
       senderName: 'Jane Doe',
     ),
     MessageModel(
-      id: '7', // This is the reply message
+      id: '7',
       content: "Thanks! Glad you liked it.",
       createdAt: now.subtract(const Duration(minutes: 4)),
       status: 'SENT',
@@ -157,11 +215,12 @@ List<MessageModel> _getMockMessages() {
       createdAt: now.subtract(const Duration(minutes: 3)),
       status: 'READ',
       userId: 'them',
+      senderName: 'John Doe',
       media: [
         MediaModel(
           url: '',
           type: 'FILE',
-          name: 'Project_Proposal_Final.pdf',
+          name: 'Project_Proposal_Final_V2.pdf',
           displaySize: '1.2 MB',
         ),
       ],
@@ -173,11 +232,9 @@ List<MessageModel> _getMockMessages() {
       status: 'PENDING',
       userId: 'me',
     ),
-  ].reversed.toList(); // Reverse to get chronological order for the list
+  ].reversed.toList();
 }
 
-// --- PASTE YOUR MESSAGE BUBBLE WIDGET CODE HERE ---
-// (The full code you provided)
 class MessageBubble extends StatelessWidget {
   final MessageModel message;
   final bool isMe;
@@ -217,60 +274,15 @@ class MessageBubble extends StatelessWidget {
         child: Column(
           crossAxisAlignment: alignment,
           children: [
-            // if (showSenderName && !isMe && message.senderName != null)
-            //   Padding(
-            //     padding: const EdgeInsets.only(left: 16, bottom: 4),
-            //     child: Text(
-            //       message.senderName!,
-            //       style: TextStyle(
-            //         color: Colors.grey[400],
-            //         fontSize: 12,
-            //         fontWeight: FontWeight.w500,
-            //       ),
-            //     ),
-            //   ),
+            if (showSenderName && !isMe && message.senderName != null)
+              _SenderName(senderName: message.senderName!),
             if (replyTo != null)
               _ReplyPreview(repliedMessage: replyTo!, isMe: isMe),
-            Container(
-              constraints: BoxConstraints(
-                maxWidth: MediaQuery.of(context).size.width * 0.75,
-              ),
-              decoration: BoxDecoration(
-                color: bubbleColor,
-                borderRadius: BorderRadius.only(
-                  topLeft: const Radius.circular(20),
-                  topRight: const Radius.circular(20),
-                  bottomLeft: isMe
-                      ? const Radius.circular(20)
-                      : const Radius.circular(4),
-                  bottomRight: isMe
-                      ? const Radius.circular(4)
-                      : const Radius.circular(20),
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (message.hasMedia) _buildMediaContent(),
-                  if (message.content != null && message.content!.isNotEmpty)
-                    Padding(
-                      padding: EdgeInsets.fromLTRB(
-                        16,
-                        message.hasMedia ? 8 : 12,
-                        16,
-                        12,
-                      ),
-                      child: Text(
-                        message.content!,
-                        style: const TextStyle(
-                          color: Palette.textWhite,
-                          fontSize: 15,
-                          height: 1.4,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
+            _MessageContentBubble(
+              message: message,
+              isMe: isMe,
+              bubbleColor: bubbleColor,
+              onMediaTap: onMediaTap,
             ),
             const SizedBox(height: 3),
             _MessageStatusAndTime(message: message, isMe: isMe),
@@ -279,9 +291,105 @@ class MessageBubble extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _buildMediaContent() {
-    if (message.media == null || message.media!.isEmpty) {
+class _SenderName extends StatelessWidget {
+  final String senderName;
+  const _SenderName({required this.senderName});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 12, bottom: 4),
+      child: Text(
+        senderName,
+        style: TextStyle(
+          color: Colors.grey[400],
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+    );
+  }
+}
+
+class _MessageContentBubble extends StatelessWidget {
+  final MessageModel message;
+  final bool isMe;
+  final Color bubbleColor;
+  final Function(int index)? onMediaTap;
+
+  const _MessageContentBubble({
+    required this.message,
+    required this.isMe,
+    required this.bubbleColor,
+    this.onMediaTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: BoxConstraints(
+        maxWidth: MediaQuery.of(context).size.width * 0.75,
+      ),
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: bubbleColor,
+        borderRadius: BorderRadius.only(
+          topLeft: const Radius.circular(12),
+          topRight: const Radius.circular(12),
+          bottomLeft: isMe
+              ? const Radius.circular(12)
+              : const Radius.circular(3),
+          bottomRight: isMe
+              ? const Radius.circular(3)
+              : const Radius.circular(12),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (message.hasMedia)
+            _MediaContent(message: message, onMediaTap: onMediaTap),
+          if (message.content?.isNotEmpty ?? false)
+            _TextContent(content: message.content!, hasMedia: message.hasMedia),
+        ],
+      ),
+    );
+  }
+}
+
+class _TextContent extends StatelessWidget {
+  final String content;
+  final bool hasMedia;
+
+  const _TextContent({required this.content, required this.hasMedia});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(12, hasMedia ? 8 : 10, 12, 10),
+      child: Text(
+        content,
+        style: const TextStyle(
+          color: Palette.textWhite,
+          fontSize: 15,
+          height: 1.4,
+        ),
+      ),
+    );
+  }
+}
+
+class _MediaContent extends StatelessWidget {
+  final MessageModel message;
+  final Function(int index)? onMediaTap;
+
+  const _MediaContent({required this.message, this.onMediaTap});
+
+  @override
+  Widget build(BuildContext context) {
+    if (message.media?.isEmpty ?? true) {
       return const SizedBox.shrink();
     }
     final media = message.media!;
@@ -292,17 +400,9 @@ class MessageBubble extends StatelessWidget {
   }
 
   Widget _buildSingleMedia(MediaModel mediaItem, int index) {
-    return ClipRRect(
-      borderRadius: const BorderRadius.only(
-        topLeft: Radius.circular(20),
-        topRight: Radius.circular(20),
-        bottomLeft: Radius.circular(20),
-        bottomRight: Radius.circular(20),
-      ),
-      child: GestureDetector(
-        onTap: () => onMediaTap?.call(index),
-        child: _buildMediaWidget(mediaItem),
-      ),
+    return GestureDetector(
+      onTap: () => onMediaTap?.call(index),
+      child: _buildMediaWidget(mediaItem),
     );
   }
 
@@ -311,52 +411,48 @@ class MessageBubble extends StatelessWidget {
     final displayCount = itemCount > 4 ? 4 : itemCount;
     final hasMore = itemCount > 4;
 
-    return ClipRRect(
-      borderRadius: const BorderRadius.only(
-        topLeft: Radius.circular(20),
-        topRight: Radius.circular(20),
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: displayCount == 1 ? 1 : 2,
+        crossAxisSpacing: 2,
+        mainAxisSpacing: 2,
       ),
-      child: GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: displayCount == 1 ? 1 : 2,
-          crossAxisSpacing: 2,
-          mainAxisSpacing: 2,
-        ),
-        itemCount: displayCount,
-        itemBuilder: (context, index) {
-          final isLast = index == displayCount - 1;
-          return GestureDetector(
-            onTap: () => onMediaTap?.call(index),
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                _buildMediaWidget(mediaList[index]),
-                if (hasMore && isLast)
-                  Container(
-                    color: Colors.black54,
-                    child: Center(
-                      child: Text(
-                        '+${itemCount - 4}',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
+      itemCount: displayCount,
+      itemBuilder: (context, index) {
+        final isLast = index == displayCount - 1;
+        return GestureDetector(
+          onTap: () => onMediaTap?.call(index),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              _buildMediaWidget(mediaList[index]),
+              if (hasMore && isLast)
+                Container(
+                  color: Colors.black54,
+                  child: Center(
+                    child: Text(
+                      '+${itemCount - 4}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
-              ],
-            ),
-          );
-        },
-      ),
+                ),
+            ],
+          ),
+        );
+      },
     );
   }
 
   Widget _buildMediaWidget(MediaModel mediaItem) {
-    switch (mediaItem.type.toUpperCase()) {
+    final type = (mediaItem.type).toUpperCase();
+
+    switch (type) {
       case 'IMAGE':
       case 'GIF':
         return CachedNetworkImage(
@@ -376,6 +472,7 @@ class MessageBubble extends StatelessWidget {
             child: const Icon(Icons.broken_image, color: Colors.grey, size: 48),
           ),
         );
+
       case 'VIDEO':
         return Stack(
           fit: StackFit.expand,
@@ -405,10 +502,10 @@ class MessageBubble extends StatelessWidget {
             ),
           ],
         );
+
       case 'FILE':
         return Container(
           padding: const EdgeInsets.all(16),
-          color: Colors.grey[850],
           child: Row(
             children: [
               const Icon(
@@ -429,7 +526,7 @@ class MessageBubble extends StatelessWidget {
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
                       ),
-                      maxLines: 1,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
@@ -444,6 +541,7 @@ class MessageBubble extends StatelessWidget {
             ],
           ),
         );
+
       default:
         return Container(
           color: Colors.grey[800],
@@ -472,9 +570,12 @@ class _ReplyPreview extends StatelessWidget {
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: isMe
-            ? Palette.info.withOpacity(0.25)
-            : Colors.grey.withOpacity(0.25),
-        borderRadius: BorderRadius.circular(12),
+            ? Palette.info.withOpacity(0.15)
+            : Colors.grey.withOpacity(0.15),
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(12),
+          topRight: Radius.circular(12),
+        ),
         border: Border(
           left: BorderSide(
             color: isMe ? Palette.info : Palette.border,
@@ -485,15 +586,14 @@ class _ReplyPreview extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (repliedMessage.senderName != null)
-            Text(
-              repliedMessage.senderName!,
-              style: TextStyle(
-                color: isMe ? Palette.info : Palette.border,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
+          Text(
+            repliedMessage.senderName ?? 'You',
+            style: TextStyle(
+              color: isMe ? Palette.info : Palette.border,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
             ),
+          ),
           const SizedBox(height: 2),
           Row(
             children: [
@@ -508,7 +608,8 @@ class _ReplyPreview extends StatelessWidget {
                 ),
               Expanded(
                 child: Text(
-                  repliedMessage.hasMedia && repliedMessage.content == null
+                  repliedMessage.hasMedia &&
+                          (repliedMessage.content?.isEmpty ?? true)
                       ? _getMediaLabel(repliedMessage.messageType)
                       : repliedMessage.content ?? '',
                   style: const TextStyle(
@@ -569,14 +670,16 @@ class _MessageStatusAndTime extends StatelessWidget {
     final formattedTime = DateFormat.jm()
         .format(message.createdAt)
         .toLowerCase();
-
     return Padding(
-      padding: EdgeInsets.only(left: isMe ? 0 : 16, right: isMe ? 16 : 0),
+      padding: EdgeInsets.only(left: isMe ? 0 : 12, right: isMe ? 12 : 0),
       child: Row(
         mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: isMe
+            ? MainAxisAlignment.end
+            : MainAxisAlignment.start,
         children: [
           Text(
-            "$formattedTime",
+            formattedTime,
             style: const TextStyle(color: Palette.greycolor, fontSize: 12),
           ),
           if (isMe) ...[const SizedBox(width: 6), _buildStatusIcon()],
@@ -588,28 +691,16 @@ class _MessageStatusAndTime extends StatelessWidget {
   Widget _buildStatusIcon() {
     switch (message.status.toUpperCase()) {
       case 'READ':
-        return const Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'Seen',
-              style: TextStyle(color: Palette.greycolor, fontSize: 12),
-            ),
-          ],
-        );
+        return const Icon(Icons.done_all, color: Palette.info, size: 16);
       case 'DELIVERED':
-        return const Icon(
-          Icons.done_all,
-          color: Palette.textSecondary,
-          size: 16,
-        );
+        return const Icon(Icons.done_all, color: Palette.greycolor, size: 16);
       case 'SENT':
-        return const Icon(Icons.check, color: Palette.textSecondary, size: 16);
+        return const Icon(Icons.check, color: Palette.greycolor, size: 16);
       case 'PENDING':
       default:
         return const Icon(
           Icons.access_time,
-          color: Palette.textSecondary,
+          color: Palette.greycolor,
           size: 14,
         );
     }
