@@ -212,4 +212,14 @@ class Palette {
     Color.fromRGBO(29, 155, 240, 1.0),
     Color.fromRGBO(26, 140, 216, 1.0),
   ]; // Primary gradient for backgrounds or buttons
+  static const Color kBrandBlue = Color(0xFF1D9BF0);
+  static const Color kBrandPurple = Color(0xFF8B5CF6);
+  static const Color container_message_color = const Color.fromARGB(
+    255,
+    28,
+    34,
+    41,
+  );
+  static const Color kDimIconwhite = Color.fromARGB(255, 184, 193, 202);
+  static const Color kBrandRed = Color(0xFFF4212E);
 }

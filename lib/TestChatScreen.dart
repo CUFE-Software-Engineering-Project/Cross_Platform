@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
 import 'package:lite_x/core/theme/palette.dart';
+import 'package:lite_x/features/chat/view/widgets/MessageAppBar.dart';
 import 'dart:async';
 import 'package:lite_x/features/chat/view/widgets/message_input_bar.dart';
 
@@ -84,14 +85,9 @@ class TestChatScreen extends StatelessWidget {
     final List<MessageModel> mockMessages = _getMockMessages();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Aser'),
-        backgroundColor: Palette.chathim,
-        elevation: 0.5,
-      ),
+      appBar: MessageAppBar(recipientName: 'NORTH MAN', recipientId: ''),
       body: Column(
         children: [
-          // 1. The Message List (takes all available space)
           Expanded(
             child: ListView.builder(
               reverse: true,
@@ -124,8 +120,6 @@ class TestChatScreen extends StatelessWidget {
               },
             ),
           ),
-
-          // 2. The Message Input Bar (fixed at the bottom)
           MessageInputBar(
             onSendMessage: (text) {
               print('--- [MOCK] Send Text Tapped: $text ---');

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:lite_x/core/theme/palette.dart';
 import 'package:lite_x/features/chat/view/widgets/conversations_list.dart';
 import 'package:lite_x/features/chat/view/widgets/conversion_app_bar.dart';
+import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 
 class ConversationsScreen extends StatelessWidget {
   const ConversationsScreen({super.key});
@@ -16,16 +17,10 @@ class ConversationsScreen extends StatelessWidget {
       body: isWeb ? _buildWebLayout(context) : _buildMobileLayout(),
       floatingActionButton: Container(
         child: FloatingActionButton(
-          onPressed: () {
-            // Navigate to new message screen
-          },
+          onPressed: () {},
           backgroundColor: Palette.primary,
           shape: const CircleBorder(),
-          child: const Icon(
-            Icons.mail_outline_rounded,
-            color: Colors.white,
-            size: 28,
-          ),
+          child: Icon(MdiIcons.emailPlusOutline, color: Colors.white, size: 28),
         ),
       ),
     );
