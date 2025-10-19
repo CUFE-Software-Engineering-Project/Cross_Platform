@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../../core/models/notification.dart';
+import '../../models/notification.dart';
 import 'package:lite_x/core/theme/palette.dart';
 
 class AllTweetCardWidget extends StatelessWidget {

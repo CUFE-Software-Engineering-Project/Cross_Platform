@@ -3,16 +3,19 @@
 // Check in to version control
 
 import 'package:hive_ce/hive.dart';
+import 'package:lite_x/core/models/search_history_hive_model.dart';
 import 'package:lite_x/core/models/usermodel.dart';
 
 extension HiveRegistrar on HiveInterface {
   void registerAdapters() {
+    registerAdapter(SearchHistoryHiveModelAdapter());
     registerAdapter(UserModelAdapter());
   }
 }
 
 extension IsolatedHiveRegistrar on IsolatedHiveInterface {
   void registerAdapters() {
+    registerAdapter(SearchHistoryHiveModelAdapter());
     registerAdapter(UserModelAdapter());
   }
 }

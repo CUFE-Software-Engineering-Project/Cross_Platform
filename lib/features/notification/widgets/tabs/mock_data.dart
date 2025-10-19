@@ -1,4 +1,4 @@
-import '../../../../../core/models/notification.dart';
+import '../../models/notification.dart';
 
 // --- Mock User Data ---
 final _userAlex = User(

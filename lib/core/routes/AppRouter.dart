@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
 import 'package:lite_x/features/auth/view/screens/CreateAccount_Screen.dart';
-import 'package:lite_x/features/auth/view/screens/Intro_Screen.dart';
-import 'package:lite_x/features/auth/view/screens/Verification_Screen.dart';
-import 'package:lite_x/features/auth/view/screens/Notification_Screen.dart';
+import 'package:lite_x/features/auth/view/screens/intro_screen.dart';
+import 'package:lite_x/features/auth/view/screens/verification_screen.dart';
+import 'package:lite_x/features/search/view/search_screen.dart';
+import 'package:lite_x/features/notification/view/notification_screen.dart';
 
 class Approuter {
   static final GoRouter router = GoRouter(
@@ -13,7 +14,7 @@ class Approuter {
         name: RouteConstants.introscreen,
         path: "/",
         pageBuilder: (context, state) => CustomTransitionPage(
-           child: const IntoScreen(),
+           child: const SearchScreen(),
           transitionsBuilder: _slideRightTransitionBuilder,
         ),
       ),
