@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+// import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lite_x/core/classes/PickedImage.dart';
 import 'package:lite_x/features/chat/providers/audiorecordernotifier.dart';
@@ -28,7 +28,7 @@ class MessageInputBar extends ConsumerStatefulWidget {
 
 class _MessageInputBarState extends ConsumerState<MessageInputBar> {
   static const kMediumSpacing = 12.0;
-  final String _giphyApiKey = dotenv.env["giphyApiKey"]!;
+  final String _giphyApiKey = "Ahjpgfo4LVqCACHRcwj0eoMlY5s7u1Uq";
   final TextEditingController _textController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
   final RecorderController _recorderController = RecorderController();
@@ -238,15 +238,15 @@ class _MessageInputBarState extends ConsumerState<MessageInputBar> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: Palette.kBrandRed.withOpacity(0.15),
+        color: Palette.kBrandPurple.withOpacity(0.15),
         borderRadius: BorderRadius.circular(24),
       ),
       child: Row(
         children: [
           _buildRecordControlButton(
             icon: Icons.delete_outline,
-            backgroundColor: Palette.kBrandRed.withOpacity(0.3),
-            iconColor: Palette.kBrandRed,
+            backgroundColor: Palette.kBrandPurple.withOpacity(0.3),
+            iconColor: Palette.kBrandPurple,
             onTap: _cancelRecording,
           ),
           const SizedBox(width: kMediumSpacing),
@@ -254,7 +254,7 @@ class _MessageInputBarState extends ConsumerState<MessageInputBar> {
             width: 8,
             height: 8,
             decoration: const BoxDecoration(
-              color: Palette.kBrandRed,
+              color: Palette.kBrandPurple,
               shape: BoxShape.circle,
             ),
           ),
