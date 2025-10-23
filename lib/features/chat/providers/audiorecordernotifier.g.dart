@@ -42,7 +42,7 @@ final class AudioRecorderNotifierProvider
 }
 
 String _$audioRecorderNotifierHash() =>
-    r'26ef77b0b7b423acadc6b772f55310e433d2d71a';
+    r'6519819e19453d1d49551e47c1708392410fbe15';
 
 abstract class _$AudioRecorderNotifier extends $Notifier<AudioRecorderState> {
   AudioRecorderState build();

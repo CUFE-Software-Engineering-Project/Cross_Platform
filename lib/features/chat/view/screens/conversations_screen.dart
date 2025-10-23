@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:lite_x/core/theme/palette.dart';
 import 'package:lite_x/features/chat/view/widgets/conversations_list.dart';
@@ -10,11 +9,10 @@ class ConversationsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isWeb = kIsWeb;
     return Scaffold(
       backgroundColor: Palette.background,
       appBar: const ConversationAppBar(),
-      body: isWeb ? _buildWebLayout(context) : _buildMobileLayout(),
+      body: const ConversationsList(),
       floatingActionButton: Container(
         child: FloatingActionButton(
           onPressed: () {},
@@ -26,21 +24,7 @@ class ConversationsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMobileLayout() {
-    return const ConversationsList();
-  }
-
-  Widget _buildWebLayout(BuildContext context) {
-    return Row(
-      children: [
-        SizedBox(
-          width: MediaQuery.of(context).size.width,
-          child: DecoratedBox(
-            decoration: BoxDecoration(),
-            child: ConversationsList(),
-          ),
-        ),
-      ],
-    );
-  }
+  // Widget _buildMobileLayout() {
+  //   return;
+  // }
 }

@@ -1,7 +1,7 @@
 import 'dart:async';
-import 'package:audio_waveforms/audio_waveforms.dart';
+import 'package:just_audio/just_audio.dart';
 import 'package:flutter/material.dart';
-// import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lite_x/core/classes/PickedImage.dart';
 import 'package:lite_x/features/chat/providers/audiorecordernotifier.dart';
@@ -26,40 +26,69 @@ class MessageInputBar extends ConsumerStatefulWidget {
   ConsumerState<MessageInputBar> createState() => _MessageInputBarState();
 }
 
-class _MessageInputBarState extends ConsumerState<MessageInputBar> {
-  static const kMediumSpacing = 12.0;
-  final String _giphyApiKey = "Ahjpgfo4LVqCACHRcwj0eoMlY5s7u1Uq";
+class _MessageInputBarState extends ConsumerState<MessageInputBar>
+    with SingleTickerProviderStateMixin {
+  final String _giphyApiKey = dotenv.env["giphyApiKey"]!;
+  late AnimationController _colorController;
   final TextEditingController _textController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
-  final RecorderController _recorderController = RecorderController();
-  PickedImage? selectedImage;
-  Timer? _recordingTimer;
-  bool _isRecordingInitialized = false;
+  final AudioPlayer _audioPlayer = AudioPlayer();
 
+  Timer? _recordingTimer;
+  StreamSubscription<PlayerState>? _playerStateSubscription;
+  StreamSubscription<Duration>? _positionSubscription;
+
+  PickedImage? selectedImage;
   @override
   void initState() {
     super.initState();
-    _initializeRecorder();
+    _colorController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 1),
+    )..repeat(reverse: true);
+    _setupAudioPlayer();
+  }
+
+  Future<void> _stopPlayback() async {
+    try {
+      await _audioPlayer.stop();
+      await _audioPlayer.seek(Duration.zero);
+      ref.read(audioRecorderProvider.notifier).resetReviewPosition();
+    } catch (e) {
+      debugPrint("Error stopping playback: $e");
+    }
+  }
+
+  void _setupAudioPlayer() {
+    _playerStateSubscription = _audioPlayer.playerStateStream.listen((state) {
+      if (!mounted) return;
+
+      if (state.processingState == ProcessingState.completed) {
+        _stopPlayback();
+      }
+    });
+
+    _positionSubscription = _audioPlayer.positionStream.listen((position) {
+      if (!mounted) return;
+
+      final audioState = ref.read(audioRecorderProvider);
+      if (audioState.status == RecorderStatus.reviewing &&
+          _audioPlayer.playing) {
+        ref.read(audioRecorderProvider.notifier).updateReviewPosition(position);
+      }
+    });
   }
 
   @override
   void dispose() {
-    _textController.dispose();
-    _focusNode.dispose();
-    _recorderController.dispose();
     _recordingTimer?.cancel();
+    _playerStateSubscription?.cancel();
+    _positionSubscription?.cancel();
+    _textController.dispose();
+    _colorController.dispose();
+    _focusNode.dispose();
+    _audioPlayer.dispose();
     super.dispose();
-  }
-
-  Future<void> _initializeRecorder() async {
-    try {
-      final hasPermission = await _recorderController.checkPermission();
-      if (mounted && hasPermission) {
-        setState(() => _isRecordingInitialized = true);
-      }
-    } catch (e) {
-      debugPrint('Error initializing recorder: $e');
-    }
   }
 
   Future<void> _handleSendMessage() async {
@@ -78,17 +107,13 @@ class _MessageInputBarState extends ConsumerState<MessageInputBar> {
   }
 
   Future<void> _startRecording() async {
-    if (!_isRecordingInitialized) return;
     try {
       final success = await ref
           .read(audioRecorderProvider.notifier)
           .startRecording();
       if (success) {
-        await _recorderController.record();
-        _recordingTimer = Timer.periodic(const Duration(milliseconds: 100), (
-          _,
-        ) {
-          ref.read(audioRecorderProvider.notifier).updateDuration();
+        _recordingTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+          ref.read(audioRecorderProvider.notifier).updateRecordingDuration();
         });
       }
     } catch (e) {
@@ -99,13 +124,7 @@ class _MessageInputBarState extends ConsumerState<MessageInputBar> {
   Future<void> _stopRecording() async {
     try {
       _recordingTimer?.cancel();
-      await _recorderController.stop();
-      final path = await ref
-          .read(audioRecorderProvider.notifier)
-          .stopRecording();
-      if (path != null) {
-        widget.onSendAudio?.call(path);
-      }
+      await ref.read(audioRecorderProvider.notifier).stopRecording();
     } catch (e) {
       debugPrint('Error stopping recording: $e');
     }
@@ -114,10 +133,41 @@ class _MessageInputBarState extends ConsumerState<MessageInputBar> {
   Future<void> _cancelRecording() async {
     try {
       _recordingTimer?.cancel();
-      await _recorderController.stop();
       await ref.read(audioRecorderProvider.notifier).cancelRecording();
     } catch (e) {
       debugPrint('Error canceling recording: $e');
+    }
+  }
+
+  Future<void> _togglePlayback() async {
+    final path = ref.read(audioRecorderProvider).recordingPath;
+    if (path == null) return;
+
+    try {
+      if (_audioPlayer.playing) {
+        await _audioPlayer.pause();
+      } else {
+        if (_audioPlayer.processingState == ProcessingState.completed ||
+            _audioPlayer.processingState == ProcessingState.idle) {
+          await _audioPlayer.setFilePath(path);
+        }
+        await _audioPlayer.play();
+      }
+    } catch (e) {
+      debugPrint("Error toggling playback: $e");
+    }
+  }
+
+  Future<void> _cancelReview() async {
+    await _stopPlayback();
+    await ref.read(audioRecorderProvider.notifier).cancelReview();
+  }
+
+  Future<void> _sendRecording() async {
+    await _stopPlayback();
+    final path = ref.read(audioRecorderProvider.notifier).sendRecording();
+    if (path != null) {
+      widget.onSendAudio?.call(path);
     }
   }
 
@@ -136,9 +186,13 @@ class _MessageInputBarState extends ConsumerState<MessageInputBar> {
     }
   }
 
-  String _formatDuration(Duration duration) {
+  String _formatRecordingDuration(Duration duration) {
+    return '${duration.inSeconds}s';
+  }
+
+  String _formatReviewDuration(Duration duration) {
     String twoDigits(int n) => n.toString().padLeft(2, '0');
-    final minutes = twoDigits(duration.inMinutes.remainder(60));
+    final minutes = duration.inMinutes.remainder(60);
     final seconds = twoDigits(duration.inSeconds.remainder(60));
     return '$minutes:$seconds';
   }
@@ -147,20 +201,23 @@ class _MessageInputBarState extends ConsumerState<MessageInputBar> {
   Widget build(BuildContext context) {
     final audioState = ref.watch(audioRecorderProvider);
     final theme = Theme.of(context);
-
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
       decoration: BoxDecoration(
-        color: Palette.container_message_color,
+        color: audioState.status == RecorderStatus.idle
+            ? Palette.container_message_color
+            : Colors.black,
         borderRadius: BorderRadius.circular(26),
       ),
-      child: audioState.isRecording
-          ? _buildRecordingView(audioState, theme)
-          : _buildnorm(theme),
+      child: switch (audioState.status) {
+        RecorderStatus.idle => _buildIdleView(theme),
+        RecorderStatus.recording => _buildRecordingView(audioState, theme),
+        RecorderStatus.reviewing => _buildReviewView(audioState, theme),
+      },
     );
   }
 
-  Widget _buildnorm(ThemeData theme) {
+  Widget _buildIdleView(ThemeData theme) {
     return Row(
       children: [
         Container(
@@ -182,7 +239,6 @@ class _MessageInputBarState extends ConsumerState<MessageInputBar> {
               color: Palette.kDimIconwhite,
               size: 26,
             ),
-
             onPressed: _toggleGifPicker,
             constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
           ),
@@ -219,12 +275,8 @@ class _MessageInputBarState extends ConsumerState<MessageInputBar> {
                   color: hastext ? Palette.kBrandBlue : Palette.kBrandPurple,
                   size: 24,
                 ),
-                onPressed: hastext
-                    ? _handleSendMessage
-                    : (_isRecordingInitialized ? _startRecording : null),
-                onLongPress: !hastext && _isRecordingInitialized
-                    ? _startRecording
-                    : null,
+                onPressed: hastext ? _handleSendMessage : _startRecording,
+                onLongPress: !hastext ? _startRecording : null,
                 constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
               ),
             );
@@ -236,77 +288,181 @@ class _MessageInputBarState extends ConsumerState<MessageInputBar> {
 
   Widget _buildRecordingView(AudioRecorderState audioState, ThemeData theme) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: Palette.kBrandPurple.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(24),
-      ),
+      color: Colors.black,
+      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          _buildRecordControlButton(
-            icon: Icons.delete_outline,
-            backgroundColor: Palette.kBrandPurple.withOpacity(0.3),
-            iconColor: Palette.kBrandPurple,
+          InkWell(
             onTap: _cancelRecording,
-          ),
-          const SizedBox(width: kMediumSpacing),
-          Container(
-            width: 8,
-            height: 8,
-            decoration: const BoxDecoration(
-              color: Palette.kBrandPurple,
-              shape: BoxShape.circle,
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: Palette.kDimIconwhite, fontSize: 14),
             ),
           ),
-          const SizedBox(width: kMediumSpacing),
           Expanded(
-            child: AudioWaveforms(
-              size: Size(MediaQuery.of(context).size.width * 0.5, 40),
-              recorderController: _recorderController,
-              waveStyle: const WaveStyle(
-                waveColor: Palette.kBrandBlue,
-                extendWaveform: true,
-                showMiddleLine: false,
+            child: Container(
+              height: 33,
+              margin: const EdgeInsets.symmetric(horizontal: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                  colors: [Color(0xFFD1C4F8), Color(0xFFE0D7FF)],
+                ),
+                borderRadius: BorderRadius.circular(15),
               ),
-              enableGesture: true,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      AnimatedBuilder(
+                        animation: _colorController,
+                        builder: (context, child) {
+                          return Container(
+                            width: 10,
+                            height: 10,
+                            margin: const EdgeInsets.only(right: 5),
+                            decoration: BoxDecoration(
+                              color: Color.lerp(
+                                const Color(0xFFF04F78),
+                                const Color(0xFF8E24AA),
+                                _colorController.value,
+                              ),
+                              shape: BoxShape.circle,
+                            ),
+                          );
+                        },
+                      ),
+                      const Text(
+                        'Recording',
+                        style: TextStyle(
+                          color: Color.fromARGB(255, 141, 108, 182),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Text(
+                    _formatRecordingDuration(audioState.remainingDuration),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-          const SizedBox(width: kMediumSpacing),
-          Text(
-            _formatDuration(audioState.recordingDuration),
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: Color(0xFFFFFFFF),
-            ),
-          ),
-          const SizedBox(width: kMediumSpacing),
-          _buildRecordControlButton(
-            icon: Icons.send,
-            backgroundColor: Palette.kBrandBlue,
-            iconColor: const Color(0xFFFFFFFF),
+          GestureDetector(
             onTap: _stopRecording,
+            child: Container(
+              width: 22,
+              height: 22,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: const Color.fromARGB(255, 239, 57, 103),
+                  width: 2.2,
+                ),
+              ),
+              child: const Center(
+                child: Icon(
+                  size: 14,
+                  Icons.stop_rounded,
+                  color: Color(0xFFF04F78),
+                ),
+              ),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildRecordControlButton({
-    required IconData icon,
-    required Color backgroundColor,
-    required Color iconColor,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(6),
-        decoration: BoxDecoration(
-          color: backgroundColor,
-          shape: BoxShape.circle,
-        ),
-        child: Icon(icon, color: iconColor, size: 20),
+  Widget _buildReviewView(AudioRecorderState audioState, ThemeData theme) {
+    return Container(
+      color: Colors.black,
+      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          InkWell(
+            onTap: _cancelReview,
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: Palette.kDimIconwhite, fontSize: 14),
+            ),
+          ),
+          Expanded(
+            child: Container(
+              height: 33,
+              margin: const EdgeInsets.symmetric(horizontal: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                  colors: [
+                    Color.fromARGB(255, 169, 145, 255),
+                    Color.fromARGB(255, 163, 141, 244),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(15),
+              ),
+              child: GestureDetector(
+                onTap: _togglePlayback,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          _audioPlayer.playing ? Icons.pause : Icons.play_arrow,
+                          color: Colors.white,
+                          size: 25,
+                        ),
+                        const SizedBox(width: 5),
+                        Text(
+                          _audioPlayer.playing ? 'Playing' : 'Play audio',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Text(
+                      _formatReviewDuration(audioState.remainingDuration),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          GestureDetector(
+            onTap: _sendRecording,
+            child: Container(
+              width: 30,
+              height: 30,
+              decoration: const BoxDecoration(
+                color: Color(0xFF8A6BFE),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.send, color: Colors.black, size: 18),
+            ),
+          ),
+        ],
       ),
     );
   }
