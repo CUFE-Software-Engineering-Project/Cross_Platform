@@ -16,6 +16,7 @@ import 'package:lite_x/features/auth/view/screens/Create_Account/Upload_Profile_
 import 'package:lite_x/features/auth/view/screens/Create_Account/UserName_Screen.dart';
 import 'package:lite_x/features/auth/view/screens/Create_Account/Verification_Screen.dart';
 import 'package:lite_x/features/auth/view/screens/Log_In/VerificationForgot_Screen.dart';
+import 'package:lite_x/features/chat/view/screens/Search_Direct_messages.dart';
 import 'package:lite_x/features/chat/view/screens/conversations_screen.dart';
 
 class Approuter {
@@ -147,6 +148,14 @@ class Approuter {
         path: "/TestChatScreen",
         pageBuilder: (context, state) => CustomTransitionPage(
           child: const TestChatScreen(),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
+        name: RouteConstants.SearchDirectMessages,
+        path: "/SearchDirectMessages",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: const SearchDirectMessages(),
           transitionsBuilder: _slideRightTransitionBuilder,
         ),
       ),
