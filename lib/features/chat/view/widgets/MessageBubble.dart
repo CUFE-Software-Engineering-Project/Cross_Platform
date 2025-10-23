@@ -7,7 +7,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 class MessageBubble extends StatelessWidget {
   final MessageModel message;
   final bool isMe;
-  final MessageModel? replyTo;
   final VoidCallback? onLongPress;
   final VoidCallback? onTap;
   final Function(int index)? onMediaTap;
@@ -19,7 +18,6 @@ class MessageBubble extends StatelessWidget {
     super.key,
     required this.message,
     required this.isMe,
-    this.replyTo,
     this.onLongPress,
     this.onTap,
     this.onMediaTap,
@@ -43,11 +41,8 @@ class MessageBubble extends StatelessWidget {
         child: Column(
           crossAxisAlignment: alignment,
           children: [
-            if (showSenderName && !isMe && message.senderName != null)
+            if (showSenderName && message.senderName != null)
               _SenderName(senderName: message.senderName!),
-
-            if (replyTo != null)
-              _ReplyPreview(repliedMessage: replyTo!, isMe: isMe),
 
             _MessageContentBubble(
               message: message,
@@ -162,9 +157,8 @@ class _MediaContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (message.media?.isEmpty ?? true) {
-      return const SizedBox.shrink();
-    }
+    if (message.media?.isEmpty ?? true) return const SizedBox.shrink();
+
     final media = message.media!;
     if (media.length == 1) {
       return _buildSingleMedia(media.first, 0);
@@ -175,7 +169,10 @@ class _MediaContent extends StatelessWidget {
   Widget _buildSingleMedia(dynamic mediaItem, int index) {
     return GestureDetector(
       onTap: () => onMediaTap?.call(index),
-      child: _buildMediaWidget(mediaItem),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxHeight: 300),
+        child: _buildMediaWidget(mediaItem),
+      ),
     );
   }
 
@@ -187,21 +184,21 @@ class _MediaContent extends StatelessWidget {
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: displayCount == 1 ? 1 : 2,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
         crossAxisSpacing: 2,
         mainAxisSpacing: 2,
+        childAspectRatio: 1,
       ),
       itemCount: displayCount,
       itemBuilder: (context, index) {
-        final isLast = index == displayCount - 1;
         return GestureDetector(
           onTap: () => onMediaTap?.call(index),
           child: Stack(
             fit: StackFit.expand,
             children: [
               _buildMediaWidget(mediaList[index]),
-              if (hasMore && isLast)
+              if (hasMore && index == displayCount - 1)
                 Container(
                   color: Colors.black54,
                   child: Center(
@@ -327,109 +324,6 @@ class _MediaContent extends StatelessWidget {
   }
 }
 
-class _ReplyPreview extends StatelessWidget {
-  final MessageModel repliedMessage;
-  final bool isMe;
-
-  const _ReplyPreview({required this.repliedMessage, required this.isMe});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: EdgeInsets.only(
-        bottom: 6,
-        left: isMe ? 40 : 0,
-        right: isMe ? 0 : 40,
-      ),
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: isMe
-            ? Palette.info.withOpacity(0.25)
-            : Colors.grey.withOpacity(0.25),
-        borderRadius: BorderRadius.circular(12),
-        border: Border(
-          left: BorderSide(
-            color: isMe ? Palette.info : Palette.border,
-            width: 3,
-          ),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (repliedMessage.senderName != null)
-            Text(
-              repliedMessage.senderName!,
-              style: TextStyle(
-                color: isMe ? Palette.info : Palette.border,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          const SizedBox(height: 2),
-          Row(
-            children: [
-              if (repliedMessage.hasMedia)
-                Padding(
-                  padding: const EdgeInsets.only(right: 6),
-                  child: Icon(
-                    _getMediaIcon(repliedMessage.messageType),
-                    color: Palette.textSecondary,
-                    size: 16,
-                  ),
-                ),
-              Expanded(
-                child: Text(
-                  repliedMessage.hasMedia && repliedMessage.content == null
-                      ? _getMediaLabel(repliedMessage.messageType)
-                      : repliedMessage.content ?? '',
-                  style: const TextStyle(
-                    color: Palette.textSecondary,
-                    fontSize: 13,
-                    fontStyle: FontStyle.italic,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  IconData _getMediaIcon(String messageType) {
-    switch (messageType) {
-      case 'image':
-        return Icons.image;
-      case 'video':
-        return Icons.videocam;
-      case 'gif':
-        return Icons.gif;
-      case 'file':
-        return Icons.insert_drive_file;
-      default:
-        return Icons.attach_file;
-    }
-  }
-
-  String _getMediaLabel(String messageType) {
-    switch (messageType) {
-      case 'image':
-        return 'Photo';
-      case 'video':
-        return 'Video';
-      case 'gif':
-        return 'GIF';
-      case 'file':
-        return 'File';
-      default:
-        return 'Media';
-    }
-  }
-}
-
 class _MessageStatusAndTime extends StatelessWidget {
   final MessageModel message;
   final bool isMe;
@@ -447,7 +341,7 @@ class _MessageStatusAndTime extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            "$formattedTime.",
+            formattedTime,
             style: const TextStyle(color: Palette.greycolor, fontSize: 12),
           ),
           if (isMe) ...[const SizedBox(width: 6), _buildStatusIcon()],

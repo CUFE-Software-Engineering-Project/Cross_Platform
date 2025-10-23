@@ -17,6 +17,7 @@ import 'package:lite_x/features/auth/view/screens/Create_Account/UserName_Screen
 import 'package:lite_x/features/auth/view/screens/Create_Account/Verification_Screen.dart';
 import 'package:lite_x/features/auth/view/screens/Log_In/VerificationForgot_Screen.dart';
 import 'package:lite_x/features/chat/view/screens/Search_Direct_messages.dart';
+import 'package:lite_x/features/chat/view/screens/chat_Screen.dart';
 import 'package:lite_x/features/chat/view/screens/conversations_screen.dart';
 
 class Approuter {
@@ -159,6 +160,14 @@ class Approuter {
           transitionsBuilder: _slideRightTransitionBuilder,
         ),
       ),
+      // GoRoute(
+      //   name: RouteConstants.ChatScreen,
+      //   path: "/ChatScreen",
+      //   pageBuilder: (context, state) => CustomTransitionPage(
+      //     child: const ChatScreen(recipientId: "", recipientName: ""),
+      //     transitionsBuilder: _slideRightTransitionBuilder,
+      //   ),
+      // ),
     ],
     redirect: (context, state) {
       return null;

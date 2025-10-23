@@ -85,6 +85,7 @@ class TestChatScreen extends StatelessWidget {
     final List<MessageModel> mockMessages = _getMockMessages();
 
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: MessageAppBar(recipientName: 'NORTH MAN', recipientId: ''),
       body: Column(
         children: [
@@ -120,16 +121,20 @@ class TestChatScreen extends StatelessWidget {
               },
             ),
           ),
-          MessageInputBar(
-            onSendMessage: (text) {
-              print('--- [MOCK] Send Text Tapped: $text ---');
-            },
-            onSendAudio: (path) {
-              print('--- [MOCK] Send Audio Tapped: $path ---');
-            },
-            onSendImage: (image) {
-              print('--- [MOCK] Send Image Tapped: ${image.path} ---');
-            },
+          SafeArea(
+            child: Container(
+              child: MessageInputBar(
+                onSendMessage: (text) {
+                  print('--- [MOCK] Send Text Tapped: $text ---');
+                },
+                onSendAudio: (path) {
+                  print('--- [MOCK] Send Audio Tapped: $path ---');
+                },
+                onSendImage: (image) {
+                  print('--- [MOCK] Send Image Tapped: ${image.path} ---');
+                },
+              ),
+            ),
           ),
         ],
       ),

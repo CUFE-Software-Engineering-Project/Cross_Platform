@@ -17,5 +17,6 @@ class RouteConstants {
 
   static String ConversationsScreen = "ConversationsScreen";
   static String TestChatScreen = "TestChatScreen";
+  static String ChatScreen = "ChatScreen";
   static String SearchDirectMessages = "SearchDirectMessages";
 }

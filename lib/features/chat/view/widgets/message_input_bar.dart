@@ -220,31 +220,28 @@ class _MessageInputBarState extends ConsumerState<MessageInputBar>
   Widget _buildIdleView(ThemeData theme) {
     return Row(
       children: [
-        Container(
-          margin: const EdgeInsets.only(left: 4),
-          child: IconButton(
-            icon: const Icon(
-              Icons.image_outlined,
-              color: Palette.kDimIconwhite,
-              size: 26,
-            ),
-            onPressed: _selectImage,
-            constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+        IconButton(
+          icon: const Icon(
+            Icons.image_outlined,
+            color: Palette.kDimIconwhite,
+            size: 26,
           ),
+          onPressed: _selectImage,
+          constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
         ),
-        Container(
-          child: IconButton(
-            icon: const Icon(
-              Icons.gif_box_outlined,
-              color: Palette.kDimIconwhite,
-              size: 26,
-            ),
-            onPressed: _toggleGifPicker,
-            constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+        IconButton(
+          icon: const Icon(
+            Icons.gif_box_outlined,
+            color: Palette.kDimIconwhite,
+            size: 26,
           ),
+          onPressed: _toggleGifPicker,
+          constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
         ),
         Expanded(
           child: TextField(
+            maxLines: null,
+            keyboardType: TextInputType.multiline,
             controller: _textController,
             focusNode: _focusNode,
             decoration: const InputDecoration(
@@ -258,7 +255,8 @@ class _MessageInputBarState extends ConsumerState<MessageInputBar>
               focusedBorder: InputBorder.none,
               enabledBorder: InputBorder.none,
               disabledBorder: InputBorder.none,
-              contentPadding: EdgeInsets.symmetric(horizontal: 2, vertical: 10),
+
+              contentPadding: EdgeInsets.symmetric(horizontal: 2, vertical: 8),
             ),
             style: const TextStyle(color: Color(0xFFFFFFFF), fontSize: 16),
           ),
@@ -267,18 +265,15 @@ class _MessageInputBarState extends ConsumerState<MessageInputBar>
           valueListenable: _textController,
           builder: (context, value, child) {
             final hastext = value.text.trim().isNotEmpty;
-            return Container(
-              margin: const EdgeInsets.only(right: 4),
-              child: IconButton(
-                icon: Icon(
-                  hastext ? Icons.send : Icons.graphic_eq,
-                  color: hastext ? Palette.kBrandBlue : Palette.kBrandPurple,
-                  size: 24,
-                ),
-                onPressed: hastext ? _handleSendMessage : _startRecording,
-                onLongPress: !hastext ? _startRecording : null,
-                constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+            return IconButton(
+              icon: Icon(
+                hastext ? Icons.send : Icons.graphic_eq,
+                color: hastext ? Palette.kBrandBlue : Palette.kBrandPurple,
+                size: 24,
               ),
+              onPressed: hastext ? _handleSendMessage : _startRecording,
+              onLongPress: !hastext ? _startRecording : null,
+              constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
             );
           },
         ),

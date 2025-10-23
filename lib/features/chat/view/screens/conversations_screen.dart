@@ -23,8 +23,4 @@ class ConversationsScreen extends StatelessWidget {
       ),
     );
   }
-
-  // Widget _buildMobileLayout() {
-  //   return;
-  // }
 }
