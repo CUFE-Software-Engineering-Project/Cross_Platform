@@ -24,7 +24,7 @@ class AudioRecorderNotifier extends _$AudioRecorderNotifier {
       _actualRecordingDuration = null;
       state = state.copyWith(
         status: RecorderStatus.recording,
-        remainingDuration: maxDuration,
+        remainingDuration: maxDuration, // 140 seconds
       );
     }
     return success;
@@ -38,7 +38,6 @@ class AudioRecorderNotifier extends _$AudioRecorderNotifier {
       await _resetToIdle();
       return;
     }
-
     final elapsed = _recordingStartTime != null
         ? DateTime.now().difference(_recordingStartTime!)
         : Duration.zero;
@@ -87,7 +86,7 @@ class AudioRecorderNotifier extends _$AudioRecorderNotifier {
 
     final elapsed = DateTime.now().difference(_recordingStartTime!);
     final remaining = maxDuration - elapsed;
-    if (remaining.isNegative || remaining == Duration.zero) {
+    if (remaining == Duration.zero || remaining.isNegative) {
       stopRecording();
     } else {
       state = state.copyWith(remainingDuration: remaining);
@@ -101,7 +100,7 @@ class AudioRecorderNotifier extends _$AudioRecorderNotifier {
     }
     final remaining = _actualRecordingDuration! - currentPosition;
 
-    if (remaining.isNegative || remaining == Duration.zero) {
+    if (remaining == Duration.zero || remaining.isNegative) {
       state = state.copyWith(remainingDuration: _actualRecordingDuration!);
     } else {
       state = state.copyWith(remainingDuration: remaining);
@@ -116,10 +115,9 @@ class AudioRecorderNotifier extends _$AudioRecorderNotifier {
   }
 
   Future<void> _deleteRecordingFile() async {
-    final path = state.recordingPath;
-    if (path == null) return;
-
     try {
+      final path = state.recordingPath;
+      if (path == null) return;
       final file = File(path);
       if (await file.exists()) {
         await file.delete();

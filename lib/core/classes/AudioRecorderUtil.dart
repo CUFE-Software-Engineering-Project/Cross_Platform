@@ -6,7 +6,7 @@ import 'dart:io';
 class AudioRecorderUtil {
   final AudioRecorder _recorder = AudioRecorder();
   bool _isRecording = false;
-  String? _recordingPath;
+  String? _recordingPath; // the place of file
 
   bool get isRecording => _isRecording;
   String? get recordingPath => _recordingPath;
@@ -23,7 +23,6 @@ class AudioRecorderUtil {
   Future<bool> startRecording() async {
     try {
       if (_isRecording) return false;
-
       final hasPermission = await this.hasPermission();
       if (!hasPermission) {
         debugPrint('Recording permission not granted');
