@@ -26,14 +26,15 @@ class _ChooseNewPasswordScreenState
   final _isFormValid = ValueNotifier<bool>(false);
   final _newPasswordValid = ValueNotifier<bool>(false);
   final _confirmPasswordValid = ValueNotifier<bool>(false);
+  final _passwordsMatch = ValueNotifier<bool>(false);
 
   @override
   void initState() {
+    super.initState();
     final email = ref.read(emailProvider);
     _emailController.text = email;
     _newpasswordController.addListener(_validateForm);
     _confirmpasswordController.addListener(_validateForm);
-    super.initState();
   }
 
   void _validateForm() {
@@ -49,6 +50,13 @@ class _ChooseNewPasswordScreenState
     _newPasswordValid.value = newPasswordValid;
     _confirmPasswordValid.value = confirmPasswordValid;
     _isFormValid.value = newPasswordValid && confirmPasswordValid;
+    if (_newpasswordController.text.isEmpty ||
+        _confirmpasswordController.text.isEmpty) {
+      _passwordsMatch.value = false;
+    } else {
+      _passwordsMatch.value =
+          (_newpasswordController.text == _confirmpasswordController.text);
+    }
   }
 
   void _handleChangePassword() {
@@ -82,6 +90,7 @@ class _ChooseNewPasswordScreenState
     _isFormValid.dispose();
     _newPasswordValid.dispose();
     _confirmPasswordValid.dispose();
+    _passwordsMatch.dispose();
     super.dispose();
   }
 
@@ -188,27 +197,19 @@ class _ChooseNewPasswordScreenState
                         ),
                         const SizedBox(height: 38),
                         ValueListenableBuilder<bool>(
-                          valueListenable: _newPasswordValid,
+                          valueListenable: _passwordsMatch,
                           builder: (context, isValid, child) {
                             return CustomTextField(
                               controller: _newpasswordController,
                               labelText: 'Enter a new password',
                               isPassword: true,
                               validator: passwordValidator,
-                              suffixIcon: isValid
-                                  ? Container(
-                                      margin: const EdgeInsets.all(12),
-                                      decoration: const BoxDecoration(
-                                        color: Color(0xFF00BA7C),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: const Icon(
-                                        Icons.check,
-                                        color: Colors.white,
-                                        size: 20,
-                                      ),
-                                    )
-                                  : null,
+
+                              isPasswordCheck:
+                                  _newpasswordController.text.isEmpty
+                                  ? null
+                                  : _confirmpasswordController.text ==
+                                        _newpasswordController.text,
                               onFieldSubmitted: (_) {
                                 if (_isFormValid.value) {
                                   _handleChangePassword();
@@ -219,13 +220,14 @@ class _ChooseNewPasswordScreenState
                         ),
                         const SizedBox(height: 32),
                         ValueListenableBuilder<bool>(
-                          valueListenable: _confirmPasswordValid,
+                          valueListenable: _passwordsMatch,
                           builder: (context, isValid, child) {
                             return CustomTextField(
                               controller: _confirmpasswordController,
                               labelText: 'Confirm your password',
                               isPassword: true,
                               validator: _confirmPasswordValidator,
+
                               isPasswordCheck:
                                   _confirmpasswordController.text.isEmpty
                                   ? null
