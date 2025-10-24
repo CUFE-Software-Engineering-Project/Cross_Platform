@@ -1,6 +1,7 @@
 import 'package:lite_x/core/constants/server_constants.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
+part 'socket_repository.g.dart';
 
 @Riverpod(keepAlive: true)
 SocketRepository socketRepository(Ref ref) {

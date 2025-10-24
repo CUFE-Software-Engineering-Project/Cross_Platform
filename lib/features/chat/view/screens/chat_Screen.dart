@@ -1,45 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lite_x/features/chat/models/messagemodel.dart';
 import 'package:lite_x/features/chat/view/widgets/MessageAppBar.dart';
+import 'package:lite_x/features/chat/view/widgets/TypingIndicator.dart';
 import 'package:lite_x/features/chat/view/widgets/message_input_bar.dart';
 import 'package:lite_x/core/classes/PickedImage.dart';
 import 'package:lite_x/features/chat/view/widgets/MessageBubble.dart';
+import 'package:lite_x/features/chat/view_model/chat/Chat_view_model.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
-class ChatScreen extends StatefulWidget {
+class ChatScreen extends ConsumerStatefulWidget {
   final String recipientName;
   final String recipientId;
   final String currentUserId;
-  final List<MessageModel> messages;
-  final Function(String text) onSendMessage;
-  final Function(String path) onSendAudio;
-  final Function(PickedImage image) onSendImage;
-  final Function(String gifUrl) onSendGif;
-  final Function(MessageModel message) onLongPressMessage;
-  final Function(MessageModel message) onTapMessage;
-  final Function(MessageModel message, int mediaIndex) onTapMedia;
 
   const ChatScreen({
     super.key,
     required this.recipientName,
     required this.recipientId,
     required this.currentUserId,
-    required this.messages,
-
-    required this.onSendMessage,
-    required this.onSendAudio,
-    required this.onSendImage,
-    required this.onSendGif,
-    required this.onLongPressMessage,
-    required this.onTapMessage,
-    required this.onTapMedia,
   });
 
   @override
-  State<ChatScreen> createState() => _ChatScreenState();
+  ConsumerState<ChatScreen> createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen> {
+class _ChatScreenState extends ConsumerState<ChatScreen> {
   final ItemScrollController _itemScrollController = ItemScrollController();
 
   final ItemPositionsListener _itemPositionsListener =
@@ -84,6 +70,8 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final chatviewmodel = ref.watch(chatViewModelProvider);
+    List<MessageModel> messages = [];
     return Scaffold(
       resizeToAvoidBottomInset: true,
       appBar: MessageAppBar(
@@ -98,25 +86,25 @@ class _ChatScreenState extends State<ChatScreen> {
                 ScrollablePositionedList.builder(
                   itemScrollController: _itemScrollController,
                   itemPositionsListener: _itemPositionsListener,
-
                   reverse: true,
                   padding: const EdgeInsets.symmetric(vertical: 10.0),
-                  itemCount: widget.messages.length,
+                  itemCount: messages.length,
                   itemBuilder: (context, index) {
-                    final message = widget.messages[index];
+                    final message = messages[index];
                     final isMe = message.userId == widget.currentUserId;
 
                     return MessageBubble(
                       message: message,
                       isMe: isMe,
                       showSenderName: message.senderName != null && !isMe,
-                      onLongPress: () => widget.onLongPressMessage(message),
-                      onTap: () => widget.onTapMessage(message),
-                      onMediaTap: (mediaIndex) =>
-                          widget.onTapMedia(message, mediaIndex),
+                      onLongPress: () => {},
+                      onTap: () => {},
+                      onMediaTap: (mediaIndex) => {},
                     );
                   },
                 ),
+                if (chatviewmodel.isRecipientTyping)
+                  TypingIndicator(userName: widget.recipientName),
 
                 _buildScrollToBottomButton(),
               ],
@@ -126,10 +114,27 @@ class _ChatScreenState extends State<ChatScreen> {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               child: MessageInputBar(
-                onSendMessage: widget.onSendMessage,
-                onSendAudio: widget.onSendAudio,
-                onSendImage: widget.onSendImage,
-                onSendGif: widget.onSendGif,
+                onSendMessage: (text) {
+                  // ref
+                  //     .read(chatViewModelProvider.notifier)
+                  //     .sendMessage(widget.recipientId, text);
+                  _scrollToBottom();
+                },
+                onSendAudio: (audioPath) {
+                  // ref
+                  //     .read(chatViewModelProvider.notifier)
+                  //     .sendAudio(widget.recipientId, audioPath);
+                },
+                onSendImage: (PickedImage image) {
+                  // ref
+                  //     .read(chatViewModelProvider.notifier)
+                  //     .sendImage(widget.recipientId, image);
+                },
+                onSendGif: (gifUrl) {
+                  // ref
+                  //     .read(chatViewModelProvider.notifier)
+                  //     .sendGif(widget.recipientId, gifUrl);
+                },
               ),
             ),
           ),

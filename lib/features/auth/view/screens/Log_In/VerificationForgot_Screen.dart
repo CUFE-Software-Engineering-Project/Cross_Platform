@@ -1,8 +1,9 @@
+// ignore_for_file: unused_import
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
-import 'package:flutter/foundation.dart';
 import 'package:lite_x/core/theme/Palette.dart';
 import 'package:lite_x/features/auth/view/widgets/CustomTextField.dart';
 import 'package:lite_x/features/auth/view/widgets/buildXLogo.dart';
@@ -41,51 +42,20 @@ class _VerificationforgotScreenState
 
   @override
   Widget build(BuildContext context) {
-    final isWeb = kIsWeb;
     return Scaffold(
-      backgroundColor: isWeb
-          ? Colors.black.withOpacity(0.4)
-          : Palette.background,
-      appBar: !isWeb
-          ? AppBar(
-              leading: IconButton(
-                onPressed: () {
-                  context.goNamed(RouteConstants.introscreen);
-                },
-                icon: Icon(Icons.close),
-              ),
-              title: buildXLogo(size: 36),
-              centerTitle: true,
-              backgroundColor: Palette.background,
-              elevation: 0,
-            )
-          : null,
+      backgroundColor: Palette.background,
+      appBar: null,
+
       body: Center(
         child: Container(
-          width: isWeb ? 600 : double.infinity,
-          height: isWeb ? 650 : double.infinity,
+          width: double.infinity,
+          height: double.infinity,
           decoration: BoxDecoration(
             color: Palette.background,
-            borderRadius: isWeb ? BorderRadius.circular(16) : null,
+            borderRadius: null,
           ),
           child: Column(
             children: [
-              if (isWeb)
-                Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Row(
-                    children: [
-                      IconButton(
-                        onPressed: () {
-                          context.goNamed(RouteConstants.introscreen);
-                        },
-                        icon: Icon(Icons.close),
-                      ),
-                      Expanded(child: Center(child: buildXLogo(size: 40))),
-                      const SizedBox(width: 48),
-                    ],
-                  ),
-                ),
               Expanded(
                 child: Form(
                   key: _formKey,
@@ -135,7 +105,7 @@ class _VerificationforgotScreenState
                   ),
                 ),
               ),
-              _buildBottomButtons(isWeb),
+              _buildBottomButtons(),
             ],
           ),
         ),
@@ -143,7 +113,7 @@ class _VerificationforgotScreenState
     );
   }
 
-  Widget _buildBottomButtons(bool isWeb) {
+  Widget _buildBottomButtons() {
     return Container(
       padding: const EdgeInsets.all(16),
       child: Row(
@@ -170,7 +140,7 @@ class _VerificationforgotScreenState
             valueListenable: _isFormValid,
             builder: (context, isValid, child) {
               return SizedBox(
-                width: isWeb ? 120 : 80,
+                width: 80,
                 child: ElevatedButton(
                   onPressed: isValid ? _handleNext : null,
                   style: ElevatedButton.styleFrom(
