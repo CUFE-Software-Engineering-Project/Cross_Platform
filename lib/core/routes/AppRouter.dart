@@ -3,10 +3,13 @@ import 'package:go_router/go_router.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
 import 'package:lite_x/features/auth/view/screens/CreateAccount_Screen.dart';
 import 'package:lite_x/features/auth/view/screens/Intro_Screen.dart';
+import 'package:lite_x/features/auth/view/screens/SettingsAndPrivacy_Screen.dart';
+import 'package:lite_x/features/auth/view/screens/PrivacyAndSafety_Screen.dart';
 import 'package:lite_x/features/auth/view/screens/Verification_Screen.dart';
 
 class Approuter {
   static final GoRouter router = GoRouter(
+    initialLocation: "/settingsandprivacy",
     routes: [
       GoRoute(
         name: RouteConstants.introscreen,
@@ -29,6 +32,22 @@ class Approuter {
         path: "/verification",
         pageBuilder: (context, state) => CustomTransitionPage(
           child: const VerificationScreen(),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
+        name: RouteConstants.settingsandprivacyscreen,
+        path: "/settingsandprivacy",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: const SettingsAndPrivacyScreen(),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
+        name: RouteConstants.privacyandsafetyscreen,
+        path: "/privacyandsafety",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: const PrivacyAndSafetyScreen(),
           transitionsBuilder: _slideRightTransitionBuilder,
         ),
       ),
