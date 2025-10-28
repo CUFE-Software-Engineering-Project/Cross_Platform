@@ -96,18 +96,40 @@ class NotificationServiceImpl implements INotificationService {
   /// Convert NotificationModel to AppNotification
   AppNotification _convertToAppNotification(NotificationModel notification) {
     final user = User(
-      username: notification.actorId ?? 'Unknown',
-      avatarUrl: 'https://picsum.photos/id/100/100/100', // Default avatar
+      id: notification.actorId ?? '',
+      username: (notification.actorId ?? 'user').toString(),
+      name: '',
+      avatarUrl: 'https://picsum.photos/id/100/100/100',
       isVerified: false,
     );
 
     return AppNotification(
+      id: notification.id,
       user: user,
-      type: notification.type,
+      type: _toNotificationType(notification.type),
       content: notification.content,
       timestamp: _formatTimestamp(notification.createdAt),
+      isRead: notification.isRead,
       postSnippet: null,
+      tweetId: notification.tweetId,
     );
+  }
+
+  NotificationType _toNotificationType(String raw) {
+    switch (raw.toLowerCase()) {
+      case 'like':
+        return NotificationType.like;
+      case 'repost':
+        return NotificationType.repost;
+      case 'follow':
+        return NotificationType.follow;
+      case 'mention':
+        return NotificationType.mention;
+      case 'reply':
+        return NotificationType.reply;
+      default:
+        return NotificationType.like;
+    }
   }
 
   /// Format timestamp for display
