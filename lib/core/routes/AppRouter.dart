@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lite_x/features/auth/view/screens/Create_Account/Interests.dart';
 import 'package:lite_x/features/chat/view/TestChatScreen.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
 import 'package:lite_x/core/view/screen/Splash_Screen.dart';
@@ -157,6 +158,14 @@ class Approuter {
         path: "/SearchDirectMessages",
         pageBuilder: (context, state) => CustomTransitionPage(
           child: const SearchDirectMessages(),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
+        name: RouteConstants.Interests,
+        path: "/Interests",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: const Interests(),
           transitionsBuilder: _slideRightTransitionBuilder,
         ),
       ),

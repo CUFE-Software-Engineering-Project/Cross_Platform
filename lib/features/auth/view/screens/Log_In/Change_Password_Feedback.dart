@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -27,48 +26,26 @@ class _ChangePasswordFeedbackState
 
   @override
   Widget build(BuildContext context) {
-    final isWeb = kIsWeb;
     return Scaffold(
-      backgroundColor: isWeb
-          ? Colors.black.withOpacity(0.4)
-          : Palette.background,
-      appBar: !isWeb
-          ? AppBar(
-              leading: IconButton(
-                icon: const Icon(Icons.close, color: Palette.textWhite),
-                onPressed: () => context.goNamed(RouteConstants.introscreen),
-              ),
-              title: buildXLogo(size: 36),
-              centerTitle: true,
-              backgroundColor: Palette.background,
-              elevation: 0,
-            )
-          : null,
+      backgroundColor: Palette.background,
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.close, color: Palette.textWhite),
+          onPressed: () => context.goNamed(RouteConstants.introscreen),
+        ),
+        title: buildXLogo(size: 36),
+        centerTitle: true,
+        backgroundColor: Palette.background,
+        elevation: 0,
+      ),
+
       body: Center(
         child: Container(
-          width: isWeb ? 600 : double.infinity,
-          height: isWeb ? 650 : double.infinity,
-          decoration: BoxDecoration(
-            color: Palette.background,
-            borderRadius: isWeb ? BorderRadius.circular(16) : null,
-          ),
+          width: double.infinity,
+          height: double.infinity,
+          decoration: BoxDecoration(color: Palette.background),
           child: Column(
             children: [
-              if (isWeb)
-                Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.close, color: Palette.textWhite),
-                        onPressed: () =>
-                            context.goNamed(RouteConstants.introscreen),
-                      ),
-                      Expanded(child: Center(child: buildXLogo(size: 40))),
-                      const SizedBox(width: 48),
-                    ],
-                  ),
-                ),
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
@@ -121,7 +98,7 @@ class _ChangePasswordFeedbackState
                   ),
                 ),
               ),
-              _buildNextButton(isWeb),
+              _buildNextButton(),
             ],
           ),
         ),
@@ -181,13 +158,12 @@ class _ChangePasswordFeedbackState
     );
   }
 
-  Widget _buildNextButton(bool isWeb) {
+  Widget _buildNextButton() {
     return Container(
-      padding: EdgeInsets.all(isWeb ? 32 : 10),
-      width: isWeb ? double.infinity : null,
-      alignment: isWeb ? Alignment.center : Alignment.centerRight,
+      padding: EdgeInsets.all(10),
+      alignment: Alignment.centerRight,
       child: SizedBox(
-        width: isWeb ? 120 : 80,
+        width: 80,
         child: ElevatedButton(
           onPressed: _selectedMethod.isNotEmpty ? _handleNext : null,
           style: ElevatedButton.styleFrom(

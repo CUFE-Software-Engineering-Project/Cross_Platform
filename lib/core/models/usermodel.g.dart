@@ -28,16 +28,16 @@ class UserModelAdapter extends TypeAdapter<UserModel> {
       isVerified: fields[8] as bool,
       loginCodesSet: fields[9] as bool,
       tfaVerified: fields[10] as bool?,
-      tokenVersion: (fields[11] as num?)?.toInt(),
-      accessToken: fields[12] as String?,
-      refreshToken: fields[13] as String?,
+      interests: fields[11] == null
+          ? const {}
+          : (fields[11] as Set).cast<String>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, UserModel obj) {
     writer
-      ..writeByte(14)
+      ..writeByte(12)
       ..writeByte(0)
       ..write(obj.name)
       ..writeByte(1)
@@ -61,11 +61,7 @@ class UserModelAdapter extends TypeAdapter<UserModel> {
       ..writeByte(10)
       ..write(obj.tfaVerified)
       ..writeByte(11)
-      ..write(obj.tokenVersion)
-      ..writeByte(12)
-      ..write(obj.accessToken)
-      ..writeByte(13)
-      ..write(obj.refreshToken);
+      ..write(obj.interests);
   }
 
   @override

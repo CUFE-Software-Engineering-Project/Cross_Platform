@@ -1,9 +1,8 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:lite_x/core/providers/signup_provider.dart';
+import 'package:lite_x/core/providers/emailProvider.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
 import 'package:lite_x/core/theme/palette.dart';
 import 'package:lite_x/core/utils.dart';
@@ -92,48 +91,28 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isWeb = kIsWeb;
-
     return Scaffold(
-      backgroundColor: isWeb
-          ? Colors.black.withOpacity(0.4)
-          : Palette.background,
-      appBar: !isWeb
-          ? AppBar(
-              leading: IconButton(
-                icon: const Icon(Icons.arrow_back, color: Palette.textWhite),
-                onPressed: () => context.pop(),
-              ),
-              title: buildXLogo(size: 36),
-              centerTitle: true,
-              backgroundColor: Palette.background,
-              elevation: 0,
-            )
-          : null,
+      backgroundColor: Palette.background,
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Palette.textWhite),
+          onPressed: () => context.pop(),
+        ),
+        title: buildXLogo(size: 36),
+        centerTitle: true,
+        backgroundColor: Palette.background,
+        elevation: 0,
+      ),
       body: Center(
         child: Container(
-          width: isWeb ? 600 : double.infinity,
-          height: isWeb ? 650 : double.infinity,
+          width: double.infinity,
+          height: double.infinity,
           decoration: BoxDecoration(
             color: Palette.background,
-            borderRadius: isWeb ? BorderRadius.circular(16) : null,
+            borderRadius: null,
           ),
           child: Column(
             children: [
-              if (isWeb)
-                Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.close, color: Palette.textWhite),
-                        onPressed: () => Navigator.of(context).pop(),
-                      ),
-                      Expanded(child: Center(child: buildXLogo(size: 40))),
-                      const SizedBox(width: 48),
-                    ],
-                  ),
-                ),
               Expanded(
                 child: Form(
                   key: _formKey,
@@ -185,7 +164,7 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
                   ),
                 ),
               ),
-              _buildNextButton(isWeb),
+              _buildNextButton(),
               const SizedBox(height: 15),
             ],
           ),
@@ -194,16 +173,16 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
     );
   }
 
-  Widget _buildNextButton(bool isWeb) {
+  Widget _buildNextButton() {
     return Container(
-      padding: EdgeInsets.all(isWeb ? 32 : 10),
-      width: isWeb ? double.infinity : null,
-      alignment: isWeb ? Alignment.center : Alignment.centerRight,
+      padding: EdgeInsets.all(10),
+      width: null,
+      alignment: Alignment.centerRight,
       child: ValueListenableBuilder<bool>(
         valueListenable: _isFormValid,
         builder: (context, isValid, child) {
           return SizedBox(
-            width: isWeb ? double.infinity : 90,
+            width: 90,
             child: ElevatedButton(
               onPressed: isValid ? _handleNext : null,
               style: ElevatedButton.styleFrom(
@@ -211,7 +190,7 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
                 disabledBackgroundColor: Palette.textWhite.withOpacity(0.5),
                 foregroundColor: Palette.background,
                 disabledForegroundColor: Palette.border,
-                minimumSize: isWeb ? const Size(0, 60) : const Size(0, 40),
+                minimumSize: const Size(0, 40),
               ),
               child: const Text(
                 'Next',

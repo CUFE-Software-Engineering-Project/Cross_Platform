@@ -2,6 +2,8 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:lite_x/core/routes/Route_Constants.dart';
 import 'package:lite_x/core/theme/palette.dart';
 import 'package:lite_x/core/utils.dart';
 import 'package:lite_x/features/auth/view/widgets/CustomTextField.dart';
@@ -52,8 +54,7 @@ class _UsernameScreenState extends ConsumerState<UsernameScreen> {
   }
 
   void _handleSkip() {
-    print('Skipped username selection');
-    //  context.goNamed(RouteConstants.home);
+    context.goNamed(RouteConstants.Interests);
   }
 
   @override

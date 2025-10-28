@@ -1,6 +1,4 @@
 // ignore_for_file: unused_field
-
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -61,40 +59,21 @@ class _PasswordScreenState extends ConsumerState<PasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isWeb = kIsWeb;
-
     return Scaffold(
-      backgroundColor: isWeb
-          ? Colors.black.withOpacity(0.4)
-          : Palette.background,
-      appBar: !isWeb
-          ? AppBar(
-              title: buildXLogo(size: 36),
-              centerTitle: true,
-              backgroundColor: Palette.background,
-              elevation: 0,
-            )
-          : null,
+      backgroundColor: Palette.background,
+      appBar: AppBar(
+        title: buildXLogo(size: 36),
+        centerTitle: true,
+        backgroundColor: Palette.background,
+        elevation: 0,
+      ),
       body: Center(
         child: Container(
-          width: isWeb ? 600 : double.infinity,
-          height: isWeb ? 650 : double.infinity,
-          decoration: BoxDecoration(
-            color: Palette.background,
-            borderRadius: isWeb ? BorderRadius.circular(16) : null,
-          ),
+          width: double.infinity,
+          height: double.infinity,
+          decoration: BoxDecoration(color: Palette.background),
           child: Column(
             children: [
-              if (isWeb)
-                Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Row(
-                    children: [
-                      Expanded(child: Center(child: buildXLogo(size: 40))),
-                      const SizedBox(width: 48),
-                    ],
-                  ),
-                ),
               Expanded(
                 child: Form(
                   key: _formKey,
@@ -142,7 +121,7 @@ class _PasswordScreenState extends ConsumerState<PasswordScreen> {
                   ),
                 ),
               ),
-              _buildSignUpButton(isWeb),
+              _buildSignUpButton(),
               const SizedBox(height: 15),
             ],
           ),
@@ -151,16 +130,16 @@ class _PasswordScreenState extends ConsumerState<PasswordScreen> {
     );
   }
 
-  Widget _buildSignUpButton(bool isWeb) {
+  Widget _buildSignUpButton() {
     return Container(
-      padding: EdgeInsets.all(isWeb ? 32 : 10),
-      width: isWeb ? double.infinity : null,
-      alignment: isWeb ? Alignment.center : Alignment.centerRight,
+      padding: EdgeInsets.all(10),
+
+      alignment: Alignment.centerRight,
       child: ValueListenableBuilder<bool>(
         valueListenable: _isFormValid,
         builder: (context, isValid, child) {
           return SizedBox(
-            width: isWeb ? double.infinity : 120,
+            width: 120,
             child: ElevatedButton(
               onPressed: isValid ? _handleSignUp : null,
               style: ElevatedButton.styleFrom(
@@ -168,7 +147,7 @@ class _PasswordScreenState extends ConsumerState<PasswordScreen> {
                 disabledBackgroundColor: Palette.textWhite.withOpacity(0.5),
                 foregroundColor: Palette.background,
                 disabledForegroundColor: Palette.border,
-                minimumSize: isWeb ? const Size(0, 60) : const Size(0, 38),
+                minimumSize: const Size(0, 38),
               ),
               child: const Text(
                 'Sign up',

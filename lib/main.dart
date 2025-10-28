@@ -24,6 +24,8 @@ Future<void> init() async {
   Hive.registerAdapter(MediaModelAdapter());
   Hive.registerAdapter(MessageModelAdapter());
   await Hive.initFlutter();
+  await Hive.openBox<UserModel>('userBox');
+  await Hive.openBox('tokenBox');
   await dotenv.load(fileName: ".env");
 }
 
