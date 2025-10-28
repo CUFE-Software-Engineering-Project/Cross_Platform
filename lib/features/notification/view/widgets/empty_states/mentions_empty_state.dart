@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lite_x/core/theme/palette.dart';
 
-class AllEmptyStateWidget extends StatelessWidget {
-  const AllEmptyStateWidget({super.key});
+/// Clean empty state for mentions notifications
+class MentionsEmptyState extends StatelessWidget {
+  const MentionsEmptyState({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +29,7 @@ class AllEmptyStateWidget extends StatelessWidget {
               ),
               const SizedBox(height: 6),
               Text(
-                "From likes to reposts and a whole lot more, this is where all the action happens.",
+                "When someone mentions you, you'll find it here.",
                 style: GoogleFonts.libreFranklin(
                   fontSize: 15,
                   fontWeight: FontWeight.w400,

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:lite_x/core/theme/palette.dart';
 
-class Statusbar extends StatelessWidget {
-  const Statusbar({super.key});
+/// Clean status bar widget
+class StatusBar extends StatelessWidget {
+  const StatusBar({super.key});
 
   @override
   Widget build(BuildContext context) {

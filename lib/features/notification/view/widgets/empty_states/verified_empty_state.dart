@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lite_x/core/theme/palette.dart';
 
-class VerifiedEmptyStateWidget extends StatelessWidget {
-  const VerifiedEmptyStateWidget({super.key});
+/// Clean empty state for verified notifications
+class VerifiedEmptyState extends StatelessWidget {
+  const VerifiedEmptyState({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +29,6 @@ class VerifiedEmptyStateWidget extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 12),
-
               Text(
                 "Nothing to see here — yet",
                 style: GoogleFonts.libreFranklin(
@@ -38,7 +38,6 @@ class VerifiedEmptyStateWidget extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 6),
-
               Text(
                 "Likes, mentions, reposts, and a whole lot more — when it comes from a verified account, you'll find it here.",
                 style: GoogleFonts.libreFranklin(

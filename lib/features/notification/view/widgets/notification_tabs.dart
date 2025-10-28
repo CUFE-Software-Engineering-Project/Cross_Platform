@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:lite_x/core/theme/palette.dart';
-import 'tabs/all_notifications.dart';
-import 'tabs/verified_notifications.dart';
-import 'tabs/mentions_notifications.dart';
+import 'tabs/all_notifications_tab.dart';
+import 'tabs/verified_notifications_tab.dart';
+import 'tabs/mentions_notifications_tab.dart';
 
+/// Clean notification tabs widget
 class NotificationTabs extends StatefulWidget {
   const NotificationTabs({super.key});
 
@@ -105,9 +106,9 @@ class _NotificationTabsState extends State<NotificationTabs>
           child: TabBarView(
             controller: _tabController,
             children: const [
-              AllTab(key: PageStorageKey('allTab')),
-              VerifiedTab(key: PageStorageKey('verifiedTab')),
-              MentionsTab(key: PageStorageKey('mentionsTab')),
+              AllNotificationsTab(),
+              VerifiedNotificationsTab(),
+              MentionsNotificationsTab(),
             ],
           ),
         ),
