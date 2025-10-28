@@ -5,7 +5,6 @@ import 'package:lite_x/features/auth/view/screens/CreateAccount_Screen.dart';
 import 'package:lite_x/features/auth/view/screens/intro_screen.dart';
 import 'package:lite_x/features/auth/view/screens/verification_screen.dart';
 import 'package:lite_x/features/search/view/search_screen.dart';
-import 'package:lite_x/features/notification/view/notification_screen.dart';
 
 class Approuter {
   static final GoRouter router = GoRouter(

@@ -4,7 +4,7 @@ import '../widgets/search_bar.dart' as sb;
 import '../widgets/search_results_list.dart';
 import '../widgets/search_history_list.dart';
 import '../view_model/search_view_model.dart';
-
+import 'package:lite_x/core/theme/palette.dart';
 class SearchScreen extends ConsumerWidget {
   const SearchScreen({super.key});
 
@@ -16,9 +16,10 @@ class SearchScreen extends ConsumerWidget {
       body: Column(
       children: [
         const Padding(
-          padding: EdgeInsets.all(16),
-          child: sb.SearchBar(),
+          padding: EdgeInsets.symmetric(horizontal: 16,vertical: 8),
+          child: const sb.SearchBar(),
         ),
+        const SizedBox(height: 14),
         Expanded(
           child: state.isLoading
               ? const Center(child: CircularProgressIndicator())
@@ -26,7 +27,7 @@ class SearchScreen extends ConsumerWidget {
                   ? SearchResultsList(results: state.results)
                   : state.history.isNotEmpty
                       ? SearchHistoryList(history: state.history)
-                      : const Text('Try searching for people, lists, or keywords'),
+                      : const Text('Try searching for people, lists, or keywords',style: TextStyle(color: Palette.textSecondary,fontSize: 16)),
         ),
       ],
     ),

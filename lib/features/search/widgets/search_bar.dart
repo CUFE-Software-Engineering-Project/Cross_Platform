@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../view_model/search_view_model.dart';
+import 'package:lite_x/core/theme/palette.dart';
 
 class SearchBar extends ConsumerWidget {
   const SearchBar({super.key});
@@ -9,23 +10,64 @@ class SearchBar extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Row(
       children: [
-        const CircleAvatar(
-          backgroundImage: NetworkImage('https://i.pravatar.cc/150?img=10'),
+        // Back arrow button
+        IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pop(context);
+          },
         ),
+
         const SizedBox(width: 8),
+
+        // Search input field
         Expanded(
-          child: TextField(
-            decoration: const InputDecoration(
-              hintText: 'Search',
-              border: OutlineInputBorder(),
-              isDense: true,
-              contentPadding: EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+          child: SizedBox(
+            height: 48,
+            child: TextField(
+              decoration: InputDecoration(
+                prefixIcon: const Icon(Icons.search),
+                hintText: 'Search',
+                hintStyle: const TextStyle(color: Palette.textSecondary),
+                filled: true, // 👈 enables background color
+                fillColor: Palette.background, // 👈 sets the background color
+                // 🟢 Capsule shape with 1px border
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(30),
+                  borderSide: const BorderSide(
+                    color: Palette.textSecondary,
+                    width: 0.5, // 👈 set border width here
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(30),
+                  borderSide: const BorderSide(
+                    color: Palette.textSecondary,
+                    width: 0.5, // 👈 set width for enabled state
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(30),
+                  borderSide: const BorderSide(
+                    color: Colors.blue,
+                    width: 2, // 👈 set width for focused state
+                  ),
+                ),
+
+                isDense: true,
+                contentPadding:
+                    const EdgeInsets.symmetric(vertical: 0, horizontal: 12),
+              ),
+              onChanged: (value) {
+                ref.read(searchViewModelProvider.notifier).search(value);
+              },
             ),
-            onChanged: (value) {
-              ref.read(searchViewModelProvider.notifier).search(value);
-            },
           ),
         ),
+
+        const SizedBox(width: 8),
+
+        // Settings button
         IconButton(
           icon: const Icon(Icons.settings),
           onPressed: () {},
