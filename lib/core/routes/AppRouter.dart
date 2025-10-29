@@ -5,6 +5,9 @@ import 'package:lite_x/features/auth/view/screens/CreateAccount_Screen.dart';
 import 'package:lite_x/features/auth/view/screens/Intro_Screen.dart';
 import 'package:lite_x/features/auth/view/screens/SettingsAndPrivacy_Screen.dart';
 import 'package:lite_x/features/auth/view/screens/PrivacyAndSafety_Screen.dart';
+import 'package:lite_x/features/auth/view/screens/MuteAndBlock_Screen.dart';
+import 'package:lite_x/features/auth/view/screens/BlockedAccounts_Screen.dart';
+import 'package:lite_x/features/auth/view/screens/MutedAccounts_Screen.dart';
 import 'package:lite_x/features/auth/view/screens/Verification_Screen.dart';
 
 class Approuter {
@@ -48,6 +51,30 @@ class Approuter {
         path: "/privacyandsafety",
         pageBuilder: (context, state) => CustomTransitionPage(
           child: const PrivacyAndSafetyScreen(),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
+        name: RouteConstants.muteandblockscreen,
+        path: "/muteandblock",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: const MuteAndBlockScreen(),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
+        name: RouteConstants.blockedaccountsscreen,
+        path: "/blockedaccounts",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: const BlockedAccountsScreen(),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
+        name: RouteConstants.mutedaccountsscreen,
+        path: "/mutedaccounts",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: const MutedAccountsScreen(),
           transitionsBuilder: _slideRightTransitionBuilder,
         ),
       ),

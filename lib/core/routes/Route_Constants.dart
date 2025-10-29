@@ -4,4 +4,7 @@ class RouteConstants {
   static String verificationscreen = "verificationscreen";
   static String settingsandprivacyscreen = "settingsandprivacyscreen";
   static String privacyandsafetyscreen = "privacyandsafetyscreen";
+  static String muteandblockscreen = "muteandblockscreen";
+  static String blockedaccountsscreen = "blockedaccountsscreen";
+  static String mutedaccountsscreen = "mutedaccountsscreen";
 }

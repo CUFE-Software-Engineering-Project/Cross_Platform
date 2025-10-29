@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lite_x/core/theme/palette.dart';
+import 'package:go_router/go_router.dart';
+import 'package:lite_x/core/routes/Route_Constants.dart';
 
 class PrivacyAndSafetyScreen extends StatelessWidget {
   const PrivacyAndSafetyScreen({super.key});
@@ -9,7 +11,7 @@ class PrivacyAndSafetyScreen extends StatelessWidget {
         child: Text(title, style: const TextStyle(color: Palette.textWhite, fontSize: 20, fontWeight: FontWeight.w700)),
       );
 
-  Widget _tile(IconData icon, String title, String subtitle) => ListTile(
+  Widget _tile(IconData icon, String title, String subtitle, {VoidCallback? onTap}) => ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         leading: SizedBox(
           width: 40,
@@ -18,7 +20,7 @@ class PrivacyAndSafetyScreen extends StatelessWidget {
         ),
         title: Text(title, style: const TextStyle(color: Palette.textWhite, fontWeight: FontWeight.w600)),
         subtitle: Text(subtitle, style: const TextStyle(color: Palette.textSecondary, fontSize: 13)),
-        onTap: () {},
+        onTap: onTap ?? () {},
       );
 
   Widget _linkTile(String title) => ListTile(
@@ -36,7 +38,12 @@ class PrivacyAndSafetyScreen extends StatelessWidget {
             _tile(Icons.group, 'Audience and tagging', 'Manage what information you allow other people on X to see.'),
             _tile(Icons.edit, 'Your posts', 'Manage the information associated with your posts.'),
             _tile(Icons.view_list, 'Content you see', 'Decide what you see on X based on your preferences.'),
-            _tile(Icons.block, 'Mute and block', 'Manage the accounts, words, and notifications that you\'ve muted or blocked.'),
+            _tile(
+              Icons.block,
+              'Mute and block',
+              'Manage the accounts, words, and notifications that you\'ve muted or blocked.',
+              onTap: () => GoRouter.of(context).pushNamed(RouteConstants.muteandblockscreen),
+            ),
             _tile(Icons.mail_outline, 'Direct messages', 'Manage who can message you directly.'),
             _tile(Icons.mic, 'Spaces', 'Manage your Spaces activity'),
             _tile(Icons.person_search, 'Discoverability and contacts', 'Control your discoverability settings and manage contacts you\'ve imported.'),
