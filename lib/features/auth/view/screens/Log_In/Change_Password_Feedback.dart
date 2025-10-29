@@ -75,47 +75,49 @@ class _ChangePasswordFeedbackState
                     horizontal: 32,
                     vertical: 16,
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Column(
-                        children: [
-                          const Text(
-                            'Why\'d you change your password?',
-                            style: TextStyle(
-                              fontSize: 30,
-                              fontWeight: FontWeight.w800,
-                              color: Palette.textWhite,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Column(
+                          children: [
+                            const Text(
+                              'Why\'d you change your password?',
+                              style: TextStyle(
+                                fontSize: 30,
+                                fontWeight: FontWeight.w800,
+                                color: Palette.textWhite,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 12),
-                          const Text(
-                            'Your feedback helps us understand when and why people need to change their passwords.',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Palette.textSecondary,
+                            const SizedBox(height: 12),
+                            const Text(
+                              'Your feedback helps us understand when and why people need to change their passwords.',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Palette.textSecondary,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 32),
-                          _buildOption(
-                            title: 'I forgot my password',
-                            optionValue: 'forgot',
-                          ),
-                          const SizedBox(height: 24),
-                          _buildOption(
-                            title:
-                                'There was suspicious activity on my account',
-                            optionValue: 'suspicious',
-                          ),
-                          const SizedBox(height: 24),
-                          _buildOption(
-                            title:
-                                'I changed my password for a different reason',
-                            optionValue: 'different',
-                          ),
-                        ],
-                      ),
-                    ],
+                            const SizedBox(height: 32),
+                            _buildOption(
+                              title: 'I forgot my password',
+                              optionValue: 'forgot',
+                            ),
+                            const SizedBox(height: 24),
+                            _buildOption(
+                              title:
+                                  'There was suspicious activity on my account',
+                              optionValue: 'suspicious',
+                            ),
+                            const SizedBox(height: 24),
+                            _buildOption(
+                              title:
+                                  'I changed my password for a different reason',
+                              optionValue: 'different',
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
