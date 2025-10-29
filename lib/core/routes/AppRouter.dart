@@ -3,10 +3,8 @@ import 'package:go_router/go_router.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
 import 'package:lite_x/core/routes/app_shell.dart';
 import 'package:lite_x/features/auth/view/screens/Intro_Screen.dart';
-import 'package:lite_x/features/home/view/screens/home_screen.dart';
 import 'package:lite_x/core/view/screen/Splash_Screen.dart';
 import 'package:lite_x/features/auth/view/screens/Create_Account/CreateAccount_Screen.dart';
-import 'package:lite_x/features/auth/view/screens/Intro_Screen.dart';
 import 'package:lite_x/features/auth/view/screens/Log_In/Change_Password_Feedback.dart';
 import 'package:lite_x/features/auth/view/screens/Log_In/Choose_New_Password_Screen.dart';
 import 'package:lite_x/features/auth/view/screens/Log_In/Confirmation_code_Loc_Screen.dart';
@@ -32,10 +30,10 @@ class Approuter {
         ),
       ),
       GoRoute(
-        name: RouteConstants.appShell,
+        name: RouteConstants.introscreen,
         path: "/",
         pageBuilder: (context, state) => CustomTransitionPage(
-          child: const AppShell(),
+          child: const IntroScreen(),
           transitionsBuilder: _slideRightTransitionBuilder,
         ),
       ),
@@ -57,10 +55,10 @@ class Approuter {
       ),
 
       GoRoute(
-        name: RouteConstants.homescreen,
-        path: "/home",
+        name: RouteConstants.appShell,
+        path: "/appshell",
         pageBuilder: (context, state) => CustomTransitionPage(
-          child: const HomeScreen(),
+          child: const AppShell(),
           transitionsBuilder: _slideRightTransitionBuilder,
         ),
       ),

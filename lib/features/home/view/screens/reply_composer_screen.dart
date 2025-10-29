@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lite_x/features/home/models/tweet_model.dart';
+import 'package:lite_x/features/home/view_model/home_view_model.dart';
 
-class ReplyComposerScreen extends StatefulWidget {
+class ReplyComposerScreen extends ConsumerStatefulWidget {
   final TweetModel replyingToTweet;
 
   const ReplyComposerScreen({super.key, required this.replyingToTweet});
 
   @override
-  State<ReplyComposerScreen> createState() => _ReplyComposerScreenState();
+  ConsumerState<ReplyComposerScreen> createState() =>
+      _ReplyComposerScreenState();
 }
 
-class _ReplyComposerScreenState extends State<ReplyComposerScreen> {
+class _ReplyComposerScreenState extends ConsumerState<ReplyComposerScreen> {
   final TextEditingController _textController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
   bool _isPosting = false;
@@ -38,11 +41,41 @@ class _ReplyComposerScreenState extends State<ReplyComposerScreen> {
       _isPosting = true;
     });
 
-    // TODO: Implement API call to post reply
-    await Future.delayed(const Duration(seconds: 1)); // Simulate network call
+    try {
+      // Create reply via view model (matches API POST /api/tweets/{id}/replies)
+      await ref
+          .read(homeViewModelProvider.notifier)
+          .createPost(
+            content: _textController.text.trim(),
+            replyToId: widget.replyingToTweet.id,
+            replyControl: "EVERYONE",
+          );
 
-    if (mounted) {
-      Navigator.pop(context, _textController.text); // Return the reply text
+      if (mounted) {
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Reply posted successfully'),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            duration: Duration(seconds: 2),
+          ),
+        );
+        Navigator.pop(context, true); // Return success
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to post reply: $e'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        setState(() {
+          _isPosting = false;
+        });
+      }
     }
   }
 

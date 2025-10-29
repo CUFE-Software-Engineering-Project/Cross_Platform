@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../models/tweet_model.dart';
 
 class TweetWidget extends StatelessWidget {
   final String userDisplayName;
@@ -14,13 +15,21 @@ class TweetWidget extends StatelessWidget {
   final int shareCount;
   final int reachCount;
   final bool isSaved;
+  final bool isLiked;
+  final bool isRetweeted;
   final VoidCallback? onReply;
   final VoidCallback? onRetweet;
+  final VoidCallback? onQuote;
   final VoidCallback? onLike;
   final VoidCallback? onShare;
   final VoidCallback? onSave;
   final VoidCallback? onReach;
   final VoidCallback? onTap;
+  final VoidCallback? onDelete;
+  final String? tweetId;
+  final bool isOwnTweet;
+  final TweetModel? quotedTweet;
+
   const TweetWidget({
     super.key,
     required this.userDisplayName,
@@ -36,13 +45,20 @@ class TweetWidget extends StatelessWidget {
     this.shareCount = 0,
     this.reachCount = 0,
     this.isSaved = false,
+    this.isLiked = false,
+    this.isRetweeted = false,
     this.onReply,
     this.onRetweet,
+    this.onQuote,
     this.onLike,
     this.onShare,
     this.onSave,
     this.onReach,
     this.onTap,
+    this.onDelete,
+    this.tweetId,
+    this.isOwnTweet = false,
+    this.quotedTweet,
   });
 
   @override
@@ -73,11 +89,16 @@ class TweetWidget extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // User Info Row
-                  _buildUserInfoRow(),
+                  _buildUserInfoRow(context),
                   const SizedBox(height: 8),
                   // Tweet Text
                   _buildTweetText(),
                   const SizedBox(height: 12),
+                  // Quoted Tweet
+                  if (quotedTweet != null) ...[
+                    _buildQuotedTweet(),
+                    const SizedBox(height: 12),
+                  ],
                   // Media Content (Image/Video)
                   if (imageUrl != null || videoUrl != null) ...[
                     _buildMediaContent(),
@@ -94,46 +115,215 @@ class TweetWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildUserInfoRow() {
+  Widget _buildUserInfoRow(BuildContext context) {
     return Row(
       children: [
         Expanded(
-          flex: 3,
           child: Row(
-            mainAxisSize: MainAxisSize.min,
             children: [
+              // Name with verified badge
+              Flexible(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        userDisplayName,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (isVerified) ...[
+                      const SizedBox(width: 4),
+                      const Icon(Icons.verified, color: Colors.blue, size: 16),
+                    ],
+                  ],
+                ),
+              ),
+              // Dot separator
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Text(
+                  '·',
+                  style: TextStyle(color: Colors.grey[500], fontSize: 15),
+                ),
+              ),
+              // Username
               Flexible(
                 child: Text(
-                  userDisplayName,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
-                  ),
+                  username.startsWith('@') ? username : '@$username',
+                  style: TextStyle(color: Colors.grey[500], fontSize: 15),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              if (isVerified) ...[
-                const SizedBox(width: 4),
-                const Icon(Icons.verified, color: Colors.blue, size: 16),
-              ],
+              // Dot separator
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Text(
+                  '·',
+                  style: TextStyle(color: Colors.grey[500], fontSize: 15),
+                ),
+              ),
+              // Short time format
+              Text(
+                timeAgo,
+                style: TextStyle(color: Colors.grey[500], fontSize: 15),
+              ),
             ],
           ),
         ),
-        const SizedBox(width: 8),
-        Expanded(
-          flex: 2,
-          child: Text(
-            '@$username',
-            style: TextStyle(color: Colors.grey[500], fontSize: 15),
-            overflow: TextOverflow.ellipsis,
-          ),
+        // Three-dot menu
+        IconButton(
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(),
+          icon: Icon(Icons.more_horiz, color: Colors.grey[500], size: 20),
+          onPressed: () => _showOptionsMenu(context),
         ),
-        const SizedBox(width: 8),
-        Text('·', style: TextStyle(color: Colors.grey[500], fontSize: 15)),
-        const SizedBox(width: 4),
-        Text(timeAgo, style: TextStyle(color: Colors.grey[500], fontSize: 15)),
       ],
+    );
+  }
+
+  void _showOptionsMenu(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1E1E1E),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext modalContext) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 12),
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[600],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 20),
+              if (isOwnTweet && onDelete != null)
+                ListTile(
+                  leading: const Icon(Icons.delete, color: Colors.red),
+                  title: const Text(
+                    'Delete',
+                    style: TextStyle(color: Colors.red, fontSize: 16),
+                  ),
+                  onTap: () {
+                    Navigator.pop(modalContext);
+                    _showDeleteConfirmation(context);
+                  },
+                ),
+              ListTile(
+                leading: Icon(
+                  Icons.person_add_outlined,
+                  color: Colors.grey[300],
+                ),
+                title: Text(
+                  'Follow @$username',
+                  style: TextStyle(color: Colors.grey[300], fontSize: 16),
+                ),
+                onTap: () {
+                  Navigator.pop(modalContext);
+                  // TODO: Implement follow functionality
+                },
+              ),
+              ListTile(
+                leading: Icon(
+                  Icons.volume_off_outlined,
+                  color: Colors.grey[300],
+                ),
+                title: Text(
+                  'Mute @$username',
+                  style: TextStyle(color: Colors.grey[300], fontSize: 16),
+                ),
+                onTap: () {
+                  Navigator.pop(modalContext);
+                  // TODO: Implement mute functionality
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.block_outlined, color: Colors.grey[300]),
+                title: Text(
+                  'Block @$username',
+                  style: TextStyle(color: Colors.grey[300], fontSize: 16),
+                ),
+                onTap: () {
+                  Navigator.pop(modalContext);
+                  // TODO: Implement block functionality
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.flag_outlined, color: Colors.grey[300]),
+                title: Text(
+                  'Report post',
+                  style: TextStyle(color: Colors.grey[300], fontSize: 16),
+                ),
+                onTap: () {
+                  Navigator.pop(modalContext);
+                  // TODO: Implement report functionality
+                },
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showDeleteConfirmation(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF1E1E1E),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Text(
+            'Delete Post?',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: const Text(
+            'This action cannot be undone. Your post will be permanently deleted.',
+            style: TextStyle(color: Colors.grey, fontSize: 14),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+                if (onDelete != null) {
+                  onDelete!();
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -144,6 +334,92 @@ class TweetWidget extends StatelessWidget {
       textDirection: _isArabicText(content)
           ? TextDirection.rtl
           : TextDirection.ltr,
+    );
+  }
+
+  Widget _buildQuotedTweet() {
+    if (quotedTweet == null) return const SizedBox.shrink();
+
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey[800]!, width: 1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Quoted tweet author
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 12,
+                backgroundImage: NetworkImage(quotedTweet!.authorAvatar),
+                backgroundColor: Colors.grey[800],
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        quotedTweet!.authorName,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: Text(
+                        '@${quotedTweet!.authorUsername}',
+                        style: TextStyle(color: Colors.grey[500], fontSize: 14),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '· ${formatTimeAgoShort(quotedTweet!.createdAt)}',
+                      style: TextStyle(color: Colors.grey[500], fontSize: 14),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          // Quoted tweet content
+          Text(
+            quotedTweet!.content,
+            style: TextStyle(color: Colors.grey[300], fontSize: 14),
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+          ),
+          // Quoted tweet image (if available)
+          if (quotedTweet!.images.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.network(
+                quotedTweet!.images.first,
+                height: 120,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    height: 120,
+                    color: Colors.grey[800],
+                    child: const Icon(Icons.image, color: Colors.grey),
+                  );
+                },
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 
@@ -267,16 +543,20 @@ class TweetWidget extends StatelessWidget {
               child: _buildActionButton(
                 icon: Icons.repeat,
                 count: retweetCount,
-                onTap: onRetweet,
+                onTap: () => _showRetweetMenu(context),
                 compact: isNarrow,
+                isActive: isRetweeted,
+                activeColor: Colors.green,
               ),
             ),
             Flexible(
               child: _buildActionButton(
-                icon: Icons.favorite_border,
+                icon: isLiked ? Icons.favorite : Icons.favorite_border,
                 count: likeCount,
                 onTap: onLike,
                 compact: isNarrow,
+                isActive: isLiked,
+                activeColor: Colors.red,
               ),
             ),
             Flexible(
@@ -307,7 +587,13 @@ class TweetWidget extends StatelessWidget {
     required int count,
     VoidCallback? onTap,
     bool compact = false,
+    bool isActive = false,
+    Color? activeColor,
   }) {
+    final color = isActive && activeColor != null
+        ? activeColor
+        : Colors.grey[500];
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(20),
@@ -316,13 +602,13 @@ class TweetWidget extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: Colors.grey[500], size: compact ? 16 : 18),
+            Icon(icon, color: color, size: compact ? 16 : 18),
             if (count > 0 && !compact) ...[
               const SizedBox(width: 4),
               Flexible(
                 child: Text(
                   _formatCount(count),
-                  style: TextStyle(color: Colors.grey[500], fontSize: 13),
+                  style: TextStyle(color: color, fontSize: 13),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -331,7 +617,7 @@ class TweetWidget extends StatelessWidget {
               Flexible(
                 child: Text(
                   _formatCount(count),
-                  style: TextStyle(color: Colors.grey[500], fontSize: 11),
+                  style: TextStyle(color: color, fontSize: 11),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -370,5 +656,85 @@ class TweetWidget extends StatelessWidget {
   bool _isArabicText(String text) {
     // Simple check for Arabic characters
     return RegExp(r'[\u0600-\u06FF]').hasMatch(text);
+  }
+
+  void _showRetweetMenu(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1E1E1E),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext modalContext) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 12),
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[600],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 20),
+              ListTile(
+                leading: Icon(
+                  isRetweeted ? Icons.repeat : Icons.repeat,
+                  color: isRetweeted ? Colors.green : Colors.grey[300],
+                ),
+                title: Text(
+                  isRetweeted ? 'Undo Repost' : 'Repost',
+                  style: TextStyle(
+                    color: isRetweeted ? Colors.green : Colors.grey[300],
+                    fontSize: 16,
+                  ),
+                ),
+                onTap: () {
+                  Navigator.pop(modalContext);
+                  if (onRetweet != null) onRetweet!();
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.edit_outlined, color: Colors.grey[300]),
+                title: Text(
+                  'Quote',
+                  style: TextStyle(color: Colors.grey[300], fontSize: 16),
+                ),
+                onTap: () {
+                  Navigator.pop(modalContext);
+                  if (onQuote != null) onQuote!();
+                },
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  /// Converts DateTime to short format (1s, 2m, 3h, 4d, 5w, 6mo, 1y)
+  static String formatTimeAgoShort(DateTime dateTime) {
+    final now = DateTime.now();
+    final difference = now.difference(dateTime);
+
+    if (difference.inSeconds < 60) {
+      return '${difference.inSeconds}s';
+    } else if (difference.inMinutes < 60) {
+      return '${difference.inMinutes}m';
+    } else if (difference.inHours < 24) {
+      return '${difference.inHours}h';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays}d';
+    } else if (difference.inDays < 30) {
+      return '${(difference.inDays / 7).floor()}w';
+    } else if (difference.inDays < 365) {
+      return '${(difference.inDays / 30).floor()}mo';
+    } else {
+      return '${(difference.inDays / 365).floor()}y';
+    }
   }
 }

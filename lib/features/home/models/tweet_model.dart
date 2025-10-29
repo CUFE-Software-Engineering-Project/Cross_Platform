@@ -46,6 +46,15 @@ class TweetModel extends HiveObject {
   @HiveField(13)
   List<String> replyIds;
 
+  @HiveField(14)
+  bool isBookmarked;
+
+  @HiveField(15)
+  final String? quotedTweetId;
+
+  @HiveField(16)
+  final TweetModel? quotedTweet;
+
   TweetModel({
     required this.id,
     required this.content,
@@ -61,6 +70,9 @@ class TweetModel extends HiveObject {
     this.isRetweeted = false,
     this.replyToId,
     this.replyIds = const [],
+    this.isBookmarked = false,
+    this.quotedTweetId,
+    this.quotedTweet,
   });
 
   TweetModel copyWith({
@@ -78,6 +90,9 @@ class TweetModel extends HiveObject {
     bool? isRetweeted,
     String? replyToId,
     List<String>? replyIds,
+    bool? isBookmarked,
+    String? quotedTweetId,
+    TweetModel? quotedTweet,
   }) {
     return TweetModel(
       id: id ?? this.id,
@@ -94,6 +109,9 @@ class TweetModel extends HiveObject {
       isRetweeted: isRetweeted ?? this.isRetweeted,
       replyToId: replyToId ?? this.replyToId,
       replyIds: replyIds ?? this.replyIds,
+      isBookmarked: isBookmarked ?? this.isBookmarked,
+      quotedTweetId: quotedTweetId ?? this.quotedTweetId,
+      quotedTweet: quotedTweet ?? this.quotedTweet,
     );
   }
 
@@ -113,6 +131,9 @@ class TweetModel extends HiveObject {
       'isRetweeted': isRetweeted,
       'replyToId': replyToId,
       'replyIds': replyIds,
+      'isBookmarked': isBookmarked,
+      'quotedTweetId': quotedTweetId,
+      'quotedTweet': quotedTweet?.toJson(),
     };
   }
 
@@ -132,6 +153,11 @@ class TweetModel extends HiveObject {
       isRetweeted: json['isRetweeted'] ?? false,
       replyToId: json['replyToId'],
       replyIds: List<String>.from(json['replyIds'] ?? []),
+      isBookmarked: json['isBookmarked'] ?? false,
+      quotedTweetId: json['quotedTweetId'],
+      quotedTweet: json['quotedTweet'] != null
+          ? TweetModel.fromJson(json['quotedTweet'])
+          : null,
     );
   }
 }

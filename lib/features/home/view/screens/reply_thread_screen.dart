@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:lite_x/data/mock_tweets.dart';
+import 'package:lite_x/data/mock_for_you_tweets.dart';
+import 'package:lite_x/data/mock_following_tweets.dart';
 import 'package:lite_x/features/home/models/tweet_model.dart';
 import 'package:lite_x/features/home/view/screens/reply_composer_screen.dart';
 import 'package:timeago/timeago.dart' as timeago;
@@ -26,6 +28,13 @@ class ReplyThreadScreen extends StatefulWidget {
 class _ReplyThreadScreenState extends State<ReplyThreadScreen> {
   final ScrollController _scrollController = ScrollController();
   final GlobalKey _currentReplyKey = GlobalKey();
+
+  // Combined tweet map from all sources
+  Map<String, TweetModel> get allTweets => {
+    ...mockTweets,
+    ...mockForYouTweets,
+    ...mockFollowingTweets,
+  };
 
   @override
   void initState() {
@@ -57,7 +66,7 @@ class _ReplyThreadScreenState extends State<ReplyThreadScreen> {
   @override
   Widget build(BuildContext context) {
     final tweets = widget.pathTweetIds
-        .map((id) => mockTweets[id])
+        .map((id) => allTweets[id])
         .where((t) => t != null)
         .cast<TweetModel>()
         .toList();
@@ -147,7 +156,7 @@ class _ReplyThreadScreenState extends State<ReplyThreadScreen> {
 
           // Children replies (compact)
           ...currentReply.replyIds
-              .map((id) => mockTweets[id])
+              .map((id) => allTweets[id])
               .where((t) => t != null)
               .cast<TweetModel>()
               .map(
@@ -645,7 +654,7 @@ class _ReplyThreadScreenState extends State<ReplyThreadScreen> {
 
   Widget _buildReplyBar() {
     final currentReply = widget.pathTweetIds.isNotEmpty
-        ? mockTweets[widget.pathTweetIds.last]
+        ? allTweets[widget.pathTweetIds.last]
         : null;
 
     return SafeArea(

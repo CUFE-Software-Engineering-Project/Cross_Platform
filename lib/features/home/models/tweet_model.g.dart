@@ -33,13 +33,16 @@ class TweetModelAdapter extends TypeAdapter<TweetModel> {
       replyIds: fields[13] == null
           ? const []
           : (fields[13] as List).cast<String>(),
+      isBookmarked: fields[14] == null ? false : fields[14] as bool,
+      quotedTweetId: fields[15] as String?,
+      quotedTweet: fields[16] as TweetModel?,
     );
   }
 
   @override
   void write(BinaryWriter writer, TweetModel obj) {
     writer
-      ..writeByte(14)
+      ..writeByte(17)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -67,7 +70,13 @@ class TweetModelAdapter extends TypeAdapter<TweetModel> {
       ..writeByte(12)
       ..write(obj.replyToId)
       ..writeByte(13)
-      ..write(obj.replyIds);
+      ..write(obj.replyIds)
+      ..writeByte(14)
+      ..write(obj.isBookmarked)
+      ..writeByte(15)
+      ..write(obj.quotedTweetId)
+      ..writeByte(16)
+      ..write(obj.quotedTweet);
   }
 
   @override
