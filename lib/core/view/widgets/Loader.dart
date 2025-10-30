@@ -29,41 +29,44 @@ class _LoaderState extends State<Loader> with SingleTickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          SizedBox(
-            width: 80,
-            height: 80,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                AnimatedBuilder(
-                  animation: _controller,
-                  builder: (context, child) {
-                    return CustomPaint(
-                      size: const Size(100, 100),
-                      painter: CircularLoaderPainter(
-                        progress: _controller.value,
-                      ),
-                    );
-                  },
-                ),
-                buildXLogo(size: 40),
-              ],
+    return Material(
+      color: Colors.black,
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SizedBox(
+              width: 80,
+              height: 80,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  AnimatedBuilder(
+                    animation: _controller,
+                    builder: (context, child) {
+                      return CustomPaint(
+                        size: const Size(100, 100),
+                        painter: CircularLoaderPainter(
+                          progress: _controller.value,
+                        ),
+                      );
+                    },
+                  ),
+                  buildXLogo(size: 40),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 14),
-          const Text(
-            "Loading...",
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
+            const SizedBox(height: 14),
+            const Text(
+              "Loading...",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

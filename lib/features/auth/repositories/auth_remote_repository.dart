@@ -1,3 +1,4 @@
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:lite_x/core/classes/AppFailure.dart';
 import 'package:lite_x/core/constants/server_constants.dart';
@@ -5,6 +6,7 @@ import 'package:lite_x/core/models/TokensModel.dart';
 import 'package:lite_x/core/models/usermodel.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:dio/dio.dart';
+import 'package:url_launcher/url_launcher.dart';
 part 'auth_remote_repository.g.dart';
 
 @Riverpod(keepAlive: true)
@@ -13,6 +15,7 @@ AuthRemoteRepository authRemoteRepository(Ref ref) {
 }
 
 class AuthRemoteRepository {
+  final String API_URL = dotenv.env["API_URL"]!;
   final Dio _dio;
   AuthRemoteRepository({required Dio dio}) : _dio = dio;
   //--------------------------------------------SignUp---------------------------------------------------------//
@@ -104,9 +107,27 @@ class AuthRemoteRepository {
     }
   }
 
+  Future<void> loginWithGoogle() async {
+    final authUrl = Uri.parse("${API_URL}/authorize/google");
+    if (await canLaunchUrl(authUrl)) {
+      await launchUrl(authUrl, mode: LaunchMode.externalApplication);
+    } else {
+      throw Exception("Could not launch $authUrl");
+    }
+  }
+
+  Future<void> loginWithGithub() async {
+    final authUrl = Uri.parse("${API_URL}/authorize/github");
+    if (await canLaunchUrl(authUrl)) {
+      await launchUrl(authUrl, mode: LaunchMode.externalApplication);
+    } else {
+      throw Exception("Could not launch $authUrl");
+    }
+  }
+
   //-------------------------------------------------Login--------------------------------------------------------------------------------------//
   // Login with email and password
-  Future<Either<AppFailure, String>> login({
+  Future<Either<AppFailure, (UserModel, TokensModel)>> login({
     required String email,
     required String password,
   }) async {
@@ -115,7 +136,14 @@ class AuthRemoteRepository {
         '/login',
         data: {'email': email, 'password': password},
       );
-      return right(response.data['message'] ?? 'Verification code sent');
+      final user = UserModel.fromMap(response.data['User']);
+      final tokensMap = {
+        'access_token': response.data['Token'],
+        'refresh_token': response.data['Refresh_token'],
+      };
+      final tokens = TokensModel.fromMap(tokensMap);
+
+      return right((user, tokens));
     } on DioException catch (e) {
       return left(
         AppFailure(message: e.response?.data['error'] ?? 'Login failed'),
@@ -125,16 +153,45 @@ class AuthRemoteRepository {
     }
   }
 
+  Future<Either<AppFailure, bool>> check_email({required String email}) async {
+    try {
+      final response = await _dio.post('/check-email', data: {'email': email});
+      return right(response.data['exists'] ?? false);
+    } on DioException catch (e) {
+      return left(
+        AppFailure(message: e.response?.data['error'] ?? 'Email check failed'),
+      );
+    } catch (e) {
+      return left(AppFailure(message: e.toString()));
+    }
+  }
+
   //-------------------------------------------------------------------------------token management--------------------------------------------------------------------------------------------//
   Future<Either<AppFailure, TokensModel>> refreshToken(
     String refreshToken,
+    DateTime refreshTokenExpiry,
   ) async {
     try {
       final response = await _dio.post(
         '/refresh',
         options: Options(headers: {'Authorization': 'Bearer $refreshToken'}),
       );
-      final tokens = TokensModel.fromMap(response.data);
+
+      final newAccessToken = response.data['NewAcesstoken'] as String?;
+
+      if (newAccessToken == null) {
+        return left(
+          AppFailure(
+            message: 'Refresh response did not contain new access token',
+          ),
+        );
+      }
+      final tokens = TokensModel(
+        accessToken: newAccessToken,
+        refreshToken: refreshToken,
+        accessTokenExpiry: DateTime.now().add(const Duration(minutes: 15)),
+        refreshTokenExpiry: refreshTokenExpiry,
+      );
       return right(tokens);
     } on DioException catch (e) {
       return left(

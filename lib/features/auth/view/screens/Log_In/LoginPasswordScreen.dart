@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -66,49 +65,25 @@ class _LoginPasswordScreenState extends ConsumerState<LoginPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isWeb = kIsWeb;
-
     return Scaffold(
-      backgroundColor: isWeb
-          ? Colors.black.withOpacity(0.4)
-          : Palette.background,
-      appBar: !isWeb
-          ? AppBar(
-              leading: IconButton(
-                icon: const Icon(Icons.close, color: Palette.textWhite),
-                onPressed: () => context.goNamed(RouteConstants.introscreen),
-              ),
-              title: buildXLogo(size: 36),
-              centerTitle: true,
-              backgroundColor: Palette.background,
-              elevation: 0,
-            )
-          : null,
+      backgroundColor: Palette.background,
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.close, color: Palette.textWhite),
+          onPressed: () => context.goNamed(RouteConstants.introscreen),
+        ),
+        title: buildXLogo(size: 36),
+        centerTitle: true,
+        backgroundColor: Palette.background,
+        elevation: 0,
+      ),
       body: Center(
         child: Container(
-          width: isWeb ? 600 : double.infinity,
-          height: isWeb ? 650 : double.infinity,
-          decoration: BoxDecoration(
-            color: Palette.background,
-            borderRadius: isWeb ? BorderRadius.circular(16) : null,
-          ),
+          width: double.infinity,
+          height: double.infinity,
+          decoration: BoxDecoration(color: Palette.background),
           child: Column(
             children: [
-              if (isWeb)
-                Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.close, color: Palette.textWhite),
-                        onPressed: () =>
-                            context.goNamed(RouteConstants.introscreen),
-                      ),
-                      Expanded(child: Center(child: buildXLogo(size: 40))),
-                      const SizedBox(width: 48),
-                    ],
-                  ),
-                ),
               Expanded(
                 child: Form(
                   key: _formKey,
@@ -153,7 +128,7 @@ class _LoginPasswordScreenState extends ConsumerState<LoginPasswordScreen> {
                   ),
                 ),
               ),
-              _buildBottomButtons(isWeb),
+              _buildBottomButtons(),
             ],
           ),
         ),
@@ -161,7 +136,7 @@ class _LoginPasswordScreenState extends ConsumerState<LoginPasswordScreen> {
     );
   }
 
-  Widget _buildBottomButtons(bool isWeb) {
+  Widget _buildBottomButtons() {
     return Container(
       padding: const EdgeInsets.all(16),
       child: Row(
@@ -186,7 +161,7 @@ class _LoginPasswordScreenState extends ConsumerState<LoginPasswordScreen> {
             valueListenable: _isFormValid,
             builder: (context, isValid, child) {
               return SizedBox(
-                width: isWeb ? 120 : 80,
+                width: 80,
                 child: ElevatedButton(
                   onPressed: isValid ? _handleLogin : null,
                   style: ElevatedButton.styleFrom(

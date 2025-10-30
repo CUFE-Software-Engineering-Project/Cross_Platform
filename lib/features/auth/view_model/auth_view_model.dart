@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:lite_x/core/models/usermodel.dart';
 import 'package:lite_x/features/auth/repositories/auth_local_repository.dart';
 import 'package:lite_x/features/auth/repositories/auth_remote_repository.dart';
@@ -20,14 +19,13 @@ class AuthViewModel extends _$AuthViewModel {
     _authRemoteRepository = ref.read(authRemoteRepositoryProvider);
     _authLocalRepository = ref.read(authLocalRepositoryProvider);
     _checkAuthStatus();
-    return AuthState.initial();
+    return AuthState.unauthenticated();
   }
 
   Future<void> _checkAuthStatus() async {
     final user = _authLocalRepository.getUser();
     final tokens = _authLocalRepository.getTokens();
-
-    if (user != null && tokens['accessToken'] != null) {
+    if (user != null && tokens != null && !tokens.isAccessTokenExpired) {
       ref.read(currentUserProvider.notifier).adduser(user);
       state = AuthState.authenticated();
       _startAutoRefresh();
@@ -75,7 +73,7 @@ class AuthViewModel extends _$AuthViewModel {
     );
   }
 
-  // Step 3: Finalize signup (set password and complete registration)
+  // Step 3: Finalize signup
   Future<void> finalizeSignup({
     required String email,
     required String password,
@@ -94,13 +92,10 @@ class AuthViewModel extends _$AuthViewModel {
       (data) async {
         final (user, tokens) = data;
         await _authLocalRepository.saveUser(user);
-        await _authLocalRepository.saveTokens(
-          tokens.accessToken,
-          tokens.refreshToken,
-        );
+        await _authLocalRepository.saveTokens(tokens);
         ref.read(currentUserProvider.notifier).adduser(user);
-
         state = AuthState.authenticated('Signup successful');
+        _startAutoRefresh();
       },
     );
   }
@@ -108,9 +103,7 @@ class AuthViewModel extends _$AuthViewModel {
   // Step 4: Update username after signup
   Future<void> updateUsername({required String username}) async {
     state = AuthState.loading();
-
-    final tokens = _authLocalRepository.getTokens();
-    final accessToken = tokens['accessToken'];
+    final accessToken = getAccessToken();
 
     if (accessToken == null) {
       state = AuthState.error('No access token found');
@@ -138,15 +131,36 @@ class AuthViewModel extends _$AuthViewModel {
   //-------------------------------------------------Login Flow--------------------------------------------------------------------------------------//
   Future<void> login({required String email, required String password}) async {
     state = AuthState.loading();
-
     final result = await _authRemoteRepository.login(
       email: email,
       password: password,
     );
+    result.fold((failure) => state = AuthState.error(failure.message), (
+      data,
+    ) async {
+      final (user, tokens) = data;
+      await _authLocalRepository.saveUser(user);
+      await _authLocalRepository.saveTokens(tokens);
 
-    result.fold(
-      (failure) => state = AuthState.error(failure.message),
-      (message) => state = AuthState.unverified(message),
+      ref.read(currentUserProvider.notifier).adduser(user);
+      state = AuthState.authenticated('Login successful');
+      _startAutoRefresh();
+    });
+  }
+
+  //-------------------------------------------------Email Check--------------------------------------------------------------------------------------//
+  Future<bool?> checkEmail({required String email}) async {
+    state = AuthState.loading();
+    final result = await _authRemoteRepository.check_email(email: email);
+    return result.fold(
+      (failure) {
+        state = AuthState.error(failure.message);
+        return null;
+      },
+      (exists) {
+        state = AuthState.unauthenticated();
+        return exists;
+      },
     );
   }
 
@@ -159,45 +173,59 @@ class AuthViewModel extends _$AuthViewModel {
   }
 
   Future<void> refreshAccessToken() async {
-    final refreshToken = getRefreshToken();
-    if (refreshToken == null) {
-      print('No refresh token found, cannot refresh');
+    final currentTokens = _authLocalRepository.getTokens();
+
+    if (currentTokens == null) {
+      print('No refresh token details found, cannot refresh');
       return;
     }
 
-    final result = await _authRemoteRepository.refreshToken(refreshToken);
+    if (currentTokens.isRefreshTokenExpired) {
+      print('Refresh token is expired. Logging out.');
+      return;
+    }
+
+    final result = await _authRemoteRepository.refreshToken(
+      currentTokens.refreshToken,
+      currentTokens.refreshTokenExpiry,
+    );
+
     result.fold(
       (failure) {
         print("Refresh failed: ${failure.message}");
       },
       (newTokens) async {
-        await _authLocalRepository.saveTokens(
-          newTokens.accessToken,
-          newTokens.refreshToken,
-        );
+        await _authLocalRepository.saveTokens(newTokens);
+        print("Token refreshed successfully.");
       },
     );
   }
 
   String? getAccessToken() {
     final tokens = _authLocalRepository.getTokens();
-    return tokens['accessToken'];
+    if (tokens != null && !tokens.isAccessTokenExpired) {
+      return tokens.accessToken;
+    }
+    return null;
   }
 
   String? getRefreshToken() {
     final tokens = _authLocalRepository.getTokens();
-    return tokens['refreshToken'];
+    if (tokens != null && !tokens.isRefreshTokenExpired) {
+      return tokens.refreshToken;
+    }
+    return null;
   }
 
   //-------------------------------------------------Helper Methods--------------------------------------------------------------------------------------//
   void resetState() {
-    state = AuthState.initial();
+    state = AuthState.unauthenticated();
   }
 
   bool get isAuthenticated {
     final user = _authLocalRepository.getUser();
     final tokens = _authLocalRepository.getTokens();
-    return user != null && tokens['accessToken'] != null;
+    return user != null && tokens != null && !tokens.isAccessTokenExpired;
   }
 
   UserModel? getCurrentUser() {

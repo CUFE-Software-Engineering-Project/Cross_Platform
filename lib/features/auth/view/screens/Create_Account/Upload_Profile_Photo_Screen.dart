@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:flutter/foundation.dart';
+
 import 'package:go_router/go_router.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:flutter/material.dart';
@@ -36,7 +36,7 @@ class _UploadProfilePhotoScreenState
     CroppedFile? croppedFile;
 
     try {
-      if (!kIsWeb && picked.file != null) {
+      if (picked.file != null) {
         croppedFile = await ImageCropper().cropImage(
           sourcePath: picked.file!.path,
           aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
@@ -60,42 +60,6 @@ class _UploadProfilePhotoScreenState
               bytes: null,
               name: picked.name,
               path: croppedFile.path,
-            );
-            _isFormValid.value = true;
-          });
-        }
-      } else if (kIsWeb && picked.bytes != null) {
-        croppedFile = await ImageCropper().cropImage(
-          sourcePath: picked.path!,
-          aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
-          uiSettings: [
-            WebUiSettings(
-              context: context,
-              presentStyle: WebPresentStyle.dialog,
-              size: const CropperSize(width: 450, height: 450),
-              viewwMode: WebViewMode.mode_1,
-              dragMode: WebDragMode.move,
-              initialAspectRatio: 1,
-              cropBoxResizable: false,
-              translations: const WebTranslations(
-                rotateLeftTooltip: "Rotate left",
-                rotateRightTooltip: "Rotate right",
-                title: "Move and scale",
-                cancelButton: "Cancel",
-                cropButton: "Apply",
-              ),
-            ),
-          ],
-        );
-
-        if (croppedFile != null && mounted) {
-          final croppedBytes = await croppedFile.readAsBytes();
-          setState(() {
-            selectedImage = PickedImage(
-              file: null,
-              bytes: croppedBytes,
-              name: picked.name,
-              path: croppedFile!.path,
             );
             _isFormValid.value = true;
           });
@@ -127,40 +91,21 @@ class _UploadProfilePhotoScreenState
 
   @override
   Widget build(BuildContext context) {
-    final isWeb = kIsWeb;
-
     return Scaffold(
-      backgroundColor: isWeb
-          ? Colors.black.withOpacity(0.4)
-          : Palette.background,
-      appBar: !isWeb
-          ? AppBar(
-              title: buildXLogo(size: 36),
-              centerTitle: true,
-              backgroundColor: Palette.background,
-              elevation: 0,
-            )
-          : null,
+      backgroundColor: Palette.background,
+      appBar: AppBar(
+        title: buildXLogo(size: 36),
+        centerTitle: true,
+        backgroundColor: Palette.background,
+        elevation: 0,
+      ),
       body: Center(
         child: Container(
-          width: isWeb ? 600 : double.infinity,
-          height: isWeb ? 650 : double.infinity,
-          decoration: BoxDecoration(
-            color: Palette.background,
-            borderRadius: isWeb ? BorderRadius.circular(16) : null,
-          ),
+          width: double.infinity,
+          height: double.infinity,
+          decoration: BoxDecoration(color: Palette.background),
           child: Column(
             children: [
-              if (isWeb)
-                Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Row(
-                    children: [
-                      Expanded(child: Center(child: buildXLogo(size: 40))),
-                      const SizedBox(width: 48),
-                    ],
-                  ),
-                ),
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(
@@ -192,7 +137,7 @@ class _UploadProfilePhotoScreenState
                   ),
                 ),
               ),
-              _buildBottomButtons(isWeb),
+              _buildBottomButtons(),
             ],
           ),
         ),
@@ -268,15 +213,13 @@ class _UploadProfilePhotoScreenState
   }
 
   ImageProvider _getImageProvider() {
-    if (kIsWeb && selectedImage!.bytes != null) {
-      return MemoryImage(selectedImage!.bytes!);
-    } else if (selectedImage!.file != null) {
+    if (selectedImage!.file != null) {
       return FileImage(selectedImage!.file!);
     }
     throw Exception('No image available');
   }
 
-  Widget _buildBottomButtons(bool isWeb) {
+  Widget _buildBottomButtons() {
     return Container(
       padding: const EdgeInsets.all(16),
       child: Row(
@@ -301,7 +244,7 @@ class _UploadProfilePhotoScreenState
             valueListenable: _isFormValid,
             builder: (context, isValid, child) {
               return SizedBox(
-                width: isWeb ? 120 : 90,
+                width: 90,
                 child: ElevatedButton(
                   onPressed: isValid ? _handleNext : null,
                   style: ElevatedButton.styleFrom(

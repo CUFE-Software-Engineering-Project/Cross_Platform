@@ -70,10 +70,7 @@ class IntroScreen extends ConsumerWidget {
         AuthButton(
           icon: 'assets/images/google.png',
           label: 'Continue with Google',
-          onPressed: () async {
-            // await _handleGoogleSignIn(context, ref);
-            // context.pushNamed(RouteConstants.TestChatScreen);
-          },
+          onPressed: () async {},
         ),
         const SizedBox(height: 10),
         AuthButton(

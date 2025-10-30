@@ -1,4 +1,5 @@
 import 'package:hive_ce/hive.dart';
+import 'package:lite_x/core/models/TokensModel.dart';
 import 'package:lite_x/core/models/usermodel.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -31,20 +32,49 @@ class AuthLocalRepository {
     await _userBox.delete('currentUser');
   }
 
-  Future<void> saveTokens(String accessToken, String refreshToken) async {
-    await _tokenBox.put('accessToken', accessToken);
-    await _tokenBox.put('refreshToken', refreshToken);
+  Future<void> saveTokens(TokensModel tokens) async {
+    await _tokenBox.put('accessToken', tokens.accessToken);
+    await _tokenBox.put('refreshToken', tokens.refreshToken);
+    await _tokenBox.put(
+      'accessTokenExpiry',
+      tokens.accessTokenExpiry.toIso8601String(),
+    );
+    await _tokenBox.put(
+      'refreshTokenExpiry',
+      tokens.refreshTokenExpiry.toIso8601String(),
+    );
   }
 
-  Map<String, String?> getTokens() {
-    return {
-      'accessToken': _tokenBox.get('accessToken'),
-      'refreshToken': _tokenBox.get('refreshToken'),
-    };
+  TokensModel? getTokens() {
+    final accessToken = _tokenBox.get('accessToken') as String?;
+    final refreshToken = _tokenBox.get('refreshToken') as String?;
+    final accessTokenExpiryStr = _tokenBox.get('accessTokenExpiry') as String?;
+    final refreshTokenExpiryStr =
+        _tokenBox.get('refreshTokenExpiry') as String?;
+
+    if (accessToken == null ||
+        refreshToken == null ||
+        accessTokenExpiryStr == null ||
+        refreshTokenExpiryStr == null) {
+      return null;
+    }
+
+    try {
+      return TokensModel(
+        accessToken: accessToken,
+        refreshToken: refreshToken,
+        accessTokenExpiry: DateTime.parse(accessTokenExpiryStr),
+        refreshTokenExpiry: DateTime.parse(refreshTokenExpiryStr),
+      );
+    } catch (e) {
+      return null;
+    }
   }
 
   Future<void> clearTokens() async {
     await _tokenBox.delete('accessToken');
     await _tokenBox.delete('refreshToken');
+    await _tokenBox.delete('accessTokenExpiry');
+    await _tokenBox.delete('refreshTokenExpiry');
   }
 }

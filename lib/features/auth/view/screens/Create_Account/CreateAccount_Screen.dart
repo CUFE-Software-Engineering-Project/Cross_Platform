@@ -6,8 +6,11 @@ import 'package:lite_x/core/providers/emailProvider.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
 import 'package:lite_x/core/theme/palette.dart';
 import 'package:lite_x/core/utils.dart';
+import 'package:lite_x/core/view/widgets/Loader.dart';
 import 'package:lite_x/features/auth/view/widgets/CustomTextField.dart';
 import 'package:lite_x/features/auth/view/widgets/buildXLogo.dart';
+import 'package:lite_x/features/auth/view_model/auth_view_model.dart';
+import 'package:lite_x/features/auth/view_model/auth_state.dart';
 
 class CreateAccountScreen extends ConsumerStatefulWidget {
   const CreateAccountScreen({super.key});
@@ -42,10 +45,34 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
   }
 
   void _handleNext() {
-    if (_formKey.currentState!.validate()) {
-      ref.read(emailProvider.notifier).update((_) => _emailController.text);
-      context.pushNamed(RouteConstants.verificationscreen);
+    if (!_formKey.currentState!.validate()) {
+      return;
     }
+    FocusScope.of(context).unfocus();
+
+    ref
+        .read(authViewModelProvider.notifier)
+        .createAccount(
+          name: _nameController.text.trim(),
+          email: _emailController.text.trim(),
+          dateOfBirth: _dobController.text.trim(),
+        );
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: const TextStyle(color: Palette.textWhite),
+        ),
+        backgroundColor: Colors.black,
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        duration: const Duration(seconds: 3),
+      ),
+    );
   }
 
   Future<void> _selectDate(BuildContext context) async {
@@ -91,92 +118,126 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Palette.background,
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Palette.textWhite),
-          onPressed: () => context.pop(),
-        ),
-        title: buildXLogo(size: 36),
-        centerTitle: true,
-        backgroundColor: Palette.background,
-        elevation: 0,
-      ),
-      body: Center(
-        child: Container(
-          width: double.infinity,
-          height: double.infinity,
-          decoration: BoxDecoration(
-            color: Palette.background,
-            borderRadius: null,
+    ref.listen(authViewModelProvider, (previous, next) {
+      final authViewModel = ref.read(authViewModelProvider.notifier);
+
+      if (next.type == AuthStateType.success) {
+        ref
+            .read(emailProvider.notifier)
+            .update((_) => _emailController.text.trim());
+        authViewModel.resetState();
+        if (mounted) {
+          context.pushNamed(RouteConstants.verificationscreen);
+        }
+      } else if (next.type == AuthStateType.error) {
+        _showErrorSnackBar(next.message ?? 'An error occurred');
+        Future.delayed(const Duration(seconds: 2), () {
+          if (mounted) {
+            authViewModel.resetState();
+          }
+        });
+      }
+    });
+
+    final authState = ref.watch(authViewModelProvider);
+    final isLoading = authState.isLoading;
+
+    return Stack(
+      children: [
+        Scaffold(
+          backgroundColor: Palette.background,
+          appBar: AppBar(
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Palette.textWhite),
+              onPressed: isLoading ? null : () => context.pop(),
+            ),
+            title: buildXLogo(size: 36),
+            centerTitle: true,
+            backgroundColor: Palette.background,
+            elevation: 0,
           ),
-          child: Column(
-            children: [
-              Expanded(
-                child: Form(
-                  key: _formKey,
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 32,
-                      vertical: 16,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Create your account',
-                          style: TextStyle(
-                            fontSize: 31,
-                            fontWeight: FontWeight.w800,
-                            color: Palette.textWhite,
+          body: AbsorbPointer(
+            absorbing: isLoading,
+            child: Center(
+              child: Container(
+                width: double.infinity,
+                height: double.infinity,
+                decoration: const BoxDecoration(color: Palette.background),
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: Form(
+                        key: _formKey,
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 32,
+                            vertical: 16,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Create your account',
+                                style: TextStyle(
+                                  fontSize: 31,
+                                  fontWeight: FontWeight.w800,
+                                  color: Palette.textWhite,
+                                ),
+                              ),
+                              const SizedBox(height: 150),
+                              CustomTextField(
+                                controller: _nameController,
+                                labelText: 'Name',
+                                maxLength: 50,
+                                validator: nameValidator,
+                                focusNode: _nameFocus,
+                                onFieldSubmitted: (_) {
+                                  FocusScope.of(
+                                    context,
+                                  ).requestFocus(_emailFocus);
+                                },
+                              ),
+                              const SizedBox(height: 10),
+                              CustomTextField(
+                                controller: _emailController,
+                                labelText: 'Email',
+                                keyboardType: TextInputType.emailAddress,
+                                validator: emailValidator,
+                                focusNode: _emailFocus,
+                              ),
+                              const SizedBox(height: 25),
+                              CustomTextField(
+                                controller: _dobController,
+                                labelText: 'Date of birth',
+                                readOnly: true,
+                                onTap: () => _selectDate(context),
+                                validator: dobValidator,
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(height: 150),
-                        CustomTextField(
-                          controller: _nameController,
-                          labelText: 'Name',
-                          maxLength: 50,
-                          validator: nameValidator,
-                          focusNode: _nameFocus,
-                          onFieldSubmitted: (_) {
-                            FocusScope.of(context).requestFocus(_emailFocus);
-                          },
-                        ),
-                        const SizedBox(height: 10),
-                        CustomTextField(
-                          controller: _emailController,
-                          labelText: 'Email',
-                          keyboardType: TextInputType.emailAddress,
-                          validator: emailValidator,
-                          focusNode: _emailFocus,
-                        ),
-                        const SizedBox(height: 25),
-                        CustomTextField(
-                          controller: _dobController,
-                          labelText: 'Date of birth',
-                          readOnly: true,
-                          onTap: () => _selectDate(context),
-                          validator: dobValidator,
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
+                    _buildNextButton(isLoading),
+                    const SizedBox(height: 15),
+                  ],
                 ),
               ),
-              _buildNextButton(),
-              const SizedBox(height: 15),
-            ],
+            ),
           ),
         ),
-      ),
+        if (isLoading)
+          Container(
+            color: Colors.black.withOpacity(0.5),
+            child: const Loader(),
+          ),
+      ],
     );
   }
 
-  Widget _buildNextButton() {
+  Widget _buildNextButton(bool isLoading) {
     return Container(
-      padding: EdgeInsets.all(10),
-      width: null,
+      padding: const EdgeInsets.all(10),
       alignment: Alignment.centerRight,
       child: ValueListenableBuilder<bool>(
         valueListenable: _isFormValid,
@@ -184,7 +245,7 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
           return SizedBox(
             width: 90,
             child: ElevatedButton(
-              onPressed: isValid ? _handleNext : null,
+              onPressed: (isValid && !isLoading) ? _handleNext : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Palette.textWhite,
                 disabledBackgroundColor: Palette.textWhite.withOpacity(0.5),
