@@ -2,11 +2,15 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lite_x/core/providers/current_user_provider.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
 import 'package:lite_x/core/theme/palette.dart';
 import 'package:lite_x/core/utils.dart';
+import 'package:lite_x/core/view/widgets/Loader.dart';
 import 'package:lite_x/features/auth/view/widgets/CustomTextField.dart';
 import 'package:lite_x/features/auth/view/widgets/buildXLogo.dart';
+import 'package:lite_x/features/auth/view_model/auth_state.dart';
+import 'package:lite_x/features/auth/view_model/auth_view_model.dart';
 
 class UsernameScreen extends ConsumerStatefulWidget {
   const UsernameScreen({super.key});
@@ -25,6 +29,20 @@ class _UsernameScreenState extends ConsumerState<UsernameScreen> {
   void initState() {
     super.initState();
     _usernameController.addListener(_validateForm);
+
+    // Debug: Check user state when screen loads
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      print('🖥️ UsernameScreen loaded');
+      final currentUser = ref.read(currentUserProvider);
+      print('👤 Current user: ${currentUser?.name ?? "NULL"}');
+      print('📧 Email: ${currentUser?.email ?? "NULL"}');
+
+      if (currentUser == null) {
+        print('⚠️ WARNING: No user in provider on UsernameScreen!');
+      } else {
+        print('✅ User exists in provider');
+      }
+    });
   }
 
   void _validateForm() {
@@ -46,10 +64,24 @@ class _UsernameScreenState extends ConsumerState<UsernameScreen> {
   }
 
   void _handleNext() {
-    if (_formKey.currentState!.validate()) {
-      print('Username: ${_usernameController.text}');
-      //  context.goNamed(RouteConstants.home);
+    if (!_formKey.currentState!.validate()) {
+      return;
     }
+
+    final username = _usernameController.text.trim();
+    final currentUser = ref.read(currentUserProvider);
+
+    if (currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Error: User not found. Please restart signup.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    ref.read(authViewModelProvider.notifier).updateUsername(username: username);
   }
 
   void _handleSkip() {
@@ -65,6 +97,24 @@ class _UsernameScreenState extends ConsumerState<UsernameScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(authViewModelProvider, (previous, next) {
+      if (next.type == AuthStateType.success) {
+        context.goNamed(RouteConstants.Interests);
+        ref.read(authViewModelProvider.notifier).setAuthenticated();
+      } else if (next.type == AuthStateType.error) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(next.message ?? 'An error occurred'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        ref.read(authViewModelProvider.notifier).resetState();
+      }
+    });
+
+    final authState = ref.watch(authViewModelProvider);
+    final isLoading = authState.isLoading;
+
     return Scaffold(
       backgroundColor: Palette.background,
       appBar: AppBar(
@@ -73,125 +123,141 @@ class _UsernameScreenState extends ConsumerState<UsernameScreen> {
         backgroundColor: Palette.background,
         elevation: 0,
       ),
-      body: Center(
-        child: Container(
-          width: double.infinity,
-          height: double.infinity,
-          decoration: BoxDecoration(color: Palette.background),
-          child: Column(
-            children: [
-              Expanded(
-                child: Form(
-                  key: _formKey,
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 28,
-                      vertical: 16,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'What should we call you?',
-                          style: TextStyle(
-                            fontSize: 26,
-                            fontWeight: FontWeight.w800,
-                            color: Palette.textWhite,
+      body: AbsorbPointer(
+        absorbing: isLoading,
+        child: Stack(
+          children: [
+            Center(
+              child: Container(
+                width: double.infinity,
+                height: double.infinity,
+                decoration: BoxDecoration(color: Palette.background),
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: Form(
+                        key: _formKey,
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 28,
+                            vertical: 16,
                           ),
-                        ),
-                        const SizedBox(height: 12),
-                        const Text(
-                          'Your @username is unique. You can always change it later.',
-                          style: TextStyle(
-                            fontSize: 15,
-                            color: Palette.textSecondary,
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        CustomTextField(
-                          controller: _usernameController,
-                          labelText: 'Username',
-                          // prefixText: '@',
-                          validator: usernameValidator,
-                          onChanged: (value) {
-                            if (value.isNotEmpty) {
-                              generateSuggestions(value);
-                            } else {
-                              setState(() {
-                                suggestions = [];
-                              });
-                            }
-                          },
-                        ),
-                        if (suggestions.isNotEmpty) ...[
-                          const SizedBox(height: 24),
-                          Wrap(
-                            spacing: 1,
-                            children: suggestions.asMap().entries.map((entry) {
-                              final index = entry.key;
-                              final suggestion = entry.value;
-
-                              return GestureDetector(
-                                onTap: () {
-                                  _usernameController.text = suggestion;
-                                },
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.only(
-                                        left: 0,
-                                        right: 10,
-                                        top: 5,
-                                        bottom: 5,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: Colors.transparent,
-                                        borderRadius: BorderRadius.circular(22),
-                                      ),
-                                      child: Text(
-                                        '@$suggestion',
-                                        style: const TextStyle(
-                                          color: Palette.primary,
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                    ),
-                                    if (index != suggestions.length - 1)
-                                      const Text(
-                                        ', ',
-                                        style: TextStyle(
-                                          color: Palette.textSecondary,
-                                          fontSize: 16,
-                                        ),
-                                      ),
-                                  ],
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'What should we call you?',
+                                style: TextStyle(
+                                  fontSize: 26,
+                                  fontWeight: FontWeight.w800,
+                                  color: Palette.textWhite,
                                 ),
-                              );
-                            }).toList(),
-                          ),
-                          const SizedBox(height: 14),
-                          GestureDetector(
-                            onTap: () {
-                              generateSuggestions(_usernameController.text);
-                            },
-                            child: const Text(
-                              'Show more',
-                              style: TextStyle(
-                                fontSize: 15,
-                                color: Palette.primary,
                               ),
-                            ),
+                              const SizedBox(height: 12),
+                              const Text(
+                                'Your @username is unique. You can always change it later.',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  color: Palette.textSecondary,
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                              CustomTextField(
+                                controller: _usernameController,
+                                labelText: 'Username',
+                                validator: usernameValidator,
+                                onChanged: (value) {
+                                  if (value.isNotEmpty) {
+                                    generateSuggestions(value);
+                                  } else {
+                                    setState(() {
+                                      suggestions = [];
+                                    });
+                                  }
+                                },
+                              ),
+                              if (suggestions.isNotEmpty) ...[
+                                const SizedBox(height: 24),
+                                Wrap(
+                                  spacing: 1,
+                                  children: suggestions.asMap().entries.map((
+                                    entry,
+                                  ) {
+                                    final index = entry.key;
+                                    final suggestion = entry.value;
+
+                                    return GestureDetector(
+                                      onTap: () {
+                                        _usernameController.text = suggestion;
+                                      },
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.only(
+                                              left: 0,
+                                              right: 10,
+                                              top: 5,
+                                              bottom: 5,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: Colors.transparent,
+                                              borderRadius:
+                                                  BorderRadius.circular(22),
+                                            ),
+                                            child: Text(
+                                              '@$suggestion',
+                                              style: const TextStyle(
+                                                color: Palette.primary,
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                          ),
+                                          if (index != suggestions.length - 1)
+                                            const Text(
+                                              ', ',
+                                              style: TextStyle(
+                                                color: Palette.textSecondary,
+                                                fontSize: 16,
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                    );
+                                  }).toList(),
+                                ),
+                                const SizedBox(height: 14),
+                                GestureDetector(
+                                  onTap: () {
+                                    generateSuggestions(
+                                      _usernameController.text,
+                                    );
+                                  },
+                                  child: const Text(
+                                    'Show more',
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      color: Palette.primary,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
-                        ],
-                      ],
+                        ),
+                      ),
                     ),
-                  ),
+                    _buildBottomButtons(),
+                  ],
                 ),
               ),
-              _buildBottomButtons(),
-            ],
-          ),
+            ),
+            if (isLoading)
+              Container(
+                color: Colors.black.withOpacity(0.5),
+                child: const Center(child: Loader()),
+              ),
+          ],
         ),
       ),
     );

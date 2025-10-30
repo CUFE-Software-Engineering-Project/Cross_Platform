@@ -6,6 +6,8 @@ OutlineInputBorder border_sign(Color co, double w) => OutlineInputBorder(
   borderSide: BorderSide(color: co, width: w),
 );
 
+enum TextFieldValidationState { none, loading, valid, invalid }
+
 class CustomTextField extends StatefulWidget {
   final TextEditingController controller;
   final String? labelText;
@@ -24,7 +26,8 @@ class CustomTextField extends StatefulWidget {
   final Widget? prefixIcon;
   final Widget? suffixIcon;
   final bool? isPasswordCheck;
-
+  final TextFieldValidationState validationState;
+  final String? validationErrorText;
   const CustomTextField({
     super.key,
     required this.controller,
@@ -44,6 +47,8 @@ class CustomTextField extends StatefulWidget {
     this.prefixIcon,
     this.suffixIcon,
     this.isPasswordCheck,
+    this.validationState = TextFieldValidationState.none,
+    this.validationErrorText,
   });
 
   @override
@@ -62,7 +67,13 @@ class _CustomTextFieldState extends State<CustomTextField> {
       maxLength: widget.maxLength,
       readOnly: widget.readOnly,
       onTap: widget.onTap,
-      validator: widget.validator,
+      validator: (value) {
+        if (widget.validationState == TextFieldValidationState.invalid &&
+            widget.validationErrorText != null) {
+          return widget.validationErrorText;
+        }
+        return widget.validator?.call(value);
+      },
       onEditingComplete: widget.onEditingComplete,
       onFieldSubmitted: widget.onFieldSubmitted,
       onChanged: widget.onChanged,
@@ -90,6 +101,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
         suffixIcon: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
+            _buildValidationSuffix(),
             if (widget.isPassword)
               IconButton(
                 icon: Icon(
@@ -104,29 +116,44 @@ class _CustomTextFieldState extends State<CustomTextField> {
                   });
                 },
               ),
-            if (widget.isPasswordCheck != null) ...[
-              if (widget.isPasswordCheck == true)
-                Container(
-                  margin: const EdgeInsets.only(right: 10),
-                  decoration: const BoxDecoration(
-                    color: Color.fromARGB(255, 47, 161, 51),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.check, color: Colors.black, size: 20),
-                )
-              else if (widget.isPasswordCheck == false)
-                Container(
-                  margin: const EdgeInsets.only(right: 10),
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFE53935),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.close, color: Colors.black, size: 18),
-                ),
-            ],
           ],
         ),
       ),
     );
+  }
+
+  Widget _buildValidationSuffix() {
+    switch (widget.validationState) {
+      case TextFieldValidationState.loading:
+        return Container(
+          margin: const EdgeInsets.only(right: 10),
+          width: 20,
+          height: 20,
+          child: const CircularProgressIndicator(
+            strokeWidth: 2.5,
+            color: Palette.primary,
+          ),
+        );
+      case TextFieldValidationState.valid:
+        return Container(
+          margin: const EdgeInsets.only(right: 10),
+          decoration: const BoxDecoration(
+            color: Palette.success,
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(Icons.check, color: Colors.black, size: 20),
+        );
+      case TextFieldValidationState.invalid:
+        return Container(
+          margin: const EdgeInsets.only(right: 10),
+          decoration: const BoxDecoration(
+            color: Palette.error,
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(Icons.error, color: Colors.black, size: 18),
+        );
+      case TextFieldValidationState.none:
+        return const SizedBox.shrink();
+    }
   }
 }

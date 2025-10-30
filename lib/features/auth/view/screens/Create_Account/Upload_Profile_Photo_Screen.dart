@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:go_router/go_router.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:flutter/material.dart';
@@ -7,8 +6,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lite_x/core/classes/PickedImage.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
 import 'package:lite_x/core/theme/palette.dart';
+import 'package:lite_x/core/view/widgets/Loader.dart';
 import 'package:lite_x/features/auth/view/widgets/buildXLogo.dart';
 import 'package:dotted_border/dotted_border.dart';
+import 'package:lite_x/features/auth/view_model/auth_state.dart';
+import 'package:lite_x/features/auth/view_model/auth_view_model.dart';
 
 class UploadProfilePhotoScreen extends ConsumerStatefulWidget {
   const UploadProfilePhotoScreen({super.key});
@@ -79,8 +81,9 @@ class _UploadProfilePhotoScreenState
 
   void _handleNext() {
     if (selectedImage != null) {
-      print('Profile photo uploaded: ${selectedImage!.name}');
-      context.goNamed(RouteConstants.UserNameScreen);
+      ref
+          .read(authViewModelProvider.notifier)
+          .uploadProfilePhoto(selectedImage!);
     }
   }
 
@@ -91,6 +94,22 @@ class _UploadProfilePhotoScreenState
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(authViewModelProvider, (previous, next) {
+      if (next.type == AuthStateType.success) {
+        context.goNamed(RouteConstants.UserNameScreen);
+        ref.read(authViewModelProvider.notifier).setAuthenticated();
+      } else if (next.type == AuthStateType.error) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(next.message ?? 'An error occurred'),
+            backgroundColor: Palette.error,
+          ),
+        );
+      }
+    });
+
+    final authState = ref.watch(authViewModelProvider);
+    final isLoading = authState.isLoading;
     return Scaffold(
       backgroundColor: Palette.background,
       appBar: AppBar(
@@ -99,47 +118,59 @@ class _UploadProfilePhotoScreenState
         backgroundColor: Palette.background,
         elevation: 0,
       ),
-      body: Center(
-        child: Container(
-          width: double.infinity,
-          height: double.infinity,
-          decoration: BoxDecoration(color: Palette.background),
-          child: Column(
-            children: [
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 32,
-                    vertical: 16,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Pick a profile picture',
-                        style: TextStyle(
-                          fontSize: 31,
-                          fontWeight: FontWeight.w800,
-                          color: Palette.textWhite,
+      body: AbsorbPointer(
+        absorbing: isLoading,
+        child: Stack(
+          children: [
+            Center(
+              child: Container(
+                width: double.infinity,
+                height: double.infinity,
+                decoration: BoxDecoration(color: Palette.background),
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 32,
+                          vertical: 16,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Pick a profile picture',
+                              style: TextStyle(
+                                fontSize: 31,
+                                fontWeight: FontWeight.w800,
+                                color: Palette.textWhite,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            const Text(
+                              'Have a favourite selfie? Upload it now.',
+                              style: TextStyle(
+                                fontSize: 15,
+                                color: Palette.greycolor,
+                              ),
+                            ),
+                            const SizedBox(height: 48),
+                            Center(child: _buildUploadArea()),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 12),
-                      const Text(
-                        'Have a favourite selfie? Upload it now.',
-                        style: TextStyle(
-                          fontSize: 15,
-                          color: Palette.greycolor,
-                        ),
-                      ),
-                      const SizedBox(height: 48),
-                      Center(child: _buildUploadArea()),
-                    ],
-                  ),
+                    ),
+                    _buildBottomButtons(),
+                  ],
                 ),
               ),
-              _buildBottomButtons(),
-            ],
-          ),
+            ),
+            if (isLoading)
+              Container(
+                color: Colors.black,
+                child: const Center(child: Loader()),
+              ),
+          ],
         ),
       ),
     );

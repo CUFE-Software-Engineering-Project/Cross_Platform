@@ -100,10 +100,24 @@ class UserModel {
       'isVerified': isVerified,
       'loginCodesSet': loginCodesSet,
       'tfaVerifed': tfaVerified, //backend uses 'tfaVerifed'
+      'interests': interests.toList(),
     };
   }
 
   factory UserModel.fromMap(Map<String, dynamic> map) {
+    Set<String> parsedInterests = {};
+    if (map['interests'] != null) {
+      if (map['interests'] is List) {
+        parsedInterests = (map['interests'] as List)
+            .map((e) => e.toString())
+            .toSet();
+      } else if (map['interests'] is Set) {
+        parsedInterests = (map['interests'] as Set)
+            .map((e) => e.toString())
+            .toSet();
+      }
+    }
+
     return UserModel(
       name: map['name'] as String,
       email: map['email'] as String,
@@ -118,6 +132,7 @@ class UserModel {
       isVerified: map['isVerified'] as bool? ?? false,
       loginCodesSet: map['loginCodesSet'] as bool? ?? false,
       tfaVerified: map['tfaVerifed'] as bool?,
+      interests: parsedInterests,
     );
   }
 
@@ -128,7 +143,7 @@ class UserModel {
 
   @override
   String toString() {
-    return 'UserModel(name: $name, email: $email, dob: $dob, username: $username, photo: $photo, bio: $bio, id: $id, isEmailVerified: $isEmailVerified, isVerified: $isVerified, loginCodesSet: $loginCodesSet, tfaVerified: $tfaVerified)';
+    return 'UserModel(name: $name, email: $email, dob: $dob, username: $username, photo: $photo, bio: $bio, id: $id, isEmailVerified: $isEmailVerified, isVerified: $isVerified, loginCodesSet: $loginCodesSet, tfaVerified: $tfaVerified, interests: $interests)';
   }
 
   @override

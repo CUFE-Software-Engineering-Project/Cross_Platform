@@ -17,7 +17,17 @@ class FollowerModel {
   factory FollowerModel.fromJson(Map<String, dynamic> json) {
     return FollowerModel(
       user: UserModel.fromJson(
-        json['user'] ?? UserModel(name: "", email: "", dob: "", username: ""),
+        json['user'] ??
+            UserModel(
+              name: "",
+              email: "",
+              dob: "",
+              username: "",
+              id: "",
+              isEmailVerified: false,
+              isVerified: false,
+              loginCodesSet: false,
+            ),
       ),
       isFollowing: json['isFollowing'] ?? false,
       isFollower: json['isFollower'] ?? false,
@@ -54,7 +64,16 @@ class FollowerModel {
   // Empty follower
   static FollowerModel empty() {
     return FollowerModel(
-      user: UserModel(name: '', email: '', dob: '', username: ''),
+      user: UserModel(
+        name: "",
+        email: "",
+        dob: "",
+        username: "",
+        id: "",
+        isEmailVerified: false,
+        isVerified: false,
+        loginCodesSet: false,
+      ),
       isFollowing: false,
       isFollower: false,
     );
