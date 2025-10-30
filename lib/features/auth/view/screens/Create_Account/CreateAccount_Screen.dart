@@ -116,7 +116,7 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
 
     final exists = await ref
         .read(authViewModelProvider.notifier)
-        .validateEmailOnBackend(email);
+        .validateEmail(email);
 
     if (!mounted) return;
 

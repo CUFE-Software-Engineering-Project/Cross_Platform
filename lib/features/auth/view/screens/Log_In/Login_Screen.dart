@@ -5,8 +5,11 @@ import 'package:lite_x/core/providers/emailProvider.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
 import 'package:lite_x/core/theme/palette.dart';
 import 'package:lite_x/core/utils.dart';
+import 'package:lite_x/core/view/widgets/Loader.dart';
 import 'package:lite_x/features/auth/view/widgets/CustomTextField.dart';
 import 'package:lite_x/features/auth/view/widgets/buildXLogo.dart';
+import 'package:lite_x/features/auth/view_model/auth_state.dart';
+import 'package:lite_x/features/auth/view_model/auth_view_model.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -32,18 +35,40 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   void _handleNext() {
     if (_formKey.currentState!.validate()) {
+      FocusScope.of(context).unfocus();
       ref
-          .read(emailProvider.notifier)
-          .update((_) => _identifiercontroller.text);
-      print('Login identifier: ${_identifiercontroller.text}');
-      context.goNamed(RouteConstants.LoginPasswordScreen);
+          .read(authViewModelProvider.notifier)
+          .checkEmail(email: _identifiercontroller.text.trim());
     }
   }
 
   void _handleForgotPassword() {
-    print('Forgot password clicked');
-
     context.pushNamed(RouteConstants.ForgotpasswordScreen);
+  }
+
+  void showErrorToast(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            color: Palette.textWhite,
+            fontSize: 15,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        backgroundColor: Palette.greycolor,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: EdgeInsets.symmetric(
+          horizontal: MediaQuery.of(context).size.width * 0.15,
+          vertical: MediaQuery.of(context).size.height * 0.4,
+        ),
+        duration: const Duration(seconds: 3),
+      ),
+    );
   }
 
   @override
@@ -56,6 +81,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(authViewModelProvider, (previous, next) {
+      final authViewModel = ref.read(authViewModelProvider.notifier);
+
+      if (next.type == AuthStateType.success) {
+        ref
+            .read(emailProvider.notifier)
+            .update((_) => _identifiercontroller.text.trim());
+        context.goNamed(RouteConstants.LoginPasswordScreen);
+        authViewModel.resetState();
+      } else if (next.type == AuthStateType.error) {
+        showErrorToast(next.message ?? 'An error occurred');
+        authViewModel.resetState();
+      }
+    });
+
+    final authState = ref.watch(authViewModelProvider);
+    final isLoading = authState.isLoading;
     return Scaffold(
       backgroundColor: Palette.background,
       appBar: AppBar(
@@ -68,52 +110,61 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         backgroundColor: Palette.background,
         elevation: 0,
       ),
-      body: Center(
-        child: Container(
-          width: double.infinity,
-          height: double.infinity,
-          decoration: BoxDecoration(color: Palette.background),
-          child: Column(
-            children: [
-              Expanded(
-                child: Form(
-                  key: _formKey,
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 25,
-                      vertical: 16,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'To get started, first enter your phone, email address or @username',
-                          style: TextStyle(
-                            fontSize: 25,
-                            fontWeight: FontWeight.w800,
-                            color: Palette.textWhite,
+      body: AbsorbPointer(
+        absorbing: isLoading,
+        child: Stack(
+          children: [
+            Center(
+              child: Container(
+                width: double.infinity,
+                height: double.infinity,
+                decoration: BoxDecoration(color: Palette.background),
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: Form(
+                        key: _formKey,
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 25,
+                            vertical: 16,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'To get started, first enter your phone, email address or @username',
+                                style: TextStyle(
+                                  fontSize: 25,
+                                  fontWeight: FontWeight.w800,
+                                  color: Palette.textWhite,
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                              CustomTextField(
+                                controller: _identifiercontroller,
+                                labelText: 'Phone, email address, or username',
+                                keyboardType: TextInputType.emailAddress,
+                                validator: emailValidator,
+                                onFieldSubmitted: (_) {
+                                  if (_isFormValid.value) {
+                                    _handleNext();
+                                  }
+                                },
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(height: 20),
-                        CustomTextField(
-                          controller: _identifiercontroller,
-                          labelText: 'Phone, email address, or username',
-                          keyboardType: TextInputType.emailAddress,
-                          validator: emailValidator,
-                          onFieldSubmitted: (_) {
-                            if (_isFormValid.value) {
-                              _handleNext();
-                            }
-                          },
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
+                    _buildBottomButtons(),
+                  ],
                 ),
               ),
-              _buildBottomButtons(),
-            ],
-          ),
+            ),
+            if (isLoading)
+              Container(color: Colors.black, child: const Loader()),
+          ],
         ),
       ),
     );

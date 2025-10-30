@@ -189,9 +189,7 @@ class AuthRemoteRepository {
       );
 
       final user = UserModel.fromMap(response.data['User']);
-
-      // Pass the entire response to TokensModel - it will handle the format
-      final tokens = TokensModel.fromMap(response.data);
+      final tokens = TokensModel.fromMap_login(response.data);
 
       return right((user, tokens));
     } on DioException catch (e) {
@@ -222,7 +220,7 @@ class AuthRemoteRepository {
   }) async {
     try {
       final response = await _dio.post(
-        '/auth/forget-password',
+        'auth/forget-password',
         data: {'email': email},
       );
       final message = response.data['message'] ?? 'Reset code sent';
@@ -244,7 +242,7 @@ class AuthRemoteRepository {
   }) async {
     try {
       final response = await _dio.post(
-        '/auth/verify-reset-code',
+        'auth/verify-reset-code',
         data: {'email': email, 'code': code},
       );
       final message = response.data['message'] ?? 'Reset code verified';
@@ -266,7 +264,7 @@ class AuthRemoteRepository {
   }) async {
     try {
       final response = await _dio.post(
-        '/auth/reset-password',
+        'auth/reset-password',
         data: {'email': email, 'password': password},
       );
       final message = response.data['message'] ?? 'Password reset successful';

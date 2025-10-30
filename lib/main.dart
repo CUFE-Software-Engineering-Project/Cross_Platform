@@ -24,8 +24,8 @@ Future<void> init() async {
   Hive.registerAdapter(MediaModelAdapter());
   Hive.registerAdapter(MessageModelAdapter());
   await Hive.initFlutter();
-  await Hive.deleteBoxFromDisk('userBox'); // For testing purposes
-  await Hive.deleteBoxFromDisk('tokenBox'); // For testing purposes
+  await Hive.deleteBoxFromDisk('userBox');
+  await Hive.deleteBoxFromDisk('tokenBox');
 
   await Hive.openBox<UserModel>('userBox');
   await Hive.openBox('tokenBox');

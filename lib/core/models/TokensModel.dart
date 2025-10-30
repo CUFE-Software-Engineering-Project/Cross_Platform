@@ -20,6 +20,16 @@ class TokensModel {
       refreshTokenExpiry: DateTime.now().add(const Duration(days: 30)),
     );
   }
+
+  factory TokensModel.fromMap_login(Map<String, dynamic> map) {
+    return TokensModel(
+      accessToken: map['Token'] as String,
+      refreshToken: map['Refresh_token'] as String,
+      accessTokenExpiry: DateTime.now().add(const Duration(minutes: 60)),
+      refreshTokenExpiry: DateTime.now().add(const Duration(days: 30)),
+    );
+  }
+
   factory TokensModel.fromRefreshResponse(Map<String, dynamic> map) {
     return TokensModel(
       accessToken: map['access_token'] as String,

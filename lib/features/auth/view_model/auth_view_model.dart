@@ -19,38 +19,23 @@ class AuthViewModel extends _$AuthViewModel {
   AuthState build() {
     _authRemoteRepository = ref.read(authRemoteRepositoryProvider);
     _authLocalRepository = ref.read(authLocalRepositoryProvider);
-
-    // Schedule check for next frame to avoid blocking build
     Future.microtask(() => _checkAuthStatus());
-
     return AuthState.loading();
   }
 
   Future<void> _checkAuthStatus() async {
-    print('🔍 Checking auth status...');
-
     try {
-      await Future.delayed(
-        Duration(milliseconds: 100),
-      ); // Small delay to ensure UI is ready
-
+      await Future.delayed(Duration(milliseconds: 100));
       final user = _authLocalRepository.getUser();
       final tokens = _authLocalRepository.getTokens();
-
-      print('👤 User: ${user?.name ?? "null"}');
-      print('🔑 Tokens: ${tokens != null ? "exists" : "null"}');
-
       if (user != null && tokens != null && !tokens.isAccessTokenExpired) {
-        print('✅ User is authenticated');
         ref.read(currentUserProvider.notifier).adduser(user);
         state = AuthState.authenticated();
         _startAutoRefresh();
       } else {
-        print('❌ User is not authenticated');
         state = AuthState.unauthenticated();
       }
     } catch (e) {
-      print('❗ Error checking auth status: $e');
       state = AuthState.unauthenticated();
     }
   }
@@ -129,16 +114,13 @@ class AuthViewModel extends _$AuthViewModel {
     String? accessToken = getAccessToken();
 
     if (accessToken == null) {
-      print('⚠️ Access token expired, attempting refresh...');
       await refreshAccessToken();
       accessToken = getAccessToken();
 
       if (accessToken == null) {
-        print('❌ Failed to refresh token');
         state = AuthState.error('Session expired. Please login again.');
         return;
       }
-      print('✅ Token refreshed successfully');
     }
 
     final result = await _authRemoteRepository.uploadProfilePhoto(
@@ -148,11 +130,9 @@ class AuthViewModel extends _$AuthViewModel {
 
     result.fold(
       (failure) {
-        print('❌ Photo upload failed: ${failure.message}');
         state = AuthState.error(failure.message);
       },
       (keyName) {
-        print('✅ Photo uploaded successfully');
         state = AuthState.success("Profile photo uploaded");
       },
     );
@@ -165,29 +145,20 @@ class AuthViewModel extends _$AuthViewModel {
     // Get current user first
     final currentUser = ref.read(currentUserProvider);
     if (currentUser == null) {
-      print('❌ No current user found');
       state = AuthState.error('User not found');
       return;
     }
-
-    // Try to get access token, refresh if needed
     String? accessToken = getAccessToken();
 
     if (accessToken == null) {
-      print('⚠️ Access token expired, attempting refresh...');
       await refreshAccessToken();
       accessToken = getAccessToken();
 
       if (accessToken == null) {
-        print('❌ Failed to refresh token');
         state = AuthState.error('Session expired. Please login again.');
         return;
       }
-      print('✅ Token refreshed successfully');
     }
-
-    print('🔑 Using access token for username update');
-
     final result = await _authRemoteRepository.updateUsername(
       currentUser: currentUser,
       Username: username,
@@ -196,11 +167,9 @@ class AuthViewModel extends _$AuthViewModel {
 
     await result.fold(
       (failure) async {
-        print('❌ Username update failed: ${failure.message}');
         state = AuthState.error(failure.message);
       },
       (updatedUser) async {
-        print('✅ Username updated successfully');
         await _authLocalRepository.saveUser(updatedUser);
         ref.read(currentUserProvider.notifier).adduser(updatedUser);
         state = AuthState.success('Username updated successfully');
@@ -247,7 +216,7 @@ class AuthViewModel extends _$AuthViewModel {
   }
 
   //-------------------------------------------------Email Check--------------------------------------------------------------------------------------//
-  Future<bool?> validateEmailOnBackend(String email) async {
+  Future<bool?> validateEmail(String email) async {
     final result = await _authRemoteRepository.check_email(email: email);
 
     return result.fold(
@@ -260,19 +229,16 @@ class AuthViewModel extends _$AuthViewModel {
     );
   }
 
-  Future<bool?> checkEmail({required String email}) async {
+  Future<void> checkEmail({required String email}) async {
     state = AuthState.loading();
-    final result = await _authRemoteRepository.check_email(email: email);
-    return result.fold(
-      (failure) {
-        state = AuthState.error(failure.message);
-        return null;
-      },
-      (exists) {
-        state = AuthState.unauthenticated();
-        return exists;
-      },
-    );
+    final bool? exists = await validateEmail(email);
+    if (exists == true) {
+      state = AuthState.success("Email found");
+    } else if (exists == false) {
+      state = AuthState.error("Email not found. Please create an account.");
+    } else {
+      state = AuthState.error("Failed to check email. Please try again.");
+    }
   }
 
   //-------------------------------------------------Forget Password--------------------------------------------------------------------------------------//
@@ -367,20 +333,11 @@ class AuthViewModel extends _$AuthViewModel {
 
   String? getAccessToken() {
     final tokens = _authLocalRepository.getTokens();
-    print('🔍 Getting access token...');
-    print('📦 Tokens exist: ${tokens != null}');
 
     if (tokens != null) {
-      print('⏰ Access token expired: ${tokens.isAccessTokenExpired}');
-      print('📅 Expiry time: ${tokens.accessTokenExpiry}');
-      print('🕒 Current time: ${DateTime.now()}');
-
       if (!tokens.isAccessTokenExpired) {
-        print('✅ Token is valid');
         return tokens.accessToken;
-      } else {
-        print('❌ Token is expired');
-      }
+      } else {}
     }
     return null;
   }

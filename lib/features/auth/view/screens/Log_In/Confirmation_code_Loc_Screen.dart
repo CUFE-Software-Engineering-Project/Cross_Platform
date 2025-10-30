@@ -4,7 +4,10 @@ import 'package:go_router/go_router.dart';
 import 'package:lite_x/core/providers/emailProvider.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
 import 'package:lite_x/core/theme/palette.dart';
+import 'package:lite_x/core/view/widgets/Loader.dart';
 import 'package:lite_x/features/auth/view/widgets/buildXLogo.dart';
+import 'package:lite_x/features/auth/view_model/auth_state.dart';
+import 'package:lite_x/features/auth/view_model/auth_view_model.dart';
 
 class ConfirmationCodeLocScreen extends ConsumerStatefulWidget {
   const ConfirmationCodeLocScreen({super.key});
@@ -17,14 +20,43 @@ class ConfirmationCodeLocScreen extends ConsumerStatefulWidget {
 class _ConfirmationCodeLocScreenState
     extends ConsumerState<ConfirmationCodeLocScreen> {
   String _selectedMethod = 'email';
+  late String email;
+
+  @override
+  void initState() {
+    super.initState();
+    email = ref.read(emailProvider);
+  }
 
   void _handleNext() {
-    print('Sending code via: $_selectedMethod');
-    context.pushNamed(RouteConstants.VerificationforgotScreen);
+    ref.read(authViewModelProvider.notifier).forgetPassword(email: email);
   }
 
   void _handleCancel() {
     context.pop();
+  }
+
+  void _showToast(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          textAlign: TextAlign.start,
+          style: const TextStyle(
+            color: Palette.textWhite,
+            fontSize: 15,
+            fontWeight: FontWeight.w400,
+          ),
+        ),
+        backgroundColor: const Color(0xFF5C5C5C),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        margin: const EdgeInsets.only(left: 16, right: 16, bottom: 100),
+        duration: const Duration(seconds: 3),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      ),
+    );
   }
 
   String _maskEmail(String email) {
@@ -50,7 +82,20 @@ class _ConfirmationCodeLocScreenState
 
   @override
   Widget build(BuildContext context) {
-    final email = ref.read(emailProvider);
+    ref.listen(authViewModelProvider, (previous, next) {
+      final authViewModel = ref.read(authViewModelProvider.notifier);
+
+      if (next.type == AuthStateType.success) {
+        context.pushNamed(RouteConstants.VerificationforgotScreen);
+        authViewModel.resetState();
+      } else if (next.type == AuthStateType.error) {
+        _showToast(next.message ?? 'Failed to send verification code');
+        authViewModel.resetState();
+      }
+    });
+
+    final authState = ref.watch(authViewModelProvider);
+    final isLoading = authState.isLoading;
 
     final maskedEmail = _maskEmail(email);
 
@@ -59,72 +104,83 @@ class _ConfirmationCodeLocScreenState
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.close, color: Palette.textWhite),
-          onPressed: () => context.goNamed(RouteConstants.introscreen),
+          onPressed: isLoading
+              ? null
+              : () => context.goNamed(RouteConstants.introscreen),
         ),
         title: buildXLogo(size: 36),
         centerTitle: true,
         backgroundColor: Palette.background,
         elevation: 0,
       ),
-      body: Center(
-        child: Container(
-          width: double.infinity,
-          height: double.infinity,
-          decoration: BoxDecoration(color: Palette.background),
-          child: Column(
-            children: [
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 32,
-                    vertical: 16,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        children: [
-                          const Text(
-                            'Where should we send a confirmation code?',
-                            style: TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.w800,
-                              color: Palette.textWhite,
+      body: AbsorbPointer(
+        absorbing: isLoading,
+        child: Stack(
+          children: [
+            Center(
+              child: Container(
+                width: double.infinity,
+                height: double.infinity,
+                decoration: BoxDecoration(color: Palette.background),
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 32,
+                          vertical: 16,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              children: [
+                                const Text(
+                                  'Where should we send a confirmation code?',
+                                  style: TextStyle(
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.w800,
+                                    color: Palette.textWhite,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                const Text(
+                                  'Before you can change your password, we need to make sure it\'s really you.',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Palette.textSecondary,
+                                  ),
+                                ),
+                                const SizedBox(height: 18),
+                                const Text(
+                                  'Start by choosing where to send a confirmation code.',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Palette.textSecondary,
+                                  ),
+                                ),
+                                const SizedBox(height: 32),
+                                _buildoption(
+                                  title: "Send an email to",
+                                  valueText: maskedEmail,
+                                  optionValue: "email",
+                                ),
+                              ],
                             ),
-                          ),
-                          const SizedBox(height: 12),
-                          const Text(
-                            'Before you can change your password, we need to make sure it\'s really you.',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Palette.textSecondary,
-                            ),
-                          ),
-                          const SizedBox(height: 18),
-                          const Text(
-                            'Start by choosing where to send a confirmation code.',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Palette.textSecondary,
-                            ),
-                          ),
-                          const SizedBox(height: 32),
-                          _buildoption(
-                            title: "Send an email to",
-                            valueText: maskedEmail,
-                            optionValue: "email",
-                          ),
-                        ],
+                            _buildSupportText(),
+                          ],
+                        ),
                       ),
-                      _buildSupportText(),
-                    ],
-                  ),
+                    ),
+                    _buildBottomButtons(isLoading),
+                  ],
                 ),
               ),
-              _buildBottomButtons(),
-            ],
-          ),
+            ),
+            if (isLoading)
+              Container(color: Colors.black, child: const Loader()),
+          ],
         ),
       ),
     );
@@ -190,14 +246,14 @@ class _ConfirmationCodeLocScreenState
     );
   }
 
-  Widget _buildBottomButtons() {
+  Widget _buildBottomButtons(bool isLoading) {
     return Container(
       padding: const EdgeInsets.all(16),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           OutlinedButton(
-            onPressed: _handleCancel,
+            onPressed: isLoading ? null : _handleCancel,
             style: OutlinedButton.styleFrom(
               foregroundColor: Palette.textWhite,
               side: const BorderSide(color: Palette.textWhite, width: 1),
@@ -214,14 +270,16 @@ class _ConfirmationCodeLocScreenState
           SizedBox(
             width: 80,
             child: ElevatedButton(
-              onPressed: _handleNext,
+              onPressed: isLoading ? null : _handleNext,
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 10,
                   vertical: 5,
                 ),
                 backgroundColor: Palette.textWhite,
+                disabledBackgroundColor: Palette.textWhite.withOpacity(0.6),
                 foregroundColor: Palette.background,
+                disabledForegroundColor: Palette.border,
                 minimumSize: const Size(0, 38),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(25),
@@ -240,18 +298,18 @@ class _ConfirmationCodeLocScreenState
 
   Widget _buildSupportText() {
     return RichText(
-      text: TextSpan(
-        style: const TextStyle(fontSize: 15, color: Palette.textSecondary),
+      text: const TextSpan(
+        style: TextStyle(fontSize: 15, color: Palette.textSecondary),
         children: [
-          const TextSpan(text: 'Contact '),
+          TextSpan(text: 'Contact '),
           TextSpan(
             text: 'X Support',
-            style: const TextStyle(
+            style: TextStyle(
               color: Palette.primary,
               fontWeight: FontWeight.w400,
             ),
           ),
-          const TextSpan(text: ' if you don\'t have access.'),
+          TextSpan(text: ' if you don\'t have access.'),
         ],
       ),
     );
