@@ -23,7 +23,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // final authState = ref.watch(authViewModelProvider);
     ref.listen(authViewModelProvider, (previousState, nextState) {
       if (nextState.type != AuthStateType.loading) {
         if (nextState.type == AuthStateType.authenticated) {

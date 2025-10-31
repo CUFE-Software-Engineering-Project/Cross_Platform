@@ -34,12 +34,9 @@ class UserModel {
   final bool isVerified;
 
   @HiveField(9)
-  final bool loginCodesSet;
-
-  @HiveField(10)
   final bool? tfaVerified;
 
-  @HiveField(11)
+  @HiveField(10)
   final Set<String> interests;
 
   UserModel({
@@ -52,7 +49,7 @@ class UserModel {
     required this.id,
     required this.isEmailVerified,
     required this.isVerified,
-    required this.loginCodesSet,
+
     this.tfaVerified,
     this.interests = const {},
   });
@@ -81,7 +78,6 @@ class UserModel {
       id: id ?? this.id,
       isEmailVerified: isEmailVerified ?? this.isEmailVerified,
       isVerified: isVerified ?? this.isVerified,
-      loginCodesSet: loginCodesSet ?? this.loginCodesSet,
       tfaVerified: tfaVerified ?? this.tfaVerified,
       interests: interests ?? this.interests,
     );
@@ -98,7 +94,7 @@ class UserModel {
       'id': id,
       'isEmailVerified': isEmailVerified,
       'isVerified': isVerified,
-      'loginCodesSet': loginCodesSet,
+
       'tfaVerifed': tfaVerified, //backend uses 'tfaVerifed'
       'interests': interests.toList(),
     };
@@ -130,7 +126,6 @@ class UserModel {
       id: map['id'].toString(),
       isEmailVerified: map['isEmailVerified'] as bool? ?? false,
       isVerified: map['isVerified'] as bool? ?? false,
-      loginCodesSet: map['loginCodesSet'] as bool? ?? false,
       tfaVerified: map['tfaVerifed'] as bool?,
       interests: parsedInterests,
     );
@@ -143,7 +138,7 @@ class UserModel {
 
   @override
   String toString() {
-    return 'UserModel(name: $name, email: $email, dob: $dob, username: $username, photo: $photo, bio: $bio, id: $id, isEmailVerified: $isEmailVerified, isVerified: $isVerified, loginCodesSet: $loginCodesSet, tfaVerified: $tfaVerified, interests: $interests)';
+    return 'UserModel(name: $name, email: $email, dob: $dob, username: $username, photo: $photo, bio: $bio, id: $id, isEmailVerified: $isEmailVerified, isVerified: $isVerified,  tfaVerified: $tfaVerified, interests: $interests)';
   }
 
   @override
@@ -159,7 +154,6 @@ class UserModel {
         other.id == id &&
         other.isEmailVerified == isEmailVerified &&
         other.isVerified == isVerified &&
-        other.loginCodesSet == loginCodesSet &&
         other.tfaVerified == tfaVerified &&
         other.interests == interests;
   }
@@ -175,7 +169,6 @@ class UserModel {
         id.hashCode ^
         isEmailVerified.hashCode ^
         isVerified.hashCode ^
-        loginCodesSet.hashCode ^
         tfaVerified.hashCode ^
         interests.hashCode;
   }

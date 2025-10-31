@@ -76,9 +76,7 @@ class IntroScreen extends ConsumerWidget {
         AuthButton(
           icon: 'assets/images/github.png',
           label: 'Continue with GitHub',
-          onPressed: () {
-            context.pushNamed(RouteConstants.ConversationsScreen);
-          },
+          onPressed: () {},
         ),
         const SizedBox(height: 12),
         Row(

@@ -1,9 +1,9 @@
 import 'package:fpdart/fpdart.dart';
 import 'package:lite_x/core/classes/AppFailure.dart';
 import 'package:lite_x/core/classes/PickedImage.dart';
-import 'package:lite_x/core/constants/server_constants.dart';
 import 'package:lite_x/core/models/TokensModel.dart';
 import 'package:lite_x/core/models/usermodel.dart';
+import 'package:lite_x/core/providers/dio_interceptor.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:dio/dio.dart';
 
@@ -11,11 +11,13 @@ part 'auth_remote_repository.g.dart';
 
 @Riverpod(keepAlive: true)
 AuthRemoteRepository authRemoteRepository(Ref ref) {
-  return AuthRemoteRepository(dio: Dio(BASE_OPTIONS));
+  final dio = ref.watch(dioProvider);
+  return AuthRemoteRepository(dio: dio);
 }
 
 class AuthRemoteRepository {
   final Dio _dio;
+
   AuthRemoteRepository({required Dio dio}) : _dio = dio;
 
   //--------------------------------------------SignUp---------------------------------------------------------//
@@ -87,38 +89,34 @@ class AuthRemoteRepository {
     }
   }
 
-  String _getMimeType(String filePath) {
+  static const Map<String, String> _mediaTypes = {
+    'jpg': 'image/jpeg',
+    'jpeg': 'image/jpeg',
+    'png': 'image/png',
+    'gif': 'image/gif',
+    'webp': 'image/webp',
+  };
+  String _getMediaType(String filePath) {
     final extension = filePath.split('.').last.toLowerCase();
-    if (extension == 'jpg' || extension == 'jpeg') {
-      return 'image/jpeg';
-    } else if (extension == 'png') {
-      return 'image/png';
-    }
-    return 'image/jpeg';
+    return _mediaTypes[extension] ?? 'image/jpeg';
   }
 
   Future<Either<AppFailure, String>> uploadProfilePhoto({
     required PickedImage pickedImage,
-    required String accessToken,
   }) async {
     if (pickedImage.file == null) {
       return left(AppFailure(message: 'No file selected'));
     }
-
     final file = pickedImage.file!;
     final fileName = pickedImage.name;
-    final fileType = _getMimeType(file.path);
-
+    final fileType = _getMediaType(file.path);
     try {
       final requestResponse = await _dio.post(
-        '/media/upload-request',
+        'media/upload-request',
         data: {'fileName': fileName, 'contentType': fileType},
-        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       );
-
       final String presignedUrl = requestResponse.data['url'];
       final String keyName = requestResponse.data['keyName'];
-
       await _dio.put(
         presignedUrl,
         data: file.openRead(),
@@ -130,11 +128,10 @@ class AuthRemoteRepository {
         ),
       );
 
+      final encodedKeyName = Uri.encodeComponent(keyName);
       final confirmResponse = await _dio.post(
-        '/media/confirm-upload/$keyName',
-        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+        'media/confirm-upload/$encodedKeyName',
       );
-
       final newMediaKey = confirmResponse.data['newMedia']['keyName'] as String;
       return right(newMediaKey);
     } on DioException catch (e) {
@@ -152,18 +149,9 @@ class AuthRemoteRepository {
     required String accessToken,
   }) async {
     try {
-      print('🔄 Updating username to: $Username');
-      print('🔑 Using token: ${accessToken.substring(0, 20)}...');
-
       final response = await _dio.put(
         'auth/update_username',
         data: {'username': Username},
-        options: Options(
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer $accessToken',
-          },
-        ),
       );
       final newUsername = response.data['user']['username'] as String;
       final updatedUser = currentUser.copyWith(username: newUsername);
@@ -171,6 +159,26 @@ class AuthRemoteRepository {
     } on DioException catch (e) {
       final errorMsg = e.response?.data['error'] ?? 'Failed to update username';
       return left(AppFailure(message: errorMsg));
+    } catch (e) {
+      return left(AppFailure(message: e.toString()));
+    }
+  }
+
+  //-------------------------------------------------FCM Token Registration-----------------------------------------------------------------------------------------//
+  Future<Either<AppFailure, String>> registerFcmToken({
+    required String fcmToken,
+    required String osType,
+  }) async {
+    try {
+      final data = {'token': fcmToken, 'osType': osType};
+      final response = await _dio.post('users/fcm-token', data: data);
+      return right(response.data['message'] ?? 'FCM registered successfully');
+    } on DioException catch (e) {
+      return left(
+        AppFailure(
+          message: e.response?.data['error'] ?? 'FCM registration failed',
+        ),
+      );
     } catch (e) {
       return left(AppFailure(message: e.toString()));
     }
@@ -291,9 +299,6 @@ class AuthRemoteRepository {
         data: {'refresh_token': refreshToken},
         options: Options(headers: {'Content-Type': 'application/json'}),
       );
-
-      print('🔄 Token refresh response: ${response.data}');
-
       final newAccessToken = response.data['access_token'] as String?;
       if (newAccessToken == null) {
         return left(
@@ -302,14 +307,12 @@ class AuthRemoteRepository {
           ),
         );
       }
-
       final tokens = TokensModel(
         accessToken: newAccessToken,
         refreshToken: refreshToken,
         accessTokenExpiry: DateTime.now().add(const Duration(hours: 1)),
         refreshTokenExpiry: refreshTokenExpiry,
       );
-
       return right(tokens);
     } on DioException catch (e) {
       return left(

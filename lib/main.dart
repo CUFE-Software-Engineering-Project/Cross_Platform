@@ -1,9 +1,11 @@
 // ignore_for_file: unused_import
-
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
+import 'package:lite_x/features/auth/view_model/auth_view_model.dart';
 import 'package:lite_x/features/chat/view/TestChatScreen.dart';
 import 'package:lite_x/core/models/usermodel.dart';
 import 'package:lite_x/core/routes/AppRouter.dart';
@@ -11,21 +13,24 @@ import 'package:lite_x/core/theme/app_theme.dart';
 import 'package:lite_x/features/chat/models/conversationmodel.dart';
 import 'package:lite_x/features/chat/models/mediamodel.dart';
 import 'package:lite_x/features/chat/models/messagemodel.dart';
+import 'firebase_options.dart';
 
 void main() async {
   await init();
-  runApp(const ProviderScope(child: const MyApp()));
+  runApp(const ProviderScope(child: MyApp()));
 }
 
 Future<void> init() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
   Hive.registerAdapter(UserModelAdapter());
   Hive.registerAdapter(ConversationModelAdapter());
   Hive.registerAdapter(MediaModelAdapter());
   Hive.registerAdapter(MessageModelAdapter());
   await Hive.initFlutter();
-  await Hive.deleteBoxFromDisk('userBox');
-  await Hive.deleteBoxFromDisk('tokenBox');
+  // await Hive.deleteBoxFromDisk('userBox');
+  // await Hive.deleteBoxFromDisk('tokenBox');
 
   await Hive.openBox<UserModel>('userBox');
   await Hive.openBox('tokenBox');

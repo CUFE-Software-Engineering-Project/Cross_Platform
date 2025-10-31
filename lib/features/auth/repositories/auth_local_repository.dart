@@ -33,16 +33,12 @@ class AuthLocalRepository {
   }
 
   Future<void> saveTokens(TokensModel tokens) async {
-    await _tokenBox.put('accessToken', tokens.accessToken);
-    await _tokenBox.put('refreshToken', tokens.refreshToken);
-    await _tokenBox.put(
-      'accessTokenExpiry',
-      tokens.accessTokenExpiry.toIso8601String(),
-    );
-    await _tokenBox.put(
-      'refreshTokenExpiry',
-      tokens.refreshTokenExpiry.toIso8601String(),
-    );
+    await _tokenBox.putAll({
+      'accessToken': tokens.accessToken,
+      'refreshToken': tokens.refreshToken,
+      'accessTokenExpiry': tokens.accessTokenExpiry.toIso8601String(),
+      'refreshTokenExpiry': tokens.refreshTokenExpiry.toIso8601String(),
+    });
   }
 
   TokensModel? getTokens() {
@@ -72,9 +68,11 @@ class AuthLocalRepository {
   }
 
   Future<void> clearTokens() async {
-    await _tokenBox.delete('accessToken');
-    await _tokenBox.delete('refreshToken');
-    await _tokenBox.delete('accessTokenExpiry');
-    await _tokenBox.delete('refreshTokenExpiry');
+    await _tokenBox.deleteAll([
+      'accessToken',
+      'refreshToken',
+      'accessTokenExpiry',
+      'refreshTokenExpiry',
+    ]);
   }
 }

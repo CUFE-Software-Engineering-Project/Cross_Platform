@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "123824690535",
+    "project_id": "litex-3c6f1",
+    "storage_bucket": "litex-3c6f1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:123824690535:android:fc6ea2d45764d44a960bc2",
+        "android_client_info": {
+          "package_name": "com.example.lite_x"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "123824690535-52cesp7okt1d8j63pn7su9rtmi0asq0b.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDYiU34-5-Rr2nP_SHphvLSIiOyr4RuC8I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "123824690535-52cesp7okt1d8j63pn7su9rtmi0asq0b.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "123824690535-5pta8j3mu07g0bb21n43n8q2vuulrstr.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.litex"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
