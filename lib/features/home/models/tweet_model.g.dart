@@ -29,13 +29,23 @@ class TweetModelAdapter extends TypeAdapter<TweetModel> {
       images: fields[9] == null ? const [] : (fields[9] as List).cast<String>(),
       isLiked: fields[10] == null ? false : fields[10] as bool,
       isRetweeted: fields[11] == null ? false : fields[11] as bool,
+      replyToId: fields[12] as String?,
+      replyIds: fields[13] == null
+          ? const []
+          : (fields[13] as List).cast<String>(),
+      isBookmarked: fields[14] == null ? false : fields[14] as bool,
+      quotedTweetId: fields[15] as String?,
+      quotedTweet: fields[16] as TweetModel?,
+      quotes: fields[17] == null ? 0 : (fields[17] as num).toInt(),
+      bookmarks: fields[18] == null ? 0 : (fields[18] as num).toInt(),
+      userId: fields[19] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, TweetModel obj) {
     writer
-      ..writeByte(12)
+      ..writeByte(20)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -59,7 +69,23 @@ class TweetModelAdapter extends TypeAdapter<TweetModel> {
       ..writeByte(10)
       ..write(obj.isLiked)
       ..writeByte(11)
-      ..write(obj.isRetweeted);
+      ..write(obj.isRetweeted)
+      ..writeByte(12)
+      ..write(obj.replyToId)
+      ..writeByte(13)
+      ..write(obj.replyIds)
+      ..writeByte(14)
+      ..write(obj.isBookmarked)
+      ..writeByte(15)
+      ..write(obj.quotedTweetId)
+      ..writeByte(16)
+      ..write(obj.quotedTweet)
+      ..writeByte(17)
+      ..write(obj.quotes)
+      ..writeByte(18)
+      ..write(obj.bookmarks)
+      ..writeByte(19)
+      ..write(obj.userId);
   }
 
   @override
