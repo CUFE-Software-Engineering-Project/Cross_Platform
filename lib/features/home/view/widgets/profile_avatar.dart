@@ -1,9 +1,6 @@
-// lib/features/home/widgets/profile_avatar.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
-
-// Provider for user profile data (future backend integration)
 final currentUserProvider = StateProvider<UserProfile?>((ref) => null);
 
 class UserProfile {
@@ -47,7 +44,6 @@ class ProfileAvatar extends ConsumerWidget {
   }
 
   void _openProfileMenu(BuildContext context, WidgetRef ref) {
-    // TODO: Open side drawer or profile menu
     Scaffold.of(context).openDrawer();
   }
 }

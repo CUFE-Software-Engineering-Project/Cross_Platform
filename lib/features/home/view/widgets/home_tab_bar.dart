@@ -1,12 +1,7 @@
-// lib/features/home/widgets/home_tab_bar.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
-
-// Provider for managing tab selection (backend-ready)
 final homeTabProvider = StateProvider<HomeTab>((ref) => HomeTab.forYou);
-
-// Provider for PageController to sync with tab selection
 final tabPageControllerProvider = Provider<PageController>((ref) {
   return PageController(initialPage: 0);
 });
@@ -52,7 +47,6 @@ class _HomeTabBarState extends ConsumerState<HomeTabBar>
       color: Colors.black,
       child: Stack(
         children: [
-          // Tab buttons
           Row(
             children: [
               Expanded(
@@ -71,8 +65,6 @@ class _HomeTabBarState extends ConsumerState<HomeTabBar>
               ),
             ],
           ),
-
-          // Animated indicator
           _buildAnimatedIndicator(selectedTab),
         ],
       ),
@@ -111,20 +103,11 @@ class _HomeTabBarState extends ConsumerState<HomeTabBar>
 
   void _onTabSelected(HomeTab tab) {
     ref.read(homeTabProvider.notifier).state = tab;
-
-    // Animate the indicator
     if (tab == HomeTab.following) {
       _animationController.forward();
     } else {
       _animationController.reverse();
     }
-
-    // TODO: Future backend integration - fetch different feeds
-    // if (tab == HomeTab.forYou) {
-    //   ref.read(homeViewModelProvider.notifier).loadForYouFeed();
-    // } else {
-    //   ref.read(homeViewModelProvider.notifier).loadFollowingFeed();
-    // }
   }
 }
 
