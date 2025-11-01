@@ -14,6 +14,9 @@ class SearchResultsList extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 16),
+      cacheExtent: 500,
+      addAutomaticKeepAlives: false,
+      addRepaintBoundaries: true,
       itemCount: results.length,
       itemBuilder: (context, index) {
         final user = results[index];

@@ -13,6 +13,7 @@ class SearchScreen extends ConsumerWidget {
     final state = ref.watch(searchViewModelProvider);
 
     return Scaffold(
+      backgroundColor: Palette.background,
       body: Column(
       children: [
         const Padding(

@@ -15,6 +15,9 @@ class SearchHistoryList extends StatelessWidget {
 
     return ListView.separated(
       padding: const EdgeInsets.all(8),
+      cacheExtent: 500,
+      addAutomaticKeepAlives: false,
+      addRepaintBoundaries: true,
       itemCount: history.length,
       separatorBuilder: (_, __) => const Divider(),
       itemBuilder: (context, index) {

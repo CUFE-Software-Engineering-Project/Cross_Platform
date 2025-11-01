@@ -16,6 +16,8 @@ class SearchBar extends ConsumerWidget {
           onPressed: () {
             Navigator.pop(context);
           },
+          splashColor: Colors.transparent,
+          highlightColor: Colors.transparent,
         ),
 
         const SizedBox(width: 8),
@@ -49,7 +51,7 @@ class SearchBar extends ConsumerWidget {
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(30),
                   borderSide: const BorderSide(
-                    color: Colors.blue,
+                    color: Palette.primary,
                     width: 2, // 👈 set width for focused state
                   ),
                 ),
@@ -71,6 +73,8 @@ class SearchBar extends ConsumerWidget {
         IconButton(
           icon: const Icon(Icons.settings),
           onPressed: () {},
+          splashColor: Colors.transparent,
+          highlightColor: Colors.transparent,
         ),
       ],
     );

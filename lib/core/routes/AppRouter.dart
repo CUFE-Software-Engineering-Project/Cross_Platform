@@ -5,6 +5,7 @@ import 'package:lite_x/features/auth/view/screens/CreateAccount_Screen.dart';
 import 'package:lite_x/features/auth/view/screens/intro_screen.dart';
 import 'package:lite_x/features/auth/view/screens/verification_screen.dart';
 import 'package:lite_x/features/search/view/search_screen.dart';
+import 'package:lite_x/features/explore/view/explore_screen.dart';
 
 class Approuter {
   static final GoRouter router = GoRouter(
@@ -13,7 +14,7 @@ class Approuter {
         name: RouteConstants.introscreen,
         path: "/",
         pageBuilder: (context, state) => CustomTransitionPage(
-           child: const SearchScreen(),
+           child: const ExploreScreen(),
           transitionsBuilder: _slideRightTransitionBuilder,
         ),
       ),
@@ -30,6 +31,22 @@ class Approuter {
         path: "/verification",
         pageBuilder: (context, state) => CustomTransitionPage(
           child: const VerificationScreen(),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
+        name: RouteConstants.explorescreen,
+        path: "/explore",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: const ExploreScreen(),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
+        name: RouteConstants.searchscreen,
+        path: "/search",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: const SearchScreen(),
           transitionsBuilder: _slideRightTransitionBuilder,
         ),
       ),
@@ -54,6 +71,12 @@ class Approuter {
     ).chain(CurveTween(curve: curve));
     final offsetAnimation = animation.drive(tween);
 
-    return SlideTransition(position: offsetAnimation, child: child);
+    return SlideTransition(
+      position: offsetAnimation,
+      child: Material(
+        color: Colors.transparent,
+        child: child,
+      ),
+    );
   }
 }

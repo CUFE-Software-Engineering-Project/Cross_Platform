@@ -58,4 +58,9 @@ final appTheme = ThemeData.dark().copyWith(
     backgroundColor: Palette.cardBackground,
     contentTextStyle: const TextStyle(color: Palette.textPrimary),
   ),
+
+  // Disable splash effects globally
+  splashColor: Colors.transparent,
+  highlightColor: Colors.transparent,
+  splashFactory: NoSplash.splashFactory,
 );
