@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lite_x/core/models/usermodel.dart';
 import 'package:lite_x/core/providers/current_user_provider.dart';
 
 class ProfileAvatar extends ConsumerWidget {
@@ -11,7 +12,7 @@ class ProfileAvatar extends ConsumerWidget {
     final user = ref.watch(currentUserProvider);
     if (user == null) {
       return GestureDetector(
-        onTap: () => _openProfileMenu(context, user),
+        onTap: () => _openProfileMenu(context,user!),
         child: Container(
           width: 32,
           height: 32,
@@ -43,7 +44,7 @@ class ProfileAvatar extends ConsumerWidget {
     );
   }
 
-  void _openProfileMenu(BuildContext context, user) {
+  void _openProfileMenu(BuildContext context,UserModel user) {
     if (user != null) {
       context.push("/profilescreen/${user.username}");
     }
