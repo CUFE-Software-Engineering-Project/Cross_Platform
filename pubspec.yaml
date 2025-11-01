@@ -56,6 +56,10 @@ dependencies:
 
   provider:
 
+  device_preview:
+
+  top_snackbar_flutter: ^3.3.0
+
   intl_utils:
 
 dev_dependencies:

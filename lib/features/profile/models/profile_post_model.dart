@@ -1,4 +1,3 @@
-import '../../../core/models/usermodel.dart';
 
 class ProfilePostModel {
   final String id;

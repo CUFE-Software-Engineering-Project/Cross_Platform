@@ -7,22 +7,25 @@ import 'package:lite_x/features/profile/view_model/profile_basic_data_states.dar
 
 class ProfileBasicDataNotifier extends StateNotifier<ProfileBasicDataStates> {
   final ProfileRepo profileRepo;
-
-  ProfileBasicDataNotifier({required this.profileRepo})
+  final String userName;
+  ProfileBasicDataNotifier({required this.profileRepo, required this.userName})
     : super(ProfileBasicDataStates.initial()) {
-    loadProfileData();
+    loadProfileData(userName);
   }
 
-  void loadProfileData() async {
+  void loadProfileData(String userName) async {
     state = state.copyWith(isLoading: true);
 
-    final Either<Failure, ProfileModel> result = await profileRepo.getProfileData();
+    final Either<Failure, ProfileModel> result = await profileRepo
+        .getProfileData(userName);
 
-    result.fold((failure) {
-      state = state.copyWith(isLoading: false, errorMessage: failure.message);
-    }, (profileData) {
-      state = state.copyWith(isLoading: false, profileData: profileData);
-    });
-
+    result.fold(
+      (failure) {
+        state = state.copyWith(isLoading: false, errorMessage: failure.message);
+      },
+      (profileData) {
+        state = state.copyWith(isLoading: false, profileData: profileData);
+      },
+    );
   }
 }

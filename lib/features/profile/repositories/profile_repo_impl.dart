@@ -1,36 +1,61 @@
+import 'package:dio/dio.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
 import 'package:lite_x/features/profile/models/profile_post_model.dart';
 import 'package:lite_x/features/profile/models/shared.dart';
 import 'package:dartz/dartz.dart';
+import 'package:lite_x/features/profile/models/user_model.dart';
 import 'package:lite_x/features/profile/repositories/profile_repo.dart';
 
-class ProfileRepoImpl implements ProfileRepo {
-  @override
-  Future<Either<Failure, ProfileModel>> getProfileData() async {
-    await Future.delayed(const Duration(seconds: 2)); // Simulate network delay
-    try {
-      final profileData = ProfileModel.fromJson({
-        "username": "HazemEmam40",
-        "displayName": "Hazem Emam",
-        "bio": "I'm Hazem Emam 2004/7/21",
-        "avatarUrl":
-            "https://static.vecteezy.com/system/resources/previews/024/183/525/non_2x/avatar-of-a-man-portrait-of-a-young-guy-illustration-of-male-character-in-modern-color-style-vector.jpg",
-        "bannerUrl":
-            "https://images.pexels.com/photos/34188568/pexels-photo-34188568.jpeg",
+String baseUrl =
+    "https://app-fd6adf10-3923-46c1-83f7-08c318e4c982.cleverapps.io";
 
-        "followersCount": 3200000,
-        "followingCount": 3150,
-        "tweetsCount": 0,
-        "isVerified": false,
-        "joinedDate": DateTime(2025, 3, 15).toString(),
-        "website": "www.facebook.com",
-        "location": "Cairo",
-        "postCount": 1,
-        "birthDate": DateTime(2004, 7, 21).toString(),
-      });
-      return Right(profileData);
+class ProfileRepoImpl implements ProfileRepo {
+  Dio _dio = Dio(
+    BaseOptions(
+      baseUrl: baseUrl,
+      headers: {
+        "Authorization":
+            "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VybmFtZSI6ImhhemVtYWhtZWQiLCJlbWFpbCI6Imppd29ub205NjFAaGg3Zi5jb20iLCJpZCI6IjY4ZGIxN2U1LTE3Y2UtNGQzNS1hY2MyLTY1ZTk4NDRmOWEyMyIsImV4cCI6MTc2MjAxNzg0OSwiaWF0IjoxNzYyMDE0MjQ5LCJ2ZXJzaW9uIjowLCJqdGkiOiI3NjdjNzYxOS0yZmZmLTQ0ODItOTFiNC0wNTI2YTBkNjk5ZDciLCJkZXZpZCI6IjM2NGVkZjUyLWU2MTgtNGJmZS1hYTIzLWYwNTBlMzdiZTMxMiJ9.xnBbAkZ6-GyZF_nhzk3qRe25MLa2eZ7bM33lMcj1vfs",
+      },
+    ),
+  );
+  @override
+  Future<Either<Failure, ProfileModel>> getProfileData(String userName) async {
+    final Response res;
+    try {
+      res = await _dio.get("/api/users/$userName");
+
+      final profileData = ProfileModel.fromJson(res.data);
+      final profileData2 = profileData.copyWith(
+        avatarUrl:
+            "https://images.pexels.com/photos/2379005/pexels-photo-2379005.jpeg",
+      );
+
+      return Right(profileData2);
     } catch (e) {
       return Left(Failure('Failed to load profile data'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, ProfileModel>> updateProfile({
+    required ProfileModel newModel,
+  }) async {
+    try {
+      final json = {
+        "id": newModel.id,
+        "username": newModel.username,
+        if (newModel.displayName.isNotEmpty) "name": newModel.displayName,
+        if (newModel.bio.isNotEmpty) "bio": newModel.bio,
+        "protectedAccount": true,
+      };
+      print(json.toString());
+      final res = await _dio.patch("/api/users/${newModel.id}", data: json);
+
+      return Right(ProfileModel.fromJson(res.data));
+    } catch (e) {
+      print("----------\n${e.toString()}\n---------");
+      return Left(Failure("can't update profile data"));
     }
   }
 
@@ -79,6 +104,136 @@ class ProfileRepoImpl implements ProfileRepo {
       return Right(profilePosts);
     } catch (e) {
       return Left(Failure('Failed to load profile posts'));
+    }
+  }
+
+  Future<Either<Failure, List<UserModel>>> getFollowers(String userName) async {
+    // await Future.delayed(const Duration(seconds: 1));
+
+    try {
+      final response = await _dio.get("/api/followers/$userName");
+      List<dynamic> jsonList = response.data['users'] as List<dynamic>;
+      final List<UserModel> usersList = jsonList
+          .map((json) => UserModel.fromJson(json))
+          .toList();
+      return Right(usersList);
+    } catch (e) {
+      // print("\n--------------\n$e\n-------------------\n");
+      return Left(Failure("couldn't get user followers"));
+    }
+    // List<UserModel> users;
+    // return Right([
+    //   UserModel(
+    //     displayName: 'Hazem Emam',
+    //     userName: 'hazememam',
+    //     image:
+    //         'https://images.pexels.com/photos/1462980/pexels-photo-1462980.jpeg',
+    //     bio:
+    //         'Software engineer and web developer. Software engineer and web developer. Software engineer and web developer.',
+    //     isFollowing: true,
+    //     isFollower: false,
+    //     isVerified: true,
+    //   ),
+    //   UserModel(
+    //     displayName: 'Sara Ali',
+    //     userName: 'sara_ali',
+    //     image: 'https://example.com/images/sara.jpg',
+    //     bio: 'UI/UX designer and artist.',
+    //     isFollowing: true,
+    //     isFollower: true,
+    //     isVerified: false,
+    //   ),
+    //   UserModel(
+    //     displayName: 'Omar Hassan',
+    //     userName: 'omar_hassan',
+    //     image: 'https://example.com/images/omar.jpg',
+    //     bio: 'Data scientist and AI enthusiast.',
+    //     isFollowing: true,
+    //     isFollower: true,
+    //     isVerified: true,
+    //   ),
+    //   UserModel(
+    //     displayName: 'Laila Mohamed',
+    //     userName: 'laila_m',
+    //     image: 'https://example.com/images/laila.jpg',
+    //     bio: 'Mobile app developer.',
+    //     isFollowing: false,
+    //     isFollower: false,
+    //     isVerified: true,
+    //   ),
+    // ]);
+  }
+
+  Future<Either<Failure, List<UserModel>>> getFollowings(
+    String userName,
+  ) async {
+    try {
+      final response = await _dio.get("/api/followings/$userName");
+      List<dynamic> jsonList = response.data['users'] as List<dynamic>;
+      final List<UserModel> usersList = jsonList
+          .map((json) => UserModel.fromJson(json))
+          .toList();
+      return Right(usersList);
+    } catch (e) {
+      // print("\n--------------\n$e\n-------------------\n");
+      return Left(Failure("couldn't get user followings"));
+    }
+  }
+
+  Future<Either<Failure, List<UserModel>>> getVerifiedFollowers(
+    String userName,
+  ) async {
+    try {
+      final response = await _dio.get("/api/followers/$userName");
+      List<dynamic> jsonList = response.data['users'] as List<dynamic>;
+      final List<UserModel> usersList = jsonList
+          .map((json) => UserModel.fromJson(json))
+          .toList();
+      final List<UserModel> verified = usersList
+          .where((e) => e.isVerified == true)
+          .toList();
+      return Right(verified);
+    } catch (e) {
+      // print("\n--------------\n$e\n-------------------\n");
+      return Left(Failure("couldn't get user verified followers"));
+    }
+  }
+
+  Future<Either<Failure, List<UserModel>>> getFollowersYouKnow(
+    String userName,
+  ) async {
+    await Future.delayed(const Duration(seconds: 1));
+    try {
+      final response = await _dio.get("/api/followers/$userName");
+      List<dynamic> jsonList = response.data['users'] as List<dynamic>;
+      final List<UserModel> usersList = jsonList
+          .map((json) => UserModel.fromJson(json))
+          .toList();
+      final List<UserModel> youKnow = usersList
+          .where((e) => e.isFollowing == true)
+          .toList();
+      return Right(youKnow);
+    } catch (e) {
+      // print("\n--------------\n$e\n-------------------\n");
+      return Left(Failure("couldn't get user verified followers"));
+    }
+  }
+
+  Future<Either<Failure, void>> followUser(String username) async {
+    try {
+      await _dio.post("/api/followers/$username");
+      return const Right(());
+    } catch (e) {
+      return Left(Failure("couldn't follow user"));
+    }
+  }
+
+  Future<Either<Failure, void>> unFollowUser(String username) async {
+    try {
+      await _dio.delete("/api/followers/$username");
+      return const Right(());
+    } catch (e) {
+      return Left(Failure("couldn't unfollow user"));
     }
   }
 }
