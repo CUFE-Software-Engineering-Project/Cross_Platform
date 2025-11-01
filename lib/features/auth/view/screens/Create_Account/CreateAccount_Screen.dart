@@ -148,17 +148,26 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
         );
   }
 
-  void _showErrorSnackBar(String message) {
+  void _showErrorToast(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
           message,
-          style: const TextStyle(color: Palette.textWhite),
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            color: Palette.textWhite,
+            fontSize: 15,
+            fontWeight: FontWeight.w500,
+          ),
         ),
-        backgroundColor: Colors.blueGrey,
+        backgroundColor: Palette.greycolor,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: EdgeInsets.symmetric(
+          horizontal: MediaQuery.of(context).size.width * 0.15,
+          vertical: MediaQuery.of(context).size.height * 0.4,
+        ),
         duration: const Duration(seconds: 3),
       ),
     );
@@ -209,7 +218,7 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
         ref.read(authViewModelProvider.notifier).resetState();
         if (mounted) context.pushNamed(RouteConstants.verificationscreen);
       } else if (next.type == AuthStateType.error) {
-        _showErrorSnackBar(next.message ?? 'An error occurred');
+        _showErrorToast(next.message ?? 'An error occurred');
         Future.delayed(const Duration(seconds: 2), () {
           if (mounted) ref.read(authViewModelProvider.notifier).resetState();
         });

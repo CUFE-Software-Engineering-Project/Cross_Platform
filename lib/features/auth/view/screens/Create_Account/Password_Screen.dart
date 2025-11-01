@@ -70,8 +70,11 @@ class _PasswordScreenState extends ConsumerState<PasswordScreen> {
       } else if (next.type == AuthStateType.error) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(next.message ?? 'Signup failed'),
-            backgroundColor: Palette.error,
+            content: Text(
+              next.message ?? 'Signup failed',
+              style: TextStyle(color: Palette.background),
+            ),
+            backgroundColor: Palette.textWhite,
           ),
         );
         ref.read(authViewModelProvider.notifier).resetState();

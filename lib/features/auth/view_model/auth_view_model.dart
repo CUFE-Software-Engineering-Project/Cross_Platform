@@ -334,10 +334,77 @@ class AuthViewModel extends _$AuthViewModel {
     );
   }
 
+  //------------------------------------------------------updatepassword-----------------------------------------------------------------//
+  Future<void> updatePassword({
+    required String password,
+    required String newpassword,
+    required String confirmPassword,
+  }) async {
+    state = AuthState.loading();
+    final result = await _authRemoteRepository.update_password(
+      password: password,
+      newpassword: newpassword,
+      confirmPassword: confirmPassword,
+    );
+    result.fold(
+      (failure) {
+        state = AuthState.error(failure.message);
+      },
+      (message) {
+        state = AuthState.success(message);
+      },
+    );
+  }
+
+  //------------------------------------------------------updateemail-----------------------------------------------------------------//
+  Future<void> updateEmail({required String newEmail}) async {
+    state = AuthState.loading();
+    final result = await _authRemoteRepository.update_email(newemail: newEmail);
+
+    result.fold(
+      (failure) {
+        state = AuthState.error(failure.message);
+      },
+      (message) {
+        state = AuthState.awaitingVerification(message);
+      },
+    );
+  }
+
+  Future<void> verifyNewEmail({
+    required String newEmail,
+    required String code,
+  }) async {
+    state = AuthState.loading();
+    final result = await _authRemoteRepository.verify_new_email(
+      newemail: newEmail,
+      code: code,
+    );
+    await result.fold(
+      (failure) async {
+        state = AuthState.error(failure.message);
+      },
+      (message) async {
+        try {
+          final currentUser = ref.read(currentUserProvider);
+          if (currentUser == null) {
+            state = AuthState.error("User not found to update email");
+            return;
+          }
+          final updatedUser = currentUser.copyWith(email: newEmail);
+          await _authLocalRepository.saveUser(updatedUser);
+          ref.read(currentUserProvider.notifier).adduser(updatedUser);
+          state = AuthState.success(message);
+        } catch (e) {
+          state = AuthState.error("Failed to update email: $e");
+        }
+      },
+    );
+  }
+
   //-------------------------------------------------Token Management--------------------------------------------------------------------------------------//
   String? getAccessToken() {
     final tokens = _authLocalRepository.getTokens();
-    // Return token even if expired - interceptor will handle refresh
     return tokens?.accessToken;
   }
 

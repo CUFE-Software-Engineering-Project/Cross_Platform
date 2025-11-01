@@ -29,20 +29,7 @@ class _UsernameScreenState extends ConsumerState<UsernameScreen> {
   void initState() {
     super.initState();
     _usernameController.addListener(_validateForm);
-
-    // Debug: Check user state when screen loads
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      print('🖥️ UsernameScreen loaded');
-      final currentUser = ref.read(currentUserProvider);
-      print('👤 Current user: ${currentUser?.name ?? "NULL"}');
-      print('📧 Email: ${currentUser?.email ?? "NULL"}');
-
-      if (currentUser == null) {
-        print('⚠️ WARNING: No user in provider on UsernameScreen!');
-      } else {
-        print('✅ User exists in provider');
-      }
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {});
   }
 
   void _validateForm() {
@@ -74,8 +61,11 @@ class _UsernameScreenState extends ConsumerState<UsernameScreen> {
     if (currentUser == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Error: User not found. Please restart signup.'),
-          backgroundColor: Colors.red,
+          content: Text(
+            'Error: User not found. Please restart signup.',
+            style: TextStyle(color: Palette.background),
+          ),
+          backgroundColor: Palette.textPrimary,
         ),
       );
       return;
@@ -104,8 +94,11 @@ class _UsernameScreenState extends ConsumerState<UsernameScreen> {
       } else if (next.type == AuthStateType.error) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(next.message ?? 'An error occurred'),
-            backgroundColor: Colors.red,
+            content: Text(
+              next.message ?? 'An error occurred',
+              style: TextStyle(color: Palette.background),
+            ),
+            backgroundColor: Palette.textPrimary,
           ),
         );
         ref.read(authViewModelProvider.notifier).resetState();

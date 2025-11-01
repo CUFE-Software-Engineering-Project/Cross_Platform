@@ -222,7 +222,7 @@ class AuthRemoteRepository {
     }
   }
 
-  //------------------------------------------------------------------------------------------------------//
+  //--------------------------------------forgetpassword---------------------------------------------------------------//
   Future<Either<AppFailure, String>> forget_password({
     required String email,
   }) async {
@@ -282,6 +282,77 @@ class AuthRemoteRepository {
         AppFailure(
           message: e.response?.data['error'] ?? 'Reset password failed',
         ),
+      );
+    } catch (e) {
+      return left(AppFailure(message: e.toString()));
+    }
+  }
+
+  //-------------------------------------------------------Update password------------------------------------------------------------------------------------//
+
+  Future<Either<AppFailure, String>> update_password({
+    required String password,
+    required String newpassword,
+    required String confirmPassword,
+  }) async {
+    try {
+      final response = await _dio.post(
+        'auth/change-password',
+        data: {
+          'password': password,
+          'newpassword': newpassword,
+          'confirmPassword': confirmPassword,
+        },
+      );
+      final message =
+          response.data['message'] ?? 'Password updated successfully';
+      return right(message);
+    } on DioException catch (e) {
+      return left(
+        AppFailure(
+          message: e.response?.data['error'] ?? 'update password failed',
+        ),
+      );
+    } catch (e) {
+      return left(AppFailure(message: e.toString()));
+    }
+  }
+
+  //----------------------------------------------------------------------updateemail------------------------------------------------------------------------------------------//
+  Future<Either<AppFailure, String>> update_email({
+    required String newemail,
+  }) async {
+    try {
+      final response = await _dio.post(
+        'auth/change-email',
+        data: {'newemail': newemail},
+      );
+      final message = response.data['message'] ?? 'Email updated successfully';
+      return right(message);
+    } on DioException catch (e) {
+      return left(
+        AppFailure(message: e.response?.data['error'] ?? 'update email failed'),
+      );
+    } catch (e) {
+      return left(AppFailure(message: e.toString()));
+    }
+  }
+
+  Future<Either<AppFailure, String>> verify_new_email({
+    required String newemail,
+    required String code,
+  }) async {
+    try {
+      final response = await _dio.post(
+        'auth/verify-new-email',
+        data: {'email': newemail, 'code': code},
+      );
+
+      final message = response.data['message'] ?? 'updated email successfully';
+      return right(message);
+    } on DioException catch (e) {
+      return left(
+        AppFailure(message: e.response?.data['error'] ?? 'Email update failed'),
       );
     } catch (e) {
       return left(AppFailure(message: e.toString()));

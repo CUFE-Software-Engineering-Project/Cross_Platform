@@ -58,7 +58,7 @@ class _InterestsState extends ConsumerState<Interests> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(next.message ?? 'Failed to save interests'),
-            backgroundColor: Palette.error,
+            backgroundColor: Palette.textWhite,
           ),
         );
         ref.read(authViewModelProvider.notifier).setAuthenticated();

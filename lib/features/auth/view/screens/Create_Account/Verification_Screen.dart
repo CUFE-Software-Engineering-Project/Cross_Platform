@@ -81,8 +81,11 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
       } else if (next.type == AuthStateType.error) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(next.message ?? 'Invalid verification code'),
-            backgroundColor: Palette.error,
+            content: Text(
+              next.message ?? 'Invalid verification code',
+              style: TextStyle(color: Palette.background),
+            ),
+            backgroundColor: Palette.textWhite,
           ),
         );
         authViewModel.resetState();

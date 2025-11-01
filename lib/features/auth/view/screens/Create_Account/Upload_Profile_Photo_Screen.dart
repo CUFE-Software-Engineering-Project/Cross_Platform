@@ -72,8 +72,11 @@ class _UploadProfilePhotoScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           duration: const Duration(seconds: 2),
-          content: Text('Error cropping image: $e'),
-          backgroundColor: Palette.error,
+          content: Text(
+            'Error cropping image: $e',
+            style: TextStyle(color: Palette.background),
+          ),
+          backgroundColor: Palette.textWhite,
         ),
       );
     }
