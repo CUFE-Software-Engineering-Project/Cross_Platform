@@ -8,7 +8,7 @@ part of 'usermodel.dart';
 
 class UserModelAdapter extends TypeAdapter<UserModel> {
   @override
-  final typeId = 1;
+  final typeId = 0;
 
   @override
   UserModel read(BinaryReader reader) {
@@ -26,18 +26,17 @@ class UserModelAdapter extends TypeAdapter<UserModel> {
       id: fields[6] as String,
       isEmailVerified: fields[7] as bool,
       isVerified: fields[8] as bool,
-      loginCodesSet: fields[9] as bool,
-      tfaVerified: fields[10] as bool?,
-      tokenVersion: (fields[11] as num?)?.toInt(),
-      accessToken: fields[12] as String?,
-      refreshToken: fields[13] as String?,
+      tfaVerified: fields[9] as bool?,
+      interests: fields[10] == null
+          ? const {}
+          : (fields[10] as Set).cast<String>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, UserModel obj) {
     writer
-      ..writeByte(14)
+      ..writeByte(11)
       ..writeByte(0)
       ..write(obj.name)
       ..writeByte(1)
@@ -57,15 +56,9 @@ class UserModelAdapter extends TypeAdapter<UserModel> {
       ..writeByte(8)
       ..write(obj.isVerified)
       ..writeByte(9)
-      ..write(obj.loginCodesSet)
-      ..writeByte(10)
       ..write(obj.tfaVerified)
-      ..writeByte(11)
-      ..write(obj.tokenVersion)
-      ..writeByte(12)
-      ..write(obj.accessToken)
-      ..writeByte(13)
-      ..write(obj.refreshToken);
+      ..writeByte(10)
+      ..write(obj.interests);
   }
 
   @override

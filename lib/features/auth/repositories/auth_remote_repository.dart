@@ -1,55 +1,36 @@
 import 'package:fpdart/fpdart.dart';
 import 'package:lite_x/core/classes/AppFailure.dart';
-import 'package:lite_x/core/constants/server_constants.dart';
+import 'package:lite_x/core/classes/PickedImage.dart';
+import 'package:lite_x/core/models/TokensModel.dart';
 import 'package:lite_x/core/models/usermodel.dart';
+import 'package:lite_x/core/providers/dio_interceptor.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:dio/dio.dart';
+
 part 'auth_remote_repository.g.dart';
 
 @Riverpod(keepAlive: true)
 AuthRemoteRepository authRemoteRepository(Ref ref) {
-  return AuthRemoteRepository(dio: Dio(BASE_OPTIONS));
+  final dio = ref.watch(dioProvider);
+  return AuthRemoteRepository(dio: dio);
 }
 
 class AuthRemoteRepository {
   final Dio _dio;
+
   AuthRemoteRepository({required Dio dio}) : _dio = dio;
 
-  // Signup Captcha Verification
-  Future<Either<AppFailure, String>> signupCaptcha(String email) async {
-    try {
-      final response = await _dio.post(
-        '/signup_captcha',
-        queryParameters: {'email': email},
-      );
-      return right(response.data['Message'] ?? 'Captcha verified');
-    } on DioException catch (e) {
-      return left(
-        AppFailure(
-          message: e.response?.data['error'] ?? 'Captcha verification failed',
-        ),
-      );
-    } catch (e) {
-      return left(AppFailure(message: e.toString()));
-    }
-  }
-
+  //--------------------------------------------SignUp---------------------------------------------------------//
   // Register new user
-  Future<Either<AppFailure, String>> signup({
+  Future<Either<AppFailure, String>> create({
     required String name,
     required String email,
-    required String password,
     required String dateOfBirth,
   }) async {
     try {
       final response = await _dio.post(
-        '/signup',
-        data: {
-          'name': name,
-          'email': email,
-          'password': password,
-          'dateOfBirth': dateOfBirth,
-        },
+        'auth/signup',
+        data: {'name': name, 'email': email, 'dateOfBirth': dateOfBirth},
       );
       return right(response.data['message'] ?? 'Verification email sent');
     } on DioException catch (e) {
@@ -62,17 +43,18 @@ class AuthRemoteRepository {
   }
 
   // Verify signup email with code
-  Future<Either<AppFailure, UserModel>> verifySignupEmail({
+  Future<Either<AppFailure, String>> verifySignupEmail({
     required String email,
     required String code,
   }) async {
     try {
       final response = await _dio.post(
-        '/verify-signup',
+        'auth/verify-signup',
         data: {'email': email, 'code': code},
       );
-      final user = UserModel.fromMap(response.data['user']);
-      return right(user);
+
+      final message = response.data['message'] ?? 'Verified successfully';
+      return right(message);
     } on DioException catch (e) {
       return left(
         AppFailure(
@@ -84,17 +66,140 @@ class AuthRemoteRepository {
     }
   }
 
-  // Login with email and password
-  Future<Either<AppFailure, String>> login({
+  //finalize signup by setting password
+  Future<Either<AppFailure, (UserModel, TokensModel)>> signup({
     required String email,
     required String password,
   }) async {
     try {
       final response = await _dio.post(
-        '/login',
+        'auth/finalize_signup',
         data: {'email': email, 'password': password},
       );
-      return right(response.data['message'] ?? 'Verification code sent');
+
+      final user = UserModel.fromMap(response.data['user']);
+      final tokens = TokensModel.fromMap(response.data['tokens']);
+      return right((user, tokens));
+    } on DioException catch (e) {
+      return left(
+        AppFailure(message: e.response?.data['error'] ?? 'Signup failed'),
+      );
+    } catch (e) {
+      return left(AppFailure(message: e.toString()));
+    }
+  }
+
+  static const Map<String, String> _mediaTypes = {
+    'jpg': 'image/jpeg',
+    'jpeg': 'image/jpeg',
+    'png': 'image/png',
+    'gif': 'image/gif',
+    'webp': 'image/webp',
+  };
+  String _getMediaType(String filePath) {
+    final extension = filePath.split('.').last.toLowerCase();
+    return _mediaTypes[extension] ?? 'image/jpeg';
+  }
+
+  Future<Either<AppFailure, String>> uploadProfilePhoto({
+    required PickedImage pickedImage,
+  }) async {
+    if (pickedImage.file == null) {
+      return left(AppFailure(message: 'No file selected'));
+    }
+    final file = pickedImage.file!;
+    final fileName = pickedImage.name;
+    final fileType = _getMediaType(file.path);
+    try {
+      final requestResponse = await _dio.post(
+        'media/upload-request',
+        data: {'fileName': fileName, 'contentType': fileType},
+      );
+      final String presignedUrl = requestResponse.data['url'];
+      final String keyName = requestResponse.data['keyName'];
+      await _dio.put(
+        presignedUrl,
+        data: file.openRead(),
+        options: Options(
+          headers: {
+            'Content-Type': fileType,
+            'Content-Length': await file.length(),
+          },
+        ),
+      );
+
+      final encodedKeyName = Uri.encodeComponent(keyName);
+      final confirmResponse = await _dio.post(
+        'media/confirm-upload/$encodedKeyName',
+      );
+      final newMediaKey = confirmResponse.data['newMedia']['keyName'] as String;
+      return right(newMediaKey);
+    } on DioException catch (e) {
+      return left(
+        AppFailure(message: e.response?.data['error'] ?? 'Upload failed'),
+      );
+    } catch (e) {
+      return left(AppFailure(message: e.toString()));
+    }
+  }
+
+  Future<Either<AppFailure, UserModel>> updateUsername({
+    required UserModel currentUser,
+    required String Username,
+    required String accessToken,
+  }) async {
+    try {
+      final response = await _dio.put(
+        'auth/update_username',
+        data: {'username': Username},
+      );
+      final newUsername = response.data['user']['username'] as String;
+      final updatedUser = currentUser.copyWith(username: newUsername);
+      return right(updatedUser);
+    } on DioException catch (e) {
+      final errorMsg = e.response?.data['error'] ?? 'Failed to update username';
+      return left(AppFailure(message: errorMsg));
+    } catch (e) {
+      return left(AppFailure(message: e.toString()));
+    }
+  }
+
+  //-------------------------------------------------FCM Token Registration-----------------------------------------------------------------------------------------//
+  Future<Either<AppFailure, String>> registerFcmToken({
+    required String fcmToken,
+    required String osType,
+  }) async {
+    try {
+      final data = {'token': fcmToken, 'osType': osType};
+      final response = await _dio.post('users/fcm-token', data: data);
+      return right(response.data['message'] ?? 'FCM registered successfully');
+    } on DioException catch (e) {
+      return left(
+        AppFailure(
+          message: e.response?.data['error'] ?? 'FCM registration failed',
+        ),
+      );
+    } catch (e) {
+      return left(AppFailure(message: e.toString()));
+    }
+  }
+
+  //-------------------------------------------------Login--------------------------------------------------------------------------------------//
+  // Login with email and password
+  Future<Either<AppFailure, (UserModel, TokensModel)>> login({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final response = await _dio.post(
+        'auth/login',
+        data: {'email': email, 'password': password},
+      );
+
+      final user = UserModel.fromMap(response.data['User']);
+      final tokens = TokensModel.fromMap_login(response.data);
+
+      return right((user, tokens));
     } on DioException catch (e) {
       return left(
         AppFailure(message: e.response?.data['error'] ?? 'Login failed'),
@@ -104,189 +209,34 @@ class AuthRemoteRepository {
     }
   }
 
-  // Verify login email with code
-  Future<Either<AppFailure, LoginResponse>> verifyLoginEmail({
+  Future<Either<AppFailure, bool>> check_email({required String email}) async {
+    try {
+      final response = await _dio.post('auth/getUser', data: {'email': email});
+      return right(response.data['exists'] ?? false);
+    } on DioException catch (e) {
+      return left(
+        AppFailure(message: e.response?.data['error'] ?? 'Email check failed'),
+      );
+    } catch (e) {
+      return left(AppFailure(message: e.toString()));
+    }
+  }
+
+  //--------------------------------------forgetpassword---------------------------------------------------------------//
+  Future<Either<AppFailure, String>> forget_password({
     required String email,
-    required String code,
   }) async {
     try {
       final response = await _dio.post(
-        '/verify-login',
-        data: {'email': email, 'code': code},
-      );
-
-      final user = UserModel.fromMap(response.data['User']);
-      final token = response.data['Token'] as String;
-      final refreshToken = response.data['Refresh_token'] as String;
-      final deviceRecord = response.data['DeviceRecord'];
-
-      return right(
-        LoginResponse(
-          user: user,
-          token: token,
-          refreshToken: refreshToken,
-          deviceRecord: deviceRecord,
-        ),
-      );
-    } on DioException catch (e) {
-      return left(
-        AppFailure(
-          message: e.response?.data['error'] ?? 'Login verification failed',
-        ),
-      );
-    } catch (e) {
-      return left(AppFailure(message: e.toString()));
-    }
-  }
-
-  // Login Captcha Verification
-  Future<Either<AppFailure, String>> loginCaptcha(String email) async {
-    try {
-      final response = await _dio.get(
-        '/captcha',
-        queryParameters: {'email': email},
-      );
-      return right(response.data['Message'] ?? 'Captcha verified');
-    } on DioException catch (e) {
-      return left(
-        AppFailure(
-          message: e.response?.data['error'] ?? 'Captcha verification failed',
-        ),
-      );
-    } catch (e) {
-      return left(AppFailure(message: e.toString()));
-    }
-  }
-
-  // Setup 2FA
-  Future<Either<AppFailure, TwoFactorSetup>> setup2FA(String token) async {
-    try {
-      final response = await _dio.post(
-        '/2fa/setup',
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
-      );
-
-      return right(
-        TwoFactorSetup(
-          email: response.data['Email'],
-          qrCodePng: response.data['Png'],
-          secret: response.data['Secret'],
-        ),
-      );
-    } on DioException catch (e) {
-      return left(
-        AppFailure(message: e.response?.data['error'] ?? '2FA setup failed'),
-      );
-    } catch (e) {
-      return left(AppFailure(message: e.toString()));
-    }
-  }
-
-  // Verify 2FA code
-  Future<Either<AppFailure, LoginResponse>> verify2FA({
-    required String email,
-    required String code,
-  }) async {
-    try {
-      final response = await _dio.post(
-        '/2fa/verify',
-        data: {'email': email, 'code': code},
-      );
-
-      final user = UserModel.fromMap(response.data['User']);
-      final token = response.data['Token'] as String;
-      final refreshToken = response.data['Refresh_token'] as String;
-
-      return right(
-        LoginResponse(user: user, token: token, refreshToken: refreshToken),
-      );
-    } on DioException catch (e) {
-      return left(
-        AppFailure(
-          message: e.response?.data['error'] ?? '2FA verification failed',
-        ),
-      );
-    } catch (e) {
-      return left(AppFailure(message: e.toString()));
-    }
-  }
-
-  // Generate backup login codes
-  Future<Either<AppFailure, List<String>>> generateLoginCodes(
-    String token,
-  ) async {
-    try {
-      final response = await _dio.post(
-        '/generate-login-codes',
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
-      );
-
-      final message = response.data as String;
-      final codes = message
-          .split('\n')
-          .where(
-            (line) => line.length == 6 && RegExp(r'^\d{6}$').hasMatch(line),
-          )
-          .toList();
-
-      return right(codes);
-    } on DioException catch (e) {
-      return left(
-        AppFailure(
-          message: e.response?.data['error'] ?? 'Failed to generate codes',
-        ),
-      );
-    } catch (e) {
-      return left(AppFailure(message: e.toString()));
-    }
-  }
-
-  // Verify login code
-  Future<Either<AppFailure, LoginResponse>> verifyLoginCode({
-    required String email,
-    required String code,
-  }) async {
-    try {
-      final response = await _dio.post(
-        '/verify-login-code',
-        data: {'email': email, 'code': code},
-      );
-
-      final user = UserModel.fromMap(response.data['User']);
-      final token = response.data['Token'] as String;
-      final refreshToken = response.data['Refresh_token'] as String;
-
-      return right(
-        LoginResponse(user: user, token: token, refreshToken: refreshToken),
-      );
-    } on DioException catch (e) {
-      return left(
-        AppFailure(
-          message:
-              e.response?.data['error'] ?? 'Login code verification failed',
-        ),
-      );
-    } catch (e) {
-      return left(AppFailure(message: e.toString()));
-    }
-  }
-
-  // Forget Password
-  Future<Either<AppFailure, String>> forgetPassword({
-    required String email,
-    required String token,
-  }) async {
-    try {
-      final response = await _dio.post(
-        '/forget-password',
+        'auth/forget-password',
         data: {'email': email},
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
-      return right(response.data['message'] ?? 'Reset token sent to email');
+      final message = response.data['message'] ?? 'Reset code sent';
+      return right(message);
     } on DioException catch (e) {
       return left(
         AppFailure(
-          message: e.response?.data['error'] ?? 'Failed to send reset email',
+          message: e.response?.data['error'] ?? 'Forget password failed',
         ),
       );
     } catch (e) {
@@ -294,22 +244,43 @@ class AuthRemoteRepository {
     }
   }
 
-  // Reset Password
-  Future<Either<AppFailure, String>> resetPassword({
+  Future<Either<AppFailure, String>> verify_reset_code({
     required String email,
-    required String token,
+    required String code,
+  }) async {
+    try {
+      final response = await _dio.post(
+        'auth/verify-reset-code',
+        data: {'email': email, 'code': code},
+      );
+      final message = response.data['message'] ?? 'Reset code verified';
+      return right(message);
+    } on DioException catch (e) {
+      return left(
+        AppFailure(
+          message: e.response?.data['error'] ?? 'Verify reset code failed',
+        ),
+      );
+    } catch (e) {
+      return left(AppFailure(message: e.toString()));
+    }
+  }
+
+  Future<Either<AppFailure, String>> reset_password({
+    required String email,
     required String password,
   }) async {
     try {
       final response = await _dio.post(
-        '/reset-password',
-        data: {'email': email, 'token': token, 'password': password},
+        'auth/reset-password',
+        data: {'email': email, 'password': password},
       );
-      return right(response.data['message'] ?? 'Password reset successfully');
+      final message = response.data['message'] ?? 'Password reset successful';
+      return right(message);
     } on DioException catch (e) {
       return left(
         AppFailure(
-          message: e.response?.data['error'] ?? 'Password reset failed',
+          message: e.response?.data['error'] ?? 'Reset password failed',
         ),
       );
     } catch (e) {
@@ -317,11 +288,103 @@ class AuthRemoteRepository {
     }
   }
 
-  // Refresh token
-  Future<Either<AppFailure, String>> refreshToken() async {
+  //-------------------------------------------------------Update password------------------------------------------------------------------------------------//
+
+  Future<Either<AppFailure, String>> update_password({
+    required String password,
+    required String newpassword,
+    required String confirmPassword,
+  }) async {
     try {
-      final response = await _dio.get('/refresh');
-      return right(response.data['NewAcesstoken'] as String);
+      final response = await _dio.post(
+        'auth/change-password',
+        data: {
+          'password': password,
+          'newpassword': newpassword,
+          'confirmPassword': confirmPassword,
+        },
+      );
+      final message =
+          response.data['message'] ?? 'Password updated successfully';
+      return right(message);
+    } on DioException catch (e) {
+      return left(
+        AppFailure(
+          message: e.response?.data['error'] ?? 'update password failed',
+        ),
+      );
+    } catch (e) {
+      return left(AppFailure(message: e.toString()));
+    }
+  }
+
+  //----------------------------------------------------------------------updateemail------------------------------------------------------------------------------------------//
+  Future<Either<AppFailure, String>> update_email({
+    required String newemail,
+  }) async {
+    try {
+      final response = await _dio.post(
+        'auth/change-email',
+        data: {'newemail': newemail},
+      );
+      final message = response.data['message'] ?? 'Email updated successfully';
+      return right(message);
+    } on DioException catch (e) {
+      return left(
+        AppFailure(message: e.response?.data['error'] ?? 'update email failed'),
+      );
+    } catch (e) {
+      return left(AppFailure(message: e.toString()));
+    }
+  }
+
+  Future<Either<AppFailure, String>> verify_new_email({
+    required String newemail,
+    required String code,
+  }) async {
+    try {
+      final response = await _dio.post(
+        'auth/verify-new-email',
+        data: {'email': newemail, 'code': code},
+      );
+
+      final message = response.data['message'] ?? 'updated email successfully';
+      return right(message);
+    } on DioException catch (e) {
+      return left(
+        AppFailure(message: e.response?.data['error'] ?? 'Email update failed'),
+      );
+    } catch (e) {
+      return left(AppFailure(message: e.toString()));
+    }
+  }
+
+  //-------------------------------------------------------------------------------token management--------------------------------------------------------------------------------------------//
+  Future<Either<AppFailure, TokensModel>> refreshToken(
+    String refreshToken,
+    DateTime refreshTokenExpiry,
+  ) async {
+    try {
+      final response = await _dio.post(
+        'auth/refresh',
+        data: {'refresh_token': refreshToken},
+        options: Options(headers: {'Content-Type': 'application/json'}),
+      );
+      final newAccessToken = response.data['access_token'] as String?;
+      if (newAccessToken == null) {
+        return left(
+          AppFailure(
+            message: 'Refresh response did not contain new access token',
+          ),
+        );
+      }
+      final tokens = TokensModel(
+        accessToken: newAccessToken,
+        refreshToken: refreshToken,
+        accessTokenExpiry: DateTime.now().add(const Duration(hours: 1)),
+        refreshTokenExpiry: refreshTokenExpiry,
+      );
+      return right(tokens);
     } on DioException catch (e) {
       return left(
         AppFailure(
@@ -331,358 +394,5 @@ class AuthRemoteRepository {
     } catch (e) {
       return left(AppFailure(message: e.toString()));
     }
-  }
-
-  // Logout
-  Future<Either<AppFailure, String>> logout(String token) async {
-    try {
-      final response = await _dio.post(
-        '/logout',
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
-      );
-      return right(response.data['message'] ?? 'Logged out successfully');
-    } on DioException catch (e) {
-      return left(
-        AppFailure(message: e.response?.data['error'] ?? 'Logout failed'),
-      );
-    } catch (e) {
-      return left(AppFailure(message: e.toString()));
-    }
-  }
-
-  // Logout from all sessions
-  Future<Either<AppFailure, String>> logoutAll(String token) async {
-    try {
-      final response = await _dio.post(
-        '/logout-all',
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
-      );
-      return right(response.data['message'] ?? 'Logged out from all sessions');
-    } on DioException catch (e) {
-      return left(
-        AppFailure(message: e.response?.data['error'] ?? 'Logout all failed'),
-      );
-    } catch (e) {
-      return left(AppFailure(message: e.toString()));
-    }
-  }
-
-  // Re-authenticate with password
-  Future<Either<AppFailure, String>> reauthPassword({
-    required String email,
-    required String password,
-    required String token,
-  }) async {
-    try {
-      final response = await _dio.post(
-        '/reauth-password',
-        data: {'email': email, 'password': password},
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
-      );
-      return right(response.data['message'] ?? 'Reauthentication successful');
-    } on DioException catch (e) {
-      return left(
-        AppFailure(
-          message: e.response?.data['error'] ?? 'Reauthentication failed',
-        ),
-      );
-    } catch (e) {
-      return left(AppFailure(message: e.toString()));
-    }
-  }
-
-  // Re-authenticate with 2FA
-  Future<Either<AppFailure, String>> reauthTFA({
-    required String email,
-    required String code,
-    required String token,
-  }) async {
-    try {
-      final response = await _dio.post(
-        '/reauth-tfa',
-        data: {'email': email, 'code': code},
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
-      );
-      return right(response.data['message'] ?? 'Reauthentication successful');
-    } on DioException catch (e) {
-      return left(
-        AppFailure(
-          message: e.response?.data['error'] ?? 'Reauthentication failed',
-        ),
-      );
-    } catch (e) {
-      return left(AppFailure(message: e.toString()));
-    }
-  }
-
-  // Re-authenticate with backup code
-  Future<Either<AppFailure, String>> reauthCode({
-    required String email,
-    required String code,
-    required String token,
-  }) async {
-    try {
-      final response = await _dio.post(
-        '/reauth-code',
-        data: {'email': email, 'code': code},
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
-      );
-      return right(response.data['message'] ?? 'Reauthentication successful');
-    } on DioException catch (e) {
-      return left(
-        AppFailure(
-          message: e.response?.data['error'] ?? 'Reauthentication failed',
-        ),
-      );
-    } catch (e) {
-      return left(AppFailure(message: e.toString()));
-    }
-  }
-
-  // Change password
-  Future<Either<AppFailure, String>> changePassword({
-    required String password,
-    required String confirm,
-    required String token,
-  }) async {
-    try {
-      final response = await _dio.post(
-        '/change-password',
-        data: {'password': password, 'confirm': confirm},
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
-      );
-      return right(response.data['Message'] ?? 'Password changed successfully');
-    } on DioException catch (e) {
-      return left(
-        AppFailure(
-          message: e.response?.data['error'] ?? 'Password change failed',
-        ),
-      );
-    } catch (e) {
-      return left(AppFailure(message: e.toString()));
-    }
-  }
-
-  // Change email
-  Future<Either<AppFailure, String>> changeEmail({
-    required String newEmail,
-    required String currentEmail,
-    required String token,
-  }) async {
-    try {
-      final response = await _dio.post(
-        '/change-email',
-        data: {'email': newEmail, 'currentEmail': currentEmail},
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
-      );
-      return right(response.data['message'] ?? 'Verification email sent');
-    } on DioException catch (e) {
-      return left(
-        AppFailure(message: e.response?.data['error'] ?? 'Email change failed'),
-      );
-    } catch (e) {
-      return left(AppFailure(message: e.toString()));
-    }
-  }
-
-  // Verify new email
-  Future<Either<AppFailure, String>> verifyNewEmail({
-    required String email,
-    required String code,
-    required String currentEmail,
-    required String token,
-  }) async {
-    try {
-      final response = await _dio.post(
-        '/verify-new-email',
-        data: {'email': email, 'code': code, 'currentEmail': currentEmail},
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
-      );
-      return right(response.data['message'] ?? 'Email changed successfully');
-    } on DioException catch (e) {
-      return left(
-        AppFailure(
-          message: e.response?.data['error'] ?? 'Email verification failed',
-        ),
-      );
-    } catch (e) {
-      return left(AppFailure(message: e.toString()));
-    }
-  }
-
-  // Get user info
-  Future<Either<AppFailure, UserModel>> getUser(String token) async {
-    try {
-      final response = await _dio.get(
-        '/user',
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
-      );
-      final user = UserModel.fromMap(response.data['User']);
-      return right(user);
-    } on DioException catch (e) {
-      return left(
-        AppFailure(message: e.response?.data['error'] ?? 'Failed to get user'),
-      );
-    } catch (e) {
-      return left(AppFailure(message: e.toString()));
-    }
-  }
-
-  // Get active sessions
-  Future<Either<AppFailure, List<SessionInfo>>> getSessions(
-    String token,
-  ) async {
-    try {
-      final response = await _dio.get(
-        '/sessions',
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
-      );
-
-      final sessionsList = response.data as List;
-      final sessions = sessionsList
-          .map((s) => SessionInfo.fromMap(s as Map<String, dynamic>))
-          .toList();
-
-      return right(sessions);
-    } on DioException catch (e) {
-      return left(
-        AppFailure(
-          message: e.response?.data['error'] ?? 'Failed to get sessions',
-        ),
-      );
-    } catch (e) {
-      return left(AppFailure(message: e.toString()));
-    }
-  }
-
-  // Logout specific session
-  Future<Either<AppFailure, String>> logoutSession({
-    required String sessionId,
-    required String token,
-  }) async {
-    try {
-      final response = await _dio.delete(
-        '/session/$sessionId',
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
-      );
-      return right(response.data['message'] ?? 'Session logged out');
-    } on DioException catch (e) {
-      return left(
-        AppFailure(
-          message: e.response?.data['error'] ?? 'Failed to logout session',
-        ),
-      );
-    } catch (e) {
-      return left(AppFailure(message: e.toString()));
-    }
-  }
-
-  // OAuth - Google Sign In
-  Future<Either<AppFailure, LoginResponse>> googleSignIn(String code) async {
-    try {
-      final response = await _dio.get(
-        '/oauth2/callback/google',
-        queryParameters: {'code': code},
-      );
-
-      final user = UserModel.fromMap(response.data['user']);
-      final token = response.data['token']['token'] as String;
-
-      return right(
-        LoginResponse(user: user, token: token, refreshToken: token),
-      );
-    } on DioException catch (e) {
-      return left(
-        AppFailure(
-          message: e.response?.data['error'] ?? 'Google sign-in failed',
-        ),
-      );
-    } catch (e) {
-      return left(AppFailure(message: e.toString()));
-    }
-  }
-
-  // OAuth - GitHub Sign In
-  Future<Either<AppFailure, LoginResponse>> githubSignIn(String code) async {
-    try {
-      final response = await _dio.get(
-        '/oauth2/callback/github',
-        queryParameters: {'code': code},
-      );
-
-      final user = UserModel.fromMap(response.data['user']);
-      final token = response.data['token']['token'] as String;
-
-      return right(
-        LoginResponse(user: user, token: token, refreshToken: token),
-      );
-    } on DioException catch (e) {
-      return left(
-        AppFailure(
-          message: e.response?.data['error'] ?? 'GitHub sign-in failed',
-        ),
-      );
-    } catch (e) {
-      return left(AppFailure(message: e.toString()));
-    }
-  }
-}
-
-// Helper classes for responses
-class LoginResponse {
-  final UserModel user;
-  final String token;
-  final String refreshToken;
-  final dynamic deviceRecord;
-
-  LoginResponse({
-    required this.user,
-    required this.token,
-    required this.refreshToken,
-    this.deviceRecord,
-  });
-}
-
-class TwoFactorSetup {
-  final String email;
-  final String qrCodePng;
-  final String secret;
-
-  TwoFactorSetup({
-    required this.email,
-    required this.qrCodePng,
-    required this.secret,
-  });
-}
-
-class SessionInfo {
-  final String jti;
-  final String deviceId;
-  final String userAgent;
-  final String ip;
-  final String location;
-  final String createdAt;
-  final String expireAt;
-
-  SessionInfo({
-    required this.jti,
-    required this.deviceId,
-    required this.userAgent,
-    required this.ip,
-    required this.location,
-    required this.createdAt,
-    required this.expireAt,
-  });
-
-  factory SessionInfo.fromMap(Map<String, dynamic> map) {
-    return SessionInfo(
-      jti: map['Jti'] as String? ?? '',
-      deviceId: map['DeviceId'] as String? ?? '',
-      userAgent: map['UserAgent'] as String? ?? '',
-      ip: map['Ip'] as String? ?? '',
-      location: map['Location'] as String? ?? '',
-      createdAt: map['CreatedAt'] as String? ?? '',
-      expireAt: map['ExpireAt'] as String? ?? '',
-    );
   }
 }

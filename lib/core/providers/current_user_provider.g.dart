@@ -41,7 +41,7 @@ final class CurrentUserProvider
   }
 }
 
-String _$currentUserHash() => r'512689d9012a7b275369c4be02ac16b64b9aa38b';
+String _$currentUserHash() => r'b22e0bfe3000aa598da061afa015c6af9af198fe';
 
 abstract class _$CurrentUser extends $Notifier<UserModel?> {
   UserModel? build();

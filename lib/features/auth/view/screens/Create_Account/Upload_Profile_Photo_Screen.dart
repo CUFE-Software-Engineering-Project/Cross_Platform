@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:flutter/material.dart';
@@ -7,8 +6,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lite_x/core/classes/PickedImage.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
 import 'package:lite_x/core/theme/palette.dart';
+import 'package:lite_x/core/view/widgets/Loader.dart';
 import 'package:lite_x/features/auth/view/widgets/buildXLogo.dart';
 import 'package:dotted_border/dotted_border.dart';
+import 'package:lite_x/features/auth/view_model/auth_state.dart';
+import 'package:lite_x/features/auth/view_model/auth_view_model.dart';
 
 class UploadProfilePhotoScreen extends ConsumerStatefulWidget {
   const UploadProfilePhotoScreen({super.key});
@@ -36,7 +38,7 @@ class _UploadProfilePhotoScreenState
     CroppedFile? croppedFile;
 
     try {
-      if (!kIsWeb && picked.file != null) {
+      if (picked.file != null) {
         croppedFile = await ImageCropper().cropImage(
           sourcePath: picked.file!.path,
           aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
@@ -64,50 +66,17 @@ class _UploadProfilePhotoScreenState
             _isFormValid.value = true;
           });
         }
-      } else if (kIsWeb && picked.bytes != null) {
-        croppedFile = await ImageCropper().cropImage(
-          sourcePath: picked.path!,
-          aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
-          uiSettings: [
-            WebUiSettings(
-              context: context,
-              presentStyle: WebPresentStyle.dialog,
-              size: const CropperSize(width: 450, height: 450),
-              viewwMode: WebViewMode.mode_1,
-              dragMode: WebDragMode.move,
-              initialAspectRatio: 1,
-              cropBoxResizable: false,
-              translations: const WebTranslations(
-                rotateLeftTooltip: "Rotate left",
-                rotateRightTooltip: "Rotate right",
-                title: "Move and scale",
-                cancelButton: "Cancel",
-                cropButton: "Apply",
-              ),
-            ),
-          ],
-        );
-
-        if (croppedFile != null && mounted) {
-          final croppedBytes = await croppedFile.readAsBytes();
-          setState(() {
-            selectedImage = PickedImage(
-              file: null,
-              bytes: croppedBytes,
-              name: picked.name,
-              path: croppedFile!.path,
-            );
-            _isFormValid.value = true;
-          });
-        }
       }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           duration: const Duration(seconds: 2),
-          content: Text('Error cropping image: $e'),
-          backgroundColor: Palette.error,
+          content: Text(
+            'Error cropping image: $e',
+            style: TextStyle(color: Palette.background),
+          ),
+          backgroundColor: Palette.textWhite,
         ),
       );
     }
@@ -115,8 +84,9 @@ class _UploadProfilePhotoScreenState
 
   void _handleNext() {
     if (selectedImage != null) {
-      print('Profile photo uploaded: ${selectedImage!.name}');
-      context.goNamed(RouteConstants.UserNameScreen);
+      ref
+          .read(authViewModelProvider.notifier)
+          .uploadProfilePhoto(selectedImage!);
     }
   }
 
@@ -127,74 +97,83 @@ class _UploadProfilePhotoScreenState
 
   @override
   Widget build(BuildContext context) {
-    final isWeb = kIsWeb;
-
-    return Scaffold(
-      backgroundColor: isWeb
-          ? Colors.black.withOpacity(0.4)
-          : Palette.background,
-      appBar: !isWeb
-          ? AppBar(
-              title: buildXLogo(size: 36),
-              centerTitle: true,
-              backgroundColor: Palette.background,
-              elevation: 0,
-            )
-          : null,
-      body: Center(
-        child: Container(
-          width: isWeb ? 600 : double.infinity,
-          height: isWeb ? 650 : double.infinity,
-          decoration: BoxDecoration(
-            color: Palette.background,
-            borderRadius: isWeb ? BorderRadius.circular(16) : null,
+    ref.listen(authViewModelProvider, (previous, next) {
+      if (next.type == AuthStateType.success) {
+        context.goNamed(RouteConstants.UserNameScreen);
+        ref.read(authViewModelProvider.notifier).setAuthenticated();
+      } else if (next.type == AuthStateType.error) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(next.message ?? 'An error occurred'),
+            backgroundColor: Palette.error,
           ),
-          child: Column(
-            children: [
-              if (isWeb)
-                Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Row(
-                    children: [
-                      Expanded(child: Center(child: buildXLogo(size: 40))),
-                      const SizedBox(width: 48),
-                    ],
-                  ),
-                ),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 32,
-                    vertical: 16,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Pick a profile picture',
-                        style: TextStyle(
-                          fontSize: 31,
-                          fontWeight: FontWeight.w800,
-                          color: Palette.textWhite,
+        );
+      }
+    });
+
+    final authState = ref.watch(authViewModelProvider);
+    final isLoading = authState.isLoading;
+    return Scaffold(
+      backgroundColor: Palette.background,
+      appBar: AppBar(
+        title: buildXLogo(size: 36),
+        centerTitle: true,
+        backgroundColor: Palette.background,
+        elevation: 0,
+      ),
+      body: AbsorbPointer(
+        absorbing: isLoading,
+        child: Stack(
+          children: [
+            Center(
+              child: Container(
+                width: double.infinity,
+                height: double.infinity,
+                decoration: BoxDecoration(color: Palette.background),
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 32,
+                          vertical: 16,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Pick a profile picture',
+                              style: TextStyle(
+                                fontSize: 31,
+                                fontWeight: FontWeight.w800,
+                                color: Palette.textWhite,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            const Text(
+                              'Have a favourite selfie? Upload it now.',
+                              style: TextStyle(
+                                fontSize: 15,
+                                color: Palette.greycolor,
+                              ),
+                            ),
+                            const SizedBox(height: 48),
+                            Center(child: _buildUploadArea()),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 12),
-                      const Text(
-                        'Have a favourite selfie? Upload it now.',
-                        style: TextStyle(
-                          fontSize: 15,
-                          color: Palette.greycolor,
-                        ),
-                      ),
-                      const SizedBox(height: 48),
-                      Center(child: _buildUploadArea()),
-                    ],
-                  ),
+                    ),
+                    _buildBottomButtons(),
+                  ],
                 ),
               ),
-              _buildBottomButtons(isWeb),
-            ],
-          ),
+            ),
+            if (isLoading)
+              Container(
+                color: Colors.black,
+                child: const Center(child: Loader()),
+              ),
+          ],
         ),
       ),
     );
@@ -268,15 +247,13 @@ class _UploadProfilePhotoScreenState
   }
 
   ImageProvider _getImageProvider() {
-    if (kIsWeb && selectedImage!.bytes != null) {
-      return MemoryImage(selectedImage!.bytes!);
-    } else if (selectedImage!.file != null) {
+    if (selectedImage!.file != null) {
       return FileImage(selectedImage!.file!);
     }
     throw Exception('No image available');
   }
 
-  Widget _buildBottomButtons(bool isWeb) {
+  Widget _buildBottomButtons() {
     return Container(
       padding: const EdgeInsets.all(16),
       child: Row(
@@ -301,7 +278,7 @@ class _UploadProfilePhotoScreenState
             valueListenable: _isFormValid,
             builder: (context, isValid, child) {
               return SizedBox(
-                width: isWeb ? 120 : 90,
+                width: 90,
                 child: ElevatedButton(
                   onPressed: isValid ? _handleNext : null,
                   style: ElevatedButton.styleFrom(

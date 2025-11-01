@@ -1,7 +1,6 @@
 import 'dart:io' show File;
 import 'dart:typed_data';
 import 'package:image_picker/image_picker.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 
 class PickedImage {
   final File? file;
@@ -17,16 +16,11 @@ Future<PickedImage?> pickImage() async {
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
 
     if (image != null) {
-      if (kIsWeb) {
-        final bytes = await image.readAsBytes();
-        return PickedImage(bytes: bytes, name: image.name, path: image.path);
-      } else {
-        return PickedImage(
-          file: File(image.path),
-          name: image.name,
-          path: image.path,
-        );
-      }
+      return PickedImage(
+        file: File(image.path),
+        name: image.name,
+        path: image.path,
+      );
     }
     return null;
   } catch (e) {

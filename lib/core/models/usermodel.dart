@@ -34,19 +34,10 @@ class UserModel {
   final bool isVerified;
 
   @HiveField(9)
-  final bool loginCodesSet;
+  final bool? tfaVerified;
 
   @HiveField(10)
-  final bool? tfaVerified; // Two-factor authentication status
-
-  @HiveField(11)
-  final int? tokenVersion; // For managing token invalidation
-
-  @HiveField(12)
-  final String? accessToken; // Store current access token
-
-  @HiveField(13)
-  final String? refreshToken; // Store refresh token
+  final Set<String> interests;
 
   UserModel({
     required this.name,
@@ -58,11 +49,9 @@ class UserModel {
     required this.id,
     required this.isEmailVerified,
     required this.isVerified,
-    required this.loginCodesSet,
+
     this.tfaVerified,
-    this.tokenVersion,
-    this.accessToken,
-    this.refreshToken,
+    this.interests = const {},
   });
 
   UserModel copyWith({
@@ -77,9 +66,7 @@ class UserModel {
     bool? isVerified,
     bool? loginCodesSet,
     bool? tfaVerified,
-    int? tokenVersion,
-    String? accessToken,
-    String? refreshToken,
+    Set<String>? interests,
   }) {
     return UserModel(
       name: name ?? this.name,
@@ -91,11 +78,8 @@ class UserModel {
       id: id ?? this.id,
       isEmailVerified: isEmailVerified ?? this.isEmailVerified,
       isVerified: isVerified ?? this.isVerified,
-      loginCodesSet: loginCodesSet ?? this.loginCodesSet,
       tfaVerified: tfaVerified ?? this.tfaVerified,
-      tokenVersion: tokenVersion ?? this.tokenVersion,
-      accessToken: accessToken ?? this.accessToken,
-      refreshToken: refreshToken ?? this.refreshToken,
+      interests: interests ?? this.interests,
     );
   }
 
@@ -103,22 +87,33 @@ class UserModel {
     return <String, dynamic>{
       'name': name,
       'email': email,
-      'dob': dob,
+      'dateOfBirth': dob,
       'username': username,
       'photo': photo,
       'bio': bio,
       'id': id,
       'isEmailVerified': isEmailVerified,
       'isVerified': isVerified,
-      'loginCodesSet': loginCodesSet,
+
       'tfaVerifed': tfaVerified, //backend uses 'tfaVerifed'
-      'tokenVersion': tokenVersion,
-      'accessToken': accessToken,
-      'refreshToken': refreshToken,
+      'interests': interests.toList(),
     };
   }
 
   factory UserModel.fromMap(Map<String, dynamic> map) {
+    Set<String> parsedInterests = {};
+    if (map['interests'] != null) {
+      if (map['interests'] is List) {
+        parsedInterests = (map['interests'] as List)
+            .map((e) => e.toString())
+            .toSet();
+      } else if (map['interests'] is Set) {
+        parsedInterests = (map['interests'] as Set)
+            .map((e) => e.toString())
+            .toSet();
+      }
+    }
+
     return UserModel(
       name: map['name'] as String,
       email: map['email'] as String,
@@ -126,17 +121,13 @@ class UserModel {
           ? map['dateOfBirth'] as String
           : map['dob'] as String? ?? '',
       username: map['username'] as String,
-      photo: map['photo'] != null ? map['photo'] as String : null,
-      bio: map['bio'] != null ? map['bio'] as String : null,
-      id: map['id'] as String,
+      photo: map['photo'] as String?,
+      bio: map['bio'] as String?,
+      id: map['id'].toString(),
       isEmailVerified: map['isEmailVerified'] as bool? ?? false,
       isVerified: map['isVerified'] as bool? ?? false,
-      loginCodesSet: map['loginCodesSet'] as bool? ?? false,
-      tfaVerified:
-          map['tfaVerifed'] as bool?, // Note: backend uses 'tfaVerifed'
-      tokenVersion: map['tokenVersion'] as int?,
-      accessToken: map['accessToken'] as String?,
-      refreshToken: map['refreshToken'] as String?,
+      tfaVerified: map['tfaVerifed'] as bool?,
+      interests: parsedInterests,
     );
   }
 
@@ -147,7 +138,7 @@ class UserModel {
 
   @override
   String toString() {
-    return 'UserModel(name: $name, email: $email, dob: $dob, username: $username, photo: $photo, bio: $bio, id: $id, isEmailVerified: $isEmailVerified, isVerified: $isVerified, loginCodesSet: $loginCodesSet, tfaVerified: $tfaVerified, tokenVersion: $tokenVersion)';
+    return 'UserModel(name: $name, email: $email, dob: $dob, username: $username, photo: $photo, bio: $bio, id: $id, isEmailVerified: $isEmailVerified, isVerified: $isVerified,  tfaVerified: $tfaVerified, interests: $interests)';
   }
 
   @override
@@ -163,11 +154,8 @@ class UserModel {
         other.id == id &&
         other.isEmailVerified == isEmailVerified &&
         other.isVerified == isVerified &&
-        other.loginCodesSet == loginCodesSet &&
         other.tfaVerified == tfaVerified &&
-        other.tokenVersion == tokenVersion &&
-        other.accessToken == accessToken &&
-        other.refreshToken == refreshToken;
+        other.interests == interests;
   }
 
   @override
@@ -181,10 +169,7 @@ class UserModel {
         id.hashCode ^
         isEmailVerified.hashCode ^
         isVerified.hashCode ^
-        loginCodesSet.hashCode ^
         tfaVerified.hashCode ^
-        tokenVersion.hashCode ^
-        accessToken.hashCode ^
-        refreshToken.hashCode;
+        interests.hashCode;
   }
 }

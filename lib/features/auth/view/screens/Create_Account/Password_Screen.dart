@@ -1,15 +1,16 @@
-// ignore_for_file: unused_field
-
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lite_x/core/providers/emailProvider.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
 import 'package:lite_x/core/theme/palette.dart';
 import 'package:lite_x/core/utils.dart';
+import 'package:lite_x/core/view/widgets/Loader.dart';
 import 'package:lite_x/features/auth/view/widgets/CustomTextField.dart';
 import 'package:lite_x/features/auth/view/widgets/buildTermsTextP.dart';
 import 'package:lite_x/features/auth/view/widgets/buildXLogo.dart';
+import 'package:lite_x/features/auth/view_model/auth_state.dart';
+import 'package:lite_x/features/auth/view_model/auth_view_model.dart';
 
 class PasswordScreen extends ConsumerStatefulWidget {
   const PasswordScreen({super.key});
@@ -45,10 +46,12 @@ class _PasswordScreenState extends ConsumerState<PasswordScreen> {
   }
 
   void _handleSignUp() {
-    if (_formKey.currentState!.validate()) {
-      print('Password: ${_passwordController.text}');
-      context.goNamed(RouteConstants.uploadProfilePhotoScreen);
-    }
+    if (!_formKey.currentState!.validate()) return;
+    final email = ref.read(emailProvider);
+    final password = _passwordController.text.trim();
+    ref
+        .read(authViewModelProvider.notifier)
+        .finalizeSignup(email: email, password: password);
   }
 
   @override
@@ -61,119 +64,145 @@ class _PasswordScreenState extends ConsumerState<PasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isWeb = kIsWeb;
+    ref.listen(authViewModelProvider, (previous, next) {
+      if (next.type == AuthStateType.authenticated) {
+        context.goNamed(RouteConstants.uploadProfilePhotoScreen);
+      } else if (next.type == AuthStateType.error) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              next.message ?? 'Signup failed',
+              style: TextStyle(color: Palette.background),
+            ),
+            backgroundColor: Palette.textWhite,
+          ),
+        );
+        ref.read(authViewModelProvider.notifier).resetState();
+      }
+    });
+
+    final authState = ref.watch(authViewModelProvider);
+    final isLoading = authState.isLoading;
 
     return Scaffold(
-      backgroundColor: isWeb
-          ? Colors.black.withOpacity(0.4)
-          : Palette.background,
-      appBar: !isWeb
-          ? AppBar(
-              title: buildXLogo(size: 36),
-              centerTitle: true,
-              backgroundColor: Palette.background,
-              elevation: 0,
-            )
-          : null,
-      body: Center(
-        child: Container(
-          width: isWeb ? 600 : double.infinity,
-          height: isWeb ? 650 : double.infinity,
-          decoration: BoxDecoration(
-            color: Palette.background,
-            borderRadius: isWeb ? BorderRadius.circular(16) : null,
-          ),
-          child: Column(
-            children: [
-              if (isWeb)
-                Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Row(
-                    children: [
-                      Expanded(child: Center(child: buildXLogo(size: 40))),
-                      const SizedBox(width: 48),
-                    ],
-                  ),
-                ),
-              Expanded(
-                child: Form(
-                  key: _formKey,
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 32,
-                      vertical: 16,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'You\'ll need a password',
-                          style: TextStyle(
-                            fontSize: 26,
-                            fontWeight: FontWeight.w800,
-                            color: Palette.textWhite,
+      backgroundColor: Palette.background,
+      appBar: AppBar(
+        title: buildXLogo(size: 36),
+        centerTitle: true,
+        backgroundColor: Palette.background,
+        elevation: 0,
+      ),
+      body: AbsorbPointer(
+        absorbing: isLoading,
+        child: Stack(
+          children: [
+            Center(
+              child: Container(
+                width: double.infinity,
+                height: double.infinity,
+                decoration: BoxDecoration(color: Palette.background),
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: Form(
+                        key: _formKey,
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 32,
+                            vertical: 16,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'You\'ll need a password',
+                                style: TextStyle(
+                                  fontSize: 26,
+                                  fontWeight: FontWeight.w800,
+                                  color: Palette.textWhite,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              const Text(
+                                'Make sure it\'s 8 characters or more.',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Palette.greycolor,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              CustomTextField(
+                                controller: _passwordController,
+                                focusNode: _passFocus,
+                                labelText: 'Password',
+                                isPassword: true,
+                                validator: passwordValidator,
+                                onFieldSubmitted: (_) {
+                                  if (_isFormValid.value) {
+                                    _handleSignUp();
+                                  }
+                                },
+                              ),
+                              const SizedBox(height: 70),
+                              buildTermsTextP(),
+                            ],
                           ),
                         ),
-                        const SizedBox(height: 10),
-                        const Text(
-                          'Make sure it\'s 8 characters or more.',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Palette.greycolor,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        CustomTextField(
-                          controller: _passwordController,
-                          focusNode: _passFocus,
-                          labelText: 'Password',
-                          isPassword: true,
-                          validator: passwordValidator,
-                          onFieldSubmitted: (_) {
-                            if (_isFormValid.value) {
-                              _handleSignUp();
-                            }
-                          },
-                        ),
-                        const SizedBox(height: 70),
-                        buildTermsTextP(),
-                      ],
+                      ),
                     ),
-                  ),
+                    _buildSignUpButton(isLoading),
+                    const SizedBox(height: 15),
+                  ],
                 ),
               ),
-              _buildSignUpButton(isWeb),
-              const SizedBox(height: 15),
-            ],
-          ),
+            ),
+            if (isLoading)
+              Container(
+                color: Colors.black.withOpacity(0.5),
+                child: const Center(child: Loader()),
+              ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildSignUpButton(bool isWeb) {
+  Widget _buildSignUpButton(bool isLoading) {
     return Container(
-      padding: EdgeInsets.all(isWeb ? 32 : 10),
-      width: isWeb ? double.infinity : null,
-      alignment: isWeb ? Alignment.center : Alignment.centerRight,
+      padding: const EdgeInsets.all(10),
+      alignment: Alignment.centerRight,
       child: ValueListenableBuilder<bool>(
         valueListenable: _isFormValid,
         builder: (context, isValid, child) {
           return SizedBox(
-            width: isWeb ? double.infinity : 120,
+            width: 120,
             child: ElevatedButton(
-              onPressed: isValid ? _handleSignUp : null,
+              onPressed: (isValid && !isLoading) ? _handleSignUp : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Palette.textWhite,
                 disabledBackgroundColor: Palette.textWhite.withOpacity(0.5),
                 foregroundColor: Palette.background,
                 disabledForegroundColor: Palette.border,
-                minimumSize: isWeb ? const Size(0, 60) : const Size(0, 38),
+                minimumSize: const Size(0, 38),
               ),
-              child: const Text(
-                'Sign up',
-                style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
-              ),
+              child: isLoading
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          Palette.background,
+                        ),
+                      ),
+                    )
+                  : const Text(
+                      'Sign up',
+                      style: TextStyle(
+                        fontSize: 19,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
             ),
           );
         },
