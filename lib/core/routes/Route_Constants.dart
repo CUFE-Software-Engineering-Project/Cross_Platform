@@ -18,4 +18,10 @@ class RouteConstants {
   static String ChangePasswordFeedback = "ChangePasswordFeedback";
   static String FollowingFollowersScreen = "FollowingFollowersScreen";
   static String BirthDateScreen = "BirthDateScreen";
+  //-------------------------------------------------------------------------------------------------------------------------------------//
+
+  static String ConversationsScreen = "ConversationsScreen";
+  static String TestChatScreen = "TestChatScreen";
+  static String ChatScreen = "ChatScreen";
+  static String SearchDirectMessages = "SearchDirectMessages";
 }

@@ -7,8 +7,7 @@ class PickedImage {
   final File? file;
   final Uint8List? bytes;
   final String name;
-  final String? path; // Add this for web cropper
-
+  final String? path;
   PickedImage({this.file, this.bytes, required this.name, this.path});
 }
 

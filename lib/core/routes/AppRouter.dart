@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lite_x/features/chat/view/TestChatScreen.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
 import 'package:lite_x/features/auth/view/screens/Intro_Screen.dart';
 
@@ -17,6 +18,9 @@ import 'package:lite_x/features/auth/view/screens/Create_Account/Upload_Profile_
 import 'package:lite_x/features/auth/view/screens/Create_Account/UserName_Screen.dart';
 import 'package:lite_x/features/auth/view/screens/Create_Account/Verification_Screen.dart';
 import 'package:lite_x/features/auth/view/screens/Log_In/VerificationForgot_Screen.dart';
+import 'package:lite_x/features/chat/view/screens/Search_Direct_messages.dart';
+import 'package:lite_x/features/chat/view/screens/chat_Screen.dart';
+import 'package:lite_x/features/chat/view/screens/conversations_screen.dart';
 // import 'package:lite_x/features/auth/view/screens/Verification_Screen.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
 import 'package:lite_x/features/profile/view/screens/birthdate_screen.dart';
@@ -181,6 +185,10 @@ class Approuter {
             isMe: state.pathParameters['isMe'] as String,
             profileModel: state.extra as ProfileModel,
           ),
+        name: RouteConstants.ConversationsScreen,
+        path: "/ConversationsScreen",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: const ConversationsScreen(),
           transitionsBuilder: _slideRightTransitionBuilder,
         ),
       ),
@@ -192,6 +200,29 @@ class Approuter {
           transitionsBuilder: _slideRightTransitionBuilder,
         ),
       ),
+        name: RouteConstants.TestChatScreen,
+        path: "/TestChatScreen",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: const TestChatScreen(),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
+        name: RouteConstants.SearchDirectMessages,
+        path: "/SearchDirectMessages",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: const SearchDirectMessages(),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      // GoRoute(
+      //   name: RouteConstants.ChatScreen,
+      //   path: "/ChatScreen",
+      //   pageBuilder: (context, state) => CustomTransitionPage(
+      //     child: const ChatScreen(recipientId: "", recipientName: ""),
+      //     transitionsBuilder: _slideRightTransitionBuilder,
+      //   ),
+      // ),
     ],
     redirect: (context, state) {
       return null;

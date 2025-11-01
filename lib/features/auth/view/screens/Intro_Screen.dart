@@ -1,42 +1,110 @@
-import 'package:flutter/foundation.dart';
+// ignore_for_file: unused_import
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
 import 'package:lite_x/core/theme/palette.dart';
+import 'package:lite_x/features/auth/repositories/auth_remote_repository.dart';
 import 'package:lite_x/features/auth/view/widgets/buildTermsText.dart';
 import 'package:lite_x/features/auth/view/widgets/buildXLogo.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class IntroScreen extends ConsumerWidget {
   const IntroScreen({super.key});
+  // Future<void> _handleGoogleSignIn(BuildContext context, WidgetRef ref) async {
+  //   try {
+  //     const String yourServerClientId =
+  //         '806859586571-kv61qm314lnqg02m6v0ae0gctkq55cvm.apps.googleusercontent.com';
+  //     final GoogleSignIn googleSignIn = GoogleSignIn.instance;
+
+  //     await googleSignIn.initialize(serverClientId: yourServerClientId);
+
+  //     final GoogleSignInAccount? account = await googleSignIn.authenticate();
+
+  //     if (account == null) {
+  //       if (context.mounted) {
+  //         ScaffoldMessenger.of(context).showSnackBar(
+  //           const SnackBar(content: Text('Google Sign-In Canceled')),
+  //         );
+  //       }
+  //       return;
+  //     }
+
+  //     const List<String> scopes = ['email'];
+
+  //     final GoogleSignInServerAuthorization? serverAuth = await account
+  //         .authorizationClient
+  //         .authorizeServer(scopes);
+
+  //     final String? serverAuthCode = serverAuth?.serverAuthCode;
+
+  //     if (serverAuthCode == null) {
+  //       throw Exception('Failed to get server auth code from Google.');
+  //     }
+  //     if (context.mounted) {
+  //       showDialog(
+  //         context: context,
+  //         barrierDismissible: false,
+  //         builder: (context) =>
+  //             const Center(child: CircularProgressIndicator()),
+  //       );
+  //     }
+
+  //     final repo = ref.read(authRemoteRepositoryProvider);
+  //     final result = await repo.googleSignIn(serverAuthCode);
+  //     if (context.mounted) {
+  //       Navigator.of(context).pop();
+  //     }
+
+  //     if (context.mounted) {
+  //       result.fold(
+  //         (failure) {
+  //           ScaffoldMessenger.of(context).showSnackBar(
+  //             SnackBar(content: Text('Error: ${failure.message}')),
+  //           );
+  //         },
+  //         (loginResponse) {
+  //           ScaffoldMessenger.of(context).showSnackBar(
+  //             SnackBar(
+  //               content: Text(
+  //                 'Login Successful! Welcome ${loginResponse.user.name}',
+  //               ),
+  //             ),
+  //           );
+  //           context.goNamed(RouteConstants.TestChatScreen);
+  //         },
+  //       );
+  //     }
+  //   } catch (e) {
+  //     if (context.mounted && Navigator.of(context).canPop()) {
+  //       Navigator.of(context).pop();
+  //     }
+
+  //     if (context.mounted) {
+  //       ScaffoldMessenger.of(
+  //         context,
+  //       ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
+  //     }
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final size = MediaQuery.of(context).size;
-    final isWeb = kIsWeb || size.width > 800;
 
     return Scaffold(
       backgroundColor: Palette.background,
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF101010), Palette.background],
-          ),
-        ),
-        child: SafeArea(
-          child: isWeb
-              ? _buildWebLayout(size, context)
-              : _buildMobileLayout(size, context),
-        ),
+        decoration: const BoxDecoration(),
+        child: SafeArea(child: _buildMobileLayout(size, context, ref)),
       ),
     );
   }
 
-  Widget _buildMobileLayout(Size size, BuildContext context) {
+  Widget _buildMobileLayout(Size size, BuildContext context, WidgetRef ref) {
     return SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -60,7 +128,7 @@ class IntroScreen extends ConsumerWidget {
               ),
             ),
             SizedBox(height: size.height * 0.15),
-            _buildAuthButtons(context),
+            _buildAuthButtons(context, ref),
             const SizedBox(height: 25),
             buildTermsText(),
             const SizedBox(height: 5),
@@ -71,74 +139,24 @@ class IntroScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildWebLayout(Size size, BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          flex: 1,
-          child: Container(
-            padding: const EdgeInsets.all(40),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(child: buildXLogo(size: 300)),
-                const SizedBox(height: 10),
-                const Text(
-                  'Happening now',
-                  style: TextStyle(
-                    fontSize: 40,
-                    fontWeight: FontWeight.w800,
-                    color: Palette.textWhite,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        Expanded(
-          flex: 1,
-          child: Container(
-            padding: const EdgeInsets.all(40),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Join today.',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.w800,
-                    color: Palette.textWhite,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                _buildAuthButtons(context),
-                const SizedBox(height: 20),
-                buildTermsText(),
-                const SizedBox(height: 20),
-                _buildLoginSection(context),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildAuthButtons(BuildContext context) {
+  Widget _buildAuthButtons(BuildContext context, WidgetRef ref) {
     return Column(
       children: [
         AuthButton(
           icon: 'assets/images/google.png',
           label: 'Continue with Google',
-          onPressed: () {},
+          onPressed: () async {
+            // await _handleGoogleSignIn(context, ref);
+            // context.pushNamed(RouteConstants.TestChatScreen);
+          },
         ),
         const SizedBox(height: 10),
         AuthButton(
-          icon: 'assets/images/facebook.png',
-          label: 'Continue with Facebook',
-          onPressed: () {},
+          icon: 'assets/images/github.png',
+          label: 'Continue with GitHub',
+          onPressed: () {
+            context.pushNamed(RouteConstants.ConversationsScreen);
+          },
         ),
         const SizedBox(height: 12),
         Row(
