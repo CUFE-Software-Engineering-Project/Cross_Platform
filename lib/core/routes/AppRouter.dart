@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
 import 'package:lite_x/features/auth/view/screens/Intro_Screen.dart';
 
-
 import 'package:lite_x/features/home/view/screens/home_screen.dart';
 import 'package:lite_x/core/view/screen/Splash_Screen.dart';
 import 'package:lite_x/features/auth/view/screens/Create_Account/CreateAccount_Screen.dart';
@@ -24,12 +23,6 @@ import 'package:lite_x/features/profile/view/screens/birthdate_screen.dart';
 import 'package:lite_x/features/profile/view/screens/edit_profile_screen.dart';
 import 'package:lite_x/features/profile/view/screens/following_followers_screen.dart';
 import 'package:lite_x/features/profile/view/screens/profile_screen.dart';
-import 'package:lite_x/features/auth/view/screens/SettingsAndPrivacy_Screen.dart';
-import 'package:lite_x/features/auth/view/screens/PrivacyAndSafety_Screen.dart';
-import 'package:lite_x/features/auth/view/screens/MuteAndBlock_Screen.dart';
-import 'package:lite_x/features/auth/view/screens/BlockedAccounts_Screen.dart';
-import 'package:lite_x/features/auth/view/screens/MutedAccounts_Screen.dart';
-import 'package:lite_x/features/auth/view/screens/Verification_Screen.dart';
 
 class Approuter {
   static final GoRouter router = GoRouter(
@@ -83,18 +76,6 @@ class Approuter {
         path: "/home",
         pageBuilder: (context, state) => CustomTransitionPage(
           child: const HomeScreen(),
-        name: RouteConstants.settingsandprivacyscreen,
-        path: "/settingsandprivacy",
-        pageBuilder: (context, state) => CustomTransitionPage(
-          child: const SettingsAndPrivacyScreen(),
-          transitionsBuilder: _slideRightTransitionBuilder,
-        ),
-      ),
-      GoRoute(
-        name: RouteConstants.privacyandsafetyscreen,
-        path: "/privacyandsafety",
-        pageBuilder: (context, state) => CustomTransitionPage(
-          child: const PrivacyAndSafetyScreen(),
           transitionsBuilder: _slideRightTransitionBuilder,
         ),
       ),
@@ -186,10 +167,6 @@ class Approuter {
         path: "/ChangePasswordFeedback",
         pageBuilder: (context, state) => CustomTransitionPage(
           child: const ChangePasswordFeedback(),
-        name: RouteConstants.muteandblockscreen,
-        path: "/muteandblock",
-        pageBuilder: (context, state) => CustomTransitionPage(
-          child: const MuteAndBlockScreen(),
           transitionsBuilder: _slideRightTransitionBuilder,
         ),
       ),
@@ -207,27 +184,11 @@ class Approuter {
           transitionsBuilder: _slideRightTransitionBuilder,
         ),
       ),
-    GoRoute(
-        name: RouteConstants.blockedaccountsscreen,
-        path: "/blockedaccounts",
-        pageBuilder: (context, state) => CustomTransitionPage(
-          child: const BlockedAccountsScreen(),
-          transitionsBuilder: _slideRightTransitionBuilder,
-        ),
-      ),
-     GoRoute(
+      GoRoute(
         name: RouteConstants.BirthDateScreen,
         path: "/birthDateScreen",
         pageBuilder: (context, state) => CustomTransitionPage(
           child: BirthdateScreen(profileModel: state.extra as ProfileModel),
-          transitionsBuilder: _slideRightTransitionBuilder,
-        ),
-      ),
-        GoRouter(
-        name: RouteConstants.mutedaccountsscreen,
-        path: "/mutedaccounts",
-        pageBuilder: (context, state) => CustomTransitionPage(
-          child: const MutedAccountsScreen(),
           transitionsBuilder: _slideRightTransitionBuilder,
         ),
       ),
