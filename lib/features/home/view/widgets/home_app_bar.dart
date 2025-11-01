@@ -1,12 +1,9 @@
-// lib/features/home/widgets/home_app_bar.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:lite_x/features/home/view/widgets/home_tab_bar.dart';
 import 'package:lite_x/features/home/view/widgets/profile_avatar.dart';
-
-// Provider for app bar settings (future backend integration)
 final appBarSettingsProvider = StateProvider<AppBarSettings>((ref) {
   return AppBarSettings(showNotificationDot: false, unreadCount: 0);
 });
@@ -33,28 +30,18 @@ class HomeAppBar extends ConsumerWidget implements PreferredSizeWidget {
       child: SafeArea(
         child: Column(
           children: [
-            // Top app bar
             Container(
               height: 56,
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 children: [
-                  // Profile Avatar (Left)
                   const ProfileAvatar(),
-
-                  // X Logo (Center)
                   Expanded(child: Center(child: _buildXLogo())),
-
-                  // Settings Icon (Right)
                   _buildSettingsButton(context, settings),
                 ],
               ),
             ),
-
-            // Tab Bar
             const HomeTabBar(),
-
-            // Bottom border
             Container(height: 0.5, color: Colors.grey[800]),
           ],
         ),
@@ -84,8 +71,6 @@ class HomeAppBar extends ConsumerWidget implements PreferredSizeWidget {
           padding: EdgeInsets.zero,
           constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
         ),
-
-        // Notification dot (for future features)
         if (settings.showNotificationDot)
           Positioned(
             right: 8,
@@ -104,7 +89,6 @@ class HomeAppBar extends ConsumerWidget implements PreferredSizeWidget {
   }
 
   void _openSettings(BuildContext context) {
-    // TODO: Navigate to settings or show bottom sheet
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.grey[900],
@@ -129,7 +113,6 @@ class HomeAppBar extends ConsumerWidget implements PreferredSizeWidget {
             ),
             onTap: () {
               Navigator.pop(context);
-              // TODO: Open timeline settings
             },
           ),
           ListTile(
@@ -140,7 +123,6 @@ class HomeAppBar extends ConsumerWidget implements PreferredSizeWidget {
             ),
             onTap: () {
               Navigator.pop(context);
-              // TODO: Handle preference
             },
           ),
         ],

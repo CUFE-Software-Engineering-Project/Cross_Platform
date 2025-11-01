@@ -14,6 +14,8 @@ class ProfileModel {
   final String location;
   final int postCount;
   final String birthDate;
+  final bool isFollowing; 
+  final bool isFollower;  
 
   const ProfileModel({
     required this.id,
@@ -31,64 +33,51 @@ class ProfileModel {
     required this.location,
     required this.postCount,
     required this.birthDate,
+    required this.isFollowing, 
+    required this.isFollower, 
   });
 
-  // JSON serialization
   factory ProfileModel.fromJson(Map<String, dynamic> json) {
     String joinedDateFormated;
     String birthDateFormated;
-    if (json['joinedDate'] != null) {
-      DateTime joinedDate = DateTime.parse(json['joinedDate']);
+
+    if (json['joinDate'] != null) {
+      DateTime joinedDate = DateTime.parse(json['joinDate']);
       joinedDateFormated =
           "${mapMonth(joinedDate.month)} ${joinedDate.day}, ${joinedDate.year}";
-    } else
+    } else {
       joinedDateFormated = "";
+    }
 
-    if (json['birthDate'] != null) {
-      DateTime birthDate = DateTime.parse(json['birthDate']);
+    if (json['dateOfBirth'] != null) {
+      DateTime birthDate = DateTime.parse(json['dateOfBirth']);
       birthDateFormated =
           "${mapMonth(birthDate.month)} ${birthDate.day}, ${birthDate.year}";
-    } else
+    } else {
       birthDateFormated = "";
+    }
 
     return ProfileModel(
       id: json['id'] ?? '',
-      username: '@' + (json['username'] ?? ''),
-      displayName: json['displayName'] ?? '',
+      username: json['username'] ?? '',
+      displayName: json['name'] ?? '',
       bio: json['bio'] ?? '',
-      avatarUrl: json['avatarUrl'] ?? '',
-      bannerUrl: json['bannerUrl'] ?? '',
+      avatarUrl: json['profileMedia'] ?? '',
+      bannerUrl: json['coverMedia'] ?? '',
       followersCount: json['followersCount'] ?? 0,
       followingCount: json['followingCount'] ?? 0,
       tweetsCount: json['tweetsCount'] ?? 0,
-      isVerified: json['isVerified'] ?? false,
+      isVerified: json['verified'] ?? false,
       joinedDate: joinedDateFormated,
       website: json['website'] ?? '',
-      location: json['location'] ?? '',
+      location: json['address'] ?? '',
       postCount: json['postCount'] ?? 0,
       birthDate: birthDateFormated,
+      isFollowing: json['isFollowing'] ?? false, // new
+      isFollower: json['isFollower'] ?? false, // new
     );
   }
 
-  // Map<String, dynamic> toJson() {
-  //   return {
-  //     'id': id,
-  //     'username': username,
-  //     'displayName': displayName,
-  //     'bio': bio,
-  //     'avatarUrl': avatarUrl,
-  //     'bannerUrl': bannerUrl,
-  //     'followersCount': followersCount,
-  //     'followingCount': followingCount,
-  //     'tweetsCount': tweetsCount,
-  //     'isVerified': isVerified,
-  //     'joinedDate': joinedDate,
-  //     'website': website,
-  //     'location': location,
-  //   };
-  // }
-
-  // Helper method for empty profile
   static ProfileModel empty() {
     return ProfileModel(
       id: '',
@@ -106,9 +95,89 @@ class ProfileModel {
       location: '',
       postCount: 0,
       birthDate: "",
+      isFollowing: false, 
+      isFollower: false, 
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    String? joinedDateIso;
+    String? birthDateIso;
+
+    if (joinedDate.isNotEmpty) {
+      try {
+        DateTime jd = DateTime.parse(joinedDate);
+        joinedDateIso = jd.toIso8601String();
+      } catch (_) {
+        joinedDateIso = joinedDate;
+      }
+    }
+
+    if (birthDate.isNotEmpty) {
+      try {
+        DateTime bd = DateTime.parse(birthDate);
+        birthDateIso = bd.toIso8601String();
+      } catch (_) {
+        birthDateIso = birthDate;
+      }
+    }
+
+    return {
+      'id':id,
+      'username': username,
+      'name': displayName,
+      'bio': bio,
+      'profilePhoto': avatarUrl,
+      'cover': bannerUrl,
+      'verified': isVerified,
+      'website': website,
+      'address': location,
+      'protectedAccount': true
+    };
+  }
+
+
+  ProfileModel copyWith({
+    String? id,
+    String? username,
+    String? displayName,
+    String? bio,
+    String? avatarUrl,
+    String? bannerUrl,
+    int? followersCount,
+    int? followingCount,
+    int? tweetsCount,
+    bool? isVerified,
+    String? joinedDate,
+    String? website,
+    String? location,
+    int? postCount,
+    String? birthDate,
+    bool? isFollowing,
+    bool? isFollower,
+  }) {
+    return ProfileModel(
+      id: id ?? this.id,
+      username: username ?? this.username,
+      displayName: displayName ?? this.displayName,
+      bio: bio ?? this.bio,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+      bannerUrl: bannerUrl ?? this.bannerUrl,
+      followersCount: followersCount ?? this.followersCount,
+      followingCount: followingCount ?? this.followingCount,
+      tweetsCount: tweetsCount ?? this.tweetsCount,
+      isVerified: isVerified ?? this.isVerified,
+      joinedDate: joinedDate ?? this.joinedDate,
+      website: website ?? this.website,
+      location: location ?? this.location,
+      postCount: postCount ?? this.postCount,
+      birthDate: birthDate ?? this.birthDate,
+      isFollowing: isFollowing ?? this.isFollowing,
+      isFollower: isFollower ?? this.isFollower,
     );
   }
 }
+
 
 String mapMonth(int month) {
   const months = [

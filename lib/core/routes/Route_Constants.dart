@@ -17,6 +17,8 @@ class RouteConstants {
   static String ChooseNewPasswordScreen = "ChooseNewPasswordScreen";
   static String ChangePasswordFeedback = "ChangePasswordFeedback";
   static String Interests = "Interests";
+  static String FollowingFollowersScreen = "FollowingFollowersScreen";
+  static String BirthDateScreen = "BirthDateScreen";
   //-------------------------------------------------------------------------------------------------------------------------------------//
 
   static String ConversationsScreen = "ConversationsScreen";
