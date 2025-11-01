@@ -16,5 +16,7 @@ abstract class ProfileRepo {
 
   Future<Either<Failure, void>> followUser(String username);
   Future<Either<Failure, void>> unFollowUser(String username);
-  Future<Either<Failure, ProfileModel>> updateProfile({required ProfileModel newModel});
+  Future<Either<Failure, ProfileModel>> updateProfile({
+    required ProfileModel newModel,
+  });
 }

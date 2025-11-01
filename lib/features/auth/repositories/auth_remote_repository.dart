@@ -29,7 +29,7 @@ class AuthRemoteRepository {
   }) async {
     try {
       final response = await _dio.post(
-        'auth/signup',
+        'api/auth/signup',
         data: {'name': name, 'email': email, 'dateOfBirth': dateOfBirth},
       );
       return right(response.data['message'] ?? 'Verification email sent');
@@ -49,7 +49,7 @@ class AuthRemoteRepository {
   }) async {
     try {
       final response = await _dio.post(
-        'auth/verify-signup',
+        'api/auth/verify-signup',
         data: {'email': email, 'code': code},
       );
 
@@ -73,7 +73,7 @@ class AuthRemoteRepository {
   }) async {
     try {
       final response = await _dio.post(
-        'auth/finalize_signup',
+        'api/auth/finalize_signup',
         data: {'email': email, 'password': password},
       );
 
@@ -112,7 +112,7 @@ class AuthRemoteRepository {
     final fileType = _getMediaType(file.path);
     try {
       final requestResponse = await _dio.post(
-        'media/upload-request',
+        'api/media/upload-request',
         data: {'fileName': fileName, 'contentType': fileType},
       );
       final String presignedUrl = requestResponse.data['url'];
@@ -130,7 +130,7 @@ class AuthRemoteRepository {
 
       final encodedKeyName = Uri.encodeComponent(keyName);
       final confirmResponse = await _dio.post(
-        'media/confirm-upload/$encodedKeyName',
+        'api/media/confirm-upload/$encodedKeyName',
       );
       final newMediaKey = confirmResponse.data['newMedia']['keyName'] as String;
       return right(newMediaKey);
@@ -150,7 +150,7 @@ class AuthRemoteRepository {
   }) async {
     try {
       final response = await _dio.put(
-        'auth/update_username',
+        'api/auth/update_username',
         data: {'username': Username},
       );
       final newUsername = response.data['user']['username'] as String;
@@ -171,7 +171,7 @@ class AuthRemoteRepository {
   }) async {
     try {
       final data = {'token': fcmToken, 'osType': osType};
-      final response = await _dio.post('users/fcm-token', data: data);
+      final response = await _dio.post('api/users/fcm-token', data: data);
       return right(response.data['message'] ?? 'FCM registered successfully');
     } on DioException catch (e) {
       return left(
@@ -192,7 +192,7 @@ class AuthRemoteRepository {
   }) async {
     try {
       final response = await _dio.post(
-        'auth/login',
+        'api/auth/login',
         data: {'email': email, 'password': password},
       );
 
@@ -211,7 +211,10 @@ class AuthRemoteRepository {
 
   Future<Either<AppFailure, bool>> check_email({required String email}) async {
     try {
-      final response = await _dio.post('auth/getUser', data: {'email': email});
+      final response = await _dio.post(
+        'api/auth/getUser',
+        data: {'email': email},
+      );
       return right(response.data['exists'] ?? false);
     } on DioException catch (e) {
       return left(
@@ -228,7 +231,7 @@ class AuthRemoteRepository {
   }) async {
     try {
       final response = await _dio.post(
-        'auth/forget-password',
+        'api/auth/forget-password',
         data: {'email': email},
       );
       final message = response.data['message'] ?? 'Reset code sent';
@@ -250,7 +253,7 @@ class AuthRemoteRepository {
   }) async {
     try {
       final response = await _dio.post(
-        'auth/verify-reset-code',
+        'api/auth/verify-reset-code',
         data: {'email': email, 'code': code},
       );
       final message = response.data['message'] ?? 'Reset code verified';
@@ -272,7 +275,7 @@ class AuthRemoteRepository {
   }) async {
     try {
       final response = await _dio.post(
-        'auth/reset-password',
+        'api/auth/reset-password',
         data: {'email': email, 'password': password},
       );
       final message = response.data['message'] ?? 'Password reset successful';
@@ -297,7 +300,7 @@ class AuthRemoteRepository {
   }) async {
     try {
       final response = await _dio.post(
-        'auth/change-password',
+        'api/auth/change-password',
         data: {
           'password': password,
           'newpassword': newpassword,
@@ -324,7 +327,7 @@ class AuthRemoteRepository {
   }) async {
     try {
       final response = await _dio.post(
-        'auth/change-email',
+        'api/auth/change-email',
         data: {'newemail': newemail},
       );
       final message = response.data['message'] ?? 'Email updated successfully';
@@ -344,7 +347,7 @@ class AuthRemoteRepository {
   }) async {
     try {
       final response = await _dio.post(
-        'auth/verify-new-email',
+        'api/auth/verify-new-email',
         data: {'email': newemail, 'code': code},
       );
 
@@ -366,7 +369,7 @@ class AuthRemoteRepository {
   ) async {
     try {
       final response = await _dio.post(
-        'auth/refresh',
+        'api/auth/refresh',
         data: {'refresh_token': refreshToken},
         options: Options(headers: {'Content-Type': 'application/json'}),
       );

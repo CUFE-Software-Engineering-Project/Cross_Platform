@@ -1,13 +1,10 @@
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lite_x/core/providers/api_provider.dart';
 import 'package:lite_x/features/home/models/tweet_model.dart';
 import 'package:lite_x/features/home/repositories/home_repository.dart';
 import 'package:lite_x/features/home/view_model/home_state.dart';
 
-final homeRepositoryProvider = Provider<HomeRepository>((ref) {
-  final apiService = ref.read(apiServiceProvider);
-  return HomeRepository(apiService);
+final homeViewModelProvider = NotifierProvider<HomeViewModel, HomeState>(() {
+  return HomeViewModel();
 });
 
 class HomeViewModel extends Notifier<HomeState> {
@@ -32,7 +29,6 @@ class HomeViewModel extends Notifier<HomeState> {
     state = state.copyWith(isLoading: true, error: null, currentFeed: feed);
 
     try {
-
       final tweets = await _fetchTweetsForFeed(feed);
 
       if (feed == FeedType.forYou) {
@@ -64,10 +60,8 @@ class HomeViewModel extends Notifier<HomeState> {
         : state.followingTweets;
 
     if (cachedTweets.isNotEmpty) {
-
       state = state.copyWith(currentFeed: feedType, tweets: cachedTweets);
     } else {
-
       await loadTweets(feedType: feedType);
     }
   }
@@ -76,7 +70,6 @@ class HomeViewModel extends Notifier<HomeState> {
     state = state.copyWith(isRefreshing: true, error: null);
 
     try {
-
       final tweets = await _fetchTweetsForFeed(state.currentFeed);
 
       if (state.currentFeed == FeedType.forYou) {
@@ -113,7 +106,6 @@ class HomeViewModel extends Notifier<HomeState> {
     String tweetId,
     TweetModel Function(TweetModel) updater,
   ) {
-
     final tweets = state.tweets;
     final tweetIndex = tweets.indexWhere((t) => t.id == tweetId);
     List<TweetModel> updatedTweets = tweets;
@@ -169,7 +161,6 @@ class HomeViewModel extends Notifier<HomeState> {
         _updateTweetInAllFeeds(tweetId, (_) => serverTweet);
       }
     } catch (e) {
-
       await refreshTweets();
       state = state.copyWith(error: 'Failed to update like: $e');
     }
@@ -200,7 +191,6 @@ class HomeViewModel extends Notifier<HomeState> {
         _updateTweetInAllFeeds(tweetId, (_) => serverTweet);
       }
     } catch (e) {
-
       await refreshTweets();
       state = state.copyWith(error: 'Failed to update retweet: $e');
     }
@@ -228,7 +218,6 @@ class HomeViewModel extends Notifier<HomeState> {
         _updateTweetInAllFeeds(tweetId, (_) => serverTweet);
       }
     } catch (e) {
-
       await refreshTweets();
       state = state.copyWith(error: 'Failed to update bookmark: $e');
     }
@@ -236,12 +225,11 @@ class HomeViewModel extends Notifier<HomeState> {
 
   Future<void> createPost({
     required String content,
-    String replyControl = "EVERYONE", // EVERYONE, FOLLOWING, MENTIONED
+    String replyControl = "EVERYONE",
     List<String> images = const [],
     String? replyToId,
   }) async {
     try {
-
       final newTweet = await _repository.createPost(
         content: content,
         replyControl: replyControl,
@@ -250,7 +238,6 @@ class HomeViewModel extends Notifier<HomeState> {
       );
 
       if (replyToId != null) {
-
         final updatedTweets = _updateParentTweetInList(
           state.tweets,
           replyToId,
@@ -273,7 +260,6 @@ class HomeViewModel extends Notifier<HomeState> {
           followingTweets: updatedFollowing,
         );
       } else {
-
         final updatedTweets = [newTweet, ...state.tweets];
         final updatedForYou = [newTweet, ...state.forYouTweets];
         final updatedFollowing = [newTweet, ...state.followingTweets];
@@ -283,10 +269,8 @@ class HomeViewModel extends Notifier<HomeState> {
           forYouTweets: updatedForYou,
           followingTweets: updatedFollowing,
         );
-
       }
     } catch (e) {
-
       state = state.copyWith(error: 'Failed to create post: $e');
       rethrow;
     }
@@ -352,13 +336,10 @@ class HomeViewModel extends Notifier<HomeState> {
 
   Future<void> deletePost(String tweetId) async {
     try {
-
       await _repository.deletePost(tweetId);
 
       final updatedTweets = state.tweets.where((t) {
-
         if (t.id == tweetId) return false;
-
         if (t.replyToId == tweetId) return false;
         return true;
       }).toList();
@@ -403,7 +384,3 @@ class HomeViewModel extends Notifier<HomeState> {
     }
   }
 }
-
-final homeViewModelProvider = NotifierProvider<HomeViewModel, HomeState>(() {
-  return HomeViewModel(); // Creates a new HomeViewModel instance
-});

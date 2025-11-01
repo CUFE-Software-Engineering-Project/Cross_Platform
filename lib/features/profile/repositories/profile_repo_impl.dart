@@ -10,21 +10,13 @@ String baseUrl =
     "https://app-fd6adf10-3923-46c1-83f7-08c318e4c982.cleverapps.io";
 
 class ProfileRepoImpl implements ProfileRepo {
-  Dio _dio = Dio(
-    BaseOptions(
-      baseUrl: baseUrl,
-      headers: {
-        "Authorization":
-            "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VybmFtZSI6ImhhemVtYWhtZWQiLCJlbWFpbCI6Imppd29ub205NjFAaGg3Zi5jb20iLCJpZCI6IjY4ZGIxN2U1LTE3Y2UtNGQzNS1hY2MyLTY1ZTk4NDRmOWEyMyIsImV4cCI6MTc2MjAxNzg0OSwiaWF0IjoxNzYyMDE0MjQ5LCJ2ZXJzaW9uIjowLCJqdGkiOiI3NjdjNzYxOS0yZmZmLTQ0ODItOTFiNC0wNTI2YTBkNjk5ZDciLCJkZXZpZCI6IjM2NGVkZjUyLWU2MTgtNGJmZS1hYTIzLWYwNTBlMzdiZTMxMiJ9.xnBbAkZ6-GyZF_nhzk3qRe25MLa2eZ7bM33lMcj1vfs",
-      },
-    ),
-  );
+  final _dio;
+  ProfileRepoImpl(Dio d) : _dio = d;
   @override
   Future<Either<Failure, ProfileModel>> getProfileData(String userName) async {
     final Response res;
     try {
-      res = await _dio.get("/api/users/$userName");
-
+      res = await _dio.get("api/users/$userName");
       final profileData = ProfileModel.fromJson(res.data);
       final profileData2 = profileData.copyWith(
         avatarUrl:
@@ -50,7 +42,7 @@ class ProfileRepoImpl implements ProfileRepo {
         "protectedAccount": true,
       };
       print(json.toString());
-      final res = await _dio.patch("/api/users/${newModel.id}", data: json);
+      final res = await _dio.patch("api/users/${newModel.id}", data: json);
 
       return Right(ProfileModel.fromJson(res.data));
     } catch (e) {
@@ -111,7 +103,7 @@ class ProfileRepoImpl implements ProfileRepo {
     // await Future.delayed(const Duration(seconds: 1));
 
     try {
-      final response = await _dio.get("/api/followers/$userName");
+      final response = await _dio.get("api/followers/$userName");
       List<dynamic> jsonList = response.data['users'] as List<dynamic>;
       final List<UserModel> usersList = jsonList
           .map((json) => UserModel.fromJson(json))
@@ -168,7 +160,7 @@ class ProfileRepoImpl implements ProfileRepo {
     String userName,
   ) async {
     try {
-      final response = await _dio.get("/api/followings/$userName");
+      final response = await _dio.get("api/followings/$userName");
       List<dynamic> jsonList = response.data['users'] as List<dynamic>;
       final List<UserModel> usersList = jsonList
           .map((json) => UserModel.fromJson(json))
@@ -184,7 +176,7 @@ class ProfileRepoImpl implements ProfileRepo {
     String userName,
   ) async {
     try {
-      final response = await _dio.get("/api/followers/$userName");
+      final response = await _dio.get("api/followers/$userName");
       List<dynamic> jsonList = response.data['users'] as List<dynamic>;
       final List<UserModel> usersList = jsonList
           .map((json) => UserModel.fromJson(json))
@@ -204,7 +196,7 @@ class ProfileRepoImpl implements ProfileRepo {
   ) async {
     await Future.delayed(const Duration(seconds: 1));
     try {
-      final response = await _dio.get("/api/followers/$userName");
+      final response = await _dio.get("api/followers/$userName");
       List<dynamic> jsonList = response.data['users'] as List<dynamic>;
       final List<UserModel> usersList = jsonList
           .map((json) => UserModel.fromJson(json))
@@ -221,7 +213,7 @@ class ProfileRepoImpl implements ProfileRepo {
 
   Future<Either<Failure, void>> followUser(String username) async {
     try {
-      await _dio.post("/api/followers/$username");
+      await _dio.post("api/followers/$username");
       return const Right(());
     } catch (e) {
       return Left(Failure("couldn't follow user"));
@@ -230,7 +222,7 @@ class ProfileRepoImpl implements ProfileRepo {
 
   Future<Either<Failure, void>> unFollowUser(String username) async {
     try {
-      await _dio.delete("/api/followers/$username");
+      await _dio.delete("api/followers/$username");
       return const Right(());
     } catch (e) {
       return Left(Failure("couldn't unfollow user"));

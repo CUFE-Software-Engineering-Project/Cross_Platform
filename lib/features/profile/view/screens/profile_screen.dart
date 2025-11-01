@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lite_x/features/profile/view/widgets/profile/profile_screen_body.dart';
 import 'package:lite_x/features/profile/view_model/providers.dart';
 
@@ -23,7 +24,12 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     } else if (state.errorMessage != null) {
       return Scaffold(
         appBar: AppBar(
-          leading: IconButton(icon: Icon(Icons.arrow_back), onPressed: () {}),
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back),
+            onPressed: () {
+              if (context.canPop()) context.pop();
+            },
+          ),
         ),
         body: Center(child: Text(state.errorMessage!)),
       );
