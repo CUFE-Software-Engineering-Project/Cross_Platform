@@ -1,7 +1,6 @@
 // lib/features/home/view/screens/home_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
 import 'package:lite_x/core/routes/app_shell.dart';
 import 'package:lite_x/features/home/repositories/home_repository.dart';
 import 'package:lite_x/features/home/view/widgets/home_app_bar.dart';

@@ -1,30 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/svg.dart';
-import 'package:lite_x/features/profile/view/screens/edit_profile_screen.dart';
-import 'package:lite_x/features/profile/view/widgets/profile_posts_list.dart';
-import 'package:lite_x/features/profile/view/widgets/profile_screen_body.dart';
+import 'package:lite_x/features/profile/view/widgets/profile/profile_screen_body.dart';
 import 'package:lite_x/features/profile/view_model/providers.dart';
-import '../../../../core/theme/app_theme.dart';
-import '../../models/shared.dart';
 
 class ProfilePage extends ConsumerStatefulWidget {
-  const ProfilePage({super.key});
+  final String username;
+  const ProfilePage({super.key, required this.username});
 
   @override
   ConsumerState<ProfilePage> createState() => _ProfilePageState();
 }
 
 class _ProfilePageState extends ConsumerState<ProfilePage> {
-  Future<void> _refresh() async {
-    await ref.read(profileBasicDataNotifierProvider.notifier)
-      ..loadProfileData();
-    print("refreshed");
-  }
-
+  bool isMe = false;
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(profileBasicDataNotifierProvider);
+    final String myUserName = ref.watch(myUserNameProvider);
+    if (myUserName == widget.username) isMe = true;
+    final state = ref.watch(profileBasicDataNotifierProvider(widget.username));
     if (state.isLoading) {
       return Scaffold(body: Center(child: CircularProgressIndicator()));
     } else if (state.errorMessage != null) {
@@ -41,12 +34,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     return DefaultTabController(
       length: 6,
       child: Scaffold(
-        body: RefreshIndicator(
-          onRefresh: _refresh,
-          child: ProfileScreenBody(profileData: profileData),
-        ),
+        body: ProfileScreenBody(profileData: profileData, isMe: isMe),
       ),
     );
   }
 }
-

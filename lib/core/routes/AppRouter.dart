@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
-import 'package:lite_x/core/routes/app_shell.dart';
 import 'package:lite_x/features/auth/view/screens/Intro_Screen.dart';
 
 import 'package:lite_x/features/home/view/screens/home_screen.dart';
 import 'package:lite_x/core/view/screen/Splash_Screen.dart';
 import 'package:lite_x/features/auth/view/screens/Create_Account/CreateAccount_Screen.dart';
-import 'package:lite_x/features/auth/view/screens/Intro_Screen.dart';
 import 'package:lite_x/features/auth/view/screens/Log_In/Change_Password_Feedback.dart';
 import 'package:lite_x/features/auth/view/screens/Log_In/Choose_New_Password_Screen.dart';
 import 'package:lite_x/features/auth/view/screens/Log_In/Confirmation_code_Loc_Screen.dart';
@@ -21,7 +19,9 @@ import 'package:lite_x/features/auth/view/screens/Create_Account/Verification_Sc
 import 'package:lite_x/features/auth/view/screens/Log_In/VerificationForgot_Screen.dart';
 // import 'package:lite_x/features/auth/view/screens/Verification_Screen.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
+import 'package:lite_x/features/profile/view/screens/birthdate_screen.dart';
 import 'package:lite_x/features/profile/view/screens/edit_profile_screen.dart';
+import 'package:lite_x/features/profile/view/screens/following_followers_screen.dart';
 import 'package:lite_x/features/profile/view/screens/profile_screen.dart';
 
 class Approuter {
@@ -62,9 +62,11 @@ class Approuter {
       ),
       GoRoute(
         name: RouteConstants.profileScreen,
-        path: "/profilescreen",
+        path: "/profilescreen/:username",
         pageBuilder: (context, state) => CustomTransitionPage(
-          child: const ProfilePage(),
+          child: ProfilePage(
+            username: state.pathParameters['username'] as String,
+          ),
           transitionsBuilder: _slideRightTransitionBuilder,
         ),
       ),
@@ -165,6 +167,28 @@ class Approuter {
         path: "/ChangePasswordFeedback",
         pageBuilder: (context, state) => CustomTransitionPage(
           child: const ChangePasswordFeedback(),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
+        name: RouteConstants.FollowingFollowersScreen,
+        path: "/followingfollowersscreen/:initialTab/:isMe",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: FollowingFollowersScreen(
+            initialIndex: int.parse(
+              state.pathParameters['initialTab'] as String,
+            ),
+            isMe: state.pathParameters['isMe'] as String,
+            profileModel: state.extra as ProfileModel,
+          ),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
+        name: RouteConstants.BirthDateScreen,
+        path: "/birthDateScreen",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: BirthdateScreen(profileModel: state.extra as ProfileModel),
           transitionsBuilder: _slideRightTransitionBuilder,
         ),
       ),

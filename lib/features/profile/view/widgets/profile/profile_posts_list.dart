@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lite_x/features/profile/view/widgets/profile_post_widget.dart';
+import 'package:lite_x/features/profile/view/widgets/profile/profile_post_widget.dart';
 import 'package:lite_x/features/profile/view_model/providers.dart';
 
-import '../../models/profile_model.dart';
-import '../../models/profile_post_model.dart';
+import '../../../models/profile_model.dart';
 
 class ProfilePostsList extends ConsumerWidget {
   const ProfilePostsList({super.key, required this.profile});
