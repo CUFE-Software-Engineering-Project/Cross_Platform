@@ -1,6 +1,8 @@
 import 'package:dartz/dartz.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
+import 'package:lite_x/core/providers/current_user_provider.dart';
+import 'package:lite_x/core/providers/dio_interceptor.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
 import 'package:lite_x/features/profile/models/shared.dart';
 import 'package:lite_x/features/profile/models/user_model.dart';
@@ -12,7 +14,7 @@ import 'package:lite_x/features/profile/view_model/profile_posts_notifier.dart';
 import 'package:lite_x/features/profile/view_model/profile_posts_states.dart';
 
 final profileRepoProvider = Provider<ProfileRepo>((ref) {
-  return ProfileRepoImpl();
+  return ProfileRepoImpl(ref.watch(dioProvider));
 });
 
 final profileBasicDataNotifierProvider = StateNotifierProvider.autoDispose
@@ -80,11 +82,10 @@ final followControllerProvider = Provider((ref) {
 
 final unFollowControllerProvider = Provider((ref) {
   final repo = ref.watch(profileRepoProvider);
-  return (String username){
+  return (String username) {
     return repo.unFollowUser(username);
   };
 });
-
 
 final editProfileProvider = Provider((ref) {
   final repo = ref.watch(profileRepoProvider);
@@ -94,4 +95,8 @@ final editProfileProvider = Provider((ref) {
 });
 
 final tokenProvider = Provider<String>((_) => "");
-final myUserNameProvider = Provider<String>((_) => "hazemahmed");
+
+final myUserNameProvider = Provider<String>((ref) {
+  final user = ref.watch(currentUserProvider.select((e) => e!.username));
+  return user;
+});

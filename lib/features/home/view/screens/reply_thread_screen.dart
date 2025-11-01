@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:lite_x/features/home/models/tweet_model.dart';
+import 'package:lite_x/features/home/repositories/home_repository.dart';
 import 'package:lite_x/features/home/view/screens/reply_composer_screen.dart';
 import 'package:lite_x/features/home/view_model/home_view_model.dart';
 import 'package:timeago/timeago.dart' as timeago;
@@ -40,9 +41,7 @@ class _ReplyThreadScreenState extends ConsumerState<ReplyThreadScreen> {
           currentUserId = userData['id']?.toString();
         });
       }
-    } catch (e) {
-
-    }
+    } catch (e) {}
   }
 
   Future<void> _loadThreadData() async {
@@ -56,9 +55,7 @@ class _ReplyThreadScreenState extends ConsumerState<ReplyThreadScreen> {
         try {
           final tweet = await repository.getTweetById(tweetId);
           loadedTweets[tweetId] = tweet;
-        } catch (e) {
-
-        }
+        } catch (e) {}
       }
 
       final currentReplyId = widget.pathTweetIds.last;
@@ -76,7 +73,6 @@ class _ReplyThreadScreenState extends ConsumerState<ReplyThreadScreen> {
         });
       }
     } catch (e) {
-
       if (mounted) {
         setState(() => isLoading = false);
       }
@@ -165,7 +161,6 @@ class _ReplyThreadScreenState extends ConsumerState<ReplyThreadScreen> {
       body: ListView(
         controller: _scrollController,
         children: [
-
           _buildTimelineTweetCard(mainTweet),
           const Divider(color: Color(0xFF2F3336), height: 1),
 
@@ -324,7 +319,6 @@ class _ReplyThreadScreenState extends ConsumerState<ReplyThreadScreen> {
   }) {
     return InkWell(
       onTap: () {
-
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -547,14 +541,12 @@ class _ReplyThreadScreenState extends ConsumerState<ReplyThreadScreen> {
   }
 
   Widget _buildActionButton(TweetModel tweet) {
-
     const String knownUserId = '6552d72c-3f27-445d-8ad8-bc22cda9ddd9';
     final bool isOwnTweet =
         (currentUserId != null && tweet.userId == currentUserId) ||
         (tweet.userId == knownUserId);
 
     if (isOwnTweet) {
-
       return PopupMenuButton<String>(
         icon: Icon(Icons.more_horiz, color: Colors.grey[600], size: 20),
         color: const Color(0xFF1E1E1E),
@@ -578,7 +570,6 @@ class _ReplyThreadScreenState extends ConsumerState<ReplyThreadScreen> {
         ],
       );
     } else {
-
       return Row(
         children: [
           Container(
@@ -666,10 +657,8 @@ class _ReplyThreadScreenState extends ConsumerState<ReplyThreadScreen> {
         final isInPath = widget.pathTweetIds.contains(tweet.id);
 
         if (isInPath) {
-
           Navigator.pop(context, true); // Return true to indicate deletion
         } else {
-
           await _loadThreadData();
         }
       }

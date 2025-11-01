@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:lite_x/features/home/models/tweet_model.dart';
+import 'package:lite_x/features/home/repositories/home_repository.dart';
 import 'package:lite_x/features/home/view/screens/reply_composer_screen.dart';
 import 'package:lite_x/features/home/view/screens/reply_thread_screen.dart';
 import 'package:lite_x/features/home/view/screens/quote_composer_screen.dart';
@@ -39,10 +40,7 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
           currentUserId = userData['id']?.toString();
         });
       }
-
-    } catch (e) {
-
-    }
+    } catch (e) {}
   }
 
   Future<void> _loadTweetData() async {
@@ -51,30 +49,24 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
     });
 
     try {
-
       final homeState = ref.read(homeViewModelProvider);
       TweetModel? tweet;
 
       try {
         tweet = homeState.tweets.firstWhere((t) => t.id == widget.tweetId);
-
       } catch (e) {
         try {
           tweet = homeState.forYouTweets.firstWhere(
             (t) => t.id == widget.tweetId,
           );
-
         } catch (e) {
           try {
             tweet = homeState.followingTweets.firstWhere(
               (t) => t.id == widget.tweetId,
             );
-
           } catch (e) {
-
             final repository = ref.read(homeRepositoryProvider);
             tweet = await repository.getTweetById(widget.tweetId);
-
           }
         }
       }
@@ -87,7 +79,6 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
 
       await _loadReplies();
     } catch (e) {
-
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -119,7 +110,6 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
         });
       }
     } catch (e) {
-
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -155,7 +145,6 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
         });
       }
     } catch (e) {
-
       if (mounted) {
         setState(() {
           mainTweet!.isLiked = !newLikeState;
@@ -188,7 +177,6 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
         });
       }
     } catch (e) {
-
       if (mounted) {
         setState(() {
           mainTweet!.isRetweeted = !newRetweetState;
@@ -220,7 +208,6 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
         });
       }
     } catch (e) {
-
       if (mounted) {
         setState(() {
           mainTweet!.isBookmarked = !newBookmarkState;
@@ -314,7 +301,6 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-
     if (isLoading) {
       return const Scaffold(
         backgroundColor: Colors.black,
@@ -464,7 +450,6 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
   }
 
   Widget _buildActionButton() {
-
     const String knownUserId = '6552d72c-3f27-445d-8ad8-bc22cda9ddd9';
 
     final bool isOwnTweet =
@@ -474,7 +459,6 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
         (mainTweet!.userId != null && mainTweet!.userId == knownUserId);
 
     if (isOwnTweet) {
-
       return PopupMenuButton<String>(
         icon: const Icon(Icons.more_horiz, color: Colors.white),
         color: const Color(0xFF1E1E1E),
@@ -509,7 +493,6 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
         ],
       );
     } else {
-
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         decoration: BoxDecoration(
@@ -529,7 +512,6 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
   }
 
   void _showEditDialog() {
-
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Edit functionality coming soon!'),
@@ -586,7 +568,6 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
         Navigator.pop(context);
       }
     } catch (e) {
-
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -647,7 +628,6 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
         await _loadReplies();
       }
     } catch (e) {
-
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -724,7 +704,6 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-
           Row(
             children: [
               CircleAvatar(
@@ -854,9 +833,7 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
 
   Widget _buildStatItem(String value, String label) {
     return GestureDetector(
-      onTap: () {
-
-      },
+      onTap: () {},
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -1008,7 +985,6 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
   }
 
   Widget _buildReplyHeader(TweetModel reply) {
-
     const String knownUserId = '6552d72c-3f27-445d-8ad8-bc22cda9ddd9';
     final bool isOwnReply =
         (currentUserId != null &&
@@ -1095,7 +1071,6 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
       children: [
         InkWell(
           onTap: () async {
-
             final result = await Navigator.push(
               context,
               MaterialPageRoute(

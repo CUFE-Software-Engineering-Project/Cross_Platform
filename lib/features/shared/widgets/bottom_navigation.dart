@@ -1,7 +1,7 @@
 // lib/features/shared/widgets/bottom_navigation.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lite_x/core/routes/app_shell.dart';
+import 'package:lite_x/core/view/screen/app_shell.dart';
 
 class XBottomNavigation extends ConsumerWidget {
   const XBottomNavigation({super.key});

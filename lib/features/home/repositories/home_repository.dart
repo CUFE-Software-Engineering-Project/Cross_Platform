@@ -1,35 +1,33 @@
-import 'package:lite_x/core/services/api_service.dart';
-import 'package:lite_x/features/home/models/tweet_model.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lite_x/core/providers/dio_interceptor.dart';
+import 'package:lite_x/features/home/models/tweet_model.dart';
+
+final homeRepositoryProvider = Provider<HomeRepository>((ref) {
+  return HomeRepository(ref);
+});
 
 class HomeRepository {
-  final ApiService apiService;
+  final Ref _ref;
   final Map<String, Map<String, dynamic>> _userCache = {};
 
-  HomeRepository(this.apiService);
+  HomeRepository(this._ref);
+
+  Dio get _dio => _ref.read(dioProvider);
 
   Future<Map<String, dynamic>> getCurrentUser() async {
     try {
-
-      final response = await apiService.getCurrentUser();
+      final response = await _dio.get('api/users/me');
 
       Map<String, dynamic> userData;
 
       if (response.data is Map) {
-
         if (response.data['User'] != null) {
           userData = response.data['User'] as Map<String, dynamic>;
-
-        }
-
-        else if (response.data['data'] != null) {
+        } else if (response.data['data'] != null) {
           userData = response.data['data'] as Map<String, dynamic>;
-
-        }
-
-        else {
+        } else {
           userData = response.data as Map<String, dynamic>;
-
         }
       } else {
         throw Exception('Unexpected response format');
@@ -37,20 +35,17 @@ class HomeRepository {
 
       return userData;
     } catch (e) {
-
       throw Exception('Failed to fetch current user: $e');
     }
   }
 
   Future<Map<String, dynamic>> _getUserData(String userId) async {
     if (_userCache.containsKey(userId)) {
-
       return _userCache[userId]!;
     }
 
     try {
-
-      final response = await apiService.getUserById(userId);
+      final response = await _dio.get('api/users/$userId');
 
       final userData = response.data is Map && response.data['data'] != null
           ? response.data['data']
@@ -59,7 +54,6 @@ class HomeRepository {
       _userCache[userId] = userData;
       return userData;
     } catch (e) {
-
       throw Exception('Failed to fetch user data: $e');
     }
   }
@@ -67,42 +61,39 @@ class HomeRepository {
   Future<TweetModel> _enrichTweetWithUserData(
     Map<String, dynamic> tweetJson,
   ) async {
-
     if (tweetJson['user'] == null && tweetJson['userId'] != null) {
-
       final userId = tweetJson['userId'];
       try {
         final userData = await _getUserData(userId);
         tweetJson['user'] = userData;
-
       } catch (e) {
-
+        // Silently handle error
       }
-    } else if (tweetJson['user'] != null) {
-
     }
 
     return TweetModel.fromJson(tweetJson);
   }
 
-  Future<List<TweetModel>> fetchForYouTweets() async {
+  Future<List<TweetModel>> fetchForYouTweets({
+    int page = 1,
+    int limit = 20,
+  }) async {
     try {
-      final response = await apiService.getForYouTweets();
+      final response = await _dio.get(
+        'api/home/for-you',
+        queryParameters: {'page': page, 'limit': limit},
+      );
 
       final List tweetsData;
       if (response.data is List) {
         tweetsData = response.data as List;
-
       } else if (response.data is Map && response.data['data'] != null) {
         tweetsData = response.data['data'] as List;
-
       } else {
-
         return [];
       }
 
       if (tweetsData.isEmpty) {
-
         return [];
       }
 
@@ -112,38 +103,38 @@ class HomeRepository {
           final tweet = await _enrichTweetWithUserData(json);
           tweets.add(tweet);
         } catch (e) {
-
+          // Silently handle error
         }
       }
 
       return tweets.where((tweet) => tweet.replyToId == null).toList();
     } on DioException catch (e) {
-
       throw _handleError(e);
     } catch (e) {
-
       rethrow;
     }
   }
 
-  Future<List<TweetModel>> fetchFollowingTweets() async {
+  Future<List<TweetModel>> fetchFollowingTweets({
+    int page = 1,
+    int limit = 20,
+  }) async {
     try {
-      final response = await apiService.getFollowingTweets();
+      final response = await _dio.get(
+        'api/home/timeline',
+        queryParameters: {'page': page, 'limit': limit},
+      );
 
       final List tweetsData;
       if (response.data is List) {
         tweetsData = response.data as List;
-
       } else if (response.data is Map && response.data['data'] != null) {
         tweetsData = response.data['data'] as List;
-
       } else {
-
         return [];
       }
 
       if (tweetsData.isEmpty) {
-
         return [];
       }
 
@@ -153,23 +144,24 @@ class HomeRepository {
           final tweet = await _enrichTweetWithUserData(json);
           tweets.add(tweet);
         } catch (e) {
-
+          // Silently handle error
         }
       }
 
       return tweets.where((tweet) => tweet.replyToId == null).toList();
     } on DioException catch (e) {
-
       throw _handleError(e);
     } catch (e) {
-
       rethrow;
     }
   }
 
-  Future<List<TweetModel>> fetchTweets() async {
+  Future<List<TweetModel>> fetchTweets({int page = 1, int limit = 20}) async {
     try {
-      final response = await apiService.getTweets();
+      final response = await _dio.get(
+        'api/tweets',
+        queryParameters: {'page': page, 'limit': limit},
+      );
 
       final List tweetsData;
       if (response.data is List) {
@@ -177,24 +169,20 @@ class HomeRepository {
       } else if (response.data is Map && response.data['data'] != null) {
         tweetsData = response.data['data'] as List;
       } else {
-
         return [];
       }
 
       return tweetsData.map((json) => TweetModel.fromJson(json)).toList();
     } on DioException catch (e) {
-
       throw _handleError(e);
     } catch (e) {
-
       rethrow;
     }
   }
 
   Future<TweetModel> getTweetById(String tweetId) async {
     try {
-
-      final response = await apiService.getTweetById(tweetId);
+      final response = await _dio.get('api/tweets/$tweetId');
 
       final tweetData = response.data is Map && response.data['data'] != null
           ? response.data['data']
@@ -204,10 +192,8 @@ class HomeRepository {
 
       return enrichedTweet;
     } on DioException catch (e) {
-
       throw _handleError(e);
     } catch (e) {
-
       rethrow;
     }
   }
@@ -215,9 +201,9 @@ class HomeRepository {
   Future<TweetModel> toggleLike(String tweetId, bool isCurrentlyLiked) async {
     try {
       if (isCurrentlyLiked) {
-        await apiService.unlikeTweet(tweetId);
+        await _dio.delete('api/tweets/$tweetId/like');
       } else {
-        await apiService.likeTweet(tweetId);
+        await _dio.post('api/tweets/$tweetId/like');
       }
       return await getTweetById(tweetId);
     } on DioException catch (e) {
@@ -231,9 +217,9 @@ class HomeRepository {
   ) async {
     try {
       if (isCurrentlyRetweeted) {
-        await apiService.unretweetTweet(tweetId);
+        await _dio.delete('api/tweets/$tweetId/retweet');
       } else {
-        await apiService.retweetTweet(tweetId);
+        await _dio.post('api/tweets/$tweetId/retweet');
       }
       return await getTweetById(tweetId);
     } on DioException catch (e) {
@@ -247,9 +233,9 @@ class HomeRepository {
   ) async {
     try {
       if (isCurrentlyBookmarked) {
-        await apiService.unbookmarkTweet(tweetId);
+        await _dio.delete('api/tweets/$tweetId/bookmark');
       } else {
-        await apiService.bookmarkTweet(tweetId);
+        await _dio.post('api/tweets/$tweetId/bookmark');
       }
       return await getTweetById(tweetId);
     } on DioException catch (e) {
@@ -264,9 +250,7 @@ class HomeRepository {
     String? replyToId,
   }) async {
     try {
-
       if (replyToId != null) {
-
         return await createReply(
           tweetId: replyToId,
           content: content,
@@ -281,25 +265,20 @@ class HomeRepository {
         if (images.isNotEmpty) 'images': images,
       };
 
-      final response = await apiService.createTweet(data);
+      final response = await _dio.post('api/tweets', data: data);
 
       Map<String, dynamic> tweetData;
 
       if (response.data is Map) {
-
         if (response.data['data'] != null) {
           tweetData = response.data['data'] as Map<String, dynamic>;
-
         } else {
           tweetData = response.data as Map<String, dynamic>;
-
         }
       } else if (response.data is List) {
-
         final list = response.data as List;
         if (list.isNotEmpty) {
           tweetData = list.first as Map<String, dynamic>;
-
         } else {
           throw Exception('Empty list response when creating tweet');
         }
@@ -311,17 +290,15 @@ class HomeRepository {
 
       return await _enrichTweetWithUserData(tweetData);
     } on DioException catch (e) {
-
       throw _handleError(e);
     } catch (e) {
-
       rethrow;
     }
   }
 
   Future<bool> deletePost(String tweetId) async {
     try {
-      await apiService.deleteTweet(tweetId);
+      await _dio.delete('api/tweets/$tweetId');
       return true;
     } on DioException catch (e) {
       throw _handleError(e);
@@ -330,7 +307,7 @@ class HomeRepository {
 
   Future<List<TweetModel>> getReplies(String tweetId) async {
     try {
-      final response = await apiService.getReplies(tweetId);
+      final response = await _dio.get('api/tweets/$tweetId/replies');
 
       final List repliesData;
       if (response.data is List) {
@@ -338,7 +315,6 @@ class HomeRepository {
       } else if (response.data is Map && response.data['data'] != null) {
         repliesData = response.data['data'] as List;
       } else {
-
         return [];
       }
 
@@ -348,16 +324,14 @@ class HomeRepository {
           final reply = await _enrichTweetWithUserData(json);
           replies.add(reply);
         } catch (e) {
-
+          // Silently handle error
         }
       }
 
       return replies;
     } on DioException catch (e) {
-
       throw _handleError(e);
     } catch (e) {
-
       rethrow;
     }
   }
@@ -375,25 +349,23 @@ class HomeRepository {
         if (images.isNotEmpty) 'images': images,
       };
 
-      final response = await apiService.createReply(tweetId, data);
+      final response = await _dio.post(
+        'api/tweets/$tweetId/replies',
+        data: data,
+      );
 
       Map<String, dynamic> replyData;
 
       if (response.data is Map) {
-
         if (response.data['data'] != null) {
           replyData = response.data['data'] as Map<String, dynamic>;
-
         } else {
           replyData = response.data as Map<String, dynamic>;
-
         }
       } else if (response.data is List) {
-
         final list = response.data as List;
         if (list.isNotEmpty) {
           replyData = list.first as Map<String, dynamic>;
-
         } else {
           throw Exception('Empty list response when creating reply');
         }
@@ -405,12 +377,9 @@ class HomeRepository {
 
       return await _enrichTweetWithUserData(replyData);
     } on DioException catch (e) {
-
       final errorMessage = _handleError(e);
-
       throw errorMessage;
     } catch (e) {
-
       rethrow;
     }
   }
@@ -419,7 +388,6 @@ class HomeRepository {
     String tweetId,
   ) async {
     try {
-
       final Map<String, TweetModel> tweetMap = {};
 
       final mainTweet = await getTweetById(tweetId);
@@ -429,7 +397,6 @@ class HomeRepository {
 
       return tweetMap;
     } catch (e) {
-
       rethrow;
     }
   }
@@ -444,12 +411,11 @@ class HomeRepository {
       for (var reply in replies) {
         if (!tweetMap.containsKey(reply.id)) {
           tweetMap[reply.id] = reply;
-
           await _fetchRepliesRecursively(reply.id, tweetMap);
         }
       }
     } catch (e) {
-
+      // Silently handle error
     }
   }
 
@@ -468,7 +434,7 @@ class HomeRepository {
         if (images.isNotEmpty) 'images': images,
       };
 
-      final response = await apiService.createQuoteTweet(data);
+      final response = await _dio.post('api/tweets/quote', data: data);
 
       final tweetData = response.data is Map && response.data['data'] != null
           ? response.data['data']
@@ -481,30 +447,27 @@ class HomeRepository {
         quotedTweet: quotedTweet,
       );
     } on DioException catch (e) {
-
       throw _handleError(e);
     } catch (e) {
-
       rethrow;
     }
   }
 
   Future<List<Map<String, dynamic>>> getTweetLikes(String tweetId) async {
     try {
-      final response = await apiService.getTweetLikes(tweetId);
+      final response = await _dio.get('api/tweets/$tweetId/likes');
       final data = response.data is Map && response.data['data'] != null
           ? response.data['data']
           : response.data;
       return List<Map<String, dynamic>>.from(data);
     } on DioException catch (e) {
-
       throw _handleError(e);
     }
   }
 
   Future<List<TweetModel>> getLikedTweets() async {
     try {
-      final response = await apiService.getLikedTweets();
+      final response = await _dio.get('api/tweets/likedtweets');
       final data = response.data is Map && response.data['data'] != null
           ? response.data['data']
           : response.data;
@@ -515,19 +478,18 @@ class HomeRepository {
           final tweet = await _enrichTweetWithUserData(json);
           tweets.add(tweet);
         } catch (e) {
-
+          // Silently handle error
         }
       }
       return tweets;
     } on DioException catch (e) {
-
       throw _handleError(e);
     }
   }
 
   Future<List<TweetModel>> getMentionedTweets(String username) async {
     try {
-      final response = await apiService.getMentionedTweets(username);
+      final response = await _dio.get('api/tweets/user/$username/mentioned');
       final data = response.data is Map && response.data['data'] != null
           ? response.data['data']
           : response.data;
@@ -538,13 +500,65 @@ class HomeRepository {
           final tweet = await _enrichTweetWithUserData(json);
           tweets.add(tweet);
         } catch (e) {
-
+          // Silently handle error
         }
       }
       return tweets;
     } on DioException catch (e) {
-
       throw _handleError(e);
+    }
+  }
+
+  Future<List<TweetModel>> getQuotes(String tweetId) async {
+    try {
+      final response = await _dio.get('api/tweets/$tweetId/quotes');
+      final data = response.data is Map && response.data['data'] != null
+          ? response.data['data']
+          : response.data;
+
+      final List<TweetModel> tweets = [];
+      for (var json in (data as List)) {
+        try {
+          final tweet = await _enrichTweetWithUserData(json);
+          tweets.add(tweet);
+        } catch (e) {
+          // Silently handle error
+        }
+      }
+      return tweets;
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getRetweets(String tweetId) async {
+    try {
+      final response = await _dio.get('api/tweets/$tweetId/retweets');
+      final data = response.data is Map && response.data['data'] != null
+          ? response.data['data']
+          : response.data;
+      return List<Map<String, dynamic>>.from(data);
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<TweetModel> updateTweet(
+    String tweetId,
+    Map<String, dynamic> data,
+  ) async {
+    try {
+      final response = await _dio.patch('api/tweets/$tweetId', data: data);
+
+      final tweetData = response.data is Map && response.data['data'] != null
+          ? response.data['data']
+          : response.data;
+
+      return await _enrichTweetWithUserData(tweetData);
+    } on DioException catch (e) {
+      throw _handleError(e);
+    } catch (e) {
+      rethrow;
     }
   }
 

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lite_x/core/view/screen/app_shell.dart';
 import 'package:lite_x/features/auth/view/screens/Create_Account/Interests.dart';
 import 'package:lite_x/features/chat/view/TestChatScreen.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
 import 'package:lite_x/features/auth/view/screens/Intro_Screen.dart';
-import 'package:lite_x/features/home/view/screens/home_screen.dart';
 import 'package:lite_x/core/view/screen/Splash_Screen.dart';
 import 'package:lite_x/features/auth/view/screens/Create_Account/CreateAccount_Screen.dart';
 import 'package:lite_x/features/auth/view/screens/Log_In/Change_Password_Feedback.dart';
@@ -21,7 +21,6 @@ import 'package:lite_x/features/auth/view/screens/Log_In/VerificationForgot_Scre
 import 'package:lite_x/features/chat/view/screens/Search_Direct_messages.dart';
 // import 'package:lite_x/features/chat/view/screens/chat_Screen.dart';
 import 'package:lite_x/features/chat/view/screens/conversations_screen.dart';
-// import 'package:lite_x/features/auth/view/screens/Verification_Screen.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
 import 'package:lite_x/features/profile/view/screens/birthdate_screen.dart';
 import 'package:lite_x/features/profile/view/screens/edit_profile_screen.dart';
@@ -77,9 +76,9 @@ class Approuter {
 
       GoRoute(
         name: RouteConstants.homescreen,
-        path: "/home",
+        path: "/appshell",
         pageBuilder: (context, state) => CustomTransitionPage(
-          child: const HomeScreen(),
+          child: const AppShell(),
           transitionsBuilder: _slideRightTransitionBuilder,
         ),
       ),
