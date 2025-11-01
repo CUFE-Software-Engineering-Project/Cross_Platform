@@ -185,6 +185,10 @@ class Approuter {
             isMe: state.pathParameters['isMe'] as String,
             profileModel: state.extra as ProfileModel,
           ),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
         name: RouteConstants.ConversationsScreen,
         path: "/ConversationsScreen",
         pageBuilder: (context, state) => CustomTransitionPage(
@@ -200,6 +204,7 @@ class Approuter {
           transitionsBuilder: _slideRightTransitionBuilder,
         ),
       ),
+      GoRoute(
         name: RouteConstants.TestChatScreen,
         path: "/TestChatScreen",
         pageBuilder: (context, state) => CustomTransitionPage(

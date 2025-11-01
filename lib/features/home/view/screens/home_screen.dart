@@ -10,7 +10,6 @@ import 'package:lite_x/features/home/view/widgets/home_tab_bar.dart';
 import 'package:lite_x/features/home/view/widgets/tweet_widget.dart';
 import 'package:lite_x/features/home/view/screens/create_post_screen.dart';
 import 'package:lite_x/features/home/view/screens/quote_composer_screen.dart';
-import 'package:lite_x/features/home/repositories/home_repository.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
