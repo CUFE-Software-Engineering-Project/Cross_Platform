@@ -284,10 +284,8 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
                             controller: _emailController,
                             labelText: 'Email',
                             keyboardType: TextInputType.emailAddress,
-                            validator: (value) {
-                              final formatError = emailValidator(value);
-                              return formatError ?? _emailErrorText;
-                            },
+                            validator: emailValidator,
+                            validationErrorText: _emailErrorText,
                             focusNode: _emailFocus,
                             validationState: _emailState,
                           ),
