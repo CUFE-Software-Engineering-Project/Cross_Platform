@@ -56,8 +56,11 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
         .createAccount(name: name, email: email, dateOfBirth: dateOfBirth);
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Verification code sent!'),
-        backgroundColor: Palette.success,
+        content: Text(
+          'Verification code sent!',
+          style: TextStyle(color: Palette.background),
+        ),
+        backgroundColor: Palette.iconsActive,
         duration: Duration(seconds: 2),
       ),
     );

@@ -36,7 +36,7 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
   String? _emailErrorText;
   Timer? _emailDebounce;
   bool _isFormValid = false;
-
+  bool _isNavigating = false;
   @override
   void initState() {
     super.initState();
@@ -204,8 +204,9 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
 
   @override
   Widget build(BuildContext context) {
-    ref.listen(authViewModelProvider, (previous, next) {
-      if (next.type == AuthStateType.success) {
+    ref.listen(authViewModelProvider, (previous, next) async {
+      if (next.type == AuthStateType.success && !_isNavigating) {
+        _isNavigating = true;
         ref
             .read(nameProvider.notifier)
             .update((_) => _nameController.text.trim());
@@ -216,7 +217,8 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
             .read(dobProvider.notifier)
             .update((_) => _dobController.text.trim());
         ref.read(authViewModelProvider.notifier).resetState();
-        if (mounted) context.pushNamed(RouteConstants.verificationscreen);
+        if (mounted) await context.pushNamed(RouteConstants.verificationscreen);
+        _isNavigating = false;
       } else if (next.type == AuthStateType.error) {
         _showErrorToast(next.message ?? 'An error occurred');
         Future.delayed(const Duration(seconds: 2), () {

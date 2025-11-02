@@ -23,16 +23,17 @@ void main() async {
 Future<void> init() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await Hive.initFlutter();
 
   Hive.registerAdapter(UserModelAdapter());
   Hive.registerAdapter(ConversationModelAdapter());
   Hive.registerAdapter(MediaModelAdapter());
   Hive.registerAdapter(MessageModelAdapter());
-  await Hive.initFlutter();
-  // await Hive.deleteBoxFromDisk('userBox');
-  // await Hive.deleteBoxFromDisk('tokenBox');
   await Hive.openBox<UserModel>('userBox');
   await Hive.openBox('tokenBox');
+
+  print("Token box ready: ${Hive.box('tokenBox').isOpen}");
+
   await dotenv.load(fileName: ".env");
 }
 
