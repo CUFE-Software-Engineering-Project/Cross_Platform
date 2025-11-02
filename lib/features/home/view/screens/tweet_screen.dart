@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:lite_x/core/providers/current_user_provider.dart';
 import 'package:lite_x/features/home/models/tweet_model.dart';
 import 'package:lite_x/features/home/repositories/home_repository.dart';
 import 'package:lite_x/features/home/view/screens/reply_composer_screen.dart';
@@ -31,16 +32,12 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
     _loadTweetData();
   }
 
-  Future<void> _loadCurrentUser() async {
-    try {
-      final repository = ref.read(homeRepositoryProvider);
-      final userData = await repository.getCurrentUser();
-      if (mounted) {
-        setState(() {
-          currentUserId = userData['id']?.toString();
-        });
-      }
-    } catch (e) {}
+  void _loadCurrentUser() {
+    // Get current user from the provider
+    final user = ref.read(currentUserProvider);
+    if (user != null) {
+      currentUserId = user.id;
+    }
   }
 
   Future<void> _loadTweetData() async {
@@ -125,8 +122,10 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
   Future<void> _toggleLike() async {
     if (mainTweet == null) return;
 
-    final newLikeState = !mainTweet!.isLiked;
+    final currentLikeState = mainTweet!.isLiked;
+    final newLikeState = !currentLikeState;
 
+    // Optimistically update UI
     setState(() {
       mainTweet!.isLiked = newLikeState;
       mainTweet!.likes += newLikeState ? 1 : -1;
@@ -134,21 +133,16 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
 
     try {
       final repository = ref.read(homeRepositoryProvider);
-      final updatedTweet = await repository.toggleLike(
-        mainTweet!.id,
-        !newLikeState,
-      );
+      // Pass current state (before toggle) to repository
+      await repository.toggleLike(mainTweet!.id, currentLikeState);
 
-      if (mounted) {
-        setState(() {
-          mainTweet = updatedTweet;
-        });
-      }
+      // Keep the optimistic update - don't overwrite with server response
     } catch (e) {
+      // Revert on error
       if (mounted) {
         setState(() {
-          mainTweet!.isLiked = !newLikeState;
-          mainTweet!.likes += newLikeState ? -1 : 1;
+          mainTweet!.isLiked = currentLikeState;
+          mainTweet!.likes += currentLikeState ? 1 : -1;
         });
       }
     }
@@ -157,8 +151,10 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
   Future<void> _toggleRetweet() async {
     if (mainTweet == null) return;
 
-    final newRetweetState = !mainTweet!.isRetweeted;
+    final currentRetweetState = mainTweet!.isRetweeted;
+    final newRetweetState = !currentRetweetState;
 
+    // Optimistically update UI
     setState(() {
       mainTweet!.isRetweeted = newRetweetState;
       mainTweet!.retweets += newRetweetState ? 1 : -1;
@@ -166,21 +162,16 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
 
     try {
       final repository = ref.read(homeRepositoryProvider);
-      final updatedTweet = await repository.toggleRetweet(
-        mainTweet!.id,
-        !newRetweetState,
-      );
+      // Pass current state (before toggle) to repository
+      await repository.toggleRetweet(mainTweet!.id, currentRetweetState);
 
-      if (mounted) {
-        setState(() {
-          mainTweet = updatedTweet;
-        });
-      }
+      // Keep the optimistic update
     } catch (e) {
+      // Revert on error
       if (mounted) {
         setState(() {
-          mainTweet!.isRetweeted = !newRetweetState;
-          mainTweet!.retweets += newRetweetState ? -1 : 1;
+          mainTweet!.isRetweeted = currentRetweetState;
+          mainTweet!.retweets += currentRetweetState ? 1 : -1;
         });
       }
     }
@@ -189,28 +180,25 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
   Future<void> _toggleBookmark() async {
     if (mainTweet == null) return;
 
-    final newBookmarkState = !mainTweet!.isBookmarked;
+    final currentBookmarkState = mainTweet!.isBookmarked;
+    final newBookmarkState = !currentBookmarkState;
 
+    // Optimistically update UI
     setState(() {
       mainTweet!.isBookmarked = newBookmarkState;
     });
 
     try {
       final repository = ref.read(homeRepositoryProvider);
-      final updatedTweet = await repository.toggleBookmark(
-        mainTweet!.id,
-        !newBookmarkState,
-      );
+      // Pass current state (before toggle) to repository
+      await repository.toggleBookmark(mainTweet!.id, currentBookmarkState);
 
-      if (mounted) {
-        setState(() {
-          mainTweet = updatedTweet;
-        });
-      }
+      // Keep the optimistic update
     } catch (e) {
+      // Revert on error
       if (mounted) {
         setState(() {
-          mainTweet!.isBookmarked = !newBookmarkState;
+          mainTweet!.isBookmarked = currentBookmarkState;
         });
       }
     }
@@ -779,7 +767,7 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
     final formattedTime = DateFormat(
       'h:mm a · d MMM yy',
     ).format(mainTweet!.createdAt);
-    final views = 215000; // Mock view count
+    final views = 0; // TODO: Get views from backend when available
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),

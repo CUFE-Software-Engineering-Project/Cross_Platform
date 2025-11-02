@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lite_x/core/providers/current_user_provider.dart';
 import 'package:lite_x/core/view/screen/app_shell.dart';
 import 'package:lite_x/features/home/models/tweet_model.dart';
-import 'package:lite_x/features/home/repositories/home_repository.dart';
 import 'package:lite_x/features/home/view/screens/tweet_screen.dart';
 import 'package:lite_x/features/home/view_model/home_state.dart';
 import 'package:lite_x/features/home/view_model/home_view_model.dart';
@@ -39,16 +39,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     _loadCurrentUser();
   }
 
-  Future<void> _loadCurrentUser() async {
-    try {
-      final repository = ref.read(homeRepositoryProvider);
-      final userData = await repository.getCurrentUser();
-      if (mounted) {
-        setState(() {
-          currentUserId = userData['id'];
-        });
-      }
-    } catch (e) {}
+  void _loadCurrentUser() {
+    // Get current user from the provider
+    final user = ref.read(currentUserProvider);
+    if (user != null) {
+      currentUserId = user.id;
+    }
   }
 
   @override
@@ -97,15 +93,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
     List<TweetModel> tweets;
     if (selectedTab == HomeTab.forYou) {
-      tweets = homeState.forYouTweets.isNotEmpty
-          ? homeState.forYouTweets
-          : (homeState.currentFeed == FeedType.forYou ? homeState.tweets : []);
+      tweets = homeState.forYouTweets;
     } else {
-      tweets = homeState.followingTweets.isNotEmpty
-          ? homeState.followingTweets
-          : (homeState.currentFeed == FeedType.following
-                ? homeState.tweets
-                : []);
+      tweets = homeState.followingTweets;
     }
 
     final feedName = selectedTab == HomeTab.forYou ? "For You" : "Following";
@@ -118,6 +108,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         backgroundColor: Colors.grey[900],
         color: Colors.white,
         child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
           controller: selectedTab == HomeTab.forYou
               ? _forYouScrollController
               : _followingScrollController,
@@ -203,7 +194,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       delegate: SliverChildBuilderDelegate((context, index) {
         final tweet = tweets[index];
 
-        const String knownUserId = '6552d72c-3f27-445d-8ad8-bc22cda9ddd9';
+        // Prefer the current user provider; fall back to the already-loaded currentUserId.
+        // Replace `currentUserProvider` with your actual provider name if different.
+        final String? knownUserId =
+            ref.watch(currentUserProvider)?.id ?? currentUserId;
         final isOwnTweet =
             (currentUserId != null && tweet.userId == currentUserId) ||
             (tweet.userId == knownUserId);
