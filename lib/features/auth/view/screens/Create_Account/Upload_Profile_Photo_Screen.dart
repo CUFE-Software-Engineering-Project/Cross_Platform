@@ -59,7 +59,6 @@ class _UploadProfilePhotoScreenState
           setState(() {
             selectedImage = PickedImage(
               file: File(croppedFile!.path),
-              bytes: null,
               name: picked.name,
               path: croppedFile.path,
             );
@@ -84,9 +83,10 @@ class _UploadProfilePhotoScreenState
 
   void _handleNext() {
     if (selectedImage != null) {
-      ref
-          .read(authViewModelProvider.notifier)
-          .uploadProfilePhoto(selectedImage!);
+      context.goNamed(RouteConstants.UserNameScreen);
+      // ref
+      //     .read(authViewModelProvider.notifier)
+      //     .uploadProfilePhoto(selectedImage!);
     }
   }
 

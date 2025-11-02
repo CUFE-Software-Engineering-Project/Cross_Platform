@@ -18,7 +18,10 @@ class AuthViewModel extends _$AuthViewModel {
   AuthState build() {
     _authRemoteRepository = ref.read(authRemoteRepositoryProvider);
     _authLocalRepository = ref.read(authLocalRepositoryProvider);
-    Future.microtask(() => _checkAuthStatus());
+    Future(() async {
+      await Future.delayed(const Duration(milliseconds: 300));
+      await _checkAuthStatus();
+    });
     return AuthState.loading();
   }
 

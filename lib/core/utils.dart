@@ -53,11 +53,6 @@ String? nameValidator(String? value) {
   } else if (value.trim().length > 50) {
     return 'Name can\'t be longer than 50 characters';
   }
-  final pattern = r'^[a-zA-Z0-9]+$';
-
-  if (!RegExp(pattern).hasMatch(value.trim())) {
-    return 'Name can only contain letters and numbers (no spaces)';
-  }
 
   return null;
 }
@@ -83,6 +78,19 @@ String? passwordValidator(String? value) {
   if (value.length > 256) {
     return 'Password must be less than 256 characters';
   }
+  final capitalLetters = RegExp(r'[A-Z]');
+  if (capitalLetters.allMatches(value).length < 3) {
+    return 'Password must contain at least 3 uppercase letters';
+  }
+  final symbols = RegExp(r'[!@#\$%^&*(),.?":{}|<>_\-=+;]');
+  if (symbols.allMatches(value).length < 3) {
+    return 'Password must contain at least 3 symbols';
+  }
+  final numbers = RegExp(r'\d');
+  if (numbers.allMatches(value).length < 3) {
+    return 'Password must contain at least three numbers';
+  }
+
   return null;
 }
 

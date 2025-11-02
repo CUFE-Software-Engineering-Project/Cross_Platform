@@ -205,7 +205,7 @@ class AuthRemoteRepository {
         AppFailure(message: e.response?.data['error'] ?? 'Login failed'),
       );
     } catch (e) {
-      return left(AppFailure(message: e.toString()));
+      return left(AppFailure(message: "Wrong Password"));
     }
   }
 
