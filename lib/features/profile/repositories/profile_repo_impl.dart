@@ -10,14 +10,14 @@ String baseUrl =
     "https://app-fd6adf10-3923-46c1-83f7-08c318e4c982.cleverapps.io";
 
 class ProfileRepoImpl implements ProfileRepo {
-  Dio _dio;
+  final Dio _dio;
   ProfileRepoImpl(Dio d) : _dio = d {
-    _dio = Dio(BaseOptions(
-      baseUrl: "https://app-0f5255eb-2937-4300-9eef-5015b844f731.cleverapps.io/",
-      headers: {
-        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VybmFtZSI6ImhhemVtMTIzIiwiZW1haWwiOiJlemtjZXcwc3VvQGlsbHViZC5jb20iLCJyb2xlIjoidXNlciIsImlkIjoiOTk3NGM3NjctYjRjOC00YWIwLThlMzItZWY1NmMyZGVlZDg3IiwiZXhwIjoxNzYyMTkxMzQ1LCJpYXQiOjE3NjIxODc3NDUsInZlcnNpb24iOjAsImp0aSI6IjY2OWQ4ZmYwLWJmOWItNDA0OC05Y2E4LTZmYjNkMjg1ZjBlYiIsImRldmlkIjoiZGFmZjQwYmEtZTBhYi00MTNmLThmMTUtMzdiMWM2MjhkNzZkIn0.gYuvpY81qf6vrJk-2eKlyRF9wAoEtnooua_rYbWcBrg",
-      }
-    ));
+    // _dio = Dio(BaseOptions(
+    //   baseUrl: "https://app-0f5255eb-2937-4300-9eef-5015b844f731.cleverapps.io/",
+    //   headers: {
+    //     "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VybmFtZSI6ImhhemVtMTIzIiwiZW1haWwiOiJlemtjZXcwc3VvQGlsbHViZC5jb20iLCJyb2xlIjoidXNlciIsImlkIjoiOTk3NGM3NjctYjRjOC00YWIwLThlMzItZWY1NmMyZGVlZDg3IiwiZXhwIjoxNzYyMTkxMzQ1LCJpYXQiOjE3NjIxODc3NDUsInZlcnNpb24iOjAsImp0aSI6IjY2OWQ4ZmYwLWJmOWItNDA0OC05Y2E4LTZmYjNkMjg1ZjBlYiIsImRldmlkIjoiZGFmZjQwYmEtZTBhYi00MTNmLThmMTUtMzdiMWM2MjhkNzZkIn0.gYuvpY81qf6vrJk-2eKlyRF9wAoEtnooua_rYbWcBrg",
+    //   }
+    // ));
   }
 
   @override

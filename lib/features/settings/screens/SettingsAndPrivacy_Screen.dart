@@ -35,7 +35,11 @@ class _BuildMobileLayout extends StatelessWidget {
             color: Palette.textWhite,
             size: 22,
           ),
-          onPressed: () => context.pop(),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            }
+          },
         ),
         title: Column(
           mainAxisSize: MainAxisSize.min,
@@ -49,7 +53,7 @@ class _BuildMobileLayout extends StatelessWidget {
             ),
             SizedBox(height: 2),
             Text(
-              '@profilename',
+              '',
               style: TextStyle(color: Palette.textSecondary, fontSize: 12),
             ),
           ],
@@ -217,22 +221,24 @@ class _SettingsList extends StatelessWidget {
             'Manage your account\'s security and keep track of your account\'s usage including apps that you have connected to your account.',
           ),
           _tile(
-            SvgPicture.asset(
-              'assets/icons/x.svg',
-              width: 20,
-              height: 20,
-              color: Palette.textWhite,
-            ),
+            // SvgPicture.asset(
+            //   'assets/icons/x.svg',
+            //   width: 20,
+            //   height: 20,
+            //   color: Palette.textWhite,
+            // ),
+            Icon(Icons.workspace_premium),
             'Premium',
             'See what\'s included in Premium and manage your settings.',
           ),
           _tile(
-            SvgPicture.asset(
-              'assets/icons/money.svg',
-              width: 20,
-              height: 20,
-              color: Palette.textWhite,
-            ),
+            // SvgPicture.asset(
+            //   'assets/icons/money.svg',
+            //   width: 20,
+            //   height: 20,
+            //   color: Palette.textWhite,
+            // ),
+            Icon(Icons.workspace_premium),
             'Monetization',
             'See how you can make money on X and manage your monetization settings.',
           ),
