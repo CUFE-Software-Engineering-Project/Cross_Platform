@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
-final homeTabProvider = StateProvider<HomeTab>((ref) => HomeTab.forYou);
+
+// TODO: Change back to HomeTab.forYou when the For You endpoint is ready
+final homeTabProvider = StateProvider<HomeTab>((ref) => HomeTab.following);
 final tabPageControllerProvider = Provider<PageController>((ref) {
-  return PageController(initialPage: 0);
+  return PageController(initialPage: 1); // Start on Following tab (index 1)
 });
 
 enum HomeTab { forYou, following }

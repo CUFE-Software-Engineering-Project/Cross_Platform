@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:lite_x/core/providers/current_user_provider.dart';
 import 'package:lite_x/features/home/models/tweet_model.dart';
 import 'package:lite_x/features/home/repositories/home_repository.dart';
 import 'package:lite_x/features/home/view/screens/reply_composer_screen.dart';
-import 'package:lite_x/features/home/view_model/home_view_model.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
 class ReplyThreadScreen extends ConsumerStatefulWidget {
@@ -32,16 +32,115 @@ class _ReplyThreadScreenState extends ConsumerState<ReplyThreadScreen> {
     _loadCurrentUser();
   }
 
-  Future<void> _loadCurrentUser() async {
+  void _loadCurrentUser() {
+    // Get current user from the provider
+    final user = ref.read(currentUserProvider);
+    if (user != null) {
+      currentUserId = user.id;
+    }
+  }
+
+  Future<void> _toggleLike(String tweetId) async {
+    // Find tweet in allTweets or childReplies
+    TweetModel? tweet = allTweets[tweetId];
+    if (tweet == null) {
+      try {
+        tweet = childReplies.firstWhere((t) => t.id == tweetId);
+      } catch (e) {
+        return;
+      }
+    }
+
+    final currentLikeState = tweet.isLiked;
+    final newLikeState = !currentLikeState;
+
+    // Optimistically update UI
+    setState(() {
+      tweet!.isLiked = newLikeState;
+      tweet.likes += newLikeState ? 1 : -1;
+    });
+
     try {
       final repository = ref.read(homeRepositoryProvider);
-      final userData = await repository.getCurrentUser();
+      await repository.toggleLike(tweetId, currentLikeState);
+      // Keep the optimistic update
+    } catch (e) {
+      // Revert on error
       if (mounted) {
         setState(() {
-          currentUserId = userData['id']?.toString();
+          tweet!.isLiked = currentLikeState;
+          tweet.likes += currentLikeState ? 1 : -1;
         });
       }
-    } catch (e) {}
+    }
+  }
+
+  Future<void> _toggleRetweet(String tweetId) async {
+    // Find tweet in allTweets or childReplies
+    TweetModel? tweet = allTweets[tweetId];
+    if (tweet == null) {
+      try {
+        tweet = childReplies.firstWhere((t) => t.id == tweetId);
+      } catch (e) {
+        return;
+      }
+    }
+
+    final currentRetweetState = tweet.isRetweeted;
+    final newRetweetState = !currentRetweetState;
+
+    // Optimistically update UI
+    setState(() {
+      tweet!.isRetweeted = newRetweetState;
+      tweet.retweets += newRetweetState ? 1 : -1;
+    });
+
+    try {
+      final repository = ref.read(homeRepositoryProvider);
+      await repository.toggleRetweet(tweetId, currentRetweetState);
+      // Keep the optimistic update
+    } catch (e) {
+      // Revert on error
+      if (mounted) {
+        setState(() {
+          tweet!.isRetweeted = currentRetweetState;
+          tweet.retweets += currentRetweetState ? 1 : -1;
+        });
+      }
+    }
+  }
+
+  Future<void> _toggleBookmark(String tweetId) async {
+    // Find tweet in allTweets or childReplies
+    TweetModel? tweet = allTweets[tweetId];
+    if (tweet == null) {
+      try {
+        tweet = childReplies.firstWhere((t) => t.id == tweetId);
+      } catch (e) {
+        return;
+      }
+    }
+
+    final currentBookmarkState = tweet.isBookmarked;
+    final newBookmarkState = !currentBookmarkState;
+
+    // Optimistically update UI
+    setState(() {
+      tweet!.isBookmarked = newBookmarkState;
+    });
+
+    try {
+      final repository = ref.read(homeRepositoryProvider);
+      await repository.toggleBookmark(tweetId, currentBookmarkState);
+      // Keep the optimistic update
+    } catch (e) {
+      // Revert on error
+      if (mounted) {
+        setState(() {
+          tweet!.isBookmarked = currentBookmarkState;
+        });
+      }
+    }
   }
 
   Future<void> _loadThreadData() async {
@@ -677,7 +776,7 @@ class _ReplyThreadScreenState extends ConsumerState<ReplyThreadScreen> {
 
   Widget _timestampWithViews(TweetModel t) {
     final formattedTime = DateFormat('h:mm a · d MMM yy').format(t.createdAt);
-    final views = 598; // mock per screenshot
+    final views = 0; // TODO: Get views from backend when available
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),
@@ -713,7 +812,7 @@ class _ReplyThreadScreenState extends ConsumerState<ReplyThreadScreen> {
             children: [
               _statItem(_formatStat(t.likes), 'Likes'),
               const SizedBox(width: 16),
-              _statItem(_formatStat(3), 'Bookmarks'),
+              _statItem(_formatStat(t.bookmarks), 'Bookmarks'),
             ],
           ),
         ],
@@ -753,17 +852,17 @@ class _ReplyThreadScreenState extends ConsumerState<ReplyThreadScreen> {
           _iconButton(
             icon: Icons.repeat,
             color: t.isRetweeted ? Colors.green : Colors.grey[600]!,
-            onTap: () {},
+            onTap: () => _toggleRetweet(t.id),
           ),
           _iconButton(
             icon: t.isLiked ? Icons.favorite : Icons.favorite_border,
             color: t.isLiked ? Colors.pink : Colors.grey[600]!,
-            onTap: () {},
+            onTap: () => _toggleLike(t.id),
           ),
           _iconButton(
-            icon: Icons.bookmark_border,
-            color: Colors.grey[600]!,
-            onTap: () {},
+            icon: t.isBookmarked ? Icons.bookmark : Icons.bookmark_border,
+            color: t.isBookmarked ? Colors.blue : Colors.grey[600]!,
+            onTap: () => _toggleBookmark(t.id),
           ),
           _iconButton(
             icon: Icons.ios_share,
