@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart' show DateFormat;
 import 'package:lite_x/core/theme/palette.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
+import 'package:lite_x/features/profile/view/screens/birthdate_screen.dart';
 import 'package:lite_x/features/profile/view/widgets/edit_profile/controller/edit_profile_controller.dart';
 
 class EditProfileForm extends StatefulWidget {
@@ -33,32 +35,7 @@ class _EditProfileFormState extends State<EditProfileForm> {
   late ProfileModel _newProfileModel;
   bool isNameFieldEmpty = false;
 
-  Future<void> _selectDate(BuildContext context) async {
-    FocusScope.of(context).unfocus();
-    final ThemeData datePickerTheme = ThemeData.dark().copyWith(
-      colorScheme: const ColorScheme.dark(
-        primary: Palette.primary,
-        onPrimary: Palette.textWhite,
-        surface: Palette.background,
-        onSurface: Palette.textWhite,
-      ),
-      dialogBackgroundColor: Palette.background,
-    );
-
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime(DateTime.now().year - 18),
-      firstDate: DateTime(1950),
-      lastDate: DateTime.now(),
-      builder: (context, child) {
-        return Theme(data: datePickerTheme, child: child!);
-      },
-    );
-
-    if (picked != null && mounted) {
-      _birthDateCtrl.text = DateFormat('MM/dd/yyyy').format(picked);
-    }
-  }
+  Future<void> _selectDate(BuildContext context) async {}
 
   void _setupListeners() {
     _nameCtrl.addListener(() {
@@ -165,16 +142,29 @@ class _EditProfileFormState extends State<EditProfileForm> {
                 keyboardType: TextInputType.twitter,
                 onTap: () {},
               ),
-              widget.controller.buildProfileInputField(
-                label: "Birth date",
-                controller: _birthDateCtrl,
-                hintText: "Add your birth date",
-                keyboardType: TextInputType.twitter,
+              GestureDetector(
                 onTap: () {
-                  //   TODO: open birth date page
-                  _selectDate(context);
+                  context
+                      .push<String>("/birthDateScreen", extra: _newProfileModel)
+                      .then((res) {
+                        _birthDateCtrl.text = res ?? "";
+                        setState(() {});
+                      });
                 },
+                child: widget.controller.buildProfileInputField(
+                  enabels: false,
+                  label: "Birth date",
+                  controller: _birthDateCtrl,
+                  hintText: "Add your date of birth",
+                  keyboardType: TextInputType.twitter,
+                ),
               ),
+              Container(
+                width: double.infinity,
+                color: Colors.grey,
+                height: 0.2,
+              ),
+
               Padding(
                 padding: const EdgeInsets.fromLTRB(4, 30, 0, 0),
                 child: ElevatedButton(
