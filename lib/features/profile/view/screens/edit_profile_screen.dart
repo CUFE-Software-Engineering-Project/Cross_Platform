@@ -10,7 +10,7 @@ import 'package:lite_x/features/profile/view/widgets/edit_profile/edit_profile_h
 import 'package:lite_x/features/profile/view_model/providers.dart';
 
 class EditProfileScreen extends ConsumerStatefulWidget {
-  EditProfileScreen({super.key, required this.profileData}) {}
+  EditProfileScreen({super.key, required this.profileData});
   final ProfileModel profileData;
 
   @override
@@ -72,19 +72,37 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         locationChanged ||
         websiteChanged ||
         birthdateChanged) {
+      // print(
+      //   "${widget.profileData.displayName} -------- ${updatedProfileData.displayName}",
+      // );
+      // print("${widget.profileData.bio} -------- ${updatedProfileData.bio}");
+      // print(
+      //   "${widget.profileData.website} -------- ${updatedProfileData.website}",
+      // );
+      // print(
+      //   "${widget.profileData.location} -------- ${updatedProfileData.location}",
+      // );
+      // print(
+      //   "${widget.profileData.birthDate} -------- ${updatedProfileData.birthDate}",
+      // );
       final editProfile = ref.read(editProfileProvider);
       final res = await editProfile(updatedProfileData);
+      if (!mounted) return;
       res.fold(
         (fail) {
-          context.pop(EditProfileStatus.failedToChange);
+          if (context.canPop()) context.pop(EditProfileStatus.failedToChange);
+          return;
         },
         (success) {
-          context.pop(EditProfileStatus.changedSuccessfully);
+          if (context.canPop())
+            context.pop(EditProfileStatus.changedSuccessfully);
+          return;
         },
       );
       // context.pop(EditProfileStatus.failedToChange);
     } else {
-      context.pop(EditProfileStatus.unChanged);
+      if (context.canPop()) context.pop(EditProfileStatus.unChanged);
+      return;
     }
   }
 
@@ -99,7 +117,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               onPressed: () {
                 if (GoRouter.of(context).canPop()) {
                   GoRouter.of(context).pop();
-                  print("can pop");
                 }
               },
             ),

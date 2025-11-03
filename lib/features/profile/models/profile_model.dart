@@ -1,3 +1,5 @@
+import 'package:lite_x/features/profile/models/shared.dart';
+
 class ProfileModel {
   final String id;
   final String username;
@@ -14,8 +16,9 @@ class ProfileModel {
   final String location;
   final int postCount;
   final String birthDate;
-  final bool isFollowing; 
-  final bool isFollower;  
+  final bool isFollowing;
+  final bool isFollower;
+  final bool protectedAccount;
 
   const ProfileModel({
     required this.id,
@@ -33,8 +36,9 @@ class ProfileModel {
     required this.location,
     required this.postCount,
     required this.birthDate,
-    required this.isFollowing, 
-    required this.isFollower, 
+    required this.isFollowing,
+    required this.isFollower,
+    required this.protectedAccount,
   });
 
   factory ProfileModel.fromJson(Map<String, dynamic> json) {
@@ -43,16 +47,14 @@ class ProfileModel {
 
     if (json['joinDate'] != null) {
       DateTime joinedDate = DateTime.parse(json['joinDate']);
-      joinedDateFormated =
-          "${mapMonth(joinedDate.month)} ${joinedDate.day}, ${joinedDate.year}";
+      joinedDateFormated = formatDate(joinedDate, DateFormatType.fullDate);
     } else {
       joinedDateFormated = "";
     }
 
     if (json['dateOfBirth'] != null) {
       DateTime birthDate = DateTime.parse(json['dateOfBirth']);
-      birthDateFormated =
-          "${mapMonth(birthDate.month)} ${birthDate.day}, ${birthDate.year}";
+      birthDateFormated = formatDate(birthDate, DateFormatType.fullDate);
     } else {
       birthDateFormated = "";
     }
@@ -64,8 +66,12 @@ class ProfileModel {
       bio: json['bio'] ?? '',
       avatarUrl: json['profileMedia'] ?? '',
       bannerUrl: json['coverMedia'] ?? '',
-      followersCount: json['followersCount'] ?? 0,
-      followingCount: json['followingCount'] ?? 0,
+      followersCount: json['_count'] != null
+          ? json['_count']['followers'] ?? 0
+          : 0,
+      followingCount: json['_count'] != null
+          ? json['_count']['followings'] ?? 0
+          : 0,
       tweetsCount: json['tweetsCount'] ?? 0,
       isVerified: json['verified'] ?? false,
       joinedDate: joinedDateFormated,
@@ -73,32 +79,13 @@ class ProfileModel {
       location: json['address'] ?? '',
       postCount: json['postCount'] ?? 0,
       birthDate: birthDateFormated,
-      isFollowing: json['isFollowing'] ?? false, // new
-      isFollower: json['isFollower'] ?? false, // new
+      isFollowing: json['isFollowing'] ?? false,
+      isFollower: json['isFollower'] ?? false,
+      protectedAccount: json['protectedAccount'] ?? false
     );
   }
 
-  static ProfileModel empty() {
-    return ProfileModel(
-      id: '',
-      username: '',
-      displayName: '',
-      bio: '',
-      avatarUrl: '',
-      bannerUrl: '',
-      followersCount: 0,
-      followingCount: 0,
-      tweetsCount: 0,
-      isVerified: false,
-      joinedDate: "",
-      website: '',
-      location: '',
-      postCount: 0,
-      birthDate: "",
-      isFollowing: false, 
-      isFollower: false, 
-    );
-  }
+ 
 
   Map<String, dynamic> toJson() {
     String? joinedDateIso;
@@ -123,7 +110,7 @@ class ProfileModel {
     }
 
     return {
-      'id':id,
+      'id': id,
       'username': username,
       'name': displayName,
       'bio': bio,
@@ -132,10 +119,9 @@ class ProfileModel {
       'verified': isVerified,
       'website': website,
       'address': location,
-      'protectedAccount': true
+      'protectedAccount': true,
     };
   }
-
 
   ProfileModel copyWith({
     String? id,
@@ -155,6 +141,7 @@ class ProfileModel {
     String? birthDate,
     bool? isFollowing,
     bool? isFollower,
+    bool? protectedAccount,
   }) {
     return ProfileModel(
       id: id ?? this.id,
@@ -174,10 +161,10 @@ class ProfileModel {
       birthDate: birthDate ?? this.birthDate,
       isFollowing: isFollowing ?? this.isFollowing,
       isFollower: isFollower ?? this.isFollower,
+      protectedAccount: protectedAccount?? this.protectedAccount
     );
   }
 }
-
 
 String mapMonth(int month) {
   const months = [

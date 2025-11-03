@@ -33,20 +33,27 @@ class ProfileRepoImpl implements ProfileRepo {
   Future<Either<Failure, ProfileModel>> updateProfile({
     required ProfileModel newModel,
   }) async {
+    final formatedDob = parseFormattedDate(newModel.birthDate);
+    String dob = "";
+    if (formatedDob != null)
+      dob = "${formatedDob.month}-${formatedDob.day}-${formatedDob.year}";
+
     try {
       final json = {
-        "id": newModel.id,
         "username": newModel.username,
-        if (newModel.displayName.isNotEmpty) "name": newModel.displayName,
-        if (newModel.bio.isNotEmpty) "bio": newModel.bio,
-        "protectedAccount": true,
+        "name": newModel.displayName,
+        "bio": newModel.bio,
+        "protectedAccount": newModel.protectedAccount,
+        "website": newModel.website,
+        "address": newModel.location,
+        "dateOfBirth": dob,
       };
       print(json.toString());
       final res = await _dio.patch("api/users/${newModel.id}", data: json);
 
       return Right(ProfileModel.fromJson(res.data));
     } catch (e) {
-      print("----------\n${e.toString()}\n---------");
+      // print("----------\n${e.toString()}\n---------");
       return Left(Failure("can't update profile data"));
     }
   }
