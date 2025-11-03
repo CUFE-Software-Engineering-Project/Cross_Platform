@@ -9,70 +9,10 @@ final homeRepositoryProvider = Provider<HomeRepository>((ref) {
 
 class HomeRepository {
   final Ref _ref;
-  final Map<String, Map<String, dynamic>> _userCache = {};
 
   HomeRepository(this._ref);
 
   Dio get _dio => _ref.read(dioProvider);
-
-  Future<Map<String, dynamic>> getCurrentUser() async {
-    try {
-      final response = await _dio.get('api/users/me');
-
-      Map<String, dynamic> userData;
-
-      if (response.data is Map) {
-        if (response.data['User'] != null) {
-          userData = response.data['User'] as Map<String, dynamic>;
-        } else if (response.data['data'] != null) {
-          userData = response.data['data'] as Map<String, dynamic>;
-        } else {
-          userData = response.data as Map<String, dynamic>;
-        }
-      } else {
-        throw Exception('Unexpected response format');
-      }
-
-      return userData;
-    } catch (e) {
-      throw Exception('Failed to fetch current user: $e');
-    }
-  }
-
-  Future<Map<String, dynamic>> _getUserData(String userId) async {
-    if (_userCache.containsKey(userId)) {
-      return _userCache[userId]!;
-    }
-
-    try {
-      final response = await _dio.get('api/users/$userId');
-
-      final userData = response.data is Map && response.data['data'] != null
-          ? response.data['data']
-          : response.data;
-
-      _userCache[userId] = userData;
-      return userData;
-    } catch (e) {
-      throw Exception('Failed to fetch user data: $e');
-    }
-  }
-
-  Future<TweetModel> _enrichTweetWithUserData(
-    Map<String, dynamic> tweetJson,
-  ) async {
-    if (tweetJson['user'] == null && tweetJson['userId'] != null) {
-      final userId = tweetJson['userId'];
-      try {
-        final userData = await _getUserData(userId);
-        tweetJson['user'] = userData;
-      } catch (e) {
-        // Silently handle error
-      }
-    }
-
-    return TweetModel.fromJson(tweetJson);
-  }
 
   Future<List<TweetModel>> fetchForYouTweets({
     int page = 1,
@@ -100,7 +40,7 @@ class HomeRepository {
       final List<TweetModel> tweets = [];
       for (var json in tweetsData) {
         try {
-          final tweet = await _enrichTweetWithUserData(json);
+          final tweet = TweetModel.fromJson(json);
           tweets.add(tweet);
         } catch (e) {
           // Silently handle error
@@ -141,7 +81,7 @@ class HomeRepository {
       final List<TweetModel> tweets = [];
       for (var json in tweetsData) {
         try {
-          final tweet = await _enrichTweetWithUserData(json);
+          final tweet = TweetModel.fromJson(json);
           tweets.add(tweet);
         } catch (e) {
           // Silently handle error
@@ -188,9 +128,7 @@ class HomeRepository {
           ? response.data['data']
           : response.data;
 
-      final enrichedTweet = await _enrichTweetWithUserData(tweetData);
-
-      return enrichedTweet;
+      return TweetModel.fromJson(tweetData);
     } on DioException catch (e) {
       throw _handleError(e);
     } catch (e) {
@@ -201,9 +139,9 @@ class HomeRepository {
   Future<TweetModel> toggleLike(String tweetId, bool isCurrentlyLiked) async {
     try {
       if (isCurrentlyLiked) {
-        await _dio.delete('api/tweets/$tweetId/like');
+        await _dio.delete('api/tweets/$tweetId/likes');
       } else {
-        await _dio.post('api/tweets/$tweetId/like');
+        await _dio.post('api/tweets/$tweetId/likes');
       }
       return await getTweetById(tweetId);
     } on DioException catch (e) {
@@ -288,7 +226,7 @@ class HomeRepository {
         );
       }
 
-      return await _enrichTweetWithUserData(tweetData);
+      return TweetModel.fromJson(tweetData);
     } on DioException catch (e) {
       throw _handleError(e);
     } catch (e) {
@@ -321,7 +259,7 @@ class HomeRepository {
       final List<TweetModel> replies = [];
       for (var json in repliesData) {
         try {
-          final reply = await _enrichTweetWithUserData(json);
+          final reply = TweetModel.fromJson(json);
           replies.add(reply);
         } catch (e) {
           // Silently handle error
@@ -375,7 +313,7 @@ class HomeRepository {
         );
       }
 
-      return await _enrichTweetWithUserData(replyData);
+      return TweetModel.fromJson(replyData);
     } on DioException catch (e) {
       final errorMessage = _handleError(e);
       throw errorMessage;
@@ -475,7 +413,7 @@ class HomeRepository {
       final List<TweetModel> tweets = [];
       for (var json in (data as List)) {
         try {
-          final tweet = await _enrichTweetWithUserData(json);
+          final tweet = TweetModel.fromJson(json);
           tweets.add(tweet);
         } catch (e) {
           // Silently handle error
@@ -497,7 +435,7 @@ class HomeRepository {
       final List<TweetModel> tweets = [];
       for (var json in (data as List)) {
         try {
-          final tweet = await _enrichTweetWithUserData(json);
+          final tweet = TweetModel.fromJson(json);
           tweets.add(tweet);
         } catch (e) {
           // Silently handle error
@@ -519,7 +457,7 @@ class HomeRepository {
       final List<TweetModel> tweets = [];
       for (var json in (data as List)) {
         try {
-          final tweet = await _enrichTweetWithUserData(json);
+          final tweet = TweetModel.fromJson(json);
           tweets.add(tweet);
         } catch (e) {
           // Silently handle error
@@ -554,7 +492,7 @@ class HomeRepository {
           ? response.data['data']
           : response.data;
 
-      return await _enrichTweetWithUserData(tweetData);
+      return TweetModel.fromJson(tweetData);
     } on DioException catch (e) {
       throw _handleError(e);
     } catch (e) {

@@ -1,4 +1,3 @@
-// lib/features/home/view_model/home_state.dart
 import 'package:lite_x/features/home/models/tweet_model.dart';
 
 enum FeedType { forYou, following }
