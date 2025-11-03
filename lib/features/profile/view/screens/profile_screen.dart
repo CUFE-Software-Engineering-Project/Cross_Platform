@@ -31,7 +31,15 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             },
           ),
         ),
-        body: Center(child: Text(state.errorMessage!)),
+        body: RefreshIndicator(
+          onRefresh: () async {
+            await ref.read(
+                profileBasicDataNotifierProvider(myUserName).notifier,
+              )
+              ..loadProfileData(myUserName);
+          },
+          child: ListView(children: [Center(child: Text(state.errorMessage!))]),
+        ),
       );
     }
 

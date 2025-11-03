@@ -65,324 +65,319 @@ class _ProfileScreenBodyState extends ConsumerState<ProfileScreenBody> {
                   SizedBox(width: 6),
                 ],
 
-                flexibleSpace: Flexible(
-                  child: FlexibleSpaceBar(
-                    collapseMode: CollapseMode.parallax,
-                    title: null,
+                flexibleSpace: FlexibleSpaceBar(
+                  collapseMode: CollapseMode.pin,
+                  title: null,
 
-                    background: Stack(
-                      children: [
-                        Container(
-                          height: 165,
-                          decoration: BoxDecoration(
-                            color: Colors.blue,
-                            image: widget.profileData.bannerUrl.isEmpty
-                                ? null
-                                : DecorationImage(
-                                    image: NetworkImage(
-                                      widget.profileData.bannerUrl,
-                                    ),
+                  background: Stack(
+                    children: [
+                      Container(
+                        height: 165,
+                        decoration: BoxDecoration(
+                          color: Colors.blue,
+                          image: widget.profileData.bannerUrl.isEmpty
+                              ? null
+                              : DecorationImage(
+                                  image: NetworkImage(
+                                    widget.profileData.bannerUrl,
                                   ),
-                          ),
+                                ),
                         ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const SizedBox(height: 120),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  GestureDetector(
-                                    onTap: () {
-                                      // TODO: add open profile page
-                                    },
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 120),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                GestureDetector(
+                                  onTap: () {
+                                    // TODO: add open profile page
+                                  },
+                                  child: CircleAvatar(
+                                    radius: 45,
+                                    backgroundColor: Colors.black,
                                     child: CircleAvatar(
-                                      radius: 45,
+                                      radius: 40,
                                       backgroundColor: Colors.black,
-                                      child: CircleAvatar(
-                                        radius: 40,
-                                        backgroundColor: Colors.black,
-                                        backgroundImage: NetworkImage(
-                                          widget.profileData.avatarUrl,
-                                        ),
+                                      backgroundImage: NetworkImage(
+                                        widget.profileData.avatarUrl,
                                       ),
                                     ),
                                   ),
-                                  widget.isMe
-                                      ? Padding(
-                                          padding: const EdgeInsets.only(
-                                            top: 60,
-                                          ),
-                                          child: OutlinedButton(
-                                            onPressed: () {
-                                              context
-                                                  .push<EditProfileStatus>(
-                                                    "/editProfile",
-                                                    extra: widget.profileData,
-                                                  )
-                                                  .then((status) {
-                                                    if (status ==
-                                                        EditProfileStatus
-                                                            .changedSuccessfully) {
-                                                      ref.read(
-                                                        profileBasicDataNotifierProvider(
-                                                          widget
-                                                              .profileData
-                                                              .username,
-                                                        ).notifier,
-                                                      )..loadProfileData(
+                                ),
+                                widget.isMe
+                                    ? Padding(
+                                        padding: const EdgeInsets.only(top: 60),
+                                        child: OutlinedButton(
+                                          onPressed: () {
+                                            context
+                                                .push<EditProfileStatus>(
+                                                  "/editProfile",
+                                                  extra: widget.profileData,
+                                                )
+                                                .then((status) {
+                                                  if (status ==
+                                                      EditProfileStatus
+                                                          .changedSuccessfully) {
+                                                    ref.read(
+                                                      profileBasicDataNotifierProvider(
                                                         widget
                                                             .profileData
                                                             .username,
-                                                      );
-                                                    } else if (status ==
-                                                        EditProfileStatus
-                                                            .failedToChange) {
-                                                      showTopSnackBar(
-                                                        Overlay.of(context),
-                                                        CustomSnackBar.error(
-                                                          backgroundColor:
-                                                              Color(0XFF212121),
-                                                          icon: Icon(
-                                                            Icons.error,
-                                                            color: Colors.red,
-                                                          ),
-                                                          message:
-                                                              "Profile update failed",
+                                                      ).notifier,
+                                                    )..loadProfileData(
+                                                      widget
+                                                          .profileData
+                                                          .username,
+                                                    );
+                                                  } else if (status ==
+                                                      EditProfileStatus
+                                                          .failedToChange) {
+                                                    showTopSnackBar(
+                                                      Overlay.of(context),
+                                                      CustomSnackBar.error(
+                                                        backgroundColor: Color(
+                                                          0XFF212121,
                                                         ),
-                                                        displayDuration:
-                                                            const Duration(
-                                                              seconds: 2,
-                                                            ),
-                                                      );
-                                                    } else {}
-                                                  });
-                                            },
-                                            style: OutlinedButton.styleFrom(
-                                              foregroundColor: Colors.white,
-                                              side: const BorderSide(
-                                                color: Color(0xFFADADAD),
-                                                width: 1,
-                                              ),
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(20),
-                                              ),
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 15,
-                                                  ),
-                                            ),
-                                            child: Text(
-                                              "Edit profile",
-                                              style: TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 16,
-                                              ),
-                                            ),
-                                          ),
-                                        )
-                                      : Follow_Following_Button(
-                                          profileData: widget.profileData,
-                                        ),
-                                ],
-                              ),
-                              const SizedBox(height: 5),
-                              InkWell(
-                                onTap: () {
-                                  //   TODO: ADD verifying logic
-                                },
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      widget.profileData.displayName,
-                                      style: const TextStyle(
-                                        fontSize: 22,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                    if (widget.isMe)
-                                      Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          const SizedBox(width: 4),
-                                          const Icon(
-                                            Icons.verified,
-                                            color: Color(0xFF1DA1F2),
-                                            size: 18,
-                                          ),
-                                          const SizedBox(width: 8),
-                                          if (!widget.profileData.isVerified)
-                                            Text(
-                                              'Get Verified',
-                                              style: TextStyle(
-                                                color: Color(0xFF1DA1F2),
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                        ],
-                                      ),
-                                  ],
-                                ),
-                              ),
-
-                              const SizedBox(height: 8),
-                              Text(
-                                "@${widget.profileData.username}",
-                                style: const TextStyle(
-                                  color: Colors.grey,
-                                  fontSize: 15,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-
-                              Text(
-                                widget.profileData.bio,
-                                style: const TextStyle(fontSize: 15),
-                                maxLines: 3,
-                              ),
-                              if (widget.profileData.bio.isNotEmpty)
-                                const SizedBox(height: 8),
-
-                              Wrap(
-                                runSpacing: 8,
-                                children: [
-                                  if (widget.profileData.location.isNotEmpty)
-                                    Wrap(
-                                      children: [
-                                        const Icon(
-                                          Icons.location_on_outlined,
-                                          color: Colors.grey,
-                                          size: 16,
-                                        ),
-                                        const SizedBox(width: 1),
-                                        Text(
-                                          widget.profileData.location,
-                                          style: const TextStyle(
-                                            color: Colors.grey,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 12),
-                                      ],
-                                    ),
-
-                                  if (widget.profileData.website.isNotEmpty)
-                                    Wrap(
-                                      children: [
-                                        SvgPicture.asset(
-                                          "assets/svg/website.svg",
-                                          width: 16,
-                                          height: 16,
-                                          colorFilter: ColorFilter.mode(
-                                            Colors.grey,
-                                            BlendMode.srcIn,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 2),
-                                        GestureDetector(
-                                          onTap: () {
-                                            // TODO: navigate the website
+                                                        icon: Icon(
+                                                          Icons.error,
+                                                          color: Colors.red,
+                                                        ),
+                                                        message:
+                                                            "Profile update failed",
+                                                      ),
+                                                      displayDuration:
+                                                          const Duration(
+                                                            seconds: 2,
+                                                          ),
+                                                    );
+                                                  } else {}
+                                                });
                                           },
-                                          child: Text(
-                                            widget.profileData.website,
-                                            style: const TextStyle(
-                                              color: Colors.blueAccent,
+                                          style: OutlinedButton.styleFrom(
+                                            foregroundColor: Colors.white,
+                                            side: const BorderSide(
+                                              color: Color(0xFFADADAD),
+                                              width: 1,
                                             ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(20),
+                                            ),
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 15,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            "Edit profile",
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 16,
+                                            ),
                                           ),
                                         ),
-
-                                        const SizedBox(width: 12),
-                                      ],
-                                    ),
-
-                                  if (widget.profileData.birthDate.isNotEmpty)
-                                    Wrap(
-                                      children: [
-                                        SvgPicture.asset(
-                                          "assets/svg/born.svg",
-                                          width: 16,
-                                          height: 16,
-                                          colorFilter: const ColorFilter.mode(
-                                            Colors.grey,
-                                            BlendMode.srcIn,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 1),
-                                        Text(
-                                          "Born ${widget.profileData.birthDate}",
-                                          style: const TextStyle(
-                                            color: Colors.grey,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 12),
-                                      ],
-                                    ),
-                                  if (widget.profileData.joinedDate.isNotEmpty)
-                                    Wrap(
-                                      children: [
-                                        const Icon(
-                                          Icons.calendar_month_outlined,
-                                          color: Colors.grey,
-                                          size: 16,
-                                        ),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          "Joined ${widget.profileData.joinedDate}",
-                                          style: const TextStyle(
-                                            color: Colors.grey,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-
-                              Row(
+                                      )
+                                    : Follow_Following_Button(
+                                        profileData: widget.profileData,
+                                      ),
+                              ],
+                            ),
+                            const SizedBox(height: 5),
+                            InkWell(
+                              onTap: () {
+                                //   TODO: ADD verifying logic
+                              },
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  GestureDetector(
-                                    onTap: () {
-                                      context.push(
-                                        "/followingfollowersscreen/${FollowingFollowersInitialTab.Following}/${widget.isMe ? "me" : "notme"}",
-                                        extra: this.widget.profileData,
-                                      );
-                                    },
-                                    child: _buildFollowCount(
-                                      widget.profileData.followingCount,
-                                      'Following',
+                                  Text(
+                                    widget.profileData.displayName,
+                                    style: const TextStyle(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
                                     ),
                                   ),
-                                  const SizedBox(width: 16),
-                                  GestureDetector(
-                                    onTap: () {
-                                      //   TODO: navigae to followers page
-                                      context.push(
-                                        "/followingfollowersscreen/${FollowingFollowersInitialTab.Followers}/${widget.isMe ? "me" : "notme"}",
-                                        extra: this.widget.profileData,
-                                      );
-                                    },
-                                    child: _buildFollowCount(
-                                      widget.profileData.followersCount,
-                                      'Follower',
+                                  if (widget.isMe)
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const SizedBox(width: 4),
+                                        const Icon(
+                                          Icons.verified,
+                                          color: Color(0xFF1DA1F2),
+                                          size: 18,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        if (!widget.profileData.isVerified)
+                                          Text(
+                                            'Get Verified',
+                                            style: TextStyle(
+                                              color: Color(0xFF1DA1F2),
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                      ],
                                     ),
-                                  ),
                                 ],
                               ),
-                              const SizedBox(height: 10),
-                            ],
-                          ),
+                            ),
+
+                            const SizedBox(height: 8),
+                            Text(
+                              "@${widget.profileData.username}",
+                              style: const TextStyle(
+                                color: Colors.grey,
+                                fontSize: 15,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+
+                            Text(
+                              widget.profileData.bio,
+                              style: const TextStyle(fontSize: 15),
+                              maxLines: 3,
+                            ),
+                            if (widget.profileData.bio.isNotEmpty)
+                              const SizedBox(height: 8),
+
+                            Wrap(
+                              runSpacing: 8,
+                              children: [
+                                if (widget.profileData.location.isNotEmpty)
+                                  Wrap(
+                                    children: [
+                                      const Icon(
+                                        Icons.location_on_outlined,
+                                        color: Colors.grey,
+                                        size: 16,
+                                      ),
+                                      const SizedBox(width: 1),
+                                      Text(
+                                        widget.profileData.location,
+                                        style: const TextStyle(
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                    ],
+                                  ),
+
+                                if (widget.profileData.website.isNotEmpty)
+                                  Wrap(
+                                    children: [
+                                      SvgPicture.asset(
+                                        "assets/svg/website.svg",
+                                        width: 16,
+                                        height: 16,
+                                        colorFilter: ColorFilter.mode(
+                                          Colors.grey,
+                                          BlendMode.srcIn,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 2),
+                                      GestureDetector(
+                                        onTap: () {
+                                          // TODO: navigate the website
+                                        },
+                                        child: Text(
+                                          widget.profileData.website,
+                                          style: const TextStyle(
+                                            color: Colors.blueAccent,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+
+                                      const SizedBox(width: 12),
+                                    ],
+                                  ),
+
+                                if (widget.profileData.birthDate.isNotEmpty)
+                                  Wrap(
+                                    children: [
+                                      SvgPicture.asset(
+                                        "assets/svg/born.svg",
+                                        width: 16,
+                                        height: 16,
+                                        colorFilter: const ColorFilter.mode(
+                                          Colors.grey,
+                                          BlendMode.srcIn,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 1),
+                                      Text(
+                                        "Born ${widget.profileData.birthDate}",
+                                        style: const TextStyle(
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                    ],
+                                  ),
+                                if (widget.profileData.joinedDate.isNotEmpty)
+                                  Wrap(
+                                    children: [
+                                      const Icon(
+                                        Icons.calendar_month_outlined,
+                                        color: Colors.grey,
+                                        size: 16,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        "Joined ${widget.profileData.joinedDate}",
+                                        style: const TextStyle(
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+
+                            Row(
+                              children: [
+                                GestureDetector(
+                                  onTap: () {
+                                    context.push(
+                                      "/followingfollowersscreen/${FollowingFollowersInitialTab.Following}/${widget.isMe ? "me" : "notme"}",
+                                      extra: this.widget.profileData,
+                                    );
+                                  },
+                                  child: _buildFollowCount(
+                                    widget.profileData.followingCount,
+                                    'Following',
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                GestureDetector(
+                                  onTap: () {
+                                    //   TODO: navigae to followers page
+                                    context.push(
+                                      "/followingfollowersscreen/${FollowingFollowersInitialTab.Followers}/${widget.isMe ? "me" : "notme"}",
+                                      extra: this.widget.profileData,
+                                    );
+                                  },
+                                  child: _buildFollowCount(
+                                    widget.profileData.followersCount,
+                                    'Follower',
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
                 bottom: PreferredSize(
