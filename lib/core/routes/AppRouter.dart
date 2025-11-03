@@ -30,6 +30,7 @@ import 'package:lite_x/features/settings/screens/BlockedAccounts_Screen.dart';
 import 'package:lite_x/features/settings/screens/MuteAndBlock_Screen.dart';
 import 'package:lite_x/features/settings/screens/MutedAccounts_Screen.dart';
 import 'package:lite_x/features/settings/screens/PrivacyAndSafety_Screen.dart';
+import 'package:lite_x/features/settings/screens/SettingsAndPrivacy_Screen.dart';
 
 class Approuter {
   static final GoRouter router = GoRouter(
@@ -260,6 +261,14 @@ class Approuter {
         path: "/privacyandsafetyscreen",
         pageBuilder: (context, state) => CustomTransitionPage(
           child: const PrivacyAndSafetyScreen(),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
+        name: RouteConstants.settingandprivacyscreen,
+        path: "/settingandprivacyscreen",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: const SettingsAndPrivacyScreen(),
           transitionsBuilder: _slideRightTransitionBuilder,
         ),
       ),

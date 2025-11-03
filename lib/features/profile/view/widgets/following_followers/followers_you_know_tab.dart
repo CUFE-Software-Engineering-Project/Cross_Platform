@@ -17,7 +17,18 @@ class FollowersYouKnowTab extends ConsumerWidget {
     final asyncFollower = ref.watch(followersYouKnowProvider(username));
     return asyncFollower.when(
       data: (either) => either.fold(
-        (fail) => Center(child: Text(fail.message)),
+        (l) => RefreshIndicator(
+          onRefresh: () async {
+            // ignore: unused_result
+            await ref.refresh(followersYouKnowProvider(username));
+          },
+          child: ListView(
+            children: [
+              SizedBox(height: 200),
+              Center(child: Text(l.message)),
+            ],
+          ),
+        ),
         (followers) => RefreshIndicator(
           onRefresh: () async {
             // ignore: unused_result
@@ -37,5 +48,3 @@ class FollowersYouKnowTab extends ConsumerWidget {
     );
   }
 }
-
-

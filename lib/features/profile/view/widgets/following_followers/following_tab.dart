@@ -14,7 +14,18 @@ class FollowingTab extends ConsumerWidget {
     final asyncFollowings = ref.watch(followingsProvider(username));
     return asyncFollowings.when(
       data: (either) => either.fold(
-        (l) => Center(child: Text(l.message)),
+        (l) => RefreshIndicator(
+          onRefresh: () async {
+            // ignore: unused_result
+            await ref.refresh(followingsProvider(username));
+          },
+          child: ListView(
+            children: [
+              SizedBox(height: 200),
+              Center(child: Text(l.message)),
+            ],
+          ),
+        ),
         (followings) => RefreshIndicator(
           onRefresh: () async {
             // ignore: unused_result
@@ -34,4 +45,3 @@ class FollowingTab extends ConsumerWidget {
     );
   }
 }
-
