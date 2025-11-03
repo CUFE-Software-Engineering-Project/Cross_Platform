@@ -11,6 +11,7 @@ import 'package:lite_x/features/home/view/widgets/home_tab_bar.dart';
 import 'package:lite_x/features/home/view/widgets/tweet_widget.dart';
 import 'package:lite_x/features/home/view/screens/create_post_screen.dart';
 import 'package:lite_x/features/home/view/screens/quote_composer_screen.dart';
+import 'package:lite_x/features/home/view/widgets/profile_side_drawer.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -23,6 +24,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     with AutomaticKeepAliveClientMixin {
   late ScrollController _forYouScrollController;
   late ScrollController _followingScrollController;
+  late GlobalKey<ScaffoldState> _scaffoldKey;
   double _lastScrollOffset = 0.0;
   String? currentUserId;
 
@@ -32,6 +34,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   @override
   void initState() {
     super.initState();
+    _scaffoldKey = GlobalKey<ScaffoldState>();
     _forYouScrollController = ScrollController();
     _followingScrollController = ScrollController();
     _forYouScrollController.addListener(_onScroll);
@@ -101,7 +104,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final feedName = selectedTab == HomeTab.forYou ? "For You" : "Following";
 
     return Scaffold(
+      key: _scaffoldKey,
       backgroundColor: Colors.black,
+      drawer: const ProfileSideDrawer(),
       body: RefreshIndicator(
         onRefresh: () =>
             ref.read(homeViewModelProvider.notifier).refreshTweets(),
@@ -122,7 +127,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               elevation: 0,
               automaticallyImplyLeading: false,
               flexibleSpace: FlexibleSpaceBar(
-                background: HomeAppBar(),
+                background: HomeAppBar(scaffoldKey: _scaffoldKey),
                 collapseMode: CollapseMode.pin,
               ),
             ),
