@@ -147,23 +147,18 @@ class AuthViewModel extends _$AuthViewModel {
       return;
     }
 
-    final accessToken = getAccessToken();
-    if (accessToken == null) {
-      state = AuthState.error('Session expired. Please login again.');
-      return;
-    }
-
     final result = await _authRemoteRepository.updateUsername(
       currentUser: currentUser,
       Username: username,
-      accessToken: accessToken,
     );
 
     await result.fold(
       (failure) async {
         state = AuthState.error(failure.message);
       },
-      (updatedUser) async {
+      (data) async {
+        final (updatedUser, newTokens) = data;
+        await _authLocalRepository.saveTokens(newTokens);
         await _authLocalRepository.saveUser(updatedUser);
         ref.read(currentUserProvider.notifier).adduser(updatedUser);
         state = AuthState.success('Username updated successfully');
