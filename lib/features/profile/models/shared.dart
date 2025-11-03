@@ -74,8 +74,109 @@ Future<bool> showUnFollowDialog(
   return result;
 }
 
-enum EditProfileStatus {
-  changedSuccessfully,
-  unChanged,
-  failedToChange,
+enum EditProfileStatus { changedSuccessfully, unChanged, failedToChange }
+
+enum DateFormatType { monthAndDayOnly, yearOnly, fullDate }
+
+String mapMonth(int month) {
+  const months = [
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
+  ];
+  return months[month - 1];
+}
+
+String formatDate(DateTime? date, DateFormatType type) {
+  if (date == null) return "";
+  switch (type) {
+    case DateFormatType.monthAndDayOnly:
+      return "${mapMonth(date.month)} ${date.day}";
+    case DateFormatType.yearOnly:
+      return "${date.year}";
+    case DateFormatType.fullDate:
+      return "${mapMonth(date.month)} ${date.day}, ${date.year}";
+  }
+}
+
+DateTime? parseFormattedDate(String formattedDate) {
+  if (formattedDate.isEmpty) return null;
+  final months = {
+    'January': 1,
+    'February': 2,
+    'March': 3,
+    'April': 4,
+    'May': 5,
+    'June': 6,
+    'July': 7,
+    'August': 8,
+    'September': 9,
+    'October': 10,
+    'November': 11,
+    'December': 12,
+  };
+
+  final regex = RegExp(r'([A-Za-z]+)\s(\d{1,2}),\s(\d{4})');
+  final match = regex.firstMatch(formattedDate);
+  if (match == null) {
+    return null;
+  }
+
+  final monthName = match.group(1)!;
+  final day = int.parse(match.group(2)!);
+  final year = int.parse(match.group(3)!);
+  final month = months[monthName]!;
+
+  return DateTime(year, month, day);
+}
+
+
+Future<bool?> showPopupMessage({
+  required BuildContext context,
+  required Text title,
+  required Text message,
+  String confirmText = 'Yes',
+  String cancelText = 'No',
+}) async {
+  return showDialog<bool>(
+    context: context,
+    barrierDismissible: true, // prevent closing by tapping outside
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: title,
+        content: message,
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(
+              cancelText,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(
+              confirmText,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
+      );
+    },
+  );
 }

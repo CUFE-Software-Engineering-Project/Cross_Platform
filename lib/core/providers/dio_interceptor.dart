@@ -2,8 +2,8 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lite_x/core/constants/server_constants.dart';
+import 'package:lite_x/core/models/TokensModel.dart';
 import 'package:lite_x/features/auth/repositories/auth_local_repository.dart';
-import 'package:lite_x/features/auth/repositories/auth_remote_repository.dart';
 import 'package:lite_x/features/auth/view_model/auth_view_model.dart';
 
 final dioProvider = Provider<Dio>((ref) {
@@ -12,11 +12,14 @@ final dioProvider = Provider<Dio>((ref) {
   return dio;
 });
 
+final refreshDioProvider = Provider<Dio>((ref) {
+  return Dio(BASE_OPTIONS);
+});
+
 class AuthInterceptor extends Interceptor {
   final Ref _ref;
   bool _isRefreshing = false;
-  final List<Completer<void>> _refreshCompleters = [];
-  static final Dio _retryDio = Dio(BASE_OPTIONS)..interceptors.clear();
+  final List<Completer<bool>> _refreshCompleters = [];
 
   AuthInterceptor(this._ref);
 
@@ -25,73 +28,62 @@ class AuthInterceptor extends Interceptor {
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
-    try {
-      // Skip certain endpoints that don't require check of tokens
-      if (_shouldSkipAuth(options.path)) {
-        return handler.next(options);
-      }
-
-      final authLocalRepository_Provider = _ref.read(
-        authLocalRepositoryProvider,
-      );
-      final tokens = authLocalRepository_Provider.getTokens();
-
-      if (tokens == null) {
-        return handler.next(options);
-      }
-
-      if (tokens.isAccessTokenExpired) {
-        if (tokens.isRefreshTokenExpired) {
-          print("AuthInterceptor: Refresh token expired, logging out...");
-          await _handleLogout();
-          return handler.reject(
-            DioException(
-              requestOptions: options,
-              error: 'Session expired. Please login again.',
-              type: DioExceptionType.cancel,
-            ),
-          );
-        }
-
-        try {
-          await _waitForRefresh();
-        } catch (e) {
-          print("AuthInterceptor: Refresh failed in onRequest - $e");
-          await _handleLogout();
-          return handler.reject(
-            DioException(
-              requestOptions: options,
-              error: 'Failed to refresh token. Please login again.',
-              type: DioExceptionType.cancel,
-            ),
-          );
-        }
-
-        final updatedTokens = authLocalRepository_Provider.getTokens();
-        if (updatedTokens != null && !updatedTokens.isAccessTokenExpired) {
-          options.headers['Authorization'] =
-              'Bearer ${updatedTokens.accessToken}';
-        } else {
-          await _handleLogout();
-          return handler.reject(
-            DioException(
-              requestOptions: options,
-              error: 'Failed to refresh token. Please login again.',
-              type: DioExceptionType.cancel,
-            ),
-          );
-        }
-      } else {
-        options.headers['Authorization'] = 'Bearer ${tokens.accessToken}';
-      }
-
-      return handler.next(options);
-    } catch (e, stackTrace) {
-      print("AuthInterceptor: Unexpected error in onRequest - $e");
-      print("StackTrace: $stackTrace");
-
+    if (_shouldSkipAuth(options.path)) {
       return handler.next(options);
     }
+
+    final authLocalRepository = _ref.read(authLocalRepositoryProvider);
+    final tokens = authLocalRepository.getTokens();
+    if (tokens == null) {
+      print("AuthInterceptor: No tokens found");
+      return handler.next(options);
+    }
+    if (tokens.isAccessTokenExpired) {
+      if (tokens.isRefreshTokenExpired) {
+        print("AuthInterceptor: Refresh token expired");
+        await _handlelogout();
+        return handler.reject(
+          DioException(
+            requestOptions: options,
+            error: 'Session expired. Please login again.',
+            type: DioExceptionType.cancel,
+          ),
+        );
+      }
+      final refreshSuccess = await _waitForRefresh();
+
+      if (!refreshSuccess) {
+        print("AuthInterceptor: Token refresh failed");
+        await _handlelogout();
+        return handler.reject(
+          DioException(
+            requestOptions: options,
+            error: 'Failed to refresh token. Please login again.',
+            type: DioExceptionType.cancel,
+          ),
+        );
+      }
+      final updatedTokens = authLocalRepository.getTokens();
+      if (updatedTokens != null && !updatedTokens.isAccessTokenExpired) {
+        options.headers['Authorization'] =
+            'Bearer ${updatedTokens.accessToken}';
+        print("AuthInterceptor: Using refreshed token");
+      } else {
+        print("AuthInterceptor: No valid tokens after refresh");
+        await _handlelogout();
+        return handler.reject(
+          DioException(
+            requestOptions: options,
+            error: 'Failed to refresh token. Please login again.',
+            type: DioExceptionType.cancel,
+          ),
+        );
+      }
+    } else {
+      options.headers['Authorization'] = 'Bearer ${tokens.accessToken}';
+    }
+
+    return handler.next(options);
   }
 
   @override
@@ -99,148 +91,142 @@ class AuthInterceptor extends Interceptor {
     DioException err,
     ErrorInterceptorHandler handler,
   ) async {
-    try {
-      if (err.response?.statusCode == 401) {
-        final authLocalRepository_Provider = _ref.read(
-          authLocalRepositoryProvider,
-        );
-        final tokens = authLocalRepository_Provider.getTokens();
+    if (err.response?.statusCode == 401) {
+      print("AuthInterceptor: 401 error detected");
 
-        if (tokens == null || tokens.isRefreshTokenExpired) {
-          print("AuthInterceptor: Cannot refresh, logging out...");
-          await _handleLogout();
-          return handler.next(err);
-        }
+      final authLocalRepository = _ref.read(authLocalRepositoryProvider);
+      final tokens = authLocalRepository.getTokens();
+      if (tokens == null || tokens.isRefreshTokenExpired) {
+        print("AuthInterceptor: Cannot refresh");
+        await _handlelogout();
+        return handler.next(err);
+      }
+      final refreshSuccess = await _waitForRefresh();
+
+      if (!refreshSuccess) {
+        print("AuthInterceptor: Retry failed");
+        await _handlelogout();
+        return handler.next(err);
+      }
+
+      final updatedTokens = authLocalRepository.getTokens();
+      if (updatedTokens != null && !updatedTokens.isAccessTokenExpired) {
+        print("AuthInterceptor: Retrying request");
 
         try {
-          await _waitForRefresh();
-
-          final updatedTokens = authLocalRepository_Provider.getTokens();
-          if (updatedTokens != null && !updatedTokens.isAccessTokenExpired) {
-            final opts = err.requestOptions;
-            opts.headers['Authorization'] =
-                'Bearer ${updatedTokens.accessToken}';
-
-            try {
-              final response = await _retryDio.fetch(opts);
-              return handler.resolve(response);
-            } catch (retryError) {
-              print("AuthInterceptor: Retry request failed - $retryError");
-              await _handleLogout();
-              return handler.next(err);
-            }
-          } else {
-            await _handleLogout();
-            return handler.next(err);
-          }
+          final opts = err.requestOptions;
+          opts.headers['Authorization'] = 'Bearer ${updatedTokens.accessToken}';
+          final retryDio = _ref.read(refreshDioProvider);
+          final response = await retryDio.fetch(opts);
+          return handler.resolve(response);
         } catch (e) {
-          print("AuthInterceptor: Refresh failed in onError - $e");
-          await _handleLogout();
+          print("AuthInterceptor: Retry request failed - $e");
+          if (e is DioException && e.response?.statusCode == 401) {
+            print("AuthInterceptor: Retry got 401, logging out");
+            await _handlelogout();
+          }
           return handler.next(err);
         }
+      } else {
+        print("AuthInterceptor: No valid tokens after refresh");
+        await _handlelogout();
+        return handler.next(err);
       }
-      return handler.next(err);
-    } catch (e, stackTrace) {
-      print("AuthInterceptor: Unexpected error in onError - $e");
-      print("StackTrace: $stackTrace");
-      return handler.next(err);
     }
+    return handler.next(err);
   }
 
-  // Wait for token refresh to complete
-  Future<void> _waitForRefresh() async {
+  Future<bool> _waitForRefresh() async {
     if (_isRefreshing) {
-      final completer = Completer<void>();
+      print("AuthInterceptor: Refresh in progress, waiting...");
+      final completer = Completer<bool>();
       _refreshCompleters.add(completer);
-      return completer.future;
-    }
+      final result = await completer.future;
+      print("AuthInterceptor: Refresh completed with result: $result");
+      return result;
+    } else {
+      _isRefreshing = true;
+      bool success = false;
 
-    _isRefreshing = true;
+      success = await _performRefresh();
 
-    try {
-      await _performRefresh().timeout(
-        const Duration(seconds: 10),
-        onTimeout: () => throw Exception("Token refresh timed out"),
-      );
-
-      for (final completer in _refreshCompleters) {
-        if (!completer.isCompleted) {
-          completer.complete();
-        }
-      }
-    } catch (e, st) {
-      for (final completer in _refreshCompleters) {
-        if (!completer.isCompleted) {
-          completer.completeError(e, st);
-        }
-      }
-      rethrow;
-    } finally {
       _isRefreshing = false;
+
+      for (final completer in _refreshCompleters) {
+        if (!completer.isCompleted) {
+          completer.complete(success);
+        }
+      }
       _refreshCompleters.clear();
+
+      return success;
     }
   }
 
-  // Perform the actual token refresh
-  Future<void> _performRefresh() async {
+  Future<bool> _performRefresh() async {
     print("AuthInterceptor: Starting token refresh...");
 
+    final authLocalRepository = _ref.read(authLocalRepositoryProvider);
+    final currentTokens = authLocalRepository.getTokens();
+
+    if (currentTokens == null) {
+      print("AuthInterceptor: No tokens to refresh");
+      return false;
+    }
+
+    if (currentTokens.isRefreshTokenExpired) {
+      print("AuthInterceptor: Refresh token expired");
+      await _handlelogout();
+      return false;
+    }
+
+    final refreshDio = _ref.read(refreshDioProvider);
+
     try {
-      final authLocalRepository_Provider = _ref.read(
-        authLocalRepositoryProvider,
+      final response = await refreshDio.post(
+        'api/auth/refresh',
+        data: {'refresh_token': currentTokens.refreshToken},
+        options: Options(headers: {'Content-Type': 'application/json'}),
       );
-      final authRemoteRepository_Provider = _ref.read(
-        authRemoteRepositoryProvider,
-      );
-      final currentTokens = authLocalRepository_Provider.getTokens();
 
-      if (currentTokens == null) {
-        print("AuthInterceptor: No tokens to refresh");
-        throw Exception("No tokens available");
+      final newAccessToken = response.data['access_token'] as String?;
+      if (newAccessToken == null) {
+        print(
+          "AuthInterceptor: Refresh response did not contain new access token",
+        );
+        return false;
       }
 
-      if (currentTokens.isRefreshTokenExpired) {
-        print("AuthInterceptor: Refresh token expired");
-        await _handleLogout();
-        throw Exception("Refresh token expired");
-      }
-
-      final result = await authRemoteRepository_Provider.refreshToken(
-        currentTokens.refreshToken,
-        currentTokens.refreshTokenExpiry,
+      final newTokens = TokensModel(
+        accessToken: newAccessToken,
+        refreshToken: currentTokens.refreshToken,
+        accessTokenExpiry: DateTime.now().add(const Duration(minutes: 60)),
+        refreshTokenExpiry: currentTokens.refreshTokenExpiry,
       );
 
-      await result.fold(
-        (failure) async {
-          print("AuthInterceptor: Refresh failed - ${failure.message}");
-          await _handleLogout();
-          throw Exception("Token refresh failed: ${failure.message}");
-        },
-        (newTokens) async {
-          await authLocalRepository_Provider.saveTokens(newTokens);
-          print("AuthInterceptor: Token refreshed successfully");
-        },
-      );
-    } catch (e, stackTrace) {
-      print("AuthInterceptor: _performRefresh error - $e");
-      print("StackTrace: $stackTrace");
-      rethrow;
+      await authLocalRepository.saveTokens(newTokens);
+      print("AuthInterceptor: Token refreshed successfully");
+      return true;
+    } on DioException catch (e) {
+      print("AuthInterceptor: Refresh failed - ${e.message}");
+      await _handlelogout();
+      return false;
+    } catch (e) {
+      print("AuthInterceptor: Refresh failed - $e");
+      return false;
     }
   }
 
-  // Handle logout when tokens are invalid
-  Future<void> _handleLogout() async {
+  Future<void> _handlelogout() async {
     try {
-      final authLocalRepository_Provider = _ref.read(
-        authLocalRepositoryProvider,
-      );
-      await authLocalRepository_Provider.clearTokens();
-      await authLocalRepository_Provider.clearUser();
+      final authLocalRepo = _ref.read(authLocalRepositoryProvider);
+      await authLocalRepo.clearTokens();
+      await authLocalRepo.clearUser();
 
       try {
-        _ref.invalidate(authViewModelProvider);
+        _ref.read(authViewModelProvider.notifier).resetState();
       } catch (e) {
-        print("AuthInterceptor: Error invalidating provider - $e");
+        print("AuthInterceptor: Error resetting AuthViewModel state - $e");
       }
 
       print("AuthInterceptor: User logged out");
@@ -250,7 +236,6 @@ class AuthInterceptor extends Interceptor {
     }
   }
 
-  // Check if request should be skipped
   bool _shouldSkipAuth(String path) {
     const skipPaths = [
       'auth/signup',

@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 
-
 class EditProfileController {
   final ImagePicker _picker = ImagePicker();
 
@@ -183,7 +182,8 @@ class EditProfileController {
     minLines = 1,
     maxLines = null,
     int maxLength = 50,
-    Widget? trailingWidget, // For things like birth date selection
+    Widget? trailingWidget,
+    bool? enabels, // For things like birth date selection
   }) {
     return Padding(
       padding: const EdgeInsets.only(top: 16.0),
@@ -198,6 +198,7 @@ class EditProfileController {
             ),
           ),
           TextFormField(
+            enabled: enabels,
             onChanged: (value) {
               if (onChange != null) onChange();
             },
@@ -239,25 +240,12 @@ class EditProfileController {
     );
   }
 
-
   Widget buildLocationAutocomplete({
     required TextEditingController controller,
     required String label,
     required FocusNode focusNode,
     required Function(String) onLocationSelected,
   }) {
-    const List<String> kAvailableLocations = <String>[
-      'New York',
-      'Los Angeles',
-      'London',
-      'Paris',
-      'Tokyo',
-      'Cairo',
-      'Dubai',
-      'Berlin',
-      'Sydney',
-      'Mumbai',
-    ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -294,14 +282,18 @@ class EditProfileController {
                 FocusNode fieldFocusNode,
                 VoidCallback onFieldSubmitted,
               ) {
-                controller.text = textEditingController.text;
+                textEditingController.text = controller.text;
 
                 return TextFormField(
                   controller: textEditingController,
+
                   focusNode: fieldFocusNode,
                   onFieldSubmitted: (value) => onFieldSubmitted(),
                   maxLines: 1,
                   maxLength: 50,
+                  onChanged: (value) {
+                    controller.text = value;
+                  },
                   style: const TextStyle(color: Colors.white, fontSize: 18),
                   decoration: const InputDecoration(
                     hintText: '',
@@ -369,8 +361,106 @@ class EditProfileController {
       ],
     );
   }
-
-
-
-  
 }
+
+const List<String> kAvailableLocations = <String>[
+  'New York',
+  'Los Angeles',
+  'London',
+  'Paris',
+  'Tokyo',
+  'Cairo',
+  'Dubai',
+  'Berlin',
+  'Sydney',
+  'Mumbai',
+  'Beijing',
+  'Toronto',
+  'Moscow',
+  'Rome',
+  'Madrid',
+  'Chicago',
+  'Seoul',
+  'Mexico City',
+  'Istanbul',
+  'Bangkok',
+  'Singapore',
+  'Hong Kong',
+  'São Paulo',
+  'Buenos Aires',
+  'Johannesburg',
+  'Nairobi',
+  'Stockholm',
+  'Vienna',
+  'Zurich',
+  'Amsterdam',
+  'Prague',
+  'Warsaw',
+  'Budapest',
+  'Lisbon',
+  'Dublin',
+  'Helsinki',
+  'Copenhagen',
+  'Oslo',
+  'Brussels',
+  'Athens',
+  'Kuala Lumpur',
+  'Manila',
+  'Jakarta',
+  'Lagos',
+  'Casablanca',
+  'Doha',
+  'Riyadh',
+  'Kuwait City',
+  'Abu Dhabi',
+  'Muscat',
+  'Tehran',
+  'Karachi',
+  'Lahore',
+  'Islamabad',
+  'Bangalore',
+  'Chennai',
+  'Hyderabad',
+  'Colombo',
+  'Kathmandu',
+  'Dhaka',
+  'Hanoi',
+  'Ho Chi Minh City',
+  'Taipei',
+  'Melbourne',
+  'Auckland',
+  'Vancouver',
+  'Montreal',
+  'San Francisco',
+  'Seattle',
+  'Boston',
+  'Washington, D.C.',
+  'Miami',
+  'Houston',
+  'Dallas',
+  'Atlanta',
+  'Philadelphia',
+  'Detroit',
+  'Phoenix',
+  'Denver',
+  'Cape Town',
+  'Durban',
+  'Addis Ababa',
+  'Accra',
+  'Lusaka',
+  'Harare',
+  'Kigali',
+  'Tunis',
+  'Algiers',
+  'Tripoli',
+  'Doha, Qatar',
+  'Riyadh, Saudi Arabia',
+  'Cairo, Egypt',
+  'Paris, France',
+  'Berlin, Germany',
+  'London, UK',
+  'Tokyo, Japan',
+  'Sydney, Australia',
+  'New York, USA',
+  'Toronto, Canada',
+];

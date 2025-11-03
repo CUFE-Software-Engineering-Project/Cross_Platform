@@ -10,8 +10,16 @@ String baseUrl =
     "https://app-fd6adf10-3923-46c1-83f7-08c318e4c982.cleverapps.io";
 
 class ProfileRepoImpl implements ProfileRepo {
-  final _dio;
-  ProfileRepoImpl(Dio d) : _dio = d;
+  final Dio _dio;
+  ProfileRepoImpl(Dio d) : _dio = d {
+    // _dio = Dio(BaseOptions(
+    //   baseUrl: "https://app-0f5255eb-2937-4300-9eef-5015b844f731.cleverapps.io/",
+    //   headers: {
+    //     "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VybmFtZSI6ImhhemVtMTIzIiwiZW1haWwiOiJlemtjZXcwc3VvQGlsbHViZC5jb20iLCJyb2xlIjoidXNlciIsImlkIjoiOTk3NGM3NjctYjRjOC00YWIwLThlMzItZWY1NmMyZGVlZDg3IiwiZXhwIjoxNzYyMTkxMzQ1LCJpYXQiOjE3NjIxODc3NDUsInZlcnNpb24iOjAsImp0aSI6IjY2OWQ4ZmYwLWJmOWItNDA0OC05Y2E4LTZmYjNkMjg1ZjBlYiIsImRldmlkIjoiZGFmZjQwYmEtZTBhYi00MTNmLThmMTUtMzdiMWM2MjhkNzZkIn0.gYuvpY81qf6vrJk-2eKlyRF9wAoEtnooua_rYbWcBrg",
+    //   }
+    // ));
+  }
+
   @override
   Future<Either<Failure, ProfileModel>> getProfileData(String userName) async {
     final Response res;
@@ -33,27 +41,34 @@ class ProfileRepoImpl implements ProfileRepo {
   Future<Either<Failure, ProfileModel>> updateProfile({
     required ProfileModel newModel,
   }) async {
+    final formatedDob = parseFormattedDate(newModel.birthDate);
+    String dob = "";
+    if (formatedDob != null)
+      dob = "${formatedDob.month}-${formatedDob.day}-${formatedDob.year}";
+
     try {
       final json = {
-        "id": newModel.id,
         "username": newModel.username,
-        if (newModel.displayName.isNotEmpty) "name": newModel.displayName,
-        if (newModel.bio.isNotEmpty) "bio": newModel.bio,
-        "protectedAccount": true,
+        "name": newModel.displayName,
+        "bio": newModel.bio,
+        "protectedAccount": newModel.protectedAccount,
+        "website": newModel.website,
+        "address": newModel.location,
+        "dateOfBirth": dob,
       };
       print(json.toString());
       final res = await _dio.patch("api/users/${newModel.id}", data: json);
 
       return Right(ProfileModel.fromJson(res.data));
     } catch (e) {
-      print("----------\n${e.toString()}\n---------");
+      // print("----------\n${e.toString()}\n---------");
       return Left(Failure("can't update profile data"));
     }
   }
 
   @override
   Future<Either<Failure, List<ProfilePostModel>>> getProfilePosts() async {
-    await Future.delayed(const Duration(seconds: 2)); // Simulate network delay
+    // await Future.delayed(const Duration(seconds: 2)); // Simulate network delay
     try {
       final List<Map<String, dynamic>> rawPostData = [
         {
@@ -113,47 +128,6 @@ class ProfileRepoImpl implements ProfileRepo {
       // print("\n--------------\n$e\n-------------------\n");
       return Left(Failure("couldn't get user followers"));
     }
-    // List<UserModel> users;
-    // return Right([
-    //   UserModel(
-    //     displayName: 'Hazem Emam',
-    //     userName: 'hazememam',
-    //     image:
-    //         'https://images.pexels.com/photos/1462980/pexels-photo-1462980.jpeg',
-    //     bio:
-    //         'Software engineer and web developer. Software engineer and web developer. Software engineer and web developer.',
-    //     isFollowing: true,
-    //     isFollower: false,
-    //     isVerified: true,
-    //   ),
-    //   UserModel(
-    //     displayName: 'Sara Ali',
-    //     userName: 'sara_ali',
-    //     image: 'https://example.com/images/sara.jpg',
-    //     bio: 'UI/UX designer and artist.',
-    //     isFollowing: true,
-    //     isFollower: true,
-    //     isVerified: false,
-    //   ),
-    //   UserModel(
-    //     displayName: 'Omar Hassan',
-    //     userName: 'omar_hassan',
-    //     image: 'https://example.com/images/omar.jpg',
-    //     bio: 'Data scientist and AI enthusiast.',
-    //     isFollowing: true,
-    //     isFollower: true,
-    //     isVerified: true,
-    //   ),
-    //   UserModel(
-    //     displayName: 'Laila Mohamed',
-    //     userName: 'laila_m',
-    //     image: 'https://example.com/images/laila.jpg',
-    //     bio: 'Mobile app developer.',
-    //     isFollowing: false,
-    //     isFollower: false,
-    //     isVerified: true,
-    //   ),
-    // ]);
   }
 
   Future<Either<Failure, List<UserModel>>> getFollowings(

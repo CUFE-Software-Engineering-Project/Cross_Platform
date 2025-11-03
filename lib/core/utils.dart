@@ -78,19 +78,34 @@ String? passwordValidator(String? value) {
   if (value.length > 256) {
     return 'Password must be less than 256 characters';
   }
+
   final capitalLetters = RegExp(r'[A-Z]');
   if (capitalLetters.allMatches(value).length < 3) {
     return 'Password must contain at least 3 uppercase letters';
   }
+
+  final lowercaseLetters = RegExp(r'[a-z]');
+  if (lowercaseLetters.allMatches(value).length < 3) {
+    return 'Password must contain at least 3 lowercase letters';
+  }
+
   final symbols = RegExp(r'[!@#\$%^&*(),.?":{}|<>_\-=+;]');
   if (symbols.allMatches(value).length < 3) {
     return 'Password must contain at least 3 symbols';
   }
+
   final numbers = RegExp(r'\d');
   if (numbers.allMatches(value).length < 3) {
-    return 'Password must contain at least three numbers';
+    return 'Password must contain at least 3 numbers';
   }
 
+  return null;
+}
+
+String? loginpasswordValidator(String? value) {
+  if (value == null || value.isEmpty) {
+    return 'Password is required';
+  }
   return null;
 }
 

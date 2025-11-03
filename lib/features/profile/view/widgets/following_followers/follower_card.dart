@@ -88,13 +88,16 @@ class _FollowerCardState extends ConsumerState<FollowerCard> {
                                   children: [
                                     Row(
                                       children: [
-                                        Text(
-                                          widget.user.displayName,
-                                          style: const TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
+                                        Flexible(
+                                          child: Text(
+                                            widget.user.displayName,
+                                            style: const TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                            softWrap: true,
+                                            // overflow: TextOverflow.ellipsis,
                                           ),
-                                          overflow: TextOverflow.ellipsis,
                                         ),
                                         SizedBox(width: 4),
                                         if (widget.user.isVerified)
