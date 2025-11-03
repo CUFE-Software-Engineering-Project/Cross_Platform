@@ -10,8 +10,16 @@ String baseUrl =
     "https://app-fd6adf10-3923-46c1-83f7-08c318e4c982.cleverapps.io";
 
 class ProfileRepoImpl implements ProfileRepo {
-  final _dio;
-  ProfileRepoImpl(Dio d) : _dio = d;
+  Dio _dio;
+  ProfileRepoImpl(Dio d) : _dio = d {
+    _dio = Dio(BaseOptions(
+      baseUrl: "https://app-0f5255eb-2937-4300-9eef-5015b844f731.cleverapps.io/",
+      headers: {
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VybmFtZSI6ImhhemVtMTIzIiwiZW1haWwiOiJlemtjZXcwc3VvQGlsbHViZC5jb20iLCJyb2xlIjoidXNlciIsImlkIjoiOTk3NGM3NjctYjRjOC00YWIwLThlMzItZWY1NmMyZGVlZDg3IiwiZXhwIjoxNzYyMTcxMzc1LCJpYXQiOjE3NjIxNjc3NzUsInZlcnNpb24iOjAsImp0aSI6IjBkYzM0Y2NlLTc2OTctNDFkMS04MjA5LTc3MzRkNWMzNTUyNyIsImRldmlkIjoiZGFmZjQwYmEtZTBhYi00MTNmLThmMTUtMzdiMWM2MjhkNzZkIn0.Ziaeuy6bkO9_ng3otXtSpv7Jc7HXtjzM1vmf6HST6vk",
+      }
+    ));
+  }
+
   @override
   Future<Either<Failure, ProfileModel>> getProfileData(String userName) async {
     final Response res;
@@ -60,7 +68,7 @@ class ProfileRepoImpl implements ProfileRepo {
 
   @override
   Future<Either<Failure, List<ProfilePostModel>>> getProfilePosts() async {
-    await Future.delayed(const Duration(seconds: 2)); // Simulate network delay
+    // await Future.delayed(const Duration(seconds: 2)); // Simulate network delay
     try {
       final List<Map<String, dynamic>> rawPostData = [
         {
@@ -120,47 +128,6 @@ class ProfileRepoImpl implements ProfileRepo {
       // print("\n--------------\n$e\n-------------------\n");
       return Left(Failure("couldn't get user followers"));
     }
-    // List<UserModel> users;
-    // return Right([
-    //   UserModel(
-    //     displayName: 'Hazem Emam',
-    //     userName: 'hazememam',
-    //     image:
-    //         'https://images.pexels.com/photos/1462980/pexels-photo-1462980.jpeg',
-    //     bio:
-    //         'Software engineer and web developer. Software engineer and web developer. Software engineer and web developer.',
-    //     isFollowing: true,
-    //     isFollower: false,
-    //     isVerified: true,
-    //   ),
-    //   UserModel(
-    //     displayName: 'Sara Ali',
-    //     userName: 'sara_ali',
-    //     image: 'https://example.com/images/sara.jpg',
-    //     bio: 'UI/UX designer and artist.',
-    //     isFollowing: true,
-    //     isFollower: true,
-    //     isVerified: false,
-    //   ),
-    //   UserModel(
-    //     displayName: 'Omar Hassan',
-    //     userName: 'omar_hassan',
-    //     image: 'https://example.com/images/omar.jpg',
-    //     bio: 'Data scientist and AI enthusiast.',
-    //     isFollowing: true,
-    //     isFollower: true,
-    //     isVerified: true,
-    //   ),
-    //   UserModel(
-    //     displayName: 'Laila Mohamed',
-    //     userName: 'laila_m',
-    //     image: 'https://example.com/images/laila.jpg',
-    //     bio: 'Mobile app developer.',
-    //     isFollowing: false,
-    //     isFollower: false,
-    //     isVerified: true,
-    //   ),
-    // ]);
   }
 
   Future<Either<Failure, List<UserModel>>> getFollowings(

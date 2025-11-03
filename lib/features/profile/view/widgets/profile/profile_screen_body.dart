@@ -25,6 +25,11 @@ class ProfileScreenBody extends ConsumerStatefulWidget {
 
 class _ProfileScreenBodyState extends ConsumerState<ProfileScreenBody> {
   @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return DefaultTabController(
       length: widget.isMe ? 6 : 3,

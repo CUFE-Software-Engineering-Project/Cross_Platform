@@ -33,7 +33,8 @@ import 'package:lite_x/features/settings/screens/PrivacyAndSafety_Screen.dart';
 
 class Approuter {
   static final GoRouter router = GoRouter(
-    initialLocation: "/splash",
+    // initialLocation: "/splash",
+    initialLocation: "/profilescreen/hazem123",
     routes: [
       GoRoute(
         name: RouteConstants.splash,

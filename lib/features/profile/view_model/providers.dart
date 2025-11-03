@@ -96,12 +96,12 @@ final editProfileProvider = Provider((ref) {
 
 final tokenProvider = Provider<String>((_) => "");
 
-final myUserNameProvider = Provider<String>((ref) {
-  final user = ref.watch(currentUserProvider.select((e) => e!.username));
-  return user;
-});
-
 // final myUserNameProvider = Provider<String>((ref) {
-//   // final user = ref.watch(currentUserProvider.select((e) => e!.username));
-//   return "hazememam";
+//   final user = ref.watch(currentUserProvider.select((e) => e!.username));
+//   return user;
 // });
+
+final myUserNameProvider = Provider<String>((ref) {
+  // final user = ref.watch(currentUserProvider.select((e) => e!.username));
+  return "hazem123";
+});
