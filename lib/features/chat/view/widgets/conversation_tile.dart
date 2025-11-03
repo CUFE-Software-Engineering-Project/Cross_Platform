@@ -25,7 +25,7 @@ class ConversationTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () {
-        context.pushNamed(RouteConstants.ChatScreen);
+        // context.pushNamed(RouteConstants.ChatScreen);
       },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),

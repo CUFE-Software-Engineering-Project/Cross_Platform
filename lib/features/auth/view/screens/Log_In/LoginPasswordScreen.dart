@@ -166,7 +166,7 @@ class _LoginPasswordScreenState extends ConsumerState<LoginPasswordScreen> {
                                 focusNode: _passFocus,
                                 labelText: 'Password',
                                 isPassword: true,
-                                validator: passwordValidator,
+                                validator: loginpasswordValidator,
                                 onFieldSubmitted: (_) {
                                   if (_isFormValid.value && !isLoading) {
                                     _handleLogin();
