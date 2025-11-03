@@ -60,7 +60,7 @@ class _ProfileScreenBodyState extends ConsumerState<ProfileScreenBody> {
                 floating: false,
                 pinned: true,
                 // snap: true,
-                expandedHeight: 450,
+                expandedHeight: 470,
                 automaticallyImplyLeading: true,
                 backgroundColor: Colors.black,
                 elevation: 0,
