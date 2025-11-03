@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
+import 'package:lite_x/features/profile/models/shared.dart';
 import 'package:lite_x/features/profile/view_model/providers.dart';
 
 class Follow_Following_Button extends ConsumerStatefulWidget {
@@ -29,8 +30,26 @@ class __Follow_Following_ButtonState
     return Padding(
       padding: const EdgeInsets.only(top: 60),
       child: OutlinedButton(
-        onPressed: () {
+        onPressed: () async {
           if (isFollowing) {
+            final res = await showPopupMessage(
+              context: context,
+              title: Text(
+                "Unfollow ${widget.profileData.displayName}",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 22,
+                ),
+              ),
+              message: Text(
+                "Their posts will no longer show up in your home timeline. You can still view thier profile, unless their posts are protected",
+                style: TextStyle(color: Colors.white),
+              ),
+              confirmText: "Unfollow",
+              cancelText: "Cancel",
+            );
+            if (res == null || res == false) return;
             final unfollow = ref.read(unFollowControllerProvider);
             unfollow(widget.profileData.username).then((res) {
               res.fold((l) {
@@ -61,7 +80,7 @@ class __Follow_Following_ButtonState
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 0),
+          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 0),
         ),
         child: Text(
           isFollowing

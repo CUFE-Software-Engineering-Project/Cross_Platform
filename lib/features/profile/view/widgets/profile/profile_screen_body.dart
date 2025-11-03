@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
+import 'package:lite_x/features/profile/models/profile_post_model.dart';
 import 'package:lite_x/features/profile/models/shared.dart';
 import 'package:lite_x/features/profile/view/widgets/profile/follow_following_button.dart';
+import 'package:lite_x/features/profile/view/widgets/profile/profile_post_widget.dart';
 import 'package:lite_x/features/profile/view/widgets/profile/profile_posts_list.dart';
 import 'package:lite_x/features/profile/view_model/providers.dart';
 import 'package:top_snackbar_flutter/custom_snack_bar.dart';
@@ -31,6 +33,14 @@ class _ProfileScreenBodyState extends ConsumerState<ProfileScreenBody> {
 
   @override
   Widget build(BuildContext context) {
+    final posts = profilePosts
+        .map(
+          (post) => ProfilePostWidget(
+            profilePostModel: post,
+            profileModel: widget.profileData,
+          ),
+        )
+        .toList();
     return DefaultTabController(
       length: widget.isMe ? 6 : 3,
       child: RefreshIndicator(
@@ -50,7 +60,7 @@ class _ProfileScreenBodyState extends ConsumerState<ProfileScreenBody> {
                 floating: false,
                 pinned: true,
                 // snap: true,
-                expandedHeight: 420,
+                expandedHeight: 450,
                 automaticallyImplyLeading: true,
                 backgroundColor: Colors.black,
                 elevation: 0,
@@ -235,12 +245,46 @@ class _ProfileScreenBodyState extends ConsumerState<ProfileScreenBody> {
                             ),
 
                             const SizedBox(height: 8),
-                            Text(
-                              "@${widget.profileData.username}",
-                              style: const TextStyle(
-                                color: Colors.grey,
-                                fontSize: 15,
-                              ),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              textBaseline: TextBaseline.ideographic,
+                              children: [
+                                Text(
+                                  "@${widget.profileData.username}",
+                                  style: const TextStyle(
+                                    color: Colors.grey,
+                                    fontSize: 15,
+                                  ),
+                                ),
+                                SizedBox(width: 10),
+                                if (widget.isMe == false &&
+                                    widget.profileData.isFollower)
+                                  Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 5,
+                                    ),
+
+                                    // width: 75,
+                                    decoration: BoxDecoration(
+                                      color: Color(0XFF1F2225),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          "Follows you",
+                                          style: TextStyle(
+                                            color: Color(0xFF6D7176),
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                              ],
                             ),
                             const SizedBox(height: 8),
 
@@ -419,7 +463,29 @@ class _ProfileScreenBodyState extends ConsumerState<ProfileScreenBody> {
 
           body: TabBarView(
             children: [
-              ProfilePostsList(profile: widget.profileData), // posts
+              // ProfilePostsList(profile: widget.profileData), // posts
+              RefreshIndicator(
+                onRefresh: () async {
+                  ref.read(
+                    profileBasicDataNotifierProvider(
+                      widget.profileData.username,
+                    ).notifier,
+                  )..loadProfileData(widget.profileData.username);
+                },
+                child: ListView.separated(
+                  itemBuilder: (context, index) {
+                    return posts[index];
+                  },
+                  itemCount: posts.length,
+                  separatorBuilder: (context, index) {
+                    return Container(
+                      width: double.infinity,
+                      height: 0.5,
+                      color: Colors.grey,
+                    );
+                  },
+                ),
+              ),
               const Center(child: Text("Replies Tab Content")), // Replies
               if (widget.isMe) _buildHilightsTab(), // Highlights
               if (widget.isMe) _buildArticlesTab(), // Articles
@@ -575,3 +641,41 @@ String mapMonth(int month) {
   if (month < 1 || month > 12) return '';
   return months[month - 1];
 }
+
+final List<Map<String, dynamic>> rawPostData = [
+  {
+    "id": "post_001",
+    "text": "Excited to share my latest project! Flutter makes UI development",
+    "timeAgo": "5m",
+    "likes": 25,
+    "retweets": 8,
+    "repost": 50,
+    "replies": 3,
+    "isLiked": false,
+    "activityNumber": 36,
+    "mediaUrls": [
+      "https://images.pexels.com/photos/34188568/pexels-photo-34188568.jpeg",
+      "https://images.pexels.com/photos/34182536/pexels-photo-34182536.jpeg",
+      "https://images.pexels.com/photos/34182536/pexels-photo-34182536.jpeg",
+      "https://media.istockphoto.com/id/158002966/photo/painted-x-mark.jpg?b=1&s=612x612&w=0&k=20&c=W-XB39kzx5Y1U5eHU7gBZzgd4k2oqo0G3bRrch3jUZk=",
+    ],
+  },
+  {
+    "id": "post_002",
+    "text":
+        "A quick update on the server migration: everything went smoothly! Downtime was minimal. Thanks to the team!",
+    "timeAgo": "2h",
+    "likes": 120,
+    "retweets": 8,
+    "replies": 10,
+    "isLiked": true,
+    "activityNumber": 20,
+    "mediaUrls": [
+      "https://media.istockphoto.com/id/158002966/photo/painted-x-mark.jpg?b=1&s=612x612&w=0&k=20&c=W-XB39kzx5Y1U5eHU7gBZzgd4k2oqo0G3bRrch3jUZk=",
+    ],
+  },
+];
+
+final List<ProfilePostModel> profilePosts = rawPostData
+    .map((json) => ProfilePostModel.fromJson(json))
+    .toList();

@@ -16,7 +16,18 @@ class FollowersTab extends ConsumerWidget {
 
     return asyncFollowers.when(
       data: (either) => either.fold(
-        (fail) => Center(child: Text(fail.message)),
+        (l) => RefreshIndicator(
+          onRefresh: () async {
+            // ignore: unused_result
+            await ref.refresh(followersProvider(username));
+          },
+          child: ListView(
+            children: [
+              SizedBox(height: 200),
+              Center(child: Text(l.message)),
+            ],
+          ),
+        ),
         (followers) => RefreshIndicator(
           onRefresh: () async {
             // ignore: unused_result

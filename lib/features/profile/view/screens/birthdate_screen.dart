@@ -49,7 +49,7 @@ class _BirthdateScreenState extends State<BirthdateScreen> {
                         context.pop(widget.profileModel.birthDate);
                         return;
                       }
-                      final res = await _showPopupMessage(
+                      final res = await showPopupMessage(
                         context: context,
                         message: Text(
                           "this will undo the changes you've made to your birth.",
@@ -206,7 +206,7 @@ class _BirthdateScreenState extends State<BirthdateScreen> {
                     children: [
                       GestureDetector(
                         onTap: () async {
-                          final res = await _showPopupMessage(
+                          final res = await showPopupMessage(
                             context: context,
                             message: Text("this will remove it from profile"),
                             title: Text(
@@ -240,43 +240,4 @@ class _BirthdateScreenState extends State<BirthdateScreen> {
   }
 }
 
-Future<bool?> _showPopupMessage({
-  required BuildContext context,
-  required Text title,
-  required Text message,
-  String confirmText = 'Yes',
-  String cancelText = 'No',
-}) async {
-  return showDialog<bool>(
-    context: context,
-    barrierDismissible: true, // prevent closing by tapping outside
-    builder: (BuildContext context) {
-      return AlertDialog(
-        title: title,
-        content: message,
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(
-              cancelText,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(
-              confirmText,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-          ),
-        ],
-      );
-    },
-  );
-}
+
