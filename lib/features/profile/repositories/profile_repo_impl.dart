@@ -24,14 +24,42 @@ class ProfileRepoImpl implements ProfileRepo {
   Future<Either<Failure, ProfileModel>> getProfileData(String userName) async {
     final Response res;
     try {
-      res = await _dio.get("api/users/$userName");
-      final profileData = ProfileModel.fromJson(res.data);
-      final profileData2 = profileData.copyWith(
-        avatarUrl:
-            "https://images.pexels.com/photos/2379005/pexels-photo-2379005.jpeg",
-      );
+      // res = await _dio.get("api/users/$userName");
+      // final profileData = ProfileModel.fromJson(res.data);
+      // final profileData2 = profileData.copyWith(
+      //   avatarUrl:
+      //       "https://images.pexels.com/photos/2379005/pexels-photo-2379005.jpeg",
+      // );
 
-      return Right(profileData2);
+      // return Right(profileData2);
+      return Right(
+        ProfileModel(
+          id: "",
+          username:
+              "hazememamffffffffffffffffffffffffffffffffffffffffffffffdddddddddddddddddddddd",
+          displayName: "Hazem Emam",
+          bio:
+              "Hello from hazem emam fffffffffffffffffffffffffffffffffffffffffffffddddddddddddddddddddddddddddddddddd",
+          avatarUrl:
+              "https://images.pexels.com/photos/31510092/pexels-photo-31510092.jpeg",
+          bannerUrl:
+              "https://images.pexels.com/photos/1765033/pexels-photo-1765033.jpeg",
+          followersCount: 15,
+          followingCount: 20,
+          tweetsCount: 15,
+          isVerified: false,
+          joinedDate: "",
+          website:
+              "https://google.coffffffffffffffffffffffffffffffffffffffffffffdddddddddddddddddddddddddddddddddddddddddddddddd",
+          location:
+              "cairo,Egyptfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffdddddddddddddddddddddddddddddd",
+          postCount: 2,
+          birthDate: formatDate(DateTime(2004, 8, 21), DateFormatType.fullDate),
+          isFollowing: false,
+          isFollower: false,
+          protectedAccount: false,
+        ),
+      );
     } catch (e) {
       return Left(Failure('Failed to load profile data'));
     }

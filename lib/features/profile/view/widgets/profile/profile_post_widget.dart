@@ -48,17 +48,21 @@ class ProfilePostWidget extends StatelessWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(
-                            profileModel.displayName,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
+                          Container(
+                            constraints: BoxConstraints(maxWidth: 120),
+                            child: Text(
+                              profileModel.displayName,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 4),
                           Flexible(
                             child: Text(
-                              profileModel.username,
+                              "@${profileModel.username}",
                               style: const TextStyle(
                                 color: Colors.grey,
                                 fontSize: 14,
@@ -98,8 +102,8 @@ class ProfilePostWidget extends StatelessWidget {
                 profilePostModel.text.isEmpty
                     ? const SizedBox(height: 15)
                     : Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: ReadMoreText(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: ReadMoreText(
                           profilePostModel.text,
                           trimLines:
                               3, // Number of lines to display before "read more"
@@ -115,7 +119,7 @@ class ProfilePostWidget extends StatelessWidget {
                             fontSize: 16,
                           ), // Style for the main text// Optional text before the main content// Style for preDataText
                         ),
-                    ),
+                      ),
                 if (profilePostModel.mediaUrls.isNotEmpty)
                   Container(
                     width: 350,
@@ -233,13 +237,16 @@ Widget buildInterActionRow({
                 "assets/svg/reply.svg",
                 width: 20,
                 height: 20,
-                colorFilter: const ColorFilter.mode(Colors.grey, BlendMode.srcIn),
+                colorFilter: const ColorFilter.mode(
+                  Colors.grey,
+                  BlendMode.srcIn,
+                ),
               ),
-              if(replies > 0)
-              Text(
-                Shared.formatCount(replies),
-                style: TextStyle(color: Colors.grey, fontSize: 15),
-              ),
+              if (replies > 0)
+                Text(
+                  Shared.formatCount(replies),
+                  style: TextStyle(color: Colors.grey, fontSize: 15),
+                ),
             ],
           ),
         ),
@@ -259,14 +266,14 @@ Widget buildInterActionRow({
                   BlendMode.srcIn,
                 ),
               ),
-              if(reposts > 0)
-              Text(
-                Shared.formatCount(reposts),
-                style: TextStyle(
-                  color: repostedByMe ? Color(0XFF00B87B) : Colors.grey,
-                  fontSize: 15,
+              if (reposts > 0)
+                Text(
+                  Shared.formatCount(reposts),
+                  style: TextStyle(
+                    color: repostedByMe ? Color(0XFF00B87B) : Colors.grey,
+                    fontSize: 15,
+                  ),
                 ),
-              ),
             ],
           ),
         ),
@@ -278,7 +285,9 @@ Widget buildInterActionRow({
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SvgPicture.asset(
-                likedByMe?"assets/svg/like_filled.svg": "assets/svg/like.svg",
+                likedByMe
+                    ? "assets/svg/like_filled.svg"
+                    : "assets/svg/like.svg",
                 width: 20,
                 height: 20,
                 colorFilter: ColorFilter.mode(
@@ -286,14 +295,14 @@ Widget buildInterActionRow({
                   BlendMode.srcIn,
                 ),
               ),
-              if(likes > 0)
-              Text(
-               Shared.formatCount(likes),
-                style: TextStyle(
-                  color: likedByMe ? Color(0XFFF6187E) : Colors.grey,
-                  fontSize: 15,
+              if (likes > 0)
+                Text(
+                  Shared.formatCount(likes),
+                  style: TextStyle(
+                    color: likedByMe ? Color(0XFFF6187E) : Colors.grey,
+                    fontSize: 15,
+                  ),
                 ),
-              ),
             ],
           ),
         ),
@@ -308,19 +317,13 @@ Widget buildInterActionRow({
                 "assets/svg/activity.svg",
                 width: 20,
                 height: 20,
-                colorFilter: ColorFilter.mode(
-                  Colors.grey,
-                  BlendMode.srcIn,
-                ),
+                colorFilter: ColorFilter.mode(Colors.grey, BlendMode.srcIn),
               ),
-              if(activities > 0)
-              Text(
-                Shared.formatCount(activities),
-                style: TextStyle(
-                  color: Colors.grey,
-                  fontSize: 15,
+              if (activities > 0)
+                Text(
+                  Shared.formatCount(activities),
+                  style: TextStyle(color: Colors.grey, fontSize: 15),
                 ),
-              ),
             ],
           ),
         ),
@@ -330,26 +333,27 @@ Widget buildInterActionRow({
               onTap: () {
                 //   TODO: do save action
               },
-              child:  SvgPicture.asset(
-                savedByMe? "assets/svg/save_filled.svg":"assets/svg/save.svg",
+              child: SvgPicture.asset(
+                savedByMe
+                    ? "assets/svg/save_filled.svg"
+                    : "assets/svg/save.svg",
                 width: 20,
                 height: 20,
                 colorFilter: ColorFilter.mode(
-                  savedByMe ? Colors.blue:Colors.grey,
+                  savedByMe ? Colors.blue : Colors.grey,
                   BlendMode.srcIn,
                 ),
               ),
             ),
-            SizedBox(width: 8,),
+            SizedBox(width: 8),
             GestureDetector(
               onTap: () {
                 //   TODO: do share action
               },
-              child:  Icon(Icons.share_outlined,color: Colors.grey,size: 20,)
+              child: Icon(Icons.share_outlined, color: Colors.grey, size: 20),
             ),
-
           ],
-        )
+        ),
       ],
     ),
   );

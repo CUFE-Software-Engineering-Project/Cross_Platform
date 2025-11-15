@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lite_x/features/profile/models/profile_model.dart';
 
 abstract class Shared {
   static String formatCount(int count) {
@@ -179,4 +180,11 @@ Future<bool?> showPopupMessage({
       );
     },
   );
+}
+
+class ProfilePhotoScreenArgs {
+  final bool isMe;
+  final ProfileModel profileModel;
+
+  ProfilePhotoScreenArgs({required this.isMe, required this.profileModel});
 }

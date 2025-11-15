@@ -7,7 +7,6 @@ import 'package:lite_x/features/profile/models/profile_post_model.dart';
 import 'package:lite_x/features/profile/models/shared.dart';
 import 'package:lite_x/features/profile/view/widgets/profile/follow_following_button.dart';
 import 'package:lite_x/features/profile/view/widgets/profile/profile_post_widget.dart';
-import 'package:lite_x/features/profile/view/widgets/profile/profile_posts_list.dart';
 import 'package:lite_x/features/profile/view_model/providers.dart';
 import 'package:top_snackbar_flutter/custom_snack_bar.dart';
 import 'package:top_snackbar_flutter/top_snack_bar.dart';
@@ -98,6 +97,7 @@ class _ProfileScreenBodyState extends ConsumerState<ProfileScreenBody> {
                                   ),
                                 ),
                         ),
+                  
                       ),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),

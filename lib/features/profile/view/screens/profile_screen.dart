@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lite_x/features/profile/view/widgets/profile/profile_screen_body.dart';
+import 'package:lite_x/features/profile/view/widgets/profile/profile_screen_body2.dart';
 import 'package:lite_x/features/profile/view_model/providers.dart';
 
 class ProfilePage extends ConsumerStatefulWidget {
@@ -48,7 +49,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     return DefaultTabController(
       length: 6,
       child: Scaffold(
-        body: ProfileScreenBody(profileData: profileData, isMe: isMe),
+        // body: ProfileScreenBody(profileData: profileData, isMe: isMe),
+        body: ProfileScreenBody2(profileData: profileData, isMe: isMe),
       ),
     );
   }
