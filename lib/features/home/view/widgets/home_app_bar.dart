@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/legacy.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:lite_x/features/home/view/widgets/home_tab_bar.dart';
 import 'package:lite_x/features/home/view/widgets/profile_avatar.dart';
+
 final appBarSettingsProvider = StateProvider<AppBarSettings>((ref) {
   return AppBarSettings(showNotificationDot: false, unreadCount: 0);
 });
@@ -19,7 +20,9 @@ class AppBarSettings {
 }
 
 class HomeAppBar extends ConsumerWidget implements PreferredSizeWidget {
-  const HomeAppBar({super.key});
+  final GlobalKey<ScaffoldState> scaffoldKey;
+
+  const HomeAppBar({super.key, required this.scaffoldKey});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -35,7 +38,7 @@ class HomeAppBar extends ConsumerWidget implements PreferredSizeWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 children: [
-                  const ProfileAvatar(),
+                  ProfileAvatar(scaffoldKey: scaffoldKey),
                   Expanded(child: Center(child: _buildXLogo())),
                   _buildSettingsButton(context, settings),
                 ],

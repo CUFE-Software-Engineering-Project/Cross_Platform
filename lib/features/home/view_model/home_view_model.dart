@@ -55,13 +55,18 @@ class HomeViewModel extends Notifier<HomeState> {
   Future<void> switchFeed(FeedType feedType) async {
     if (state.currentFeed == feedType) return;
 
+    // Update current feed immediately to show the correct cached tweets
+    state = state.copyWith(currentFeed: feedType);
+
     final cachedTweets = feedType == FeedType.forYou
         ? state.forYouTweets
         : state.followingTweets;
 
     if (cachedTweets.isNotEmpty) {
-      state = state.copyWith(currentFeed: feedType, tweets: cachedTweets);
+      // Use cached tweets without reloading
+      state = state.copyWith(tweets: cachedTweets);
     } else {
+      // Load fresh tweets if cache is empty
       await loadTweets(feedType: feedType);
     }
   }
@@ -146,8 +151,10 @@ class HomeViewModel extends Notifier<HomeState> {
 
       if (tweetIndex != -1) {
         final tweet = tweets[tweetIndex];
-        final newLikeState = !tweet.isLiked;
+        final currentLikeState = tweet.isLiked;
+        final newLikeState = !currentLikeState;
 
+        // Optimistically update UI immediately
         _updateTweetInAllFeeds(
           tweetId,
           (t) => t.copyWith(
@@ -156,12 +163,26 @@ class HomeViewModel extends Notifier<HomeState> {
           ),
         );
 
-        final serverTweet = await _repository.toggleLike(tweetId, newLikeState);
+        // Send request to server (don't wait for full response)
+        await _repository.toggleLike(tweetId, currentLikeState);
 
-        _updateTweetInAllFeeds(tweetId, (_) => serverTweet);
+        // Keep the optimistic update - don't overwrite with server response
+        // The server response might not have the correct isLiked state
       }
     } catch (e) {
-      await refreshTweets();
+      // Revert the optimistic update on error
+      final tweets = state.tweets;
+      final tweetIndex = tweets.indexWhere((tweet) => tweet.id == tweetId);
+      if (tweetIndex != -1) {
+        final tweet = tweets[tweetIndex];
+        _updateTweetInAllFeeds(
+          tweetId,
+          (t) => t.copyWith(
+            isLiked: !tweet.isLiked,
+            likes: tweet.isLiked ? t.likes - 1 : t.likes + 1,
+          ),
+        );
+      }
       state = state.copyWith(error: 'Failed to update like: $e');
     }
   }
@@ -173,8 +194,10 @@ class HomeViewModel extends Notifier<HomeState> {
 
       if (tweetIndex != -1) {
         final tweet = tweets[tweetIndex];
-        final newRetweetState = !tweet.isRetweeted;
+        final currentRetweetState = tweet.isRetweeted;
+        final newRetweetState = !currentRetweetState;
 
+        // Optimistically update UI immediately
         _updateTweetInAllFeeds(
           tweetId,
           (t) => t.copyWith(
@@ -183,15 +206,25 @@ class HomeViewModel extends Notifier<HomeState> {
           ),
         );
 
-        final serverTweet = await _repository.toggleRetweet(
-          tweetId,
-          newRetweetState,
-        );
+        // Send request to server
+        await _repository.toggleRetweet(tweetId, currentRetweetState);
 
-        _updateTweetInAllFeeds(tweetId, (_) => serverTweet);
+        // Keep the optimistic update
       }
     } catch (e) {
-      await refreshTweets();
+      // Revert the optimistic update on error
+      final tweets = state.tweets;
+      final tweetIndex = tweets.indexWhere((tweet) => tweet.id == tweetId);
+      if (tweetIndex != -1) {
+        final tweet = tweets[tweetIndex];
+        _updateTweetInAllFeeds(
+          tweetId,
+          (t) => t.copyWith(
+            isRetweeted: !tweet.isRetweeted,
+            retweets: tweet.isRetweeted ? t.retweets - 1 : t.retweets + 1,
+          ),
+        );
+      }
       state = state.copyWith(error: 'Failed to update retweet: $e');
     }
   }
@@ -203,22 +236,31 @@ class HomeViewModel extends Notifier<HomeState> {
 
       if (tweetIndex != -1) {
         final tweet = tweets[tweetIndex];
-        final newBookmarkState = !tweet.isBookmarked;
+        final currentBookmarkState = tweet.isBookmarked;
+        final newBookmarkState = !currentBookmarkState;
 
+        // Optimistically update UI immediately
         _updateTweetInAllFeeds(
           tweetId,
           (t) => t.copyWith(isBookmarked: newBookmarkState),
         );
 
-        final serverTweet = await _repository.toggleBookmark(
-          tweetId,
-          newBookmarkState,
-        );
+        // Send request to server
+        await _repository.toggleBookmark(tweetId, currentBookmarkState);
 
-        _updateTweetInAllFeeds(tweetId, (_) => serverTweet);
+        // Keep the optimistic update
       }
     } catch (e) {
-      await refreshTweets();
+      // Revert the optimistic update on error
+      final tweets = state.tweets;
+      final tweetIndex = tweets.indexWhere((tweet) => tweet.id == tweetId);
+      if (tweetIndex != -1) {
+        final tweet = tweets[tweetIndex];
+        _updateTweetInAllFeeds(
+          tweetId,
+          (t) => t.copyWith(isBookmarked: !tweet.isBookmarked),
+        );
+      }
       state = state.copyWith(error: 'Failed to update bookmark: $e');
     }
   }
@@ -260,14 +302,18 @@ class HomeViewModel extends Notifier<HomeState> {
           followingTweets: updatedFollowing,
         );
       } else {
-        final updatedTweets = [newTweet, ...state.tweets];
-        final updatedForYou = [newTweet, ...state.forYouTweets];
+        // New posts should only appear in the Following feed, not For You
         final updatedFollowing = [newTweet, ...state.followingTweets];
+
+        // Only update current tweets if we're on the Following feed
+        final updatedTweets = state.currentFeed == FeedType.following
+            ? [newTweet, ...state.tweets]
+            : state.tweets;
 
         state = state.copyWith(
           tweets: updatedTweets,
-          forYouTweets: updatedForYou,
           followingTweets: updatedFollowing,
+          // Don't add to forYouTweets
         );
       }
     } catch (e) {
@@ -318,16 +364,18 @@ class HomeViewModel extends Notifier<HomeState> {
         images: images,
       );
 
-      final updatedTweets = [newTweet, ...state.tweets];
+      // Quote tweets should only appear in the Following feed, not For You
+      final updatedFollowing = [newTweet, ...state.followingTweets];
+
+      // Only update current tweets if we're on the Following feed
+      final updatedTweets = state.currentFeed == FeedType.following
+          ? [newTweet, ...state.tweets]
+          : state.tweets;
 
       state = state.copyWith(
         tweets: updatedTweets,
-        forYouTweets: state.currentFeed == FeedType.forYou
-            ? updatedTweets
-            : [newTweet, ...state.forYouTweets],
-        followingTweets: state.currentFeed == FeedType.following
-            ? updatedTweets
-            : [newTweet, ...state.followingTweets],
+        followingTweets: updatedFollowing,
+        // Don't add to forYouTweets
       );
     } catch (e) {
       state = state.copyWith(error: 'Failed to create quote tweet: $e');
