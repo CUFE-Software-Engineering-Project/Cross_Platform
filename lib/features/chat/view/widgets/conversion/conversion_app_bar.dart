@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lite_x/core/providers/current_user_provider.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
 import 'package:lite_x/core/theme/Palette.dart';
-import 'package:lite_x/features/chat/view/widgets/SearchField.dart';
+import 'package:lite_x/features/chat/view/widgets/conversion/SearchField.dart';
 
 class ConversationAppBar extends ConsumerWidget implements PreferredSizeWidget {
   const ConversationAppBar({super.key});
@@ -29,7 +29,7 @@ class ConversationAppBar extends ConsumerWidget implements PreferredSizeWidget {
               child: GestureDetector(
                 onTap: () {},
                 child: Hero(
-                  tag: "user_avatar",
+                  tag: "chat_user_avatar",
                   child: CircleAvatar(
                     radius: 18,
                     backgroundImage: currentuser?.photo != null

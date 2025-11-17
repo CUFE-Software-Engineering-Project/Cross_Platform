@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:hive_ce/hive.dart';
 
 part 'usermodel.g.dart';
@@ -155,7 +156,7 @@ class UserModel {
         other.isEmailVerified == isEmailVerified &&
         other.isVerified == isVerified &&
         other.tfaVerified == tfaVerified &&
-        other.interests == interests;
+        setEquals(other.interests, interests);
   }
 
   @override

@@ -28,6 +28,7 @@ class RouteConstants {
   //-------------------------------------------------------------------------------------------------------------------------------------//
 
   static String ConversationsScreen = "ConversationsScreen";
+  static String SearchUserGroup = "SearchUserGroup";
   static String TestChatScreen = "TestChatScreen";
   static String ChatScreen = "ChatScreen";
   static String SearchDirectMessages = "SearchDirectMessages";

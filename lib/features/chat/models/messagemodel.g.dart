@@ -26,7 +26,7 @@ class MessageModelAdapter extends TypeAdapter<MessageModel> {
       media: (fields[6] as List?)?.cast<MediaModel>(),
       senderUsername: fields[7] as String?,
       senderName: fields[8] as String?,
-      senderProfilePhoto: fields[9] as String?,
+      senderProfileMediaKey: fields[9] as String?,
     );
   }
 
@@ -53,7 +53,7 @@ class MessageModelAdapter extends TypeAdapter<MessageModel> {
       ..writeByte(8)
       ..write(obj.senderName)
       ..writeByte(9)
-      ..write(obj.senderProfilePhoto);
+      ..write(obj.senderProfileMediaKey);
   }
 
   @override

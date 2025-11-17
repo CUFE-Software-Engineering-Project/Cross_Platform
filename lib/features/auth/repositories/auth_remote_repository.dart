@@ -135,7 +135,7 @@ class AuthRemoteRepository {
     }
   }
 
-  Future<Either<AppFailure, (UserModel, TokensModel)>> updateUsername({
+  Future<Either<AppFailure, UserModel>> updateUsername({
     required UserModel currentUser,
     required String Username,
   }) async {
@@ -146,8 +146,8 @@ class AuthRemoteRepository {
       );
       final newUsername = response.data['user']['username'] as String;
       final updatedUser = currentUser.copyWith(username: newUsername);
-      final newtokens = TokensModel.fromMap_update(response.data['tokens']);
-      return right((updatedUser, newtokens));
+      // final newtokens = TokensModel.fromMap_update(response.data['tokens']);
+      return right(updatedUser);
     } on DioException catch (e) {
       return left(AppFailure(message: 'Failed to update username'));
     } catch (e) {
@@ -183,9 +183,9 @@ class AuthRemoteRepository {
         data: {'email': email, 'password': password},
       );
 
-      final user = UserModel.fromMap(response.data['user']);
+      final user = UserModel.fromMap(response.data['User']);
       final tokens = TokensModel.fromMap_login(response.data);
-
+      print(tokens);
       return right((user, tokens));
     } on DioException catch (e) {
       return left(AppFailure(message: 'Login failed'));
@@ -324,37 +324,4 @@ class AuthRemoteRepository {
       return left(AppFailure(message: e.toString()));
     }
   }
-
-  //-------------------------------------------------------------------------------token management--------------------------------------------------------------------------------------------//
-  // Future<Either<AppFailure, TokensModel>> refreshToken(
-  //   String refreshToken,
-  //   DateTime refreshTokenExpiry,
-  // ) async {
-  //   try {
-  //     final response = await _dio.post(
-  //       'api/auth/refresh',
-  //       data: {'refresh_token': refreshToken},
-  //       options: Options(headers: {'Content-Type': 'application/json'}),
-  //     );
-  //     final newAccessToken = response.data['access_token'] as String?;
-  //     if (newAccessToken == null) {
-  //       return left(
-  //         AppFailure(
-  //           message: 'Refresh response did not contain new access token',
-  //         ),
-  //       );
-  //     }
-  //     final tokens = TokensModel(
-  //       accessToken: newAccessToken,
-  //       refreshToken: refreshToken,
-  //       accessTokenExpiry: DateTime.now().add(const Duration(hours: 1)),
-  //       refreshTokenExpiry: refreshTokenExpiry,
-  //     );
-  //     return right(tokens);
-  //   } on DioException catch (e) {
-  //     return left(AppFailure(message: 'Token refresh failed'));
-  //   } catch (e) {
-  //     return left(AppFailure(message: e.toString()));
-  //   }
-  // }
 }

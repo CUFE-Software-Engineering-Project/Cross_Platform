@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
 import 'package:lite_x/core/theme/palette.dart';
-import 'package:lite_x/features/chat/view/widgets/MessageAppBar.dart';
+import 'package:lite_x/features/chat/view/widgets/chat/MessageAppBar.dart';
 import 'dart:async';
-import 'package:lite_x/features/chat/view/widgets/message_input_bar.dart';
+import 'package:lite_x/features/chat/view/widgets/chat/message_input_bar.dart';
 
 class PickedImage {
   final String path;

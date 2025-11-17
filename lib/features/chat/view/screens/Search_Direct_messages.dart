@@ -54,7 +54,7 @@ class _SearchDirectMessagesState extends ConsumerState<SearchDirectMessages> {
             controller: _searchController,
             autofocus: true,
             style: const TextStyle(color: Palette.textWhite, fontSize: 16),
-            cursorColor: Palette.inputBorderFocused,
+
             decoration: InputDecoration(
               hintText: isQueryEmpty ? 'Search Direct Messages' : '',
               hintStyle: TextStyle(color: searchBarHintColor, fontSize: 16),

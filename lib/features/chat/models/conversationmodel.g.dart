@@ -22,20 +22,24 @@ class ConversationModelAdapter extends TypeAdapter<ConversationModel> {
       createdAt: fields[2] as DateTime,
       updatedAt: fields[3] as DateTime,
       groupName: fields[4] as String?,
-      groupPhoto: fields[5] as String?,
+      groupPhotoKey: fields[5] as String?,
       groupDescription: fields[6] as String?,
       participantIds: (fields[7] as List).cast<String>(),
       lastMessageContent: fields[8] as String?,
       lastMessageTime: fields[9] as DateTime?,
       lastMessageSenderId: fields[10] as String?,
       unseenCount: fields[11] == null ? 0 : (fields[11] as num).toInt(),
+      dmPartnerUserId: fields[12] as String?,
+      dmPartnerName: fields[13] as String?,
+      dmPartnerUsername: fields[14] as String?,
+      dmPartnerProfileKey: fields[15] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, ConversationModel obj) {
     writer
-      ..writeByte(12)
+      ..writeByte(16)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -47,7 +51,7 @@ class ConversationModelAdapter extends TypeAdapter<ConversationModel> {
       ..writeByte(4)
       ..write(obj.groupName)
       ..writeByte(5)
-      ..write(obj.groupPhoto)
+      ..write(obj.groupPhotoKey)
       ..writeByte(6)
       ..write(obj.groupDescription)
       ..writeByte(7)
@@ -59,7 +63,15 @@ class ConversationModelAdapter extends TypeAdapter<ConversationModel> {
       ..writeByte(10)
       ..write(obj.lastMessageSenderId)
       ..writeByte(11)
-      ..write(obj.unseenCount);
+      ..write(obj.unseenCount)
+      ..writeByte(12)
+      ..write(obj.dmPartnerUserId)
+      ..writeByte(13)
+      ..write(obj.dmPartnerName)
+      ..writeByte(14)
+      ..write(obj.dmPartnerUsername)
+      ..writeByte(15)
+      ..write(obj.dmPartnerProfileKey);
   }
 
   @override

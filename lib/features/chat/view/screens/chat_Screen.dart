@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lite_x/features/chat/models/messagemodel.dart';
-import 'package:lite_x/features/chat/view/widgets/MessageAppBar.dart';
-import 'package:lite_x/features/chat/view/widgets/TypingIndicator.dart';
-import 'package:lite_x/features/chat/view/widgets/message_input_bar.dart';
+
+import 'package:lite_x/features/chat/view/widgets/chat/MessageAppBar.dart';
+import 'package:lite_x/features/chat/view/widgets/chat/MessageBubble.dart';
+import 'package:lite_x/features/chat/view/widgets/chat/TypingIndicator.dart';
+import 'package:lite_x/features/chat/view/widgets/chat/message_input_bar.dart';
 import 'package:lite_x/core/classes/PickedImage.dart';
-import 'package:lite_x/features/chat/view/widgets/MessageBubble.dart';
 import 'package:lite_x/features/chat/view_model/chat/Chat_view_model.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
@@ -115,25 +116,17 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               child: MessageInputBar(
                 onSendMessage: (text) {
-                  // ref
-                  //     .read(chatViewModelProvider.notifier)
-                  //     .sendMessage(widget.recipientId, text);
+                  //
                   _scrollToBottom();
                 },
                 onSendAudio: (audioPath) {
-                  // ref
-                  //     .read(chatViewModelProvider.notifier)
-                  //     .sendAudio(widget.recipientId, audioPath);
+                  //
                 },
                 onSendImage: (PickedImage image) {
-                  // ref
-                  //     .read(chatViewModelProvider.notifier)
-                  //     .sendImage(widget.recipientId, image);
+                  //
                 },
                 onSendGif: (gifUrl) {
-                  // ref
-                  //     .read(chatViewModelProvider.notifier)
-                  //     .sendGif(widget.recipientId, gifUrl);
+                  //
                 },
               ),
             ),

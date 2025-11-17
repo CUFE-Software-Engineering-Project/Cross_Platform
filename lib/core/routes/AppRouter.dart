@@ -19,6 +19,8 @@ import 'package:lite_x/features/auth/view/screens/Create_Account/UserName_Screen
 import 'package:lite_x/features/auth/view/screens/Create_Account/Verification_Screen.dart';
 import 'package:lite_x/features/auth/view/screens/Log_In/VerificationForgot_Screen.dart';
 import 'package:lite_x/features/chat/view/screens/Search_Direct_messages.dart';
+import 'package:lite_x/features/chat/view/screens/Search_User_Group.dart';
+import 'package:lite_x/features/chat/view/screens/chat_Screen.dart';
 // import 'package:lite_x/features/chat/view/screens/chat_Screen.dart';
 import 'package:lite_x/features/chat/view/screens/conversations_screen.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
@@ -201,6 +203,14 @@ class Approuter {
         ),
       ),
       GoRoute(
+        name: RouteConstants.SearchUserGroup,
+        path: "/SearchUserGroup",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: const SearchUserGroup(),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
         name: RouteConstants.BirthDateScreen,
         path: "/birthDateScreen",
         pageBuilder: (context, state) => CustomTransitionPage(
@@ -273,14 +283,18 @@ class Approuter {
         ),
       ),
 
-      // GoRoute(
-      //   name: RouteConstants.ChatScreen,
-      //   path: "/ChatScreen",
-      //   pageBuilder: (context, state) => CustomTransitionPage(
-      //     child: const ChatScreen(recipientId: "", recipientName: ""),
-      //     transitionsBuilder: _slideRightTransitionBuilder,
-      //   ),
-      // ),
+      GoRoute(
+        name: RouteConstants.ChatScreen,
+        path: "/ChatScreen",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: const ChatScreen(
+            recipientId: "",
+            recipientName: "",
+            currentUserId: "5",
+          ),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
     ],
     redirect: (context, state) {
       return null;

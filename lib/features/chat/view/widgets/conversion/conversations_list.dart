@@ -2,8 +2,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lite_x/features/chat/view/widgets/conversation_tile.dart';
-import 'package:lite_x/features/chat/view/widgets/empty_inbox.dart';
+import 'package:lite_x/features/chat/view/widgets/conversion/conversation_tile.dart';
+import 'package:lite_x/features/chat/view/widgets/conversion/empty_inbox.dart';
 
 class ConversationsList extends ConsumerStatefulWidget {
   const ConversationsList({super.key});

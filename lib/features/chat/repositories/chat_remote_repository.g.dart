@@ -55,4 +55,4 @@ final class ChatRemoteRepositoryProvider
 }
 
 String _$chatRemoteRepositoryHash() =>
-    r'49eea86abd6586db0ed39d26d74ea7ecb15f4d8a';
+    r'5196bf8a6ccb4b046cc61a77e1e86250a817d147';

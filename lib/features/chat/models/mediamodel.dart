@@ -1,4 +1,6 @@
+// ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:convert';
+
 import 'package:hive_ce/hive.dart';
 
 part 'mediamodel.g.dart';
@@ -9,7 +11,7 @@ class MediaModel {
   String id;
 
   @HiveField(1)
-  String url;
+  String keyName;
 
   @HiveField(2)
   String type; // "IMAGE", "VIDEO", "GIF", "FILE"
@@ -22,7 +24,7 @@ class MediaModel {
 
   MediaModel({
     required this.id,
-    required this.url,
+    required this.keyName,
     required this.type,
     this.size,
     this.name,
@@ -31,40 +33,33 @@ class MediaModel {
   factory MediaModel.fromApiResponse(Map<String, dynamic> json) {
     return MediaModel(
       id: json['id'] as String,
-      url: json['url'] as String,
+      keyName: json['keyName'] as String,
       type: json['type'] as String,
       size: json['size'] as int?,
       name: json['name'] as String?,
     );
   }
-
-  MediaModel copyWith({
-    String? id,
-    String? url,
-    String? type,
-    int? size,
-    String? name,
-  }) {
-    return MediaModel(
-      id: id ?? this.id,
-      url: url ?? this.url,
-      type: type ?? this.type,
-      size: size ?? this.size,
-      name: name ?? this.name,
-    );
+  Map<String, dynamic> toApiRequest() {
+    return {'keyName': keyName, 'type': type, 'size': size, 'name': name};
   }
 
   Map<String, dynamic> toMap() {
-    return {'id': id, 'url': url, 'type': type, 'size': size, 'name': name};
+    return <String, dynamic>{
+      'id': id,
+      'keyName': keyName,
+      'type': type,
+      'size': size,
+      'name': name,
+    };
   }
 
   factory MediaModel.fromMap(Map<String, dynamic> map) {
     return MediaModel(
       id: map['id'] as String,
-      url: map['url'] as String,
+      keyName: map['keyName'] as String,
       type: map['type'] as String,
-      size: map['size'] as int?,
-      name: map['name'] as String?,
+      size: map['size'] != null ? map['size'] as int : null,
+      name: map['name'] != null ? map['name'] as String : null,
     );
   }
 
@@ -102,18 +97,42 @@ class MediaModel {
 
   @override
   String toString() {
-    return 'MediaModel(id: $id, type: $type, size: $displaySize)';
+    return 'MediaModel(id: $id, keyName: $keyName, type: $type, size: $size, name: $name)';
   }
 
   @override
   bool operator ==(covariant MediaModel other) {
     if (identical(this, other)) return true;
 
-    return other.id == id && other.url == url;
+    return other.id == id &&
+        other.keyName == keyName &&
+        other.type == type &&
+        other.size == size &&
+        other.name == name;
   }
 
   @override
   int get hashCode {
-    return id.hashCode ^ url.hashCode;
+    return id.hashCode ^
+        keyName.hashCode ^
+        type.hashCode ^
+        size.hashCode ^
+        name.hashCode;
+  }
+
+  MediaModel copyWith({
+    String? id,
+    String? keyName,
+    String? type,
+    int? size,
+    String? name,
+  }) {
+    return MediaModel(
+      id: id ?? this.id,
+      keyName: keyName ?? this.keyName,
+      type: type ?? this.type,
+      size: size ?? this.size,
+      name: name ?? this.name,
+    );
   }
 }

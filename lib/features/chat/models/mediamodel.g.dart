@@ -18,7 +18,7 @@ class MediaModelAdapter extends TypeAdapter<MediaModel> {
     };
     return MediaModel(
       id: fields[0] as String,
-      url: fields[1] as String,
+      keyName: fields[1] as String,
       type: fields[2] as String,
       size: (fields[3] as num?)?.toInt(),
       name: fields[4] as String?,
@@ -32,7 +32,7 @@ class MediaModelAdapter extends TypeAdapter<MediaModel> {
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
-      ..write(obj.url)
+      ..write(obj.keyName)
       ..writeByte(2)
       ..write(obj.type)
       ..writeByte(3)

@@ -33,7 +33,7 @@ class MessageModel extends HiveObject {
   String? senderName;
 
   @HiveField(9)
-  String? senderProfilePhoto;
+  String? senderProfileMediaKey;
 
   MessageModel({
     required this.id,
@@ -45,7 +45,7 @@ class MessageModel extends HiveObject {
     this.media,
     this.senderUsername,
     this.senderName,
-    this.senderProfilePhoto,
+    this.senderProfileMediaKey,
   });
   factory MessageModel.fromApiResponse(Map<String, dynamic> json) {
     List<MediaModel>? mediaList;
@@ -68,7 +68,7 @@ class MessageModel extends HiveObject {
       media: mediaList,
       senderUsername: user?['username'] as String?,
       senderName: user?['name'] as String?,
-      senderProfilePhoto: user?['profilePhoto'] as String?,
+      senderProfileMediaKey: user?['profileMediaId'] as String?,
     );
   }
 
@@ -82,7 +82,7 @@ class MessageModel extends HiveObject {
     List<MediaModel>? media,
     String? senderUsername,
     String? senderName,
-    String? senderProfilePhoto,
+    String? senderProfileMediaKey,
   }) {
     return MessageModel(
       id: id ?? this.id,
@@ -94,7 +94,8 @@ class MessageModel extends HiveObject {
       media: media ?? this.media,
       senderUsername: senderUsername ?? this.senderUsername,
       senderName: senderName ?? this.senderName,
-      senderProfilePhoto: senderProfilePhoto ?? this.senderProfilePhoto,
+      senderProfileMediaKey:
+          senderProfileMediaKey ?? this.senderProfileMediaKey,
     );
   }
 
@@ -109,7 +110,7 @@ class MessageModel extends HiveObject {
       'media': media?.map((x) => x.toMap()).toList(),
       'senderUsername': senderUsername,
       'senderName': senderName,
-      'senderProfilePhoto': senderProfilePhoto,
+      'senderProfileMediaKey': senderProfileMediaKey,
     };
   }
 
@@ -117,16 +118,7 @@ class MessageModel extends HiveObject {
     return {
       'data': {
         'content': content,
-        'messageMedia': media
-            ?.map(
-              (m) => {
-                'name': m.id,
-                'url': m.url,
-                'size': m.size,
-                'type': m.type,
-              },
-            )
-            .toList(),
+        'messageMedia': media?.map((m) => m.toApiRequest()).toList(),
       },
     };
   }
@@ -148,7 +140,7 @@ class MessageModel extends HiveObject {
           : null,
       senderUsername: map['senderUsername'] as String?,
       senderName: map['senderName'] as String?,
-      senderProfilePhoto: map['senderProfilePhoto'] as String?,
+      senderProfileMediaKey: map['senderProfileMediaKey'] as String?,
     );
   }
 

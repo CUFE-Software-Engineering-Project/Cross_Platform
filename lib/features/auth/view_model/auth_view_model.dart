@@ -157,8 +157,8 @@ class AuthViewModel extends _$AuthViewModel {
         state = AuthState.error(failure.message);
       },
       (data) async {
-        final (updatedUser, newTokens) = data;
-        await _authLocalRepository.saveTokens(newTokens);
+        final updatedUser = data;
+        // await _authLocalRepository.saveTokens(newTokens);
         await _authLocalRepository.saveUser(updatedUser);
         ref.read(currentUserProvider.notifier).adduser(updatedUser);
         state = AuthState.success('Username updated successfully');
