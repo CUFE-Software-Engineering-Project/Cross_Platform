@@ -4,6 +4,7 @@ import 'package:lite_x/core/routes/Route_Constants.dart';
 import 'package:lite_x/core/theme/palette.dart';
 
 class ConversationTile extends StatelessWidget {
+  final String recipientId;
   final String name;
   final String username;
   final String message;
@@ -14,6 +15,7 @@ class ConversationTile extends StatelessWidget {
   const ConversationTile({
     super.key,
     required this.name,
+    required this.recipientId,
     required this.username,
     required this.message,
     required this.time,
@@ -25,7 +27,11 @@ class ConversationTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () {
-        context.pushNamed(RouteConstants.ChatScreen);
+        context.pushNamed(
+          RouteConstants.ChatScreen,
+          pathParameters: {'recipientId': recipientId},
+          extra: {'name': name, 'avatarUrl': avatarUrl, 'username': username},
+        );
       },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),

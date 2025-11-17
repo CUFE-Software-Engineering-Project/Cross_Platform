@@ -34,6 +34,7 @@ class _ConversationsListState extends ConsumerState<ConversationsList> {
       itemCount: 20,
       itemBuilder: (context, index) {
         return ConversationTile(
+          recipientId: "test_user_id_$index",
           name: 'NORTH MAN',
           username: 'NORTHMAN750',
           message: 'Fine and you',

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lite_x/core/providers/current_user_provider.dart';
+import 'package:lite_x/core/theme/Palette.dart';
 import 'package:lite_x/features/chat/models/messagemodel.dart';
 
 import 'package:lite_x/features/chat/view/widgets/chat/MessageAppBar.dart';
@@ -13,13 +15,17 @@ import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 class ChatScreen extends ConsumerStatefulWidget {
   final String recipientName;
   final String recipientId;
-  final String currentUserId;
+  final String? recipientUsername;
+  final String? recipientProfileImage;
+  final int? recipientFollowersCount;
 
   const ChatScreen({
     super.key,
     required this.recipientName,
     required this.recipientId,
-    required this.currentUserId,
+    this.recipientUsername,
+    this.recipientProfileImage,
+    this.recipientFollowersCount,
   });
 
   @override
@@ -72,7 +78,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     final chatviewmodel = ref.watch(chatViewModelProvider);
+    final currentuser = ref.watch(currentUserProvider);
     List<MessageModel> messages = [];
+    if (currentuser == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
     return Scaffold(
       resizeToAvoidBottomInset: true,
       appBar: MessageAppBar(
@@ -89,10 +99,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   itemPositionsListener: _itemPositionsListener,
                   reverse: true,
                   padding: const EdgeInsets.symmetric(vertical: 10.0),
-                  itemCount: messages.length,
+                  itemCount: messages.length + 1,
                   itemBuilder: (context, index) {
+                    if (index == messages.length) {
+                      return _buildProfileHeader();
+                    }
+
                     final message = messages[index];
-                    final isMe = message.userId == widget.currentUserId;
+                    final isMe = message.userId == currentuser.id;
 
                     return MessageBubble(
                       message: message,
@@ -129,6 +143,78 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   //
                 },
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProfileHeader() {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 24.0),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CircleAvatar(
+            radius: 45,
+            backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
+            backgroundImage: widget.recipientProfileImage != null
+                ? NetworkImage(widget.recipientProfileImage!)
+                : null,
+            child: widget.recipientProfileImage == null
+                ? Text(
+                    widget.recipientName[0].toUpperCase(),
+                    style: TextStyle(
+                      fontSize: 48,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).primaryColor,
+                    ),
+                  )
+                : null,
+          ),
+          const SizedBox(height: 5),
+
+          Text(
+            widget.recipientName,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: Palette.textPrimary,
+            ),
+          ),
+          if (widget.recipientUsername != null)
+            Text(
+              '@${widget.recipientUsername}',
+              style: TextStyle(
+                fontSize: 16,
+                color: Color.fromARGB(255, 133, 139, 145),
+              ),
+            ),
+          const SizedBox(height: 12),
+
+          if (widget.recipientFollowersCount != null)
+            Text(
+              '${widget.recipientFollowersCount} Followers',
+              style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+            ),
+
+          const SizedBox(height: 20),
+
+          Divider(
+            thickness: 0.2,
+            color: Colors.grey[500],
+            indent: 10,
+            endIndent: 10,
+          ),
+          const SizedBox(height: 4),
+
+          Text(
+            'Today', // mock
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: Palette.textPrimary,
             ),
           ),
         ],

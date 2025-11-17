@@ -285,15 +285,24 @@ class Approuter {
 
       GoRoute(
         name: RouteConstants.ChatScreen,
-        path: "/ChatScreen",
-        pageBuilder: (context, state) => CustomTransitionPage(
-          child: const ChatScreen(
-            recipientId: "",
-            recipientName: "",
-            currentUserId: "5",
-          ),
-          transitionsBuilder: _slideRightTransitionBuilder,
-        ),
+        path: "/ChatScreen/:recipientId",
+        pageBuilder: (context, state) {
+          final recipientId = state.pathParameters['recipientId']!;
+          final extraData = state.extra as Map<String, dynamic>;
+          final recipientName = extraData['name'] as String;
+          final recipientAvatar = extraData['avatarUrl'] as String?;
+          final recipientUsername = extraData['username'] as String?;
+          return CustomTransitionPage(
+            child: ChatScreen(
+              // chatId: "2",
+              recipientId: recipientId,
+              recipientName: recipientName,
+              recipientProfileImage: recipientAvatar,
+              recipientUsername: recipientUsername,
+            ),
+            transitionsBuilder: _slideRightTransitionBuilder,
+          );
+        },
       ),
     ],
     redirect: (context, state) {
