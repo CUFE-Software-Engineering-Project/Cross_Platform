@@ -31,10 +31,14 @@ class ChatRemoteRepository {
         queryParameters: {"query": query},
       );
 
-      final list = response.data as List<dynamic>;
+      final data = response.data as Map<String, dynamic>;
+
+      final List<dynamic> list = data["users"] ?? [];
+
       final users = list
           .map((e) => UserSearchModel.fromMap(e as Map<String, dynamic>))
           .toList();
+
       return Right(users);
     } on DioException catch (e) {
       print("DIO RESPONSE DATA: ${e.response?.data}");

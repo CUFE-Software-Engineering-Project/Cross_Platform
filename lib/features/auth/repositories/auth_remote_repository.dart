@@ -135,7 +135,7 @@ class AuthRemoteRepository {
     }
   }
 
-  Future<Either<AppFailure, UserModel>> updateUsername({
+  Future<Either<AppFailure, (UserModel, TokensModel)>> updateUsername({
     required UserModel currentUser,
     required String Username,
   }) async {
@@ -146,8 +146,8 @@ class AuthRemoteRepository {
       );
       final newUsername = response.data['user']['username'] as String;
       final updatedUser = currentUser.copyWith(username: newUsername);
-      // final newtokens = TokensModel.fromMap_update(response.data['tokens']);
-      return right(updatedUser);
+      final newtokens = TokensModel.fromMap_update(response.data['tokens']);
+      return right((updatedUser, newtokens));
     } on DioException catch (e) {
       return left(AppFailure(message: 'Failed to update username'));
     } catch (e) {
@@ -183,7 +183,7 @@ class AuthRemoteRepository {
         data: {'email': email, 'password': password},
       );
 
-      final user = UserModel.fromMap(response.data['User']);
+      final user = UserModel.fromMap(response.data['user']);
       final tokens = TokensModel.fromMap_login(response.data);
       print(tokens);
       return right((user, tokens));
@@ -253,6 +253,7 @@ class AuthRemoteRepository {
         'api/auth/reset-password',
         data: {'email': email, 'password': password},
       );
+      print(response);
       final message = response.data['message'] ?? 'Password reset successful';
       return right(message);
     } on DioException catch (e) {
@@ -278,6 +279,7 @@ class AuthRemoteRepository {
           'confirmPassword': confirmPassword,
         },
       );
+
       final message =
           response.data['message'] ?? 'Password updated successfully';
       return right(message);
