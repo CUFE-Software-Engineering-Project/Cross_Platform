@@ -25,6 +25,8 @@ class RouteConstants {
   static String mutedaccountsscreen = "mutedaccountsscreen";
   static String privacyandsafetyscreen = "privacyandsafetyscreen";
   static String settingandprivacyscreen = "settingandprivacyscreen";
+  static String youraccountscreen = "youraccountscreen";
+  static String accountinformationscreen = "accountinformationscreen";
   //-------------------------------------------------------------------------------------------------------------------------------------//
 
   static String ConversationsScreen = "ConversationsScreen";

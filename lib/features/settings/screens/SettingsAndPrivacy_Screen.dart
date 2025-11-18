@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
 import 'package:lite_x/core/theme/palette.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:lite_x/features/settings/view/widgets/settings_search_bar.dart';
+import 'package:lite_x/features/settings/view/widgets/settings_responsive_scaffold.dart';
 
 class SettingsAndPrivacyScreen extends StatelessWidget {
   const SettingsAndPrivacyScreen({super.key});
@@ -27,49 +28,10 @@ class _BuildMobileLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(
-            LucideIcons.arrowLeft,
-            color: Palette.textWhite,
-            size: 22,
-          ),
-          onPressed: () {
-            if (context.canPop()) {
-              context.pop();
-            }
-          },
-        ),
-        title: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: const [
-            Text(
-              'Settings',
-              style: TextStyle(
-                color: Palette.textWhite,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            SizedBox(height: 2),
-            Text(
-              '',
-              style: TextStyle(color: Palette.textSecondary, fontSize: 12),
-            ),
-          ],
-        ),
-        centerTitle: true,
-        bottom: const PreferredSize(
-          preferredSize: Size.fromHeight(64),
-          child: Padding(
-            padding: EdgeInsets.only(bottom: 8.0),
-            child: _SearchBar(),
-          ),
-        ),
-        backgroundColor: Palette.background,
-        elevation: 0,
-      ),
-      backgroundColor: Palette.background,
+    return SettingsResponsiveScaffold.mobile(
+      title: 'Settings',
+      subtitle: '',
+      headerBottom: const SettingsSearchBar(),
       body: const _SettingsList(),
     );
   }
@@ -80,96 +42,11 @@ class _BuildWebLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black.withOpacity(0.4),
-      body: Center(
-        child: Container(
-          width: 800,
-          height: 700,
-          decoration: BoxDecoration(
-            color: Palette.background,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Column(
-            children: const [
-              SizedBox(height: 12),
-              _ProfileHeader(),
-              SizedBox(height: 8),
-              _SearchBar(),
-              SizedBox(height: 8),
-              Expanded(child: _SettingsList()),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ProfileHeader extends StatelessWidget {
-  const _ProfileHeader({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      child: Row(
-        children: const [
-          CircleAvatar(
-            radius: 18,
-            backgroundColor: Colors.transparent,
-            child: Icon(LucideIcons.user, color: Palette.textWhite, size: 20),
-          ),
-          SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Settings',
-                style: TextStyle(
-                  color: Palette.textWhite,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 16,
-                ),
-              ),
-              SizedBox(height: 2),
-              Text(
-                '@profilename',
-                style: TextStyle(color: Palette.textSecondary, fontSize: 12),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SearchBar extends StatelessWidget {
-  const _SearchBar({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6),
-      child: Container(
-        height: 44,
-        decoration: BoxDecoration(
-          color: Palette.inputBackground,
-          borderRadius: BorderRadius.circular(30),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
-            Icon(LucideIcons.search, color: Palette.textSecondary, size: 18),
-            SizedBox(width: 10),
-            Text(
-              'Search settings',
-              style: TextStyle(color: Palette.textSecondary),
-            ),
-          ],
-        ),
-      ),
+    return SettingsResponsiveScaffold.web(
+      title: 'Settings',
+      subtitle: '@profilename',
+      headerBottom: const SettingsSearchBar(),
+      body: const _SettingsList(),
     );
   }
 }
@@ -214,6 +91,7 @@ class _SettingsList extends StatelessWidget {
             Icon(LucideIcons.user, color: Palette.textWhite, size: 22),
             'Your account',
             'See information about your account, download an archive of your data, or learn about your account deactivation options.',
+            onTap: () => GoRouter.of(context).pushNamed(RouteConstants.youraccountscreen),
           ),
           _tile(
             Icon(LucideIcons.lock, color: Palette.textWhite, size: 22),
@@ -221,24 +99,12 @@ class _SettingsList extends StatelessWidget {
             'Manage your account\'s security and keep track of your account\'s usage including apps that you have connected to your account.',
           ),
           _tile(
-            // SvgPicture.asset(
-            //   'assets/icons/x.svg',
-            //   width: 20,
-            //   height: 20,
-            //   color: Palette.textWhite,
-            // ),
-            Icon(Icons.workspace_premium),
+            Icon(Icons.workspace_premium, color: Palette.textWhite, size: 22),
             'Premium',
             'See what\'s included in Premium and manage your settings.',
           ),
           _tile(
-            // SvgPicture.asset(
-            //   'assets/icons/money.svg',
-            //   width: 20,
-            //   height: 20,
-            //   color: Palette.textWhite,
-            // ),
-            Icon(Icons.workspace_premium),
+            Icon(Icons.attach_money, color: Palette.textWhite, size: 22),
             'Monetization',
             'See how you can make money on X and manage your monetization settings.',
           ),
