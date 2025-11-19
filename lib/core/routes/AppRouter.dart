@@ -33,6 +33,7 @@ import 'package:lite_x/features/settings/screens/PrivacyAndSafety_Screen.dart';
 import 'package:lite_x/features/settings/screens/SettingsAndPrivacy_Screen.dart';
 import 'package:lite_x/features/settings/screens/YourAccount_Screen.dart';
 import 'package:lite_x/features/settings/screens/AccountInformation_Screen.dart';
+import 'package:lite_x/features/settings/screens/ChangePassword_Screen.dart';
 
 class Approuter {
   static final GoRouter router = GoRouter(
@@ -169,6 +170,14 @@ class Approuter {
         path: "/ChooseNewPasswordScreen",
         pageBuilder: (context, state) => CustomTransitionPage(
           child: const ChooseNewPasswordScreen(),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
+        name: RouteConstants.changePasswordScreen,
+        path: "/change-password",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: const ChangePasswordScreen(),
           transitionsBuilder: _slideRightTransitionBuilder,
         ),
       ),

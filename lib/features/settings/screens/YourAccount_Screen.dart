@@ -58,7 +58,7 @@ class YourAccountScreen extends ConsumerWidget {
               leading: Icon(LucideIcons.lock, color: Palette.textWhite, size: 22),
               title: 'Change your password',
               subtitle: 'Change your password at any time.',
-              onTap: () => GoRouter.of(context).pushNamed(RouteConstants.passwordscreen),
+              onTap: () => GoRouter.of(context).pushNamed(RouteConstants.changePasswordScreen),
             ),
             _tile(
               leading: Icon(LucideIcons.download, color: Palette.textWhite, size: 22),
