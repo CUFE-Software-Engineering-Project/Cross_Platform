@@ -39,6 +39,8 @@ class UserModel {
 
   @HiveField(10)
   final Set<String> interests;
+  @HiveField(11)
+  final String? localProfilePhotoPath;
 
   UserModel({
     required this.name,
@@ -53,6 +55,7 @@ class UserModel {
 
     this.tfaVerified,
     this.interests = const {},
+    this.localProfilePhotoPath,
   });
 
   UserModel copyWith({
@@ -68,6 +71,7 @@ class UserModel {
     bool? loginCodesSet,
     bool? tfaVerified,
     Set<String>? interests,
+    String? localProfilePhotoPath,
   }) {
     return UserModel(
       name: name ?? this.name,
@@ -81,6 +85,8 @@ class UserModel {
       isVerified: isVerified ?? this.isVerified,
       tfaVerified: tfaVerified ?? this.tfaVerified,
       interests: interests ?? this.interests,
+      localProfilePhotoPath:
+          localProfilePhotoPath ?? this.localProfilePhotoPath,
     );
   }
 

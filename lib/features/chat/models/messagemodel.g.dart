@@ -27,13 +27,15 @@ class MessageModelAdapter extends TypeAdapter<MessageModel> {
       senderUsername: fields[7] as String?,
       senderName: fields[8] as String?,
       senderProfileMediaKey: fields[9] as String?,
+      messageType: fields[10] as String,
+      localId: fields[11] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, MessageModel obj) {
     writer
-      ..writeByte(10)
+      ..writeByte(12)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -53,7 +55,11 @@ class MessageModelAdapter extends TypeAdapter<MessageModel> {
       ..writeByte(8)
       ..write(obj.senderName)
       ..writeByte(9)
-      ..write(obj.senderProfileMediaKey);
+      ..write(obj.senderProfileMediaKey)
+      ..writeByte(10)
+      ..write(obj.messageType)
+      ..writeByte(11)
+      ..write(obj.localId);
   }
 
   @override

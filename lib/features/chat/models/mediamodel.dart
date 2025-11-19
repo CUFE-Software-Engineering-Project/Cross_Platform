@@ -40,7 +40,12 @@ class MediaModel {
     );
   }
   Map<String, dynamic> toApiRequest() {
-    return {'keyName': keyName, 'type': type, 'size': size, 'name': name};
+    return {
+      'keyName': keyName,
+      'type': type.toUpperCase(),
+      'size': size,
+      'name': name,
+    };
   }
 
   Map<String, dynamic> toMap() {

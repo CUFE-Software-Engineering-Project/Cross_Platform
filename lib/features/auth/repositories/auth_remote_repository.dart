@@ -1,14 +1,18 @@
 // ignore_for_file: unused_catch_clause
 
+import 'dart:io';
+
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:lite_x/core/classes/AppFailure.dart';
 import 'package:lite_x/core/classes/PickedImage.dart';
 import 'package:lite_x/core/models/TokensModel.dart';
 import 'package:lite_x/core/models/usermodel.dart';
 import 'package:lite_x/core/providers/dio_interceptor.dart';
+import 'package:lite_x/features/auth/view/webview/oauth_browser.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:dio/dio.dart';
-
 part 'auth_remote_repository.g.dart';
 
 @Riverpod(keepAlive: true)
@@ -83,6 +87,7 @@ class AuthRemoteRepository {
     }
   }
 
+  //-------------------------------------------------------------------media of photo-----------------------------------------------------------------------------------//
   static const Map<String, String> _mediaTypes = {
     'jpg': 'image/jpeg',
     'jpeg': 'image/jpeg',
@@ -95,7 +100,7 @@ class AuthRemoteRepository {
     return _mediaTypes[extension] ?? 'image/jpeg';
   }
 
-  Future<Either<AppFailure, String>> uploadProfilePhoto({
+  Future<Either<AppFailure, Map<String, dynamic>>> uploadProfilePhoto({
     required PickedImage pickedImage,
   }) async {
     if (pickedImage.file == null) {
@@ -109,25 +114,32 @@ class AuthRemoteRepository {
         'api/media/upload-request',
         data: {'fileName': fileName, 'contentType': fileType},
       );
+
       final String presignedUrl = requestResponse.data['url'];
       final String keyName = requestResponse.data['keyName'];
-      await _dio.put(
-        presignedUrl,
-        data: file.openRead(),
-        options: Options(
+      final fileBytes = await file.readAsBytes();
+
+      final newDio = Dio(
+        BaseOptions(
           headers: {
             'Content-Type': fileType,
-            'Content-Length': await file.length(),
+            'Content-Length': fileBytes.length,
           },
         ),
       );
 
-      final encodedKeyName = Uri.encodeComponent(keyName);
+      await newDio.put(presignedUrl, data: Stream.fromIterable([fileBytes]));
+
       final confirmResponse = await _dio.post(
-        'api/media/confirm-upload/$encodedKeyName',
+        'api/media/confirm-upload/$keyName',
       );
+
+      final mediaId = confirmResponse.data['newMedia']['id'].toString();
+
       final newMediaKey = confirmResponse.data['newMedia']['keyName'] as String;
-      return right(newMediaKey);
+      print("MEDIA ID AFTER UPLOAD: $mediaId");
+
+      return right({'mediaId': mediaId, 'keyName': newMediaKey});
     } on DioException catch (e) {
       return left(AppFailure(message: 'Upload failed'));
     } catch (e) {
@@ -135,6 +147,34 @@ class AuthRemoteRepository {
     }
   }
 
+  //------------------------------------------------------------------download the media------------------------------------------------------------------------------//
+  Future<Either<AppFailure, File>> downloadMedia({
+    required String mediaId,
+  }) async {
+    try {
+      final response = await _dio.get('api/media/download-request/$mediaId');
+      final String downloadUrl = response.data['url'];
+
+      final newDio = Dio();
+      final imageResponse = await newDio.get(
+        downloadUrl,
+        options: Options(responseType: ResponseType.bytes),
+      );
+
+      final directory = await getTemporaryDirectory();
+      final filePath =
+          '${directory.path}/downloaded_${DateTime.now().millisecondsSinceEpoch}.jpg';
+
+      final file = File(filePath);
+      await file.writeAsBytes(imageResponse.data);
+
+      return right(file);
+    } catch (e) {
+      return left(AppFailure(message: 'Download failed $e'));
+    }
+  }
+
+  //-------------------------------------------------------------------------------------------------------------------------------------------------------//
   Future<Either<AppFailure, (UserModel, TokensModel)>> updateUsername({
     required UserModel currentUser,
     required String Username,
@@ -185,7 +225,7 @@ class AuthRemoteRepository {
 
       final user = UserModel.fromMap(response.data['user']);
       final tokens = TokensModel.fromMap_login(response.data);
-      print(tokens);
+      // print(tokens);
       return right((user, tokens));
     } on DioException catch (e) {
       return left(AppFailure(message: 'Login failed'));
@@ -244,7 +284,7 @@ class AuthRemoteRepository {
     }
   }
 
-  Future<Either<AppFailure, String>> reset_password({
+  Future<Either<AppFailure, (UserModel, TokensModel)>> reset_password({
     required String email,
     required String password,
   }) async {
@@ -253,9 +293,9 @@ class AuthRemoteRepository {
         'api/auth/reset-password',
         data: {'email': email, 'password': password},
       );
-      print(response);
-      final message = response.data['message'] ?? 'Password reset successful';
-      return right(message);
+      final user = UserModel.fromMap(response.data['user']);
+      final tokens = TokensModel.fromMap_reset_password(response.data);
+      return right((user, tokens));
     } on DioException catch (e) {
       return left(AppFailure(message: 'Reset password failed'));
     } catch (e) {
@@ -325,5 +365,57 @@ class AuthRemoteRepository {
     } catch (e) {
       return left(AppFailure(message: e.toString()));
     }
+  }
+
+  //-----------------------------------------------google & github------------------------------------------------------------//
+  Future<Either<AppFailure, (UserModel, TokensModel)>> _performSocialLogin(
+    String provider,
+  ) async {
+    try {
+      final baseUrl = dotenv.env["API_URL"]!;
+      final startUrl = "${baseUrl}oauth2/authorize/$provider";
+      const successUrl = "https://shoy.publicvm.com/login/success";
+      final browser = OAuthBrowser(
+        startUrl: startUrl,
+        successBaseUrl: successUrl,
+      );
+
+      final result = await browser.start();
+      final accessToken = result['token'];
+      final refreshToken = result['refresh'];
+      final userJsonString = result['user'];
+
+      if (accessToken == null ||
+          refreshToken == null ||
+          userJsonString == null) {
+        return left(
+          AppFailure(message: "Login failed: Missing data from server"),
+        );
+      }
+
+      final decoded = Uri.decodeComponent(userJsonString);
+      final user = UserModel.fromJson(decoded);
+
+      final tokens = TokensModel(
+        accessToken: accessToken,
+        refreshToken: refreshToken,
+        accessTokenExpiry: DateTime.now().add(const Duration(hours: 1)),
+        refreshTokenExpiry: DateTime.now().add(const Duration(days: 30)),
+      );
+      return right((user, tokens));
+    } catch (e) {
+      if (e.toString().contains("USER_CLOSED")) {
+        return left(AppFailure(message: "Login cancelled"));
+      }
+      return left(AppFailure(message: e.toString()));
+    }
+  }
+
+  Future<Either<AppFailure, (UserModel, TokensModel)>> loginWithGoogle() async {
+    return _performSocialLogin('google');
+  }
+
+  Future<Either<AppFailure, (UserModel, TokensModel)>> loginWithGithub() async {
+    return _performSocialLogin('github');
   }
 }

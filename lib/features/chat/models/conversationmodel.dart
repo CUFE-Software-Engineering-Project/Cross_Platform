@@ -38,6 +38,8 @@ class ConversationModel extends HiveObject {
   String? dmPartnerUsername;
   @HiveField(15)
   String? dmPartnerProfileKey;
+  @HiveField(16)
+  String? lastMessageType;
 
   ConversationModel({
     required this.id,
@@ -56,7 +58,9 @@ class ConversationModel extends HiveObject {
     this.dmPartnerName,
     this.dmPartnerUsername,
     this.dmPartnerProfileKey,
+    this.lastMessageType,
   });
+
   factory ConversationModel.fromApiResponse(
     Map<String, dynamic> json,
     String currentUserId,
@@ -69,24 +73,56 @@ class ConversationModel extends HiveObject {
     String? lastMessageContent;
     DateTime? lastMessageTime;
     String? lastMessageSenderId;
+    String? lastMessageType;
+
     if (messages.isNotEmpty) {
-      final lastMsg = messages.reduce((a, b) {
-        return DateTime.parse(
-              a['createdAt'],
-            ).isAfter(DateTime.parse(b['createdAt']))
-            ? a
-            : b;
-      });
-      lastMessageContent = lastMsg['content'] as String?;
+      final lastMsg = messages.last;
+
+      if (lastMsg['messageMedia'] != null &&
+          lastMsg['messageMedia'].isNotEmpty) {
+        final media = lastMsg['messageMedia'][0]['media'];
+
+        switch ((media['type'] as String).toUpperCase()) {
+          case 'IMAGE':
+            lastMessageType = 'image';
+            lastMessageContent = null;
+            break;
+          case 'VIDEO':
+            lastMessageType = 'video';
+            lastMessageContent = null;
+            break;
+          case 'GIF':
+            lastMessageType = 'gif';
+            lastMessageContent = null;
+            break;
+          case 'FILE':
+            lastMessageType = 'file';
+            lastMessageContent = null;
+            break;
+          default:
+            lastMessageType = 'text';
+        }
+      } else {
+        lastMessageType = 'text';
+        lastMessageContent = lastMsg['content'] as String?;
+
+        if (lastMessageContent != null && lastMessageContent.length > 80) {
+          lastMessageContent = lastMessageContent.substring(0, 80);
+        }
+      }
+
       lastMessageTime = DateTime.parse(lastMsg['createdAt'] as String);
       lastMessageSenderId = lastMsg['userId'] as String;
     }
+
+    final unseenCount = json['unseenMessagesCount'] as int? ?? 0;
     final chatGroup = json['chatGroup'] as Map<String, dynamic>?;
     final isDm = json['DMChat'] as bool;
     String? dmPartnerUserId;
     String? dmPartnerName;
     String? dmPartnerUsername;
     String? dmPartnerProfileKey;
+
     if (isDm && participantIds.length > 1) {
       final partner = chatUsers.firstWhereOrNull(
         (cu) => cu['userId'] != currentUserId,
@@ -100,6 +136,7 @@ class ConversationModel extends HiveObject {
         dmPartnerProfileKey = partnerUser['profileMediaId'] as String?;
       }
     }
+
     return ConversationModel(
       id: json['id'] as String,
       isDMChat: isDm,
@@ -112,15 +149,17 @@ class ConversationModel extends HiveObject {
       lastMessageContent: lastMessageContent,
       lastMessageTime: lastMessageTime,
       lastMessageSenderId: lastMessageSenderId,
-      unseenCount: 0,
+      unseenCount: unseenCount,
       dmPartnerUserId: dmPartnerUserId,
       dmPartnerName: dmPartnerName,
       dmPartnerUsername: dmPartnerUsername,
       dmPartnerProfileKey: dmPartnerProfileKey,
+      lastMessageType: lastMessageType,
     );
   }
 
   bool get isGroup => !isDMChat;
+
   String getDisplayName() {
     if (isDMChat) {
       return dmPartnerName ?? dmPartnerUsername ?? "Unknown User";
@@ -147,7 +186,7 @@ class ConversationModel extends HiveObject {
 
   @override
   String toString() {
-    return 'ConversationModel(id: $id, isDMChat: $isDMChat, createdAt: $createdAt, updatedAt: $updatedAt, groupName: $groupName, groupPhotoKey: $groupPhotoKey, groupDescription: $groupDescription, participantIds: $participantIds, lastMessageContent: $lastMessageContent, lastMessageTime: $lastMessageTime, lastMessageSenderId: $lastMessageSenderId, unseenCount: $unseenCount, dmPartnerUserId: $dmPartnerUserId, dmPartnerName: $dmPartnerName, dmPartnerUsername: $dmPartnerUsername, dmPartnerProfileKey: $dmPartnerProfileKey)';
+    return 'ConversationModel(id: $id, isDMChat: $isDMChat, createdAt: $createdAt, updatedAt: $updatedAt, groupName: $groupName, groupPhotoKey: $groupPhotoKey, groupDescription: $groupDescription, participantIds: $participantIds, lastMessageContent: $lastMessageContent, lastMessageTime: $lastMessageTime, lastMessageSenderId: $lastMessageSenderId, unseenCount: $unseenCount, dmPartnerUserId: $dmPartnerUserId, dmPartnerName: $dmPartnerName, dmPartnerUsername: $dmPartnerUsername, dmPartnerProfileKey: $dmPartnerProfileKey, lastMessageType: $lastMessageType)';
   }
 
   @override
@@ -170,7 +209,8 @@ class ConversationModel extends HiveObject {
         other.dmPartnerUserId == dmPartnerUserId &&
         other.dmPartnerName == dmPartnerName &&
         other.dmPartnerUsername == dmPartnerUsername &&
-        other.dmPartnerProfileKey == dmPartnerProfileKey;
+        other.dmPartnerProfileKey == dmPartnerProfileKey &&
+        other.lastMessageType == lastMessageType;
   }
 
   @override
@@ -190,7 +230,8 @@ class ConversationModel extends HiveObject {
         dmPartnerUserId.hashCode ^
         dmPartnerName.hashCode ^
         dmPartnerUsername.hashCode ^
-        dmPartnerProfileKey.hashCode;
+        dmPartnerProfileKey.hashCode ^
+        lastMessageType.hashCode;
   }
 
   ConversationModel copyWith({
@@ -210,6 +251,7 @@ class ConversationModel extends HiveObject {
     String? dmPartnerName,
     String? dmPartnerUsername,
     String? dmPartnerProfileKey,
+    String? lastMessageType,
   }) {
     return ConversationModel(
       id: id ?? this.id,
@@ -228,6 +270,7 @@ class ConversationModel extends HiveObject {
       dmPartnerName: dmPartnerName ?? this.dmPartnerName,
       dmPartnerUsername: dmPartnerUsername ?? this.dmPartnerUsername,
       dmPartnerProfileKey: dmPartnerProfileKey ?? this.dmPartnerProfileKey,
+      lastMessageType: lastMessageType ?? this.lastMessageType,
     );
   }
 
@@ -249,6 +292,7 @@ class ConversationModel extends HiveObject {
       'dmPartnerName': dmPartnerName,
       'dmPartnerUsername': dmPartnerUsername,
       'dmPartnerProfileKey': dmPartnerProfileKey,
+      'lastMessageType': lastMessageType,
     };
   }
 
@@ -287,6 +331,9 @@ class ConversationModel extends HiveObject {
           : null,
       dmPartnerProfileKey: map['dmPartnerProfileKey'] != null
           ? map['dmPartnerProfileKey'] as String
+          : null,
+      lastMessageType: map['lastMessageType'] != null
+          ? map['lastMessageType'] as String
           : null,
     );
   }

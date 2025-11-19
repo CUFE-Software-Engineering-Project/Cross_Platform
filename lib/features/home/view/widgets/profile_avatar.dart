@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lite_x/core/providers/current_user_provider.dart';
@@ -19,9 +21,10 @@ class ProfileAvatar extends ConsumerWidget {
         child: CircleAvatar(
           radius: 16,
           backgroundColor: Colors.grey[800],
-          backgroundImage: user?.photo != null && user!.photo!.isNotEmpty
-              ? NetworkImage(user.photo!)
+          backgroundImage: user?.localProfilePhotoPath != null
+              ? FileImage(File(user!.localProfilePhotoPath!))
               : null,
+
           child: user?.photo == null || user?.photo?.isEmpty == true
               ? Icon(Icons.person, color: Colors.grey[400], size: 18)
               : null,

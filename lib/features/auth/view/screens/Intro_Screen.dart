@@ -9,22 +9,77 @@ import 'package:lite_x/core/view/widgets/Loader.dart';
 import 'package:lite_x/features/auth/repositories/auth_remote_repository.dart';
 import 'package:lite_x/features/auth/view/widgets/buildTermsText.dart';
 import 'package:lite_x/features/auth/view/widgets/buildXLogo.dart';
+import 'package:lite_x/features/auth/view_model/auth_state.dart';
+import 'package:lite_x/features/auth/view_model/auth_view_model.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 class IntroScreen extends ConsumerWidget {
   const IntroScreen({super.key});
 
+  void _showErrorToast(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          textAlign: TextAlign.start,
+          style: const TextStyle(
+            color: Palette.textWhite,
+            fontSize: 15,
+            fontWeight: FontWeight.w400,
+          ),
+        ),
+        backgroundColor: const Color(0xFF5C5C5C),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        margin: const EdgeInsets.only(left: 16, right: 16, bottom: 100),
+        duration: const Duration(seconds: 3),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final size = MediaQuery.of(context).size;
 
+    // Listen to auth state changes
+    ref.listen(authViewModelProvider, (previous, next) {
+      final authViewModel = ref.read(authViewModelProvider.notifier);
+
+      if (next.type == AuthStateType.authenticated) {
+        context.goNamed(RouteConstants.homescreen);
+        authViewModel.resetState();
+      } else if (next.type == AuthStateType.error) {
+        _showErrorToast(
+          context,
+          next.message ?? 'Login failed. Please try again.',
+        );
+        authViewModel.resetState();
+      }
+    });
+
+    final authState = ref.watch(authViewModelProvider);
+    final isLoading = authState.isLoading;
+
     return Scaffold(
       backgroundColor: Palette.background,
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(),
-        child: SafeArea(child: _buildMobileLayout(size, context, ref)),
+      body: AbsorbPointer(
+        absorbing: isLoading,
+        child: Stack(
+          children: [
+            Container(
+              width: double.infinity,
+              height: double.infinity,
+              decoration: const BoxDecoration(),
+              child: SafeArea(child: _buildMobileLayout(size, context, ref)),
+            ),
+            if (isLoading)
+              Container(
+                color: Colors.black.withOpacity(0.5),
+                child: const Loader(),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -65,18 +120,29 @@ class IntroScreen extends ConsumerWidget {
   }
 
   Widget _buildAuthButtons(BuildContext context, WidgetRef ref) {
+    final authState = ref.watch(authViewModelProvider);
+    final isLoading = authState.isLoading;
+
     return Column(
       children: [
         AuthButton(
           icon: 'assets/images/google.png',
           label: 'Continue with Google',
-          onPressed: () async {},
+          onPressed: isLoading
+              ? null
+              : () {
+                  ref.read(authViewModelProvider.notifier).loginWithGoogle();
+                },
         ),
         const SizedBox(height: 10),
         AuthButton(
           icon: 'assets/images/github.png',
           label: 'Continue with GitHub',
-          onPressed: () {},
+          onPressed: isLoading
+              ? null
+              : () {
+                  ref.read(authViewModelProvider.notifier).loginWithGithub();
+                },
         ),
         const SizedBox(height: 12),
         Row(
@@ -95,9 +161,11 @@ class IntroScreen extends ConsumerWidget {
         const SizedBox(height: 12),
         AuthButton(
           label: 'Create account',
-          onPressed: () {
-            context.pushNamed(RouteConstants.createaccountscreen);
-          },
+          onPressed: isLoading
+              ? null
+              : () {
+                  context.pushNamed(RouteConstants.createaccountscreen);
+                },
         ),
       ],
     );
@@ -134,7 +202,7 @@ class IntroScreen extends ConsumerWidget {
 class AuthButton extends StatelessWidget {
   final String? icon;
   final String label;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
 
   const AuthButton({
     super.key,
@@ -145,9 +213,11 @@ class AuthButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isEnabled = onPressed != null;
+
     final buttonStyle = ElevatedButton.styleFrom(
-      backgroundColor: Colors.white,
-      foregroundColor: Colors.black,
+      backgroundColor: isEnabled ? Colors.white : Colors.white.withOpacity(0.6),
+      foregroundColor: isEnabled ? Colors.black : Colors.black.withOpacity(0.4),
       elevation: 0,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
     );

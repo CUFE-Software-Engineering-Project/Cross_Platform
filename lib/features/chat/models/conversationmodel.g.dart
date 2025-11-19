@@ -33,13 +33,14 @@ class ConversationModelAdapter extends TypeAdapter<ConversationModel> {
       dmPartnerName: fields[13] as String?,
       dmPartnerUsername: fields[14] as String?,
       dmPartnerProfileKey: fields[15] as String?,
+      lastMessageType: fields[16] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, ConversationModel obj) {
     writer
-      ..writeByte(16)
+      ..writeByte(17)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -71,7 +72,9 @@ class ConversationModelAdapter extends TypeAdapter<ConversationModel> {
       ..writeByte(14)
       ..write(obj.dmPartnerUsername)
       ..writeByte(15)
-      ..write(obj.dmPartnerProfileKey);
+      ..write(obj.dmPartnerProfileKey)
+      ..writeByte(16)
+      ..write(obj.lastMessageType);
   }
 
   @override

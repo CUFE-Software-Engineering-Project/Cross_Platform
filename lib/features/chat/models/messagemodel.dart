@@ -35,6 +35,12 @@ class MessageModel extends HiveObject {
   @HiveField(9)
   String? senderProfileMediaKey;
 
+  @HiveField(10)
+  String messageType; // text | image | video | gif | file
+
+  @HiveField(11)
+  String? localId; // before server assigns id
+
   MessageModel({
     required this.id,
     required this.chatId,
@@ -46,6 +52,8 @@ class MessageModel extends HiveObject {
     this.senderUsername,
     this.senderName,
     this.senderProfileMediaKey,
+    required this.messageType,
+    this.localId,
   });
   factory MessageModel.fromApiResponse(Map<String, dynamic> json) {
     List<MediaModel>? mediaList;
@@ -57,7 +65,23 @@ class MessageModel extends HiveObject {
           .toList();
     }
     final user = json['user'] as Map<String, dynamic>?;
-
+    String detectedType = 'text';
+    if (mediaList != null && mediaList.isNotEmpty) {
+      switch (mediaList.first.type.toUpperCase()) {
+        case 'IMAGE':
+          detectedType = 'image';
+          break;
+        case 'VIDEO':
+          detectedType = 'video';
+          break;
+        case 'GIF':
+          detectedType = 'gif';
+          break;
+        case 'FILE':
+          detectedType = 'file';
+          break;
+      }
+    }
     return MessageModel(
       id: json['id'] as String,
       chatId: json['chatId'] as String,
@@ -69,6 +93,8 @@ class MessageModel extends HiveObject {
       senderUsername: user?['username'] as String?,
       senderName: user?['name'] as String?,
       senderProfileMediaKey: user?['profileMediaId'] as String?,
+      messageType: detectedType,
+      localId: null,
     );
   }
 
@@ -83,6 +109,8 @@ class MessageModel extends HiveObject {
     String? senderUsername,
     String? senderName,
     String? senderProfileMediaKey,
+    String? messageType,
+    String? localId,
   }) {
     return MessageModel(
       id: id ?? this.id,
@@ -96,6 +124,8 @@ class MessageModel extends HiveObject {
       senderName: senderName ?? this.senderName,
       senderProfileMediaKey:
           senderProfileMediaKey ?? this.senderProfileMediaKey,
+      messageType: messageType ?? this.messageType,
+      localId: localId ?? this.localId,
     );
   }
 
@@ -111,16 +141,28 @@ class MessageModel extends HiveObject {
       'senderUsername': senderUsername,
       'senderName': senderName,
       'senderProfileMediaKey': senderProfileMediaKey,
+      'messageType': messageType,
+      'localId': localId,
     };
   }
 
-  Map<String, dynamic> toApiRequest() {
-    return {
+  Map<String, dynamic> toApiRequest({List<String>? recipientIds}) {
+    final Map<String, dynamic> payload = {
       'data': {
         'content': content,
         'messageMedia': media?.map((m) => m.toApiRequest()).toList(),
       },
     };
+
+    if (chatId.isNotEmpty) {
+      payload['chatId'] = chatId;
+    }
+
+    if (recipientIds != null && recipientIds.isNotEmpty) {
+      payload['recipientId'] = recipientIds;
+    }
+
+    return payload;
   }
 
   factory MessageModel.fromMap(Map<String, dynamic> map) {
@@ -141,6 +183,8 @@ class MessageModel extends HiveObject {
       senderUsername: map['senderUsername'] as String?,
       senderName: map['senderName'] as String?,
       senderProfileMediaKey: map['senderProfileMediaKey'] as String?,
+      messageType: map['messageType'] ?? 'text',
+      localId: map['localId'],
     );
   }
 
@@ -155,25 +199,6 @@ class MessageModel extends HiveObject {
   bool get isSent =>
       status == 'SENT' || status == 'DELIVERED' || status == 'READ';
   bool get isRead => status == 'READ';
-
-  String get messageType {
-    if (hasMedia) {
-      final firstMedia = media!.first;
-      switch (firstMedia.type) {
-        case 'IMAGE':
-          return 'image';
-        case 'VIDEO':
-          return 'video';
-        case 'GIF':
-          return 'gif';
-        case 'FILE':
-          return 'file';
-        default:
-          return 'media';
-      }
-    }
-    return 'text';
-  }
 
   @override
   String toString() {

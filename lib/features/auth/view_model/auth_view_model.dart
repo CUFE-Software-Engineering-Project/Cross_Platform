@@ -1,6 +1,9 @@
 import 'dart:io';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:fpdart/fpdart.dart';
+import 'package:lite_x/core/classes/AppFailure.dart';
 import 'package:lite_x/core/classes/PickedImage.dart';
+import 'package:lite_x/core/models/TokensModel.dart';
 import 'package:lite_x/core/models/usermodel.dart';
 import 'package:lite_x/features/auth/repositories/auth_local_repository.dart';
 import 'package:lite_x/features/auth/repositories/auth_remote_repository.dart';
@@ -111,29 +114,6 @@ class AuthViewModel extends _$AuthViewModel {
         state = AuthState.authenticated('Signup successful');
         _registerFcmToken();
         _listenForFcmTokenRefresh();
-      },
-    );
-  }
-
-  Future<void> uploadProfilePhoto(PickedImage pickedImage) async {
-    state = AuthState.loading();
-    final accessToken = getAccessToken();
-
-    if (accessToken == null) {
-      state = AuthState.error('Session expired. Please login again.');
-      return;
-    }
-
-    final result = await _authRemoteRepository.uploadProfilePhoto(
-      pickedImage: pickedImage,
-    );
-
-    result.fold(
-      (failure) {
-        state = AuthState.error(failure.message);
-      },
-      (keyName) {
-        state = AuthState.success("Profile photo uploaded");
       },
     );
   }
@@ -322,14 +302,17 @@ class AuthViewModel extends _$AuthViewModel {
       password: password,
     );
 
-    result.fold(
-      (failure) {
-        state = AuthState.error(failure.message);
-      },
-      (message) {
-        state = AuthState.success(message);
-      },
-    );
+    result.fold((failure) => state = AuthState.error(failure.message), (
+      data,
+    ) async {
+      final (user, tokens) = data;
+      await Future.wait([
+        _authLocalRepository.saveUser(user),
+        _authLocalRepository.saveTokens(tokens),
+      ]);
+      ref.read(currentUserProvider.notifier).adduser(user);
+      state = AuthState.success('Reset_Password successful');
+    });
   }
 
   //------------------------------------------------------updatepassword-----------------------------------------------------------------//
@@ -431,5 +414,83 @@ class AuthViewModel extends _$AuthViewModel {
 
   UserModel? getCurrentUser() {
     return _authLocalRepository.getUser();
+  }
+  //-------------------------------------------------------profile photo ---------------------------------------------------------------------//
+
+  Future<void> uploadProfilePhoto(PickedImage pickedImage) async {
+    state = AuthState.loading();
+
+    final uploadResult = await _authRemoteRepository.uploadProfilePhoto(
+      pickedImage: pickedImage,
+    );
+
+    await uploadResult.fold(
+      (failure) async {
+        state = AuthState.error(failure.message);
+      },
+      (data) async {
+        final String mediaId = data['mediaId'].toString();
+        final downloadResult = await _authRemoteRepository.downloadMedia(
+          mediaId: mediaId,
+        );
+
+        await downloadResult.fold(
+          (failure) async {
+            state = AuthState.error("Upload done but download failed!");
+          },
+          (file) async {
+            final localPath = file.path;
+
+            final currentUser = ref.read(currentUserProvider);
+            if (currentUser != null) {
+              final updatedUser = currentUser.copyWith(
+                photo: mediaId,
+                localProfilePhotoPath: localPath,
+              );
+
+              await _authLocalRepository.saveUser(updatedUser);
+              ref.read(currentUserProvider.notifier).adduser(updatedUser);
+
+              state = AuthState.success("Profile photo uploaded and saved");
+            }
+          },
+        );
+      },
+    );
+  }
+
+  //--------------------------------------------------------------download photo ----------------------------------------------------------------------------------//
+
+  //-----------------------------------------------google & github------------------------------------------------------------//
+  Future<void> loginWithGoogle() async {
+    state = AuthState.loading();
+    final result = await _authRemoteRepository.loginWithGoogle();
+    await _handleSocialLoginResult(result);
+  }
+
+  Future<void> loginWithGithub() async {
+    state = AuthState.loading();
+    final result = await _authRemoteRepository.loginWithGithub();
+    await _handleSocialLoginResult(result);
+  }
+
+  Future<void> _handleSocialLoginResult(
+    Either<AppFailure, (UserModel, TokensModel)> result,
+  ) async {
+    result.fold(
+      (failure) {
+        state = AuthState.error(failure.message);
+      },
+      (data) async {
+        final (user, tokens) = data;
+        await Future.wait([
+          _authLocalRepository.saveUser(user),
+          _authLocalRepository.saveTokens(tokens),
+        ]);
+
+        ref.read(currentUserProvider.notifier).adduser(user);
+        state = AuthState.authenticated('Social login successful');
+      },
+    );
   }
 }
