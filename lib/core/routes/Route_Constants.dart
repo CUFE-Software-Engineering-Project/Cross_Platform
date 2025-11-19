@@ -33,4 +33,6 @@ class RouteConstants {
   static String SearchDirectMessages = "SearchDirectMessages";
   static String ProfilePhotoScreen = "ProfilePhotoScreen";
   static String ProfileCoverScreen = "ProfileCoverScreen";
+  static String ProfileSearchScreen = "ProfileSearchScreen";
+  
 }

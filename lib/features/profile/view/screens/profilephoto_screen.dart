@@ -143,6 +143,7 @@ class ProfilephotoScreen extends StatelessWidget {
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900),
               ),
             ),
+          if (!isMe) SizedBox(),
         ],
       ),
     );

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
+import 'package:lite_x/features/profile/models/profile_tweet_model.dart';
+import 'package:lite_x/features/profile/view/widgets/profile_tweets/profile_normal_tweet_widget.dart';
+import 'package:lite_x/features/profile/view/widgets/profile_tweets/profile_retweet_widget.dart';
 
 abstract class Shared {
   static String formatCount(int count) {
@@ -140,7 +143,6 @@ DateTime? parseFormattedDate(String formattedDate) {
   return DateTime(year, month, day);
 }
 
-
 Future<bool?> showPopupMessage({
   required BuildContext context,
   required Text title,
@@ -187,4 +189,58 @@ class ProfilePhotoScreenArgs {
   final ProfileModel profileModel;
 
   ProfilePhotoScreenArgs({required this.isMe, required this.profileModel});
+}
+
+enum TweetType { Tweet, ReTweet, Quote }
+
+abstract class ProfileTweet implements Widget {}
+
+ProfileTweet getCorrectTweetType(
+  ProfileTweetModel tweetModel,
+  ProfileModel pm,
+) {
+  TweetType type = tweetModel.type;
+
+  if (type == TweetType.ReTweet)
+    return ProfileRetweetWidget(profileModel: pm, tweetModel: tweetModel);
+
+  return ProfileNormalTweetWidget(
+    profileModel: pm,
+    profilePostModel: tweetModel,
+  );
+}
+
+void showSmallPopUpMessage({
+  required BuildContext context,
+  required String message,
+  required Color borderColor,
+  required Icon icon,
+}) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Center(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            icon,
+            SizedBox(width: 10),
+            Flexible(
+              child: Text(
+                message,
+                style: TextStyle(fontSize: 16),
+                overflow: TextOverflow.clip,
+              ),
+            ),
+          ],
+        ),
+      ),
+      duration: Duration(seconds: 2),
+      behavior: SnackBarBehavior.floating,
+      margin: EdgeInsets.all(30),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(width: 0.8, color: borderColor),
+      ),
+    ),
+  );
 }

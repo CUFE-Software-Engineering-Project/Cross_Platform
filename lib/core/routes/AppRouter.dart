@@ -27,8 +27,10 @@ import 'package:lite_x/features/profile/view/screens/birthdate_screen.dart';
 import 'package:lite_x/features/profile/view/screens/edit_profile_screen.dart';
 import 'package:lite_x/features/profile/view/screens/following_followers_screen.dart';
 import 'package:lite_x/features/profile/view/screens/profile_screen.dart';
+import 'package:lite_x/features/profile/view/screens/profile_search_screen.dart';
 import 'package:lite_x/features/profile/view/screens/profilecover_screen.dart';
-import 'package:lite_x/features/profile/view/screens/profilephoto_screen.dart' hide ProfilePhotoScreenArgs;
+import 'package:lite_x/features/profile/view/screens/profilephoto_screen.dart'
+    hide ProfilePhotoScreenArgs;
 import 'package:lite_x/features/settings/screens/BlockedAccounts_Screen.dart';
 import 'package:lite_x/features/settings/screens/MuteAndBlock_Screen.dart';
 import 'package:lite_x/features/settings/screens/MutedAccounts_Screen.dart';
@@ -38,7 +40,7 @@ import 'package:lite_x/features/settings/screens/SettingsAndPrivacy_Screen.dart'
 class Approuter {
   static final GoRouter router = GoRouter(
     // initialLocation: "/splash",
-    initialLocation: "/profilescreen/hazem123",
+    initialLocation: "/profilescreen/hazememam",
     routes: [
       GoRoute(
         name: RouteConstants.splash,
@@ -302,6 +304,14 @@ class Approuter {
           child: ProfileCoverScreen(
             profilePhotoScreenArgs: state.extra as ProfilePhotoScreenArgs,
           ),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
+        name: RouteConstants.ProfileSearchScreen,
+        path: "/profileSearchScreen",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: ProfileSearchScreen(),
           transitionsBuilder: _slideRightTransitionBuilder,
         ),
       ),
