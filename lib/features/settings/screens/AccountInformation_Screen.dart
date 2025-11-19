@@ -62,6 +62,17 @@ class AccountInformationScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (username.isNotEmpty) ...[
+              Text(
+                '@$username',
+                style: const TextStyle(
+                  color: Palette.textSecondary,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
             _section(
               title: '',
               children: [
@@ -138,17 +149,17 @@ class AccountInformationScreen extends ConsumerWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final subtitle = _subtitle(ref);
+        _subtitle(ref); // keep provider call for side-effect-free compatibility (not used for placeholder)
         if (constraints.maxWidth > 600) {
           return SettingsResponsiveScaffold.web(
             title: 'Account information',
-            subtitle: subtitle,
+            subtitle: '@profilename',
             body: body,
           );
         }
         return SettingsResponsiveScaffold.mobile(
           title: 'Account information',
-          subtitle: subtitle,
+          subtitle: '',
           body: body,
         );
       },

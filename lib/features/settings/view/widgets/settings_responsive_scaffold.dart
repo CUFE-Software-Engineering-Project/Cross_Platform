@@ -55,7 +55,7 @@ class SettingsResponsiveScaffold extends StatelessWidget {
       ),
       title: Column(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: isWeb ? CrossAxisAlignment.start : CrossAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             title,
@@ -72,7 +72,7 @@ class SettingsResponsiveScaffold extends StatelessWidget {
             ),
         ],
       ),
-      centerTitle: !isWeb,
+      centerTitle: false,
       bottom: headerBottom != null
           ? PreferredSize(
               preferredSize: const Size.fromHeight(64),
@@ -89,24 +89,15 @@ class SettingsResponsiveScaffold extends StatelessWidget {
 
   Widget _buildWebContainer(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black.withOpacity(0.4),
+      backgroundColor: Palette.background,
+      appBar: _buildAppBar(context),
       body: Center(
-        child: Container(
-          width: 800,
-            height: 700,
-          decoration: BoxDecoration(
-            color: Palette.background,
-            borderRadius: BorderRadius.circular(12),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 800),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            child: body,
           ),
-          child: Builder(builder: (context) {
-            final appBar = _buildAppBar(context);
-            return Column(
-              children: [
-                SizedBox(height: appBar.preferredSize.height, child: appBar),
-                Expanded(child: body),
-              ],
-            );
-          }),
         ),
       ),
     );

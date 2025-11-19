@@ -27,13 +27,20 @@ class YourAccountScreen extends ConsumerWidget {
         onTap: onTap,
       );
 
-  Widget _body(BuildContext context) {
+  Widget _body(BuildContext context, String subtitle) {
     return SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (subtitle.isNotEmpty) ...[
+              Text(
+                subtitle,
+                style: const TextStyle(color: Palette.textSecondary, fontSize: 16, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 8),
+            ],
             const SizedBox(height: 8),
             const Text(
               'See information about your account, download an archive of your data, or learn about account deactivation options.',
@@ -77,14 +84,14 @@ class YourAccountScreen extends ConsumerWidget {
       if (constraints.maxWidth > 600) {
         return SettingsResponsiveScaffold.web(
           title: 'Your account',
-          subtitle: subtitle,
-          body: _body(context),
+          subtitle: '@profilename',
+          body: _body(context, subtitle),
         );
       }
       return SettingsResponsiveScaffold.mobile(
         title: 'Your account',
-        subtitle: subtitle,
-        body: _body(context),
+        subtitle: '',
+        body: _body(context, subtitle),
       );
     });
   }
