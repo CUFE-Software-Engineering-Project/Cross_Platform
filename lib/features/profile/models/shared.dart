@@ -191,7 +191,7 @@ class ProfilePhotoScreenArgs {
   ProfilePhotoScreenArgs({required this.isMe, required this.profileModel});
 }
 
-enum TweetType { Tweet, ReTweet, Quote }
+enum TweetType { Tweet, ReTweet, Quote, Reply }
 
 abstract class ProfileTweet implements Widget {}
 
@@ -243,4 +243,52 @@ void showSmallPopUpMessage({
       ),
     ),
   );
+}
+
+String getTimeAgo(String backendTime) {
+  try {
+    DateTime postTime = DateTime.parse(backendTime);
+    DateTime currentTime = DateTime.now().toUtc();
+    Duration difference = currentTime.difference(postTime);
+
+    if (difference.isNegative) {
+      return 'now';
+    }
+
+    int seconds = difference.inSeconds;
+
+    if (seconds < 60) {
+      return '${seconds}s';
+    }
+
+    int minutes = difference.inMinutes;
+    if (minutes < 60) {
+      return '${minutes}m';
+    }
+
+    int hours = difference.inHours;
+    if (hours < 24) {
+      return '${hours}h';
+    }
+
+    int days = difference.inDays;
+    if (days < 7) {
+      return '${days}d';
+    }
+
+    if (days < 30) {
+      int weeks = (days / 7).floor();
+      return '${weeks}w';
+    }
+
+    if (days < 365) {
+      int months = (days / 30).floor();
+      return '${months}mo';
+    }
+
+    int years = (days / 365).floor();
+    return '${years}y';
+  } catch (e) {
+    return 'now';
+  }
 }

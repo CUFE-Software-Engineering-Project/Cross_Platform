@@ -11,6 +11,13 @@ class ProfileTweetModel {
   final bool isLikedByMe;
   final bool isSavedByMe;
   final bool isRepostedWithMe;
+  final num quotesCount;
+  final String userId;
+  final String userUserName;
+  final String userDisplayName;
+  final String profileMediaUrl;
+  final bool verified;
+  final bool protectedAccount;
   final List<dynamic> mediaUrls;
   final TweetType type;
 
@@ -26,6 +33,13 @@ class ProfileTweetModel {
     required this.isLikedByMe,
     required this.activityNumber,
     required this.mediaUrls,
+    required this.quotesCount,
+    required this.profileMediaUrl,
+    required this.protectedAccount,
+    required this.userId,
+    required this.userDisplayName,
+    required this.userUserName,
+    required this.verified,
     required this.type,
   });
 
@@ -38,19 +52,28 @@ class ProfileTweetModel {
       type = TweetType.ReTweet;
     else if (typeString.toLowerCase() == "quote")
       type = TweetType.Quote;
+    else if (typeString.toLowerCase() == "reply")
+      type = TweetType.Reply;
     return ProfileTweetModel(
       id: json['id'] ?? "",
-      text: json['text'] ?? "",
+      text: json['content'] ?? "",
       timeAgo: json['timeAgo'] ?? "",
-      likes: json['likes'] ?? 0,
-      retweets: json['retweets'] ?? 0,
-      replies: json['replies'] ?? 0,
-      isLikedByMe: json['isLikedByMe'] ?? false,
-      isRepostedWithMe: json['isRepostedWithMe'] ?? false,
+      likes: json['likesCount'] ?? 0,
+      retweets: json['retweetCount'] ?? 0,
+      replies: json['repliesCount'] ?? 0,
+      quotesCount: json["quotesCount"] ?? 0,
+      isLikedByMe: json['isLiked'] ?? false,
+      isRepostedWithMe: json['isRetweeted'] ?? false,
       activityNumber: json['activityNumber'] ?? 0,
-      isSavedByMe: json['isSaveByMe'] ?? false,
+      isSavedByMe: json['isBookmarked'] ?? false,
       mediaUrls: json['mediaUrls'] ?? [],
       type: type,
+      userDisplayName: json["user"]?["name"] ?? "",
+      userId: json["user"]?["id"] ?? "",
+      userUserName: json["user"]?["username"] ?? "",
+      profileMediaUrl: json["profileMedia"] ?? "",
+      protectedAccount: json["user"]?["protectedAccount"] ?? false,
+      verified: json["user"]?["verified"] ?? false,
     );
   }
   // ------------------------------------------

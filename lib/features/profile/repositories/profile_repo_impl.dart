@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:lite_x/features/media/download_media.dart';
 import 'package:lite_x/features/profile/models/create_reply_model.dart';
 import 'package:lite_x/features/profile/models/create_tweet_model.dart';
 import 'package:lite_x/features/profile/models/follower_model.dart';
@@ -17,16 +18,16 @@ import 'package:lite_x/features/profile/repositories/profile_repo.dart';
 class ProfileRepoImpl implements ProfileRepo {
   Dio _dio;
   ProfileRepoImpl(Dio d) : _dio = d {
-    _dio = Dio(
-      BaseOptions(
-        baseUrl:
-            "https://app-dbef67eb-9a2e-44fa-abff-3e8b83204d9c.cleverapps.io/",
-        headers: {
-          "Authorization":
-              "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VybmFtZSI6ImhhemVtZW1hbSIsImVtYWlsIjoicGFqYWQ4NTY0OUBmZXJtaXJvLmNvbSIsInJvbGUiOiJ1c2VyIiwiaWQiOiJmM2EwZDdmNC0zZDMwLTQ2NjgtOTkyZi1kN2E2ZGM0NjUyNDEiLCJleHAiOjE3NjM1NDgwMjgsImlhdCI6MTc2MzU0NDQyOCwidmVyc2lvbiI6MCwianRpIjoiYmUxY2RlZTktOTQ1MC00NGZkLWI0MGQtYjZkZmYwZGVmY2Q1IiwiZGV2aWQiOiJlNGY2YTRkZi03MzVkLTRlZGItYTIxZi0wZDZkMTA5Y2M1YmUifQ.qzn7WB7F51S6W66TJWSYaV46tpngEvFalKkHymONAfM",
-        },
-      ),
-    );
+    // _dio = Dio(
+    //   BaseOptions(
+    //     baseUrl:
+    //         "https://app-dbef67eb-9a2e-44fa-abff-3e8b83204d9c.cleverapps.io/",
+    //     headers: {
+    //       "Authorization":
+    //           "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VybmFtZSI6ImhhemVtZW1hbSIsImVtYWlsIjoicGFqYWQ4NTY0OUBmZXJtaXJvLmNvbSIsInJvbGUiOiJ1c2VyIiwiaWQiOiJmM2EwZDdmNC0zZDMwLTQ2NjgtOTkyZi1kN2E2ZGM0NjUyNDEiLCJleHAiOjE3NjM1OTgzNDUsImlhdCI6MTc2MzU5NDc0NSwidmVyc2lvbiI6MCwianRpIjoiNjk3ZDJkYjMtY2U1Mi00NDk5LWE5YjItZGQxNDg3YmEzZTcwIiwiZGV2aWQiOiJlNGY2YTRkZi03MzVkLTRlZGItYTIxZi0wZDZkMTA5Y2M1YmUifQ.KmgxTcKVvUmH-xHhlNCgYDUgj92ooDiu1WerL9nUvqk",
+    //     },
+    //   ),
+    // );
   }
 
   @override
@@ -34,13 +35,28 @@ class ProfileRepoImpl implements ProfileRepo {
     final Response res;
     try {
       res = await _dio.get("api/users/$userName");
-      final profileData = ProfileModel.fromJson(res.data);
-      final profileData2 = profileData.copyWith(
-        avatarUrl:
-            "https://images.pexels.com/photos/2379005/pexels-photo-2379005.jpeg",
-      );
+      final Map<String, dynamic> json = res.data;
+      final String profilePhotoId = json["profileMediaId"] ?? "";
+      final String profileBannerId = json["coverMediaId"] ?? "";
 
-      return Right(profileData2);
+      List<String> urls = await getMediaUrls([profilePhotoId, profileBannerId]);
+
+      print(urls[0]);
+      print(urls[1]);
+      final String profilePhotoUrl = urls[0];
+      final String profileBannerUrl = urls[1];
+
+      json["profileMedia"] = profilePhotoUrl;
+      json["coverMedia"] = profileBannerUrl;
+
+      final profileData = ProfileModel.fromJson(json);
+      return Right(profileData);
+
+      // final profileData2 = profileData.copyWith(
+      //   avatarUrl:
+      //       "https://images.pexels.com/photos/2379005/pexels-photo-2379005.jpeg",
+      // );
+
       // await Future.delayed(Duration(seconds: 1));
 
       // return Right(
@@ -75,7 +91,7 @@ class ProfileRepoImpl implements ProfileRepo {
       //   ),
       // );
     } catch (e) {
-      // print(e.toString());
+      print(e.toString());
       return Left(Failure('Failed to load profile data'));
     }
   }
@@ -113,51 +129,76 @@ class ProfileRepoImpl implements ProfileRepo {
   Future<Either<Failure, List<ProfileTweetModel>>> getProfilePosts(
     String username,
   ) async {
-    // await Future.delayed(const Duration(seconds: 2)); // Simulate network delay
     try {
-      final List<Map<String, dynamic>> rawPostData = [
-        {
-          "id": "post_001",
-          "text":
-              "Excited to share my latest project! Flutter makes UI development",
-          "timeAgo": "5m",
-          "likes": 1,
-          "retweets": 8,
-          "repost": 50,
-          "replies": 3,
-          "tweetType": "reTweet",
-          "isLikedByMe": true,
-          "isSaveByMe": true,
-          "activityNumber": 36,
-          "mediaUrls": [
-            "https://images.pexels.com/photos/34188568/pexels-photo-34188568.jpeg",
-            "https://images.pexels.com/photos/34051342/pexels-photo-34051342.jpeg",
-            "https://images.pexels.com/photos/34182536/pexels-photo-34182536.jpeg",
-            "https://media.istockphoto.com/id/158002966/photo/painted-x-mark.jpg?b=1&s=612x612&w=0&k=20&c=W-XB39kzx5Y1U5eHU7gBZzgd4k2oqo0G3bRrch3jUZk=",
-          ],
-        },
-        {
-          "id": "post_002",
-          "text":
-              "A quick update on the server migration: everything went smoothly! Downtime was minimal. Thanks to the team! A quick update on the server migration: everything went smoothly! Downtime was minimal. Thanks to the team! \n A quick update on the server migration: everything went smoothly! Downtime was minimal. Thanks to the team!",
-          "timeAgo": "2h",
-          "likes": 120,
-          "retweets": 6,
-          "replies": 10,
-          "isLiked": true,
-          "activityNumber": 20,
-          "mediaUrls": [
-            "https://media.istockphoto.com/id/158002966/photo/painted-x-mark.jpg?b=1&s=612x612&w=0&k=20&c=W-XB39kzx5Y1U5eHU7gBZzgd4k2oqo0G3bRrch3jUZk=",
-          ],
-        },
-      ];
+      // final List<Map<String, dynamic>> rawPostData = [
+      //   {
+      //     "id": "post_001",
+      //     "text":
+      //         "Excited to share my latest project! Flutter makes UI development",
+      //     "timeAgo": "5m",
+      //     "likes": 1,
+      //     "retweets": 8,
+      //     "repost": 50,
+      //     "replies": 3,
+      //     "tweetType": "reTweet",
+      //     "isLikedByMe": true,
+      //     "isSaveByMe": true,
+      //     "activityNumber": 36,
+      //     "mediaUrls": [
+      //       "https://images.pexels.com/photos/34188568/pexels-photo-34188568.jpeg",
+      //       "https://images.pexels.com/photos/34051342/pexels-photo-34051342.jpeg",
+      //       "https://images.pexels.com/photos/34182536/pexels-photo-34182536.jpeg",
+      //       "https://media.istockphoto.com/id/158002966/photo/painted-x-mark.jpg?b=1&s=612x612&w=0&k=20&c=W-XB39kzx5Y1U5eHU7gBZzgd4k2oqo0G3bRrch3jUZk=",
+      //     ],
+      //   },
+      //   {
+      //     "id": "post_002",
+      //     "text":
+      //         "A quick update on the server migration: everything went smoothly! Downtime was minimal. Thanks to the team! A quick update on the server migration: everything went smoothly! Downtime was minimal. Thanks to the team! \n A quick update on the server migration: everything went smoothly! Downtime was minimal. Thanks to the team!",
+      //     "timeAgo": "2h",
+      //     "likes": 120,
+      //     "retweets": 6,
+      //     "replies": 10,
+      //     "isLiked": true,
+      //     "activityNumber": 20,
+      //     "mediaUrls": [
+      //       "https://media.istockphoto.com/id/158002966/photo/painted-x-mark.jpg?b=1&s=612x612&w=0&k=20&c=W-XB39kzx5Y1U5eHU7gBZzgd4k2oqo0G3bRrch3jUZk=",
+      //     ],
+      //   },
+      // ];
 
-      await Future.delayed(Duration(seconds: 2));
-      final List<ProfileTweetModel> profilePosts = rawPostData
-          .map((json) => ProfileTweetModel.fromJson(json))
-          .toList();
-      return Right(profilePosts);
+      // await Future.delayed(Duration(seconds: 2));
+      final res = await _dio.get("api/tweets/users/$username");
+      final List<Map<String, dynamic>> jsonList =
+          List<Map<String, dynamic>>.from(res.data["data"] ?? []);
+
+      List<ProfileTweetModel> tweets = [];
+      for (int i = 0; i < jsonList.length; i++) {
+        final Map<String, dynamic> json = jsonList[i];
+        if (json["tweetType"]?.toLowerCase() == "reply") continue;
+        // get profile photo url and tweet medial urls
+        final String profilePhotoId = json["user"]?["profileMedia"] ?? "";
+        final List<String> tweetMediaIds = json["media"] ?? [];
+        final List<String> urls = await getMediaUrls(
+          [profilePhotoId] + tweetMediaIds,
+        );
+        final String profilePhotoUrl = urls[0];
+        final List<String> tweetMediaUrls = urls.skip(1).toList();
+
+        // get timeAgo
+        final String createTime = json["createdAt"] ?? "";
+        final String timeAgo = getTimeAgo(createTime);
+
+        json["profileMedia"] = profilePhotoUrl;
+        json["mediaUrls"] = tweetMediaUrls;
+        json["timeAgo"] = timeAgo;
+
+        tweets.add(ProfileTweetModel.fromJson(json));
+      }
+
+      return Right(tweets);
     } catch (e) {
+      print(e.toString());
       return Left(Failure('Failed to load profile posts'));
     }
   }
@@ -212,6 +253,30 @@ class ProfileRepoImpl implements ProfileRepo {
       return Right(profilePosts);
     } catch (e) {
       return Left(Failure('Failed to load profile posts'));
+    }
+  }
+
+  Future<Either<Failure, void>> updateProfileBanner(
+    String userId,
+    String mediaId,
+  ) async {
+    try {
+      await _dio.patch("api/users/banner/$userId/$mediaId");
+      return const Right(());
+    } catch (e) {
+      return Left(Failure("couldn't update banner"));
+    }
+  }
+
+  Future<Either<Failure, void>> updateProfilePhoto(
+    String userId,
+    String mediaId,
+  ) async {
+    try {
+      await _dio.patch("api/users/profile-picture/$userId/$mediaId");
+      return const Right(());
+    } catch (e) {
+      return Left(Failure("couldn't update profile picture"));
     }
   }
 

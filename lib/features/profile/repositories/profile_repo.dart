@@ -29,6 +29,9 @@ abstract class ProfileRepo {
     Future<Either<Failure, void>> muteUser(String username);
   Future<Either<Failure, void>> unMuteUser(String username);
 
+  Future<Either<Failure, void>> updateProfileBanner(String userId, String mediaId);
+  Future<Either<Failure, void>> updateProfilePhoto(String userId, String mediaId);
+
   // tweets
   Future<Either<Failure, List<ProfileTweetModel>>> getProfilePosts(
     String username,

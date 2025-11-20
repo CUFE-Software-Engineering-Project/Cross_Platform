@@ -19,7 +19,18 @@ class ProfilePostsList extends ConsumerWidget {
       data: (either) {
         return either.fold(
           (l) {
-            return Center(child: Text(l.message));
+            return RefreshIndicator(
+              child: ListView(
+                children: [
+                  SizedBox(height: 30),
+                  Center(child: Text(l.message)),
+                ],
+              ),
+              onRefresh: () async {
+                // ignore: unused_result
+                ref.refresh(profilePostsProvider(this.profile.username));
+              },
+            );
           },
           (data) {
             final List<ProfileTweet> posts = data.map((post) {
@@ -51,7 +62,19 @@ class ProfilePostsList extends ConsumerWidget {
         );
       },
       error: (err, _) {
-        return Center(child: Text("Failed to load post data"));
+        return RefreshIndicator(
+          child: ListView(
+            children: [
+              SizedBox(height: 30),
+              Center(child: Text('Failed to load post data')),
+            ],
+          ),
+          onRefresh: () async {
+            // ignore: unused_result
+            ref.refresh(profilePostsProvider(this.profile.username));
+          },
+        );
+        ;
       },
       loading: () {
         return const Center(child: CircularProgressIndicator());

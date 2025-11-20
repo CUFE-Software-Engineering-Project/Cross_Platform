@@ -63,6 +63,9 @@ class ProfileModel {
       birthDateFormated = "";
     }
 
+    
+    
+
     return ProfileModel(
       id: json['id'] ?? '',
       username: json['username'] ?? '',

@@ -1,6 +1,7 @@
 import 'package:dartz/dartz.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
+import 'package:lite_x/core/providers/current_user_provider.dart';
 import 'package:lite_x/core/providers/dio_interceptor.dart';
 import 'package:lite_x/features/profile/models/create_reply_model.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
@@ -18,17 +19,6 @@ final profileRepoProvider = Provider<ProfileRepo>((ref) {
   return ProfileRepoImpl(ref.watch(dioProvider));
 });
 
-// final profileBasicDataNotifierProvider = StateNotifierProvider.autoDispose
-//     .family<ProfileBasicDataNotifier, ProfileBasicDataStates, String>((
-//       ref,
-//       username,
-//     ) {
-//       final profileRepo = ref.watch(profileRepoProvider);
-//       return ProfileBasicDataNotifier(
-//         profileRepo: profileRepo,
-//         userName: username,
-//       );
-//     });
 final profileDataProvider =
     FutureProvider.family<Either<Failure, ProfileModel>, String>((
       ref,
@@ -37,6 +27,20 @@ final profileDataProvider =
       final repo = ref.watch(profileRepoProvider);
       return repo.getProfileData(username);
     });
+
+final updateProfileBannerProvider = Provider((ref) {
+  final repo = ref.watch(profileRepoProvider);
+  return (String userId, String mediaId) {
+    return repo.updateProfileBanner(userId, mediaId);
+  };
+});
+
+final updateProfilePhotoProvider = Provider((ref) {
+  final repo = ref.watch(profileRepoProvider);
+  return (String userId, String mediaId) {
+    return repo.updateProfilePhoto(userId, mediaId);
+  };
+});
 
 final followersProvider =
     FutureProvider.family<Either<Failure, List<UserModel>>, String>((
@@ -190,7 +194,6 @@ final replyOnTweetProvider = Provider((ref) {
   };
 });
 
-
 // search
 final profileCurrentSearchProvider =
     FutureProvider.family<Either<Failure, List<SearchUserModel>>, String>((
@@ -201,13 +204,12 @@ final profileCurrentSearchProvider =
       return repo.profileCurrentSearch(query);
     });
 
+final myUserNameProvider = Provider<String>((ref) {
+  final Myusername = ref.watch(currentUserProvider.select((e) => e!.username));
+  return Myusername;
+});
 
 // final myUserNameProvider = Provider<String>((ref) {
-//   final Myusername = ref.watch(currentUserProvider.select((e) => e!.username));
-//   return Myusername;
+//   // final user = ref.watch(currentUserProvider.select((e) => e!.username));
+//   return "hazememam";
 // });
-
-final myUserNameProvider = Provider<String>((ref) {
-  // final user = ref.watch(currentUserProvider.select((e) => e!.username));
-  return "hazememam";
-});
