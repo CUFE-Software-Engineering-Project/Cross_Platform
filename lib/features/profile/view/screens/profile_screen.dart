@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lite_x/features/profile/view/widgets/profile/profile_screen_body_draft.dart';
 import 'package:lite_x/features/profile/view/widgets/profile/profile_screen_body.dart';
 import 'package:lite_x/features/profile/view_model/providers.dart';
 
@@ -18,38 +19,60 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   Widget build(BuildContext context) {
     final String myUserName = ref.watch(myUserNameProvider);
     if (myUserName == widget.username) isMe = true;
-    final state = ref.watch(profileBasicDataNotifierProvider(widget.username));
-    if (state.isLoading) {
-      return Scaffold(body: Center(child: CircularProgressIndicator()));
-    } else if (state.errorMessage != null) {
-      return Scaffold(
-        appBar: AppBar(
-          leading: IconButton(
-            icon: Icon(Icons.arrow_back),
-            onPressed: () {
-              if (context.canPop()) context.pop();
-            },
-          ),
-        ),
-        body: RefreshIndicator(
-          onRefresh: () async {
-            await ref.read(
-                profileBasicDataNotifierProvider(myUserName).notifier,
-              )
-              ..loadProfileData(myUserName);
+    final asyncData = ref.watch(profileDataProvider(widget.username));
+    return asyncData.when(
+      data: (either) {
+        return either.fold(
+          (l) {
+            return Scaffold(
+              appBar: AppBar(
+                leading: IconButton(
+                  icon: Icon(Icons.arrow_back),
+                  onPressed: () {
+                    if (context.canPop()) context.pop();
+                  },
+                ),
+              ),
+              body: RefreshIndicator(
+                onRefresh: () async {
+                  // ignore: unused_result
+                  await ref.refresh(profileDataProvider(widget.username));
+                },
+                child: ListView(children: [Center(child: Text(l.message))]),
+              ),
+            );
           },
-          child: ListView(children: [Center(child: Text(state.errorMessage!))]),
-        ),
-      );
-    }
-
-    final profileData = state.profileData!;
-
-    return DefaultTabController(
-      length: 6,
-      child: Scaffold(
-        body: ProfileScreenBody(profileData: profileData, isMe: isMe),
-      ),
+          (data) {
+            return DefaultTabController(
+              length: 6,
+              child: Scaffold(
+                // body: ProfileScreenBody(profileData: profileData, isMe: isMe),
+                body: ProfileScreenBody(profileData: data, isMe: isMe),
+              ),
+            );
+          },
+        );
+      },
+      error: (err, _) {
+        return Scaffold(
+          appBar: AppBar(
+            leading: IconButton(
+              icon: Icon(Icons.arrow_back),
+              onPressed: () {
+                if (context.canPop()) context.pop();
+              },
+            ),
+          ),
+          body: RefreshIndicator(
+            onRefresh: () async {
+              // ignore: unused_result
+              await ref.refresh(profileDataProvider(widget.username));
+            },
+            child: ListView(children: [Center(child: Text(err.toString()))]),
+          ),
+        );
+      },
+      loading: () => Scaffold(body: Center(child: CircularProgressIndicator())),
     );
   }
 }
