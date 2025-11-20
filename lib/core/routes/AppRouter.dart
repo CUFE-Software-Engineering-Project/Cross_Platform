@@ -21,6 +21,7 @@ import 'package:lite_x/features/auth/view/screens/Log_In/VerificationForgot_Scre
 import 'package:lite_x/features/chat/view/screens/Search_Direct_messages.dart';
 // import 'package:lite_x/features/chat/view/screens/chat_Screen.dart';
 import 'package:lite_x/features/chat/view/screens/conversations_screen.dart';
+import 'package:lite_x/features/explore/view/explore_screen.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
 import 'package:lite_x/features/profile/models/shared.dart';
 import 'package:lite_x/features/profile/view/screens/birthdate_screen.dart';
@@ -32,15 +33,23 @@ import 'package:lite_x/features/profile/view/screens/profile_search_screen.dart'
 import 'package:lite_x/features/profile/view/screens/profilecover_screen.dart';
 import 'package:lite_x/features/profile/view/screens/profilephoto_screen.dart'
     hide ProfilePhotoScreenArgs;
+
 import 'package:lite_x/features/profile/view/screens/verify_change_email_profile_screen.dart';
+
+import 'package:lite_x/features/search/view/search_screen.dart';
+
 import 'package:lite_x/features/settings/screens/BlockedAccounts_Screen.dart';
 import 'package:lite_x/features/settings/screens/MuteAndBlock_Screen.dart';
 import 'package:lite_x/features/settings/screens/MutedAccounts_Screen.dart';
 import 'package:lite_x/features/settings/screens/PrivacyAndSafety_Screen.dart';
 import 'package:lite_x/features/settings/screens/SettingsAndPrivacy_Screen.dart';
+import 'package:lite_x/features/settings/screens/YourAccount_Screen.dart';
+import 'package:lite_x/features/settings/screens/AccountInformation_Screen.dart';
+import 'package:lite_x/features/settings/screens/ChangePassword_Screen.dart';
 
 class Approuter {
   static final GoRouter router = GoRouter(
+    // initialLocation: "/exploreScreen",
     initialLocation: "/splash",
     // initialExtra: ProfileModel(
     //   id: "",
@@ -203,6 +212,14 @@ class Approuter {
         ),
       ),
       GoRoute(
+        name: RouteConstants.changePasswordScreen,
+        path: "/change-password",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: const ChangePasswordScreen(),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
         name: RouteConstants.ChangePasswordFeedback,
         path: "/ChangePasswordFeedback",
         pageBuilder: (context, state) => CustomTransitionPage(
@@ -304,6 +321,22 @@ class Approuter {
           transitionsBuilder: _slideRightTransitionBuilder,
         ),
       ),
+      GoRoute(
+        name: RouteConstants.youraccountscreen,
+        path: "/youraccount",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: const YourAccountScreen(),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
+        name: RouteConstants.accountinformationscreen,
+        path: "/accountinformation",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: const AccountInformationScreen(),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
 
       GoRoute(
         name: RouteConstants.ChatScreen,
@@ -312,6 +345,22 @@ class Approuter {
           child: VerifyChangeEmailProfileScreen(
             extra: state.extra as List<dynamic>,
           ),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
+        name: RouteConstants.SearchScreen,
+        path: "/searchScreen",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: SearchScreen(),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
+        name: RouteConstants.ExploreScreen,
+        path: "/exploreScreen",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: ExploreScreen(),
           transitionsBuilder: _slideRightTransitionBuilder,
         ),
       ),
