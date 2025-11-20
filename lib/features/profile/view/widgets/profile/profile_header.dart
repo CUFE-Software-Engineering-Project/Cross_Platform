@@ -14,6 +14,7 @@ import 'package:lite_x/features/profile/view_model/providers.dart';
 import 'package:top_snackbar_flutter/custom_snack_bar.dart';
 import 'package:top_snackbar_flutter/top_snack_bar.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class ProfileHeader extends ConsumerStatefulWidget {
   const ProfileHeader({
@@ -71,7 +72,9 @@ class _ProfileHeaderState extends ConsumerState<ProfileHeader> {
                   image: widget.profileData.bannerUrl.isEmpty
                       ? null
                       : DecorationImage(
-                          image: NetworkImage(widget.profileData.bannerUrl),
+                          image: CachedNetworkImageProvider(
+                            widget.profileData.bannerUrl,
+                          ),
                           fit: BoxFit.cover,
                           onError: (exception, stackTrace) => null,
                         ),
@@ -144,9 +147,11 @@ class _ProfileHeaderState extends ConsumerState<ProfileHeader> {
                               child: CircleAvatar(
                                 radius: 40,
                                 backgroundColor: Colors.black,
-                                backgroundImage: NetworkImage(
+                                backgroundImage: CachedNetworkImageProvider(
                                   widget.profileData.avatarUrl,
                                 ),
+                                onBackgroundImageError:
+                                    (exception, stackTrace) => null,
                               ),
                             ),
                           ),
