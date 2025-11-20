@@ -69,12 +69,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         final res = await updatePhoto(widget.profileData.id, ids[0]);
         res.fold(
           (l) {
-            showSmallPopUpMessage(
-              context: context,
-              message: l.message,
-              borderColor: Colors.red,
-              icon: Icon(Icons.error),
-            );
+            if (mounted)
+              showSmallPopUpMessage(
+                context: context,
+                message: l.message,
+                borderColor: Colors.red,
+                icon: Icon(Icons.error),
+              );
           },
           (r) {
             imageUpdated = true;

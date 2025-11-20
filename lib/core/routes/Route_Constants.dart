@@ -34,5 +34,6 @@ class RouteConstants {
   static String ProfilePhotoScreen = "ProfilePhotoScreen";
   static String ProfileCoverScreen = "ProfileCoverScreen";
   static String ProfileSearchScreen = "ProfileSearchScreen";
-  
+  static String ChangeEmailProfileScreen = "ChangeEmailProfileScreen";
+  static String VerifyChangeEmailProfileScreen = "VerifyChangeEmailProfileScreen";
 }

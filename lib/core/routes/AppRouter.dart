@@ -24,6 +24,7 @@ import 'package:lite_x/features/chat/view/screens/conversations_screen.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
 import 'package:lite_x/features/profile/models/shared.dart';
 import 'package:lite_x/features/profile/view/screens/birthdate_screen.dart';
+import 'package:lite_x/features/profile/view/screens/change_email_profile_screen.dart';
 import 'package:lite_x/features/profile/view/screens/edit_profile_screen.dart';
 import 'package:lite_x/features/profile/view/screens/following_followers_screen.dart';
 import 'package:lite_x/features/profile/view/screens/profile_screen.dart';
@@ -31,6 +32,7 @@ import 'package:lite_x/features/profile/view/screens/profile_search_screen.dart'
 import 'package:lite_x/features/profile/view/screens/profilecover_screen.dart';
 import 'package:lite_x/features/profile/view/screens/profilephoto_screen.dart'
     hide ProfilePhotoScreenArgs;
+import 'package:lite_x/features/profile/view/screens/verify_change_email_profile_screen.dart';
 import 'package:lite_x/features/settings/screens/BlockedAccounts_Screen.dart';
 import 'package:lite_x/features/settings/screens/MuteAndBlock_Screen.dart';
 import 'package:lite_x/features/settings/screens/MutedAccounts_Screen.dart';
@@ -40,6 +42,31 @@ import 'package:lite_x/features/settings/screens/SettingsAndPrivacy_Screen.dart'
 class Approuter {
   static final GoRouter router = GoRouter(
     initialLocation: "/splash",
+    // initialExtra: ProfileModel(
+    //   id: "",
+    //   username: "hazememam",
+    //   displayName: "Hazem Emam",
+    //   email: "hazem@gmail.com",
+    //   bio: "Hello from hazem emam ",
+    //   avatarUrl:
+    //       "https://images.pexels.com/photos/31510092/pexels-photo-31510092.jpeg",
+    //   bannerUrl:
+    //       "https://images.pexels.com/photos/1765033/pexels-photo-1765033.jpeg",
+    //   followersCount: 15,
+    //   followingCount: 20,
+    //   tweetsCount: 15,
+    //   isVerified: false,
+    //   joinedDate: formatDate(DateTime(2004, 8, 21), DateFormatType.fullDate),
+    //   website: "https://google.cof",
+    //   location: "cairo",
+    //   postCount: 2,
+    //   birthDate: formatDate(DateTime(2004, 8, 21), DateFormatType.fullDate),
+    //   isFollowing: false,
+    //   isFollower: false,
+    //   protectedAccount: false,
+    //   isBlockedByMe: true,
+    //   isMutedByMe: false,
+    // ),
     routes: [
       GoRoute(
         name: RouteConstants.splash,
@@ -278,14 +305,16 @@ class Approuter {
         ),
       ),
 
-      // GoRoute(
-      //   name: RouteConstants.ChatScreen,
-      //   path: "/ChatScreen",
-      //   pageBuilder: (context, state) => CustomTransitionPage(
-      //     child: const ChatScreen(recipientId: "", recipientName: ""),
-      //     transitionsBuilder: _slideRightTransitionBuilder,
-      //   ),
-      // ),
+      GoRoute(
+        name: RouteConstants.ChatScreen,
+        path: "/verifyChangeEmailProfileScreen",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: VerifyChangeEmailProfileScreen(
+            extra: state.extra as List<dynamic>,
+          ),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
       GoRoute(
         name: RouteConstants.ProfilePhotoScreen,
         path: "/profilePhotoScreen",
@@ -311,6 +340,16 @@ class Approuter {
         path: "/profileSearchScreen",
         pageBuilder: (context, state) => CustomTransitionPage(
           child: ProfileSearchScreen(),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
+        name: RouteConstants.ChangeEmailProfileScreen,
+        path: "/changeEmailProfileScreen",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: ChangeEmailProfileScreen(
+            profileData: state.extra as ProfileModel,
+          ),
           transitionsBuilder: _slideRightTransitionBuilder,
         ),
       ),

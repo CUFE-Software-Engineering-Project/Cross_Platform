@@ -24,7 +24,7 @@ class ProfileRepoImpl implements ProfileRepo {
     //         "https://app-dbef67eb-9a2e-44fa-abff-3e8b83204d9c.cleverapps.io/",
     //     headers: {
     //       "Authorization":
-    //           "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VybmFtZSI6ImhhemVtZW1hbSIsImVtYWlsIjoicGFqYWQ4NTY0OUBmZXJtaXJvLmNvbSIsInJvbGUiOiJ1c2VyIiwiaWQiOiJmM2EwZDdmNC0zZDMwLTQ2NjgtOTkyZi1kN2E2ZGM0NjUyNDEiLCJleHAiOjE3NjM1OTgzNDUsImlhdCI6MTc2MzU5NDc0NSwidmVyc2lvbiI6MCwianRpIjoiNjk3ZDJkYjMtY2U1Mi00NDk5LWE5YjItZGQxNDg3YmEzZTcwIiwiZGV2aWQiOiJlNGY2YTRkZi03MzVkLTRlZGItYTIxZi0wZDZkMTA5Y2M1YmUifQ.KmgxTcKVvUmH-xHhlNCgYDUgj92ooDiu1WerL9nUvqk",
+    //           "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VybmFtZSI6ImhhemVtZW1hbSIsImVtYWlsIjoiaGF6ZW1AenVkcGNrLmNvbSIsInJvbGUiOiJ1c2VyIiwiaWQiOiJmM2EwZDdmNC0zZDMwLTQ2NjgtOTkyZi1kN2E2ZGM0NjUyNDEiLCJleHAiOjE3NjM2NjczMjcsImlhdCI6MTc2MzY2MzcyNywidmVyc2lvbiI6MiwianRpIjoiNzkzOTI0ZDAtYzAxMi00NTk5LTk4NWYtOTgyNTdlYTIyZmRhIiwiZGV2aWQiOiJlNGY2YTRkZi03MzVkLTRlZGItYTIxZi0wZDZkMTA5Y2M1YmUifQ.PdXybFYl0DyMKIuwCeoi17awgHz72zQlBFR_W1m0IU4",
     //     },
     //   ),
     // );
@@ -508,12 +508,61 @@ class ProfileRepoImpl implements ProfileRepo {
     }
   }
 
-  // Future<Either<Failure, void>> repostTweet(String tweetId) async {
-  //   try {
-  //     await _dio.delete("api/tweets/$tweetId/likes");
-  //     return const Right(());
-  //   } catch (e) {
-  //     return Left(Failure("Can't unlike tweet"));
-  //   }
-  // }
+  Future<Either<Failure, void>> changeEmailProfile(String newEmail) async {
+    try {
+      await _dio.post("api/auth/change-email", data: {"email": newEmail});
+      // await Future.delayed(Duration(seconds: 3));
+      return Right(());
+    } catch (e) {
+      print(e);
+      return Left(Failure("couldn't change email, Please try again later"));
+    }
+  }
+
+  Future<Either<Failure, void>> verifyChangeEmailProfile(
+    String newEmail,
+    String code,
+  ) async {
+    try {
+      print(newEmail);
+      print(code);
+      await _dio.post(
+        "api/auth/verify-new-email",
+        data: {"email": newEmail, "code": code.toString()},
+      );
+      return Right(());
+    } on DioException catch (e) {
+      final String errorMessage =
+          e.response?.data["error"] ?? "can't verify code";
+      return (Left(Failure(errorMessage)));
+    } catch (e) {
+      return (Left(Failure("can't verify code")));
+    }
+  }
+
+  Future<Either<Failure, void>> changePasswordProfile(
+    String oldPassword,
+    String newPassword,
+    String confirmNewPassword,
+  ) async {
+    try {
+      await _dio.post(
+        "api/auth/change-password",
+        data: {
+          {
+            "oldPassword": oldPassword,
+            "newPassword": newPassword,
+            "confirmPassword": confirmNewPassword,
+          },
+        },
+      );
+      return Right(());
+    } on DioException catch (e) {
+      final String errorMessage =
+          e.response?.data["error"] ?? "can't change password";
+      return (Left(Failure(errorMessage)));
+    } catch (e) {
+      return (Left(Failure("can't change password")));
+    }
+  }
 }

@@ -204,6 +204,36 @@ final profileCurrentSearchProvider =
       return repo.profileCurrentSearch(query);
     });
 
+// change email & password
+final changeEmailProfileProvider = Provider((ref) {
+  final repo = ref.watch(profileRepoProvider);
+  return (String newEmail) {
+    return repo.changeEmailProfile(newEmail);
+  };
+});
+
+final verifyChangeEmailProfileProvider = Provider((ref) {
+  final repo = ref.watch(profileRepoProvider);
+  return (String newEmail, String code) {
+    return repo.verifyChangeEmailProfile(newEmail, code);
+  };
+});
+
+final changePasswordProfileProvider = Provider((ref) {
+  final repo = ref.watch(profileRepoProvider);
+  return ({
+    required String oldPassword,
+    required String newPassword,
+    required String confirmNewPassword,
+  }) {
+    return repo.changePasswordProfile(
+      oldPassword,
+      newPassword,
+      confirmNewPassword,
+    );
+  };
+});
+
 final myUserNameProvider = Provider<String>((ref) {
   final Myusername = ref.watch(currentUserProvider.select((e) => e!.username));
   return Myusername;

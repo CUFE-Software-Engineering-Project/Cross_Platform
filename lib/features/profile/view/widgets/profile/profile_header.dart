@@ -73,6 +73,7 @@ class _ProfileHeaderState extends ConsumerState<ProfileHeader> {
                       : DecorationImage(
                           image: NetworkImage(widget.profileData.bannerUrl),
                           fit: BoxFit.cover,
+                          onError: (exception, stackTrace) => null,
                         ),
                 ),
               ),
