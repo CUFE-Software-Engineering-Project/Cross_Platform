@@ -22,10 +22,15 @@ import 'package:lite_x/features/chat/view/screens/Search_Direct_messages.dart';
 // import 'package:lite_x/features/chat/view/screens/chat_Screen.dart';
 import 'package:lite_x/features/chat/view/screens/conversations_screen.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
+import 'package:lite_x/features/profile/models/shared.dart';
 import 'package:lite_x/features/profile/view/screens/birthdate_screen.dart';
 import 'package:lite_x/features/profile/view/screens/edit_profile_screen.dart';
 import 'package:lite_x/features/profile/view/screens/following_followers_screen.dart';
 import 'package:lite_x/features/profile/view/screens/profile_screen.dart';
+import 'package:lite_x/features/profile/view/screens/profile_search_screen.dart';
+import 'package:lite_x/features/profile/view/screens/profilecover_screen.dart';
+import 'package:lite_x/features/profile/view/screens/profilephoto_screen.dart'
+    hide ProfilePhotoScreenArgs;
 import 'package:lite_x/features/settings/screens/BlockedAccounts_Screen.dart';
 import 'package:lite_x/features/settings/screens/MuteAndBlock_Screen.dart';
 import 'package:lite_x/features/settings/screens/MutedAccounts_Screen.dart';
@@ -281,6 +286,34 @@ class Approuter {
       //     transitionsBuilder: _slideRightTransitionBuilder,
       //   ),
       // ),
+      GoRoute(
+        name: RouteConstants.ProfilePhotoScreen,
+        path: "/profilePhotoScreen",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: ProfilephotoScreen(
+            profilePhotoScreenArgs: state.extra as ProfilePhotoScreenArgs,
+          ),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
+        name: RouteConstants.ProfileCoverScreen,
+        path: "/profileCoverScreen",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: ProfileCoverScreen(
+            profilePhotoScreenArgs: state.extra as ProfilePhotoScreenArgs,
+          ),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
+        name: RouteConstants.ProfileSearchScreen,
+        path: "/profileSearchScreen",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: ProfileSearchScreen(),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
     ],
     redirect: (context, state) {
       return null;
