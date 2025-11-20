@@ -5,7 +5,7 @@ import 'package:material_design_icons_flutter/material_design_icons_flutter.dart
 class MessageAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String recipientName;
   final String? recipientAvatarUrl;
-  final String recipientId;
+  // final String recipientId;
   final VoidCallback? onProfileTap;
   final VoidCallback? onVideoCallTap;
   final VoidCallback? onAudioCallTap;
@@ -13,7 +13,7 @@ class MessageAppBar extends StatelessWidget implements PreferredSizeWidget {
   const MessageAppBar({
     super.key,
     required this.recipientName,
-    required this.recipientId,
+    // required this.recipientId,
     this.recipientAvatarUrl,
     this.onProfileTap,
     this.onVideoCallTap,
@@ -35,7 +35,7 @@ class MessageAppBar extends StatelessWidget implements PreferredSizeWidget {
           children: [
             const SizedBox(width: 12),
             Hero(
-              tag: recipientId,
+              tag: "message_app_bar",
               child: CircleAvatar(
                 radius: 18,
                 backgroundImage: recipientAvatarUrl != null

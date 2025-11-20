@@ -1,13 +1,17 @@
-// ignore_for_file: unused_local_variable, unused_import
+// ignore_for_file: unused_local_variable, unused_import, unused_catch_clause
+
+import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:lite_x/core/classes/AppFailure.dart';
+import 'package:lite_x/core/classes/PickedImage.dart';
 import 'package:lite_x/core/constants/server_constants.dart';
 import 'package:lite_x/core/providers/dio_interceptor.dart';
 import 'package:lite_x/features/chat/models/conversationmodel.dart';
 import 'package:lite_x/features/chat/models/messagemodel.dart';
 import 'package:lite_x/features/chat/models/usersearchmodel.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'chat_remote_repository.g.dart';
@@ -65,7 +69,9 @@ class ChatRemoteRepository {
         "api/dm/chat/create-chat",
         data: {"participant_ids": recipientIds, "DMChat": DMChat},
       );
-      final data = response.data as Map<String, dynamic>;
+      final data = response.data["newChat"] as Map<String, dynamic>;
+      print("RESPONSE => ${response.data}");
+
       final conversation = ConversationModel.fromApiResponse(
         data,
         Current_UserId,
@@ -139,6 +145,7 @@ class ChatRemoteRepository {
     }
   }
 
+  //---------------------------------------------------------------------------//
   //-----------------------------------------------------------get messages of the conversation-------------------------------------------------------------------------//
   Future<Either<AppFailure, List<MessageModel>>> getMessagesChat(
     String chatId, {
@@ -147,7 +154,9 @@ class ChatRemoteRepository {
     try {
       final response = await _dio.get(
         "api/dm/chat/$chatId/messages",
-        data: {"lastMessageTimestamp": lastMessageTimestamp.toIso8601String()},
+        queryParameters: {
+          "lastMessageTimestamp": lastMessageTimestamp.toIso8601String(),
+        },
       );
 
       final List<dynamic> messagesList = response.data as List<dynamic>;
@@ -255,6 +264,77 @@ class ChatRemoteRepository {
       return Left(AppFailure(message: errorMessage));
     } catch (e) {
       return Left(AppFailure(message: e.toString()));
+    }
+  }
+
+  //---------------------------------------------------------------------media of message ---------------------------------------------------------------------------------//
+  Future<Either<AppFailure, Map<String, dynamic>>> upload_Media_Message({
+    required File file,
+    required String fileType,
+  }) async {
+    try {
+      final fileName = file.path.split('/').last;
+      final requestResponse = await _dio.post(
+        'api/media/upload-request',
+        data: {'fileName': fileName, 'contentType': fileType},
+      );
+
+      final String presignedUrl = requestResponse.data['url'];
+      final String keyName = requestResponse.data['keyName'];
+      final fileBytes = await file.readAsBytes();
+
+      final newDio = Dio(
+        BaseOptions(
+          headers: {
+            'Content-Type': fileType,
+            'Content-Length': fileBytes.length,
+          },
+        ),
+      );
+
+      await newDio.put(presignedUrl, data: Stream.fromIterable([fileBytes]));
+
+      final confirmResponse = await _dio.post(
+        'api/media/confirm-upload/$keyName',
+      );
+
+      final mediaId = confirmResponse.data['newMedia']['id'].toString();
+
+      final newMediaKey = confirmResponse.data['newMedia']['keyName'] as String;
+      print("MEDIA ID AFTER UPLOAD: $mediaId");
+
+      return right({'mediaId': mediaId, 'keyName': newMediaKey});
+    } on DioException catch (e) {
+      return left(AppFailure(message: 'Upload failed'));
+    } catch (e) {
+      return left(AppFailure(message: e.toString()));
+    }
+  }
+
+  //------------------------------------------------------------------download the media------------------------------------------------------------------------------//
+  Future<Either<AppFailure, File>> downloadMedia({
+    required String mediaId,
+  }) async {
+    try {
+      final response = await _dio.get('api/media/download-request/$mediaId');
+      final String downloadUrl = response.data['url'];
+
+      final newDio = Dio();
+      final imageResponse = await newDio.get(
+        downloadUrl,
+        options: Options(responseType: ResponseType.bytes),
+      );
+
+      final directory = await getTemporaryDirectory();
+      final filePath =
+          '${directory.path}/downloaded_${DateTime.now().millisecondsSinceEpoch}.jpg';
+
+      final file = File(filePath);
+      await file.writeAsBytes(imageResponse.data);
+
+      return right(file);
+    } catch (e) {
+      return left(AppFailure(message: 'Download failed $e'));
     }
   }
 

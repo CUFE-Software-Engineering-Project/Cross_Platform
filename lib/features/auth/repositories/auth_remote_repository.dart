@@ -374,7 +374,8 @@ class AuthRemoteRepository {
     try {
       final baseUrl = dotenv.env["API_URL"]!;
       final startUrl = "${baseUrl}oauth2/authorize/$provider";
-      const successUrl = "https://shoy.publicvm.com/login/success";
+      const successUrl =
+          "https://app-dbef67eb-9a2e-44fa-abff-3e8b83204d9c.cleverapps.io/login/success";
       final browser = OAuthBrowser(
         startUrl: startUrl,
         successBaseUrl: successUrl,

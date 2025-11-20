@@ -116,7 +116,20 @@ class ConversationModel extends HiveObject {
     }
 
     final unseenCount = json['unseenMessagesCount'] as int? ?? 0;
-    final chatGroup = json['chatGroup'] as Map<String, dynamic>?;
+    Map<String, dynamic>? chatGroup;
+
+    if (json['chatGroup'] is List) {
+      if ((json['chatGroup'] as List).isNotEmpty) {
+        chatGroup = (json['chatGroup'] as List).first;
+      } else {
+        chatGroup = null;
+      }
+    } else if (json['chatGroup'] is Map) {
+      chatGroup = json['chatGroup'] as Map<String, dynamic>;
+    } else {
+      chatGroup = null;
+    }
+
     final isDm = json['DMChat'] as bool;
     String? dmPartnerUserId;
     String? dmPartnerName;

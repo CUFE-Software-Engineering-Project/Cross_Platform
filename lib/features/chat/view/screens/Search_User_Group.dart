@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -46,6 +47,7 @@ class _SearchUserGroupState extends ConsumerState<SearchUserGroup> {
     _searchQuery = query;
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 300), () async {
+      if (!mounted) return;
       if (query.isNotEmpty) {
         final users = await ref
             .read(conversationsViewModelProvider.notifier)
@@ -58,7 +60,7 @@ class _SearchUserGroupState extends ConsumerState<SearchUserGroup> {
     });
   }
 
-  void _onUserTapped(UserSearchModel user) {
+  void _onUserTapped(UserSearchModel user) async {
     if (_isGrouping) {
       setState(() {
         final exists = _selectedUsers.any((u) => u.id == user.id);
@@ -69,15 +71,55 @@ class _SearchUserGroupState extends ConsumerState<SearchUserGroup> {
         }
       });
     } else {
-      //
-      context.pushNamed(RouteConstants.ChatScreen);
+      final result = await ref
+          .read(conversationsViewModelProvider.notifier)
+          .createChat(isDMChat: true, recipientIds: [user.id]);
+      result.fold((l) => print("Error"), (chatModel) {
+        context.pushNamed(
+          RouteConstants.ChatScreen,
+          pathParameters: {'chatId': chatModel.id},
+          extra: {
+            'title': user.name,
+            'subtitle': "${user.username}",
+            'avatarUrl': user.profileMedia,
+            'isGroup': false,
+          },
+        );
+      });
     }
   }
 
-  void _createGroup() {
+  void _createGroup() async {
     if (_selectedUsers.isEmpty) return;
-    //
-    print("Creating group with ${_selectedUsers.length} users");
+    final result = await ref
+        .read(conversationsViewModelProvider.notifier)
+        .createChat(
+          isDMChat: false,
+          recipientIds: _selectedUsers.map((u) => u.id).toList(),
+        );
+    result.fold(
+      (failure) => ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(failure.message))),
+      (chatModel) {
+        context.pushNamed(
+          RouteConstants.ChatScreen,
+          pathParameters: {'chatId': chatModel.id},
+          extra: {
+            'title': chatModel.groupName ?? "Group A",
+            'subtitle': "${_selectedUsers.length + 1} members",
+            'avatarUrl': chatModel.groupPhotoKey,
+            'isGroup': true,
+          },
+        );
+      },
+    );
+  }
+
+  bool isValidHttpUrl(String? url) {
+    if (url == null) return false;
+    final uri = Uri.tryParse(url);
+    return uri != null && (uri.isScheme('http') || uri.isScheme('https'));
   }
 
   @override
@@ -229,6 +271,7 @@ class _SearchUserGroupState extends ConsumerState<SearchUserGroup> {
                           ),
                   )
                 : ListView.builder(
+                    itemExtent: 72.0,
                     itemCount: users.length,
                     itemBuilder: (_, i) {
                       final user = users[i];
@@ -237,14 +280,17 @@ class _SearchUserGroupState extends ConsumerState<SearchUserGroup> {
                       );
                       return ListTile(
                         leading: CircleAvatar(
-                          backgroundImage: user.profileMedia != null
-                              ? NetworkImage(user.profileMedia!)
-                              : null,
                           backgroundColor: const Color(0xFF1E2732),
-                          child: user.profileMedia == null
+
+                          backgroundImage: isValidHttpUrl(user.profileMedia)
+                              ? CachedNetworkImageProvider(user.profileMedia!)
+                              : null,
+
+                          child: !isValidHttpUrl(user.profileMedia)
                               ? const Icon(Icons.person, color: Colors.grey)
                               : null,
                         ),
+
                         title: Text(
                           user.name,
                           style: const TextStyle(

@@ -10,21 +10,24 @@ import 'package:lite_x/features/chat/view/widgets/chat/TypingIndicator.dart';
 import 'package:lite_x/features/chat/view/widgets/chat/message_input_bar.dart';
 import 'package:lite_x/core/classes/PickedImage.dart';
 import 'package:lite_x/features/chat/view_model/chat/Chat_view_model.dart';
+import 'package:lite_x/features/chat/view_model/conversions/Conversations_view_model.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
-  final String recipientName;
-  final String recipientId;
-  final String? recipientUsername;
-  final String? recipientProfileImage;
+  final String chatId;
+  final String title; // name of user or group name
+  final String? subtitle; // username or group count
+  final String? profileImage;
+  final bool isGroup;
   final int? recipientFollowersCount;
 
   const ChatScreen({
     super.key,
-    required this.recipientName,
-    required this.recipientId,
-    this.recipientUsername,
-    this.recipientProfileImage,
+    required this.chatId,
+    required this.title,
+    this.subtitle,
+    this.profileImage,
+    this.isGroup = false,
     this.recipientFollowersCount,
   });
 
@@ -44,6 +47,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   void initState() {
     super.initState();
     _itemPositionsListener.itemPositions.addListener(_scrollListener);
+    // ref
+    //     .read(conversationsViewModelProvider.notifier)
+    //     .markChatAsRead(widget.chatId);
   }
 
   @override
@@ -85,10 +91,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     }
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      appBar: MessageAppBar(
-        recipientName: widget.recipientName,
-        recipientId: widget.recipientId,
-      ),
+      appBar: MessageAppBar(recipientName: widget.title),
       body: Column(
         children: [
           Expanded(
@@ -119,7 +122,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   },
                 ),
                 if (chatviewmodel.isRecipientTyping)
-                  TypingIndicator(userName: widget.recipientName),
+                  TypingIndicator(userName: widget.title),
 
                 _buildScrollToBottomButton(),
               ],
@@ -159,12 +162,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           CircleAvatar(
             radius: 45,
             backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
-            backgroundImage: widget.recipientProfileImage != null
-                ? NetworkImage(widget.recipientProfileImage!)
-                : null,
-            child: widget.recipientProfileImage == null
+            // backgroundImage: widget.profileImage != null
+            //     ? NetworkImage(widget.profileImage!)
+            //     : null,
+            child: widget.profileImage == null
                 ? Text(
-                    widget.recipientName[0].toUpperCase(),
+                    widget.title[0].toUpperCase(),
                     style: TextStyle(
                       fontSize: 48,
                       fontWeight: FontWeight.bold,
@@ -176,16 +179,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           const SizedBox(height: 5),
 
           Text(
-            widget.recipientName,
+            widget.title,
             style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w500,
               color: Palette.textPrimary,
             ),
           ),
-          if (widget.recipientUsername != null)
+          if (widget.subtitle != null)
             Text(
-              '@${widget.recipientUsername}',
+              '@${widget.subtitle}',
               style: TextStyle(
                 fontSize: 16,
                 color: Color.fromARGB(255, 133, 139, 145),

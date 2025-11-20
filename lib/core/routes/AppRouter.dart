@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lite_x/core/view/screen/app_shell.dart';
 import 'package:lite_x/features/auth/view/screens/Create_Account/Interests.dart';
-import 'package:lite_x/features/chat/view/TestChatScreen.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
 import 'package:lite_x/features/auth/view/screens/Intro_Screen.dart';
 import 'package:lite_x/core/view/screen/Splash_Screen.dart';
@@ -218,14 +217,7 @@ class Approuter {
           transitionsBuilder: _slideRightTransitionBuilder,
         ),
       ),
-      GoRoute(
-        name: RouteConstants.TestChatScreen,
-        path: "/TestChatScreen",
-        pageBuilder: (context, state) => CustomTransitionPage(
-          child: const TestChatScreen(),
-          transitionsBuilder: _slideRightTransitionBuilder,
-        ),
-      ),
+
       GoRoute(
         name: RouteConstants.SearchDirectMessages,
         path: "/SearchDirectMessages",
@@ -285,20 +277,18 @@ class Approuter {
 
       GoRoute(
         name: RouteConstants.ChatScreen,
-        path: "/ChatScreen/:recipientId",
+        path: "/ChatScreen/:chatId",
         pageBuilder: (context, state) {
-          final recipientId = state.pathParameters['recipientId']!;
+          final chatId = state.pathParameters['chatId']!;
           final extraData = state.extra as Map<String, dynamic>;
-          final recipientName = extraData['name'] as String;
-          final recipientAvatar = extraData['avatarUrl'] as String?;
-          final recipientUsername = extraData['username'] as String?;
+
           return CustomTransitionPage(
             child: ChatScreen(
-              // chatId: "2",
-              recipientId: recipientId,
-              recipientName: recipientName,
-              recipientProfileImage: recipientAvatar,
-              recipientUsername: recipientUsername,
+              chatId: chatId,
+              title: extraData['title'],
+              subtitle: extraData['subtitle'],
+              profileImage: extraData['avatarUrl'],
+              isGroup: extraData['isGroup'] ?? false,
             ),
             transitionsBuilder: _slideRightTransitionBuilder,
           );

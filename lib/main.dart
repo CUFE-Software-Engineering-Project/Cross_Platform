@@ -29,6 +29,8 @@ Future<void> init() async {
 
   await Hive.openBox<UserModel>('userBox');
   await Hive.openBox('tokenBox');
+  await Hive.openBox<ConversationModel>('conversationsBox');
+  await Hive.openBox<MessageModel>('messagesBox');
   await dotenv.load(fileName: ".env");
 }
 

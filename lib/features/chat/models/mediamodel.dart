@@ -22,30 +22,33 @@ class MediaModel {
   @HiveField(4)
   String? name;
 
+  @HiveField(5)
+  String? localPath;
+
+  @HiveField(6)
+  String? mediaMessageId;
+
   MediaModel({
     required this.id,
     required this.keyName,
     required this.type,
     this.size,
     this.name,
+    this.localPath,
+    this.mediaMessageId,
   });
 
-  factory MediaModel.fromApiResponse(Map<String, dynamic> json) {
+  factory MediaModel.fromApiResponse(
+    Map<String, dynamic> json, {
+    String? mediaMessageId,
+  }) {
     return MediaModel(
       id: json['id'] as String,
-      keyName: json['keyName'] as String,
+      keyName: json['keyName'] as String? ?? "",
       type: json['type'] as String,
       size: json['size'] as int?,
       name: json['name'] as String?,
-    );
-  }
-  Map<String, dynamic> toApiRequest() {
-    return {
-      'keyName': keyName,
-      'type': type.toUpperCase(),
-      'size': size,
-      'name': name,
-    };
+    )..mediaMessageId = mediaMessageId;
   }
 
   Map<String, dynamic> toMap() {
@@ -131,6 +134,8 @@ class MediaModel {
     String? type,
     int? size,
     String? name,
+    String? localPath,
+    String? mediaMessageId,
   }) {
     return MediaModel(
       id: id ?? this.id,
@@ -138,6 +143,8 @@ class MediaModel {
       type: type ?? this.type,
       size: size ?? this.size,
       name: name ?? this.name,
+      localPath: localPath ?? this.localPath,
+      mediaMessageId: mediaMessageId ?? this.mediaMessageId,
     );
   }
 }

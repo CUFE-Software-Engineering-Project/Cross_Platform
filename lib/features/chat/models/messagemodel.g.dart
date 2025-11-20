@@ -28,7 +28,6 @@ class MessageModelAdapter extends TypeAdapter<MessageModel> {
       senderName: fields[8] as String?,
       senderProfileMediaKey: fields[9] as String?,
       messageType: fields[10] as String,
-      localId: fields[11] as String?,
     );
   }
 
@@ -58,8 +57,7 @@ class MessageModelAdapter extends TypeAdapter<MessageModel> {
       ..write(obj.senderProfileMediaKey)
       ..writeByte(10)
       ..write(obj.messageType)
-      ..writeByte(11)
-      ..write(obj.localId);
+      ..writeByte(11);
   }
 
   @override

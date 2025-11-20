@@ -94,6 +94,9 @@ class SocketRepository {
     _socket?.on("messages-read", (data) {
       print("Messages read event: $data");
     });
+    _socket?.on("message-added", (data) {
+      print("Message added event: $data");
+    });
   }
 
   void sendTyping(String chatId, bool isTyping) {
@@ -107,12 +110,12 @@ class SocketRepository {
   // Send a real-time message
   void sendMessage(Map<String, dynamic> message) {
     _socket?.emit("add-message", {"message": message});
-  }
+  } // sender
 
   // Listen to new real-time message
   void onNewMessage(Function(dynamic data) callback) {
     _socket?.on("new-message", (data) => callback(data));
-  }
+  } // receiver
 
   // Mark chat opened (make all messages READ)
   void openChat(String chatId) {
@@ -124,9 +127,15 @@ class SocketRepository {
     _socket?.on("messages-read", (data) => callback(data));
   }
 
+  void onMessageAdded(Function(dynamic data) callback) {
+    _socket?.on("message-added", (data) => callback(data));
+  } //for sender
+
   void disposeListeners() {
     _socket?.off('new-message');
     _socket?.off('user-typing');
+    _socket?.off('messages-read');
+    _socket?.off('message-added');
   }
 
   void dispose() {

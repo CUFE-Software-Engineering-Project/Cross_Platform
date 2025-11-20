@@ -1,5 +1,7 @@
 // ignore_for_file: unused_field
 
+import 'package:fpdart/fpdart.dart';
+import 'package:lite_x/core/classes/AppFailure.dart';
 import 'package:lite_x/core/models/usermodel.dart';
 import 'package:lite_x/core/providers/current_user_provider.dart';
 import 'package:lite_x/features/chat/models/conversationmodel.dart';
@@ -18,6 +20,7 @@ class ConversationsViewModel extends _$ConversationsViewModel {
   late final SocketRepository _socketRepository;
   UserModel? _currentUser;
   bool _listening = false;
+
   @override
   AsyncValue<List<ConversationModel>> build() {
     _chatRemoteRepository = ref.watch(chatRemoteRepositoryProvider);
@@ -48,9 +51,10 @@ class ConversationsViewModel extends _$ConversationsViewModel {
 
         final idx = currentConversations.indexWhere(
           (chat) => chat.id == newMsg.chatId,
-        );
+        ); // check if conversation already exist or not
 
         if (idx != -1) {
+          // conversation exists
           final chat = currentConversations[idx];
           final bool isMe = newMsg.userId == _currentUser?.id;
 
@@ -95,10 +99,18 @@ class ConversationsViewModel extends _$ConversationsViewModel {
               .then((result) {
                 result.fold((l) => null, (chat) async {
                   await _chatLocalRepository.upsertConversations([chat]);
-                  final refreshed =
-                      List<ConversationModel>.from(currentConversations)
-                        ..removeWhere((c) => c.id == chat.id)
-                        ..add(chat);
+
+                  final currentList = state.value ?? [];
+
+                  final refreshed = List<ConversationModel>.from(currentList)
+                    ..removeWhere((c) => c.id == chat.id)
+                    ..add(chat);
+
+                  refreshed.sort((a, b) {
+                    final aTime = a.lastMessageTime ?? a.updatedAt;
+                    final bTime = b.lastMessageTime ?? b.updatedAt;
+                    return bTime.compareTo(aTime);
+                  });
 
                   state = AsyncValue.data(refreshed);
                 });
@@ -117,6 +129,60 @@ class ConversationsViewModel extends _$ConversationsViewModel {
         print("Error handling new-message socket: $e");
       }
     });
+  }
+
+  void markChatAsRead(String chatId) {
+    state.whenData((currentList) {
+      final updatedList = currentList.map((chat) {
+        if (chat.id == chatId) {
+          return chat.copyWith(unseenCount: 0);
+        }
+        return chat;
+      }).toList();
+
+      state = AsyncValue.data(updatedList);
+      final chat = updatedList.firstWhere((c) => c.id == chatId);
+      _chatLocalRepository.upsertConversations([chat]);
+    });
+  }
+
+  Future<Either<AppFailure, ConversationModel>> createChat({
+    required List<String> recipientIds,
+    required bool isDMChat,
+  }) async {
+    if (_currentUser == null) {
+      return Left(AppFailure(message: "No current user found"));
+    }
+
+    try {
+      final result = await _chatRemoteRepository.create_chat(
+        recipientIds: recipientIds,
+        Current_UserId: _currentUser!.id,
+        DMChat: isDMChat,
+      );
+
+      return result.fold((failure) => Left(failure), (newChat) async {
+        await _chatLocalRepository.upsertConversations([newChat]);
+
+        final currentList = state.value ?? [];
+
+        final updatedList = List<ConversationModel>.from(currentList)
+          ..removeWhere((c) => c.id == newChat.id)
+          ..add(newChat);
+
+        updatedList.sort((a, b) {
+          final aTime = a.lastMessageTime ?? a.updatedAt;
+          final bTime = b.lastMessageTime ?? b.updatedAt;
+          return bTime.compareTo(aTime);
+        });
+
+        state = AsyncValue.data(updatedList);
+
+        return Right(newChat);
+      });
+    } catch (e) {
+      return Left(AppFailure(message: e.toString()));
+    }
   }
 
   Future<List<UserSearchModel>> searchUsers(String query) async {

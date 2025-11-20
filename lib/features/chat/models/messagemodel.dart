@@ -22,7 +22,7 @@ class MessageModel extends HiveObject {
   DateTime createdAt;
 
   @HiveField(5)
-  String status; // "PENDING", "SENT", "DELIVERED", "READ"
+  String status; // "PENDING","SENT","READ"
 
   @HiveField(6)
   List<MediaModel>? media;
@@ -38,9 +38,6 @@ class MessageModel extends HiveObject {
   @HiveField(10)
   String messageType; // text | image | video | gif | file
 
-  @HiveField(11)
-  String? localId; // before server assigns id
-
   MessageModel({
     required this.id,
     required this.chatId,
@@ -53,16 +50,31 @@ class MessageModel extends HiveObject {
     this.senderName,
     this.senderProfileMediaKey,
     required this.messageType,
-    this.localId,
   });
+
+  Map<String, dynamic> toApiRequest({List<String>? recipientIds}) {
+    return {
+      "chatId": chatId,
+      "data": {
+        "content": content,
+        "messageMedia": media?.map((m) => {"mediaId": m.id}).toList(),
+      },
+      if (recipientIds != null) "recipientId": recipientIds,
+    };
+  }
+
   factory MessageModel.fromApiResponse(Map<String, dynamic> json) {
     List<MediaModel>? mediaList;
+
     final messageMedia = json['messageMedia'] as List<dynamic>?;
 
     if (messageMedia != null && messageMedia.isNotEmpty) {
-      mediaList = messageMedia
-          .map((mm) => MediaModel.fromApiResponse(mm['media']))
-          .toList();
+      mediaList = messageMedia.map((message_media) {
+        final mediaJson = message_media['media'];
+        final mediaId = message_media['mediaId']; //used for download
+
+        return MediaModel.fromApiResponse(mediaJson, mediaMessageId: mediaId);
+      }).toList();
     }
     final user = json['user'] as Map<String, dynamic>?;
     String detectedType = 'text';
@@ -94,7 +106,6 @@ class MessageModel extends HiveObject {
       senderName: user?['name'] as String?,
       senderProfileMediaKey: user?['profileMediaId'] as String?,
       messageType: detectedType,
-      localId: null,
     );
   }
 
@@ -125,7 +136,6 @@ class MessageModel extends HiveObject {
       senderProfileMediaKey:
           senderProfileMediaKey ?? this.senderProfileMediaKey,
       messageType: messageType ?? this.messageType,
-      localId: localId ?? this.localId,
     );
   }
 
@@ -142,27 +152,7 @@ class MessageModel extends HiveObject {
       'senderName': senderName,
       'senderProfileMediaKey': senderProfileMediaKey,
       'messageType': messageType,
-      'localId': localId,
     };
-  }
-
-  Map<String, dynamic> toApiRequest({List<String>? recipientIds}) {
-    final Map<String, dynamic> payload = {
-      'data': {
-        'content': content,
-        'messageMedia': media?.map((m) => m.toApiRequest()).toList(),
-      },
-    };
-
-    if (chatId.isNotEmpty) {
-      payload['chatId'] = chatId;
-    }
-
-    if (recipientIds != null && recipientIds.isNotEmpty) {
-      payload['recipientId'] = recipientIds;
-    }
-
-    return payload;
   }
 
   factory MessageModel.fromMap(Map<String, dynamic> map) {
@@ -184,7 +174,6 @@ class MessageModel extends HiveObject {
       senderName: map['senderName'] as String?,
       senderProfileMediaKey: map['senderProfileMediaKey'] as String?,
       messageType: map['messageType'] ?? 'text',
-      localId: map['localId'],
     );
   }
 
