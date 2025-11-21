@@ -1,23 +1,50 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive_ce/hive.dart';
+import 'package:lite_x/features/media/download_media.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
 import 'package:lite_x/features/profile/models/profile_tweet_model.dart';
 import 'package:lite_x/features/profile/models/shared.dart';
 import 'package:lite_x/features/profile/view_model/providers.dart';
 import 'package:readmore/readmore.dart';
 
-class ProfileNormalTweetWidget extends ConsumerWidget implements ProfileTweet {
+class ProfileNormalTweetWidget extends ConsumerStatefulWidget
+    implements ProfileTweet {
   const ProfileNormalTweetWidget({
     required this.profileModel,
     required this.profilePostModel,
   });
   final ProfileModel profileModel;
   final ProfileTweetModel profilePostModel;
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ProfileNormalTweetWidget> createState() =>
+      _ProfileNormalTweetWidgetState();
+}
+
+class _ProfileNormalTweetWidgetState
+    extends ConsumerState<ProfileNormalTweetWidget> {
+  bool _isLoading = true;
+  late final List<String>? urls;
+  late final int numOfIds;
+
+  @override
+  void initState() async {
+    // TODO: implement initState
+    // urls = await getMediaUrls(widget.profilePostModel.mediaIds);
+    numOfIds = widget.profilePostModel.mediaIds.length;
+    // await Future.delayed(Duration(seconds: 2));
+    setState(() {
+      _isLoading = false;
+    });
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(8.0).copyWith(right: 16),
       child: Row(
@@ -32,13 +59,13 @@ class ProfileNormalTweetWidget extends ConsumerWidget implements ProfileTweet {
                 GestureDetector(
                   onTap: () {
                     context.push(
-                      "/profilescreen/${this.profileModel.username}",
+                      "/profilescreen/${this.widget.profileModel.username}",
                     );
                   },
                   child: CircleAvatar(
                     backgroundColor: Colors.grey,
-                    backgroundImage: profileModel.avatarUrl.isNotEmpty
-                        ? NetworkImage(profileModel.avatarUrl)
+                    backgroundImage: widget.profileModel.avatarUrl.isNotEmpty
+                        ? NetworkImage(widget.profileModel.avatarUrl)
                         : null,
                     radius: 20,
                   ),
@@ -62,7 +89,7 @@ class ProfileNormalTweetWidget extends ConsumerWidget implements ProfileTweet {
                           Container(
                             constraints: BoxConstraints(maxWidth: 120),
                             child: Text(
-                              profileModel.displayName,
+                              widget.profileModel.displayName,
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
@@ -73,7 +100,7 @@ class ProfileNormalTweetWidget extends ConsumerWidget implements ProfileTweet {
                           const SizedBox(width: 4),
                           Flexible(
                             child: Text(
-                              "@${profileModel.username}",
+                              "@${widget.profileModel.username}",
                               style: const TextStyle(
                                 color: Colors.grey,
                                 fontSize: 14,
@@ -84,7 +111,7 @@ class ProfileNormalTweetWidget extends ConsumerWidget implements ProfileTweet {
                           ),
                           const SizedBox(width: 5),
                           Text(
-                            "· ${profilePostModel.timeAgo}",
+                            "· ${widget.profilePostModel.timeAgo}",
                             style: TextStyle(color: Colors.grey, fontSize: 16),
                             textAlign: TextAlign.start,
                           ),
@@ -119,12 +146,12 @@ class ProfileNormalTweetWidget extends ConsumerWidget implements ProfileTweet {
                     ),
                   ],
                 ),
-                profilePostModel.text.isEmpty
+                widget.profilePostModel.text.isEmpty
                     ? const SizedBox(height: 15)
                     : Padding(
                         padding: const EdgeInsets.only(bottom: 8),
                         child: ReadMoreText(
-                          profilePostModel.text,
+                          widget.profilePostModel.text,
                           trimLines: 3,
                           colorClickableText: Colors.grey,
                           trimMode: TrimMode.Line,
@@ -133,7 +160,7 @@ class ProfileNormalTweetWidget extends ConsumerWidget implements ProfileTweet {
                           style: TextStyle(fontSize: 16),
                         ),
                       ),
-                if (profilePostModel.mediaUrls.isNotEmpty)
+                if (widget.profilePostModel.mediaUrls.isNotEmpty)
                   Container(
                     width: 350,
                     // height: 350,
@@ -141,10 +168,14 @@ class ProfileNormalTweetWidget extends ConsumerWidget implements ProfileTweet {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: buildPhotoSection(profilePostModel.mediaUrls),
+                    child: buildPhotoSection(
+                      widget.profilePostModel.mediaUrls,
+                      _isLoading,
+                      numOfIds,
+                    ),
                     clipBehavior: Clip.hardEdge,
                   ),
-                InterActionsRowOfTweet(tweet: this.profilePostModel),
+                InterActionsRowOfTweet(tweet: this.widget.profilePostModel),
               ],
             ),
           ),
@@ -154,61 +185,181 @@ class ProfileNormalTweetWidget extends ConsumerWidget implements ProfileTweet {
   }
 }
 
-Widget buildPhotoSection(List<dynamic> photos) {
+Widget buildPhotoSection(List<dynamic> photos, bool isLoading, int numOfIds) {
+  if (isLoading) {
+    print("helooo");
+    if (numOfIds == 0) return const SizedBox.shrink();
+    if (numOfIds == 1) {
+      return Container(color: Colors.grey, height: 250);
+    } else if (numOfIds == 2) {
+      return Row(
+        children: [
+          Expanded(child: Container(color: Colors.black, height: 250)),
+          const SizedBox(width: 5),
+          Expanded(child: Container(color: Colors.grey, height: 250)),
+        ],
+      );
+    } else if (numOfIds == 3) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(child: Container(color: Colors.grey, height: 250)),
+          const SizedBox(width: 4),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(child: Container(color: Colors.grey)),
+                const SizedBox(height: 4),
+                Expanded(child: Container(color: Colors.grey)),
+              ],
+            ),
+          ),
+        ],
+      );
+    } else {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(child: Container(color: Colors.grey)),
+                const SizedBox(height: 4),
+                Expanded(child: Container(color: Colors.grey)),
+              ],
+            ),
+          ),
+          const SizedBox(width: 4),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(child: Container(color: Colors.grey)),
+                const SizedBox(height: 4),
+                Expanded(child: Container(color: Colors.grey)),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
+  }
+
+  // Handle actual photos when not loading
   if (photos.isEmpty) return const SizedBox.shrink();
 
   if (photos.length == 1) {
-    return Image.network(photos[0], fit: BoxFit.cover);
+    print("trueeeeeeee");
+    return CachedNetworkImage(
+      imageUrl: photos[0],
+      fit: BoxFit.cover,
+      placeholder: (context, url) => Container(color: Colors.white),
+      errorWidget: (context, url, error) =>
+          Container(color: Colors.grey, height: 250),
+    );
   }
 
   if (photos.length == 2) {
+    print("treu---------------");
     return Row(
-      // crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        Expanded(child: Image.network(photos[0], fit: BoxFit.fill)),
-        Expanded(child: Image.network(photos[1], fit: BoxFit.fill)),
-      ],
-    );
-  } else if (photos.length == 3) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Expanded(child: Image.network(photos[0], fit: BoxFit.cover)),
-        const SizedBox(width: 4),
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(child: Image.network(photos[1], fit: BoxFit.cover)),
-              const SizedBox(height: 4),
-              Expanded(child: Image.network(photos[2], fit: BoxFit.cover)),
-            ],
+          child: CachedNetworkImage(
+            imageUrl: photos[0],
+            fit: BoxFit.cover,
+            errorWidget: (context, url, error) =>
+                Container(color: Colors.grey, height: 250),
+          ),
+        ),
+        const SizedBox(width: 5),
+        Expanded(
+          child: CachedNetworkImage(
+            imageUrl: photos[1],
+            fit: BoxFit.cover,
+            errorWidget: (context, url, error) =>
+                Container(color: Colors.grey, height: 250),
           ),
         ),
       ],
     );
-  } else if (photos.length == 4) {
+  }
+
+  if (photos.length == 3) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(child: Image.network(photos[0], fit: BoxFit.cover)),
-              const SizedBox(height: 4),
-              Expanded(child: Image.network(photos[3], fit: BoxFit.cover)),
-            ],
-          ),
+          child: CachedNetworkImage(imageUrl: photos[0], fit: BoxFit.cover),
         ),
         const SizedBox(width: 4),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Expanded(child: Image.network(photos[1], fit: BoxFit.cover)),
+              Expanded(
+                child: CachedNetworkImage(
+                  imageUrl: photos[1],
+                  fit: BoxFit.cover,
+                ),
+              ),
               const SizedBox(height: 4),
-              Expanded(child: Image.network(photos[2], fit: BoxFit.cover)),
+              Expanded(
+                child: CachedNetworkImage(
+                  imageUrl: photos[2],
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  if (photos.length >= 4) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: CachedNetworkImage(
+                  imageUrl: photos[0],
+                  fit: BoxFit.cover,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Expanded(
+                child: CachedNetworkImage(
+                  imageUrl: photos[3],
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 4),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: CachedNetworkImage(
+                  imageUrl: photos[1],
+                  fit: BoxFit.cover,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Expanded(
+                child: CachedNetworkImage(
+                  imageUrl: photos[2],
+                  fit: BoxFit.cover,
+                ),
+              ),
             ],
           ),
         ),

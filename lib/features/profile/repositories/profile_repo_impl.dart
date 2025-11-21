@@ -177,11 +177,18 @@ class ProfileRepoImpl implements ProfileRepo {
         final Map<String, dynamic> json = jsonList[i];
         if (json["tweetType"]?.toLowerCase() == "reply") continue;
         // get profile photo url and tweet medial urls
-        final String profilePhotoId = json["user"]?["profileMedia"] ?? "";
-        final List<String> tweetMediaIds = json["media"] ?? [];
+        final String profilePhotoId =
+            json["user"]?["profileMedia"]?["id"] ?? "";
+
+        final List<dynamic> tweetMediaIdsDynamic = json["tweetMedia"] ?? [];
+        final List<String> tweetMediaIds = tweetMediaIdsDynamic
+            .map((media) => media.toString())
+            .toList();
+
         final List<String> urls = await getMediaUrls(
           [profilePhotoId] + tweetMediaIds,
         );
+
         final String profilePhotoUrl = urls[0];
         final List<String> tweetMediaUrls = urls.skip(1).toList();
 

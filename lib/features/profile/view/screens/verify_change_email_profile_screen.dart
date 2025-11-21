@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lite_x/core/routes/Route_Constants.dart';
+import 'package:lite_x/features/auth/view_model/auth_view_model.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
 import 'package:lite_x/features/profile/models/shared.dart';
 import 'package:lite_x/features/profile/view_model/providers.dart';
@@ -89,14 +91,16 @@ class _VerifyChangeEmailScreenProfileState
       (l) {
         _codeError = l.message;
       },
-      (r) {
+      (r) async {
         showSmallPopUpMessage(
           context: context,
           message: "Email Changed Successfully",
           borderColor: Colors.blue,
           icon: Icon(Icons.mark_email_read_rounded, color: Colors.blue),
         );
-        context.go("/profilescreen/${widget.profileData.username}");
+        final a = AuthViewModel();
+        await a.logout();
+        context.goNamed(RouteConstants.introscreen);
         // TODO:go to homePage
       },
     );
