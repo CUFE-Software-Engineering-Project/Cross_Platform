@@ -6,6 +6,8 @@ class TweetWidget extends StatelessWidget {
   final String username;
   final String timeAgo;
   final String content;
+  final String? avatarUrl;
+  final String tweetType;
   final String? imageUrl;
   final String? videoUrl;
   final bool isVerified;
@@ -26,6 +28,7 @@ class TweetWidget extends StatelessWidget {
   final VoidCallback? onReach;
   final VoidCallback? onTap;
   final VoidCallback? onDelete;
+  final VoidCallback? onProfileTap;
   final String? tweetId;
   final bool isOwnTweet;
   final TweetModel? quotedTweet;
@@ -36,6 +39,8 @@ class TweetWidget extends StatelessWidget {
     required this.username,
     required this.timeAgo,
     required this.content,
+    this.avatarUrl,
+    this.tweetType = 'TWEET',
     this.imageUrl,
     this.videoUrl,
     this.isVerified = false,
@@ -56,6 +61,7 @@ class TweetWidget extends StatelessWidget {
     this.onReach,
     this.onTap,
     this.onDelete,
+    this.onProfileTap,
     this.tweetId,
     this.isOwnTweet = false,
     this.quotedTweet,
@@ -73,34 +79,39 @@ class TweetWidget extends StatelessWidget {
             bottom: BorderSide(color: Colors.grey[800]!, width: 0.5),
           ),
         ),
-        child: Row(
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            CircleAvatar(
-              radius: 20,
-              backgroundColor: Colors.grey[700],
-              child: const Icon(Icons.person, color: Colors.white, size: 24),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildUserInfoRow(context),
-                  const SizedBox(height: 8),
-                  _buildTweetText(),
-                  const SizedBox(height: 12),
-                  if (quotedTweet != null) ...[
-                    _buildQuotedTweet(),
-                    const SizedBox(height: 12),
-                  ],
-                  if (imageUrl != null || videoUrl != null) ...[
-                    _buildMediaContent(),
-                    const SizedBox(height: 12),
-                  ],
-                  _buildActionButtons(),
-                ],
-              ),
+            if (_contextLabel != null) ...[
+              _buildContextPill(_contextLabel!),
+              const SizedBox(height: 12),
+            ],
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildAvatar(),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildUserInfoRow(context),
+                      const SizedBox(height: 8),
+                      _buildTweetText(),
+                      const SizedBox(height: 12),
+                      if (quotedTweet != null) ...[
+                        _buildQuotedTweet(),
+                        const SizedBox(height: 12),
+                      ],
+                      if (imageUrl != null || videoUrl != null) ...[
+                        _buildMediaContent(),
+                        const SizedBox(height: 12),
+                      ],
+                      _buildActionButtons(),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -108,60 +119,90 @@ class TweetWidget extends StatelessWidget {
     );
   }
 
+  Widget _buildAvatar() {
+    final hasAvatar = avatarUrl != null && avatarUrl!.isNotEmpty;
+    final avatar = CircleAvatar(
+      radius: 20,
+      backgroundColor: Colors.grey[700],
+      backgroundImage: hasAvatar ? NetworkImage(avatarUrl!) : null,
+      child: hasAvatar
+          ? null
+          : const Icon(Icons.person, color: Colors.white, size: 24),
+    );
+
+    if (onProfileTap == null) {
+      return avatar;
+    }
+
+    return GestureDetector(
+      onTap: onProfileTap,
+      behavior: HitTestBehavior.opaque,
+      child: avatar,
+    );
+  }
+
   Widget _buildUserInfoRow(BuildContext context) {
     return Row(
       children: [
         Expanded(
-          child: Row(
-            children: [
-              Flexible(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Flexible(
-                      child: Text(
-                        userDisplayName,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
+          child: GestureDetector(
+            onTap: onProfileTap,
+            behavior: HitTestBehavior.opaque,
+            child: Row(
+              children: [
+                Flexible(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          userDisplayName,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                    if (isVerified) ...[
-                      const SizedBox(width: 4),
-                      const Icon(Icons.verified, color: Colors.blue, size: 16),
+                      if (isVerified) ...[
+                        const SizedBox(width: 4),
+                        const Icon(
+                          Icons.verified,
+                          color: Colors.blue,
+                          size: 16,
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: Text(
-                  '·',
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Text(
+                    '·',
+                    style: TextStyle(color: Colors.grey[500], fontSize: 15),
+                  ),
+                ),
+                Flexible(
+                  child: Text(
+                    username.startsWith('@') ? username : '@$username',
+                    style: TextStyle(color: Colors.grey[500], fontSize: 15),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Text(
+                    '·',
+                    style: TextStyle(color: Colors.grey[500], fontSize: 15),
+                  ),
+                ),
+                Text(
+                  timeAgo,
                   style: TextStyle(color: Colors.grey[500], fontSize: 15),
                 ),
-              ),
-              Flexible(
-                child: Text(
-                  username.startsWith('@') ? username : '@$username',
-                  style: TextStyle(color: Colors.grey[500], fontSize: 15),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: Text(
-                  '·',
-                  style: TextStyle(color: Colors.grey[500], fontSize: 15),
-                ),
-              ),
-              Text(
-                timeAgo,
-                style: TextStyle(color: Colors.grey[500], fontSize: 15),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
         IconButton(
@@ -638,6 +679,36 @@ class TweetWidget extends StatelessWidget {
     return RegExp(r'[\u0600-\u06FF]').hasMatch(text);
   }
 
+  String? get _contextLabel {
+    switch (tweetType.toUpperCase()) {
+      case 'REPLY':
+        return 'Reply';
+      case 'RETWEET':
+      case 'REPOST':
+        return 'Repost';
+      default:
+        return null;
+    }
+  }
+
+  Widget _buildContextPill(String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.grey[900],
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: Colors.grey[400],
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+
   void _showRetweetMenu(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -695,6 +766,7 @@ class TweetWidget extends StatelessWidget {
       },
     );
   }
+
   static String formatTimeAgoShort(DateTime dateTime) {
     final now = DateTime.now();
     final difference = now.difference(dateTime);

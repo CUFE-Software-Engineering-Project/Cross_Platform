@@ -24,6 +24,7 @@ class _ReplyThreadScreenState extends ConsumerState<ReplyThreadScreen> {
   List<TweetModel> childReplies = [];
   bool isLoading = true;
   String? currentUserId;
+  final Map<String, int> _viewCounts = {};
 
   @override
   void initState() {
@@ -167,6 +168,8 @@ class _ReplyThreadScreenState extends ConsumerState<ReplyThreadScreen> {
           isLoading = false;
         });
 
+        _prefetchViewCounts([...loadedTweets.values, ...replies]);
+
         WidgetsBinding.instance.addPostFrameCallback((_) {
           _scrollToCurrentReply();
         });
@@ -175,6 +178,40 @@ class _ReplyThreadScreenState extends ConsumerState<ReplyThreadScreen> {
       if (mounted) {
         setState(() => isLoading = false);
       }
+    }
+  }
+
+  Future<void> _prefetchViewCounts(List<TweetModel> tweets) async {
+    final tweetsToFetch = tweets
+        .where((tweet) => !_viewCounts.containsKey(tweet.id))
+        .toList();
+
+    if (tweetsToFetch.isEmpty) {
+      return;
+    }
+
+    try {
+      final repository = ref.read(homeRepositoryProvider);
+      final results = await Future.wait(
+        tweetsToFetch.map((tweet) async {
+          try {
+            final summary = await repository.getTweetSummary(tweet.id);
+            return MapEntry(tweet.id, summary.views);
+          } catch (_) {
+            return MapEntry(tweet.id, 0);
+          }
+        }),
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        for (final entry in results) {
+          _viewCounts[entry.key] = entry.value;
+        }
+      });
+    } catch (_) {
+      // Ignore summary failures to avoid interrupting the thread rendering
     }
   }
 
@@ -776,7 +813,10 @@ class _ReplyThreadScreenState extends ConsumerState<ReplyThreadScreen> {
 
   Widget _timestampWithViews(TweetModel t) {
     final formattedTime = DateFormat('h:mm a · d MMM yy').format(t.createdAt);
-    final views = 0; // TODO: Get views from backend when available
+    final views = _viewCounts[t.id];
+    final viewsLabel = views == null
+        ? '... Views'
+        : '${_formatNumber(views)} Views';
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),
@@ -790,7 +830,7 @@ class _ReplyThreadScreenState extends ConsumerState<ReplyThreadScreen> {
           Text('·', style: TextStyle(color: Colors.grey[600])),
           const SizedBox(width: 4),
           Text(
-            '${_formatNumber(views)} Views',
+            viewsLabel,
             style: const TextStyle(
               color: Colors.white,
               fontSize: 15,

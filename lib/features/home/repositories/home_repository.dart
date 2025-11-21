@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lite_x/core/providers/dio_interceptor.dart';
 import 'package:lite_x/features/home/models/tweet_model.dart';
+import 'package:lite_x/features/home/models/tweet_summary.dart';
 
 final homeRepositoryProvider = Provider<HomeRepository>((ref) {
   return HomeRepository(ref);
@@ -47,7 +48,7 @@ class HomeRepository {
         }
       }
 
-      return tweets.where((tweet) => tweet.replyToId == null).toList();
+      return _filterTimelineTweets(tweets);
     } on DioException catch (e) {
       throw _handleError(e);
     } catch (e) {
@@ -88,7 +89,7 @@ class HomeRepository {
         }
       }
 
-      return tweets.where((tweet) => tweet.replyToId == null).toList();
+      return _filterTimelineTweets(tweets);
     } on DioException catch (e) {
       throw _handleError(e);
     } catch (e) {
@@ -155,9 +156,9 @@ class HomeRepository {
   ) async {
     try {
       if (isCurrentlyRetweeted) {
-        await _dio.delete('api/tweets/$tweetId/retweet');
+        await _dio.delete('api/tweets/$tweetId/retweets');
       } else {
-        await _dio.post('api/tweets/$tweetId/retweet');
+        await _dio.post('api/tweets/$tweetId/retweets');
       }
       return await getTweetById(tweetId);
     } on DioException catch (e) {
@@ -372,7 +373,10 @@ class HomeRepository {
         if (images.isNotEmpty) 'images': images,
       };
 
-      final response = await _dio.post('api/tweets/quote', data: data);
+      final response = await _dio.post(
+        'api/tweets/$quotedTweetId/quotes',
+        data: data,
+      );
 
       final tweetData = response.data is Map && response.data['data'] != null
           ? response.data['data']
@@ -389,6 +393,22 @@ class HomeRepository {
     } catch (e) {
       rethrow;
     }
+  }
+
+  List<TweetModel> _filterTimelineTweets(List<TweetModel> tweets) {
+    return tweets.where((tweet) {
+      final type = tweet.tweetType.toUpperCase();
+
+      if (type == 'TWEET' || type == 'QUOTE') {
+        return true;
+      }
+
+      if (type == 'REPLY') {
+        return false;
+      }
+
+      return tweet.replyToId == null;
+    }).toList();
   }
 
   Future<List<Map<String, dynamic>>> getTweetLikes(String tweetId) async {
@@ -427,7 +447,7 @@ class HomeRepository {
 
   Future<List<TweetModel>> getMentionedTweets(String username) async {
     try {
-      final response = await _dio.get('api/tweets/user/$username/mentioned');
+      final response = await _dio.get('api/tweets/users/$username/mentioned');
       final data = response.data is Map && response.data['data'] != null
           ? response.data['data']
           : response.data;
@@ -476,6 +496,57 @@ class HomeRepository {
           ? response.data['data']
           : response.data;
       return List<Map<String, dynamic>>.from(data);
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<TweetSummary> getTweetSummary(String tweetId) async {
+    try {
+      final response = await _dio.get('api/tweets/$tweetId/summary');
+      final data = _extractMap(response.data);
+      return TweetSummary.fromJson(data);
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<List<TweetModel>> searchTweets(
+    String query, {
+    int page = 1,
+    int limit = 20,
+  }) async {
+    final trimmedQuery = query.trim();
+    if (trimmedQuery.isEmpty) {
+      return [];
+    }
+
+    try {
+      final response = await _dio.get(
+        'api/tweets/search',
+        queryParameters: {'query': trimmedQuery, 'page': page, 'limit': limit},
+      );
+
+      final tweetsData = _extractList(response.data);
+      return tweetsData.map(TweetModel.fromJson).toList();
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<List<TweetModel>> getUserTweets(
+    String username, {
+    int page = 1,
+    int limit = 20,
+  }) async {
+    try {
+      final response = await _dio.get(
+        'api/tweets/users/$username',
+        queryParameters: {'page': page, 'limit': limit},
+      );
+
+      final tweetsData = _extractList(response.data);
+      return tweetsData.map(TweetModel.fromJson).toList();
     } on DioException catch (e) {
       throw _handleError(e);
     }
@@ -533,5 +604,45 @@ class HomeRepository {
     } else {
       return 'Network error: ${error.message}';
     }
+  }
+
+  List<Map<String, dynamic>> _extractList(dynamic data) {
+    if (data is List) {
+      return data
+          .whereType<Map>()
+          .map((map) => Map<String, dynamic>.from(map))
+          .toList();
+    }
+
+    if (data is Map && data['data'] is List) {
+      return (data['data'] as List)
+          .whereType<Map>()
+          .map((map) => Map<String, dynamic>.from(map))
+          .toList();
+    }
+
+    return const [];
+  }
+
+  Map<String, dynamic> _extractMap(dynamic data) {
+    if (data is Map<String, dynamic>) {
+      return Map<String, dynamic>.from(data);
+    }
+
+    if (data is Map) {
+      return data.map((key, value) => MapEntry(key.toString(), value));
+    }
+
+    if (data is List && data.isNotEmpty) {
+      final first = data.first;
+      if (first is Map<String, dynamic>) {
+        return Map<String, dynamic>.from(first);
+      }
+      if (first is Map) {
+        return first.map((key, value) => MapEntry(key.toString(), value));
+      }
+    }
+
+    return <String, dynamic>{};
   }
 }

@@ -39,13 +39,14 @@ class TweetModelAdapter extends TypeAdapter<TweetModel> {
       quotes: fields[17] == null ? 0 : (fields[17] as num).toInt(),
       bookmarks: fields[18] == null ? 0 : (fields[18] as num).toInt(),
       userId: fields[19] as String?,
+      tweetType: fields[20] == null ? 'TWEET' : fields[20] as String,
     );
   }
 
   @override
   void write(BinaryWriter writer, TweetModel obj) {
     writer
-      ..writeByte(20)
+      ..writeByte(21)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -85,7 +86,9 @@ class TweetModelAdapter extends TypeAdapter<TweetModel> {
       ..writeByte(18)
       ..write(obj.bookmarks)
       ..writeByte(19)
-      ..write(obj.userId);
+      ..write(obj.userId)
+      ..writeByte(20)
+      ..write(obj.tweetType);
   }
 
   @override
