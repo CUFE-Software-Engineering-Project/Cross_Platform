@@ -77,7 +77,6 @@ class ConversationModel extends HiveObject {
 
     if (messages.isNotEmpty) {
       final lastMsg = messages.last;
-
       if (lastMsg['messageMedia'] != null &&
           lastMsg['messageMedia'].isNotEmpty) {
         final media = lastMsg['messageMedia'][0]['media'];

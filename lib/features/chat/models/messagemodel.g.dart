@@ -34,7 +34,7 @@ class MessageModelAdapter extends TypeAdapter<MessageModel> {
   @override
   void write(BinaryWriter writer, MessageModel obj) {
     writer
-      ..writeByte(12)
+      ..writeByte(11)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -56,8 +56,7 @@ class MessageModelAdapter extends TypeAdapter<MessageModel> {
       ..writeByte(9)
       ..write(obj.senderProfileMediaKey)
       ..writeByte(10)
-      ..write(obj.messageType)
-      ..writeByte(11);
+      ..write(obj.messageType);
   }
 
   @override

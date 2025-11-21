@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -25,9 +27,8 @@ class ProfileSideDrawer extends ConsumerWidget {
                   CircleAvatar(
                     radius: 32,
                     backgroundColor: Colors.grey[800],
-                    backgroundImage:
-                        user?.photo != null && user!.photo!.isNotEmpty
-                        ? NetworkImage(user.photo!)
+                    backgroundImage: user?.localProfilePhotoPath != null
+                        ? FileImage(File(user!.localProfilePhotoPath!))
                         : null,
                     child: user?.photo == null || user?.photo?.isEmpty == true
                         ? Icon(Icons.person, color: Colors.grey[400], size: 32)

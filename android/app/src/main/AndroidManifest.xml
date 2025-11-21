@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="com.example.lite_x">
+          package="com.Artemsia.lite_x">
     <!-- Permissions -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -25,12 +25,24 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https"
+                      android:host="app-dbef67eb-9a2e-44fa-abff-3e8b83204d9c.cleverapps.io"
+                      android:pathPrefix="/login/success" />
+            </intent-filter>
         </activity>
         <activity android:name="com.yalantis.ucrop.UCropActivity"
                   android:screenOrientation="portrait"
                   android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
         <meta-data android:name="flutterEmbedding"
                    android:value="2" />
+        <meta-data android:name="com.google.android.gms.version"
+                   android:value="@integer/google_play_services_version" />
+        <meta-data android:name="com.google.android.gms.client_id"
+                   android:value="@string/default_web_client_id" />
     </application>
     <queries>
         <intent>

@@ -1,18 +1,24 @@
 // ignore_for_file: unused_catch_clause
 
+import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:fpdart/fpdart.dart';
+import 'package:google_sign_in/google_sign_in.dart' as signIn;
+import 'package:http/http.dart' as http;
+
 import 'package:lite_x/core/classes/AppFailure.dart';
 import 'package:lite_x/core/classes/PickedImage.dart';
 import 'package:lite_x/core/models/TokensModel.dart';
 import 'package:lite_x/core/models/usermodel.dart';
 import 'package:lite_x/core/providers/dio_interceptor.dart';
-import 'package:lite_x/features/auth/view/webview/oauth_browser.dart';
+import 'package:lite_x/core/services/deep_link_service.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:dio/dio.dart';
+import 'package:url_launcher/url_launcher.dart';
 part 'auth_remote_repository.g.dart';
 
 @Riverpod(keepAlive: true)
@@ -23,8 +29,94 @@ AuthRemoteRepository authRemoteRepository(Ref ref) {
 
 class AuthRemoteRepository {
   final Dio _dio;
-
   AuthRemoteRepository({required Dio dio}) : _dio = dio;
+  //---------------------------------------------------github------------------------------------------------------//
+  Future<Either<AppFailure, (UserModel, TokensModel)>> loginWithGithub() async {
+    try {
+      final baseUrl = dotenv.env["API_URL"]!;
+      final authUrl = "${baseUrl}oauth2/authorize/github";
+      final fullUrl = "$authUrl?redirect_uri=${baseUrl}login/success";
+
+      final opened = await launchUrl(
+        Uri.parse(fullUrl),
+        mode: LaunchMode.externalApplication,
+      );
+
+      if (!opened) {
+        return left(AppFailure(message: "Could not open browser"));
+      }
+
+      final uri = await DeepLinkService.waitForLink();
+
+      if (uri == null) {
+        return left(AppFailure(message: "Login cancelled by user"));
+      }
+
+      final token = uri.queryParameters["token"];
+      final refresh = uri.queryParameters["refresh"];
+      final userRaw = uri.queryParameters["user"];
+
+      if (token == null || refresh == null || userRaw == null) {
+        return left(AppFailure(message: "OAuth error: missing parameters"));
+      }
+
+      final decodedUser = Uri.decodeComponent(userRaw);
+      final user = UserModel.fromJson(decodedUser);
+
+      final tokens = TokensModel(
+        accessToken: token,
+        refreshToken: refresh,
+        accessTokenExpiry: DateTime.now().add(const Duration(hours: 1)),
+        refreshTokenExpiry: DateTime.now().add(const Duration(days: 30)),
+      );
+
+      return right((user, tokens));
+    } catch (e) {
+      return left(AppFailure(message: e.toString()));
+    }
+  }
+  //--------------------------------------------------------google-------------------------------------------------------------------//
+
+  final _googleSignIn = signIn.GoogleSignIn(scopes: ['email', 'profile']);
+
+  Future<Either<AppFailure, (UserModel, TokensModel)>>
+  signInWithGoogleAndroid() async {
+    try {
+      final String apiUrl = dotenv.env["API_URL"]!;
+
+      final googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) {
+        return left(AppFailure(message: "Google login canceled"));
+      }
+
+      final googleAuth = await googleUser.authentication;
+      final idToken = googleAuth.idToken;
+
+      final resp = await http.post(
+        Uri.parse("${apiUrl}oauth2/callback/android_google"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"idToken": idToken}),
+      );
+
+      if (resp.statusCode != 200) {
+        return left(AppFailure(message: resp.body));
+      }
+
+      final data = jsonDecode(resp.body);
+
+      final user = UserModel.fromMap(data["user"]);
+      final tokens = TokensModel(
+        accessToken: data["token"],
+        refreshToken: data["refreshToken"],
+        accessTokenExpiry: DateTime.now().add(const Duration(hours: 1)),
+        refreshTokenExpiry: DateTime.now().add(const Duration(days: 30)),
+      );
+
+      return right((user, tokens));
+    } catch (e) {
+      return left(AppFailure(message: e.toString()));
+    }
+  }
 
   //--------------------------------------------SignUp---------------------------------------------------------//
   // Register new user
@@ -195,16 +287,35 @@ class AuthRemoteRepository {
     }
   }
 
+  //---------------------------------------------------------google sign up--------------------------------------------------------------------------//
+
   //-------------------------------------------------FCM Token Registration-----------------------------------------------------------------------------------------//
   Future<Either<AppFailure, String>> registerFcmToken({
     required String fcmToken,
-    required String osType,
   }) async {
     try {
+      final String osType = kIsWeb
+          ? 'WEB'
+          : (Platform.isAndroid ? 'ANDROID' : 'IOS');
+
       final data = {'token': fcmToken, 'osType': osType};
+
       final response = await _dio.post('api/users/fcm-token', data: data);
-      return right(response.data['message'] ?? 'FCM registered successfully');
+
+      final message = response.data['message'] ?? 'FCM registered successfully';
+      return right(message);
     } on DioException catch (e) {
+      if (e.response != null) {
+        final resp = e.response!;
+        final serverMessage = resp.data != null && resp.data is Map
+            ? (resp.data['message'] ??
+                  resp.data['errors'] ??
+                  resp.data.toString())
+            : resp.statusMessage;
+        return left(
+          AppFailure(message: 'FCM registration failed: $serverMessage'),
+        );
+      }
       return left(AppFailure(message: 'FCM registration failed'));
     } catch (e) {
       return left(AppFailure(message: e.toString()));
@@ -365,58 +476,5 @@ class AuthRemoteRepository {
     } catch (e) {
       return left(AppFailure(message: e.toString()));
     }
-  }
-
-  //-----------------------------------------------google & github------------------------------------------------------------//
-  Future<Either<AppFailure, (UserModel, TokensModel)>> _performSocialLogin(
-    String provider,
-  ) async {
-    try {
-      final baseUrl = dotenv.env["API_URL"]!;
-      final startUrl = "${baseUrl}oauth2/authorize/$provider";
-      const successUrl =
-          "https://app-dbef67eb-9a2e-44fa-abff-3e8b83204d9c.cleverapps.io/login/success";
-      final browser = OAuthBrowser(
-        startUrl: startUrl,
-        successBaseUrl: successUrl,
-      );
-
-      final result = await browser.start();
-      final accessToken = result['token'];
-      final refreshToken = result['refresh'];
-      final userJsonString = result['user'];
-
-      if (accessToken == null ||
-          refreshToken == null ||
-          userJsonString == null) {
-        return left(
-          AppFailure(message: "Login failed: Missing data from server"),
-        );
-      }
-
-      final decoded = Uri.decodeComponent(userJsonString);
-      final user = UserModel.fromJson(decoded);
-
-      final tokens = TokensModel(
-        accessToken: accessToken,
-        refreshToken: refreshToken,
-        accessTokenExpiry: DateTime.now().add(const Duration(hours: 1)),
-        refreshTokenExpiry: DateTime.now().add(const Duration(days: 30)),
-      );
-      return right((user, tokens));
-    } catch (e) {
-      if (e.toString().contains("USER_CLOSED")) {
-        return left(AppFailure(message: "Login cancelled"));
-      }
-      return left(AppFailure(message: e.toString()));
-    }
-  }
-
-  Future<Either<AppFailure, (UserModel, TokensModel)>> loginWithGoogle() async {
-    return _performSocialLogin('google');
-  }
-
-  Future<Either<AppFailure, (UserModel, TokensModel)>> loginWithGithub() async {
-    return _performSocialLogin('github');
   }
 }

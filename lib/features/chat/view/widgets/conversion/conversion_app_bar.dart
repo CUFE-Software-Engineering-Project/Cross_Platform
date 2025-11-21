@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -32,8 +34,8 @@ class ConversationAppBar extends ConsumerWidget implements PreferredSizeWidget {
                   tag: "chat_user_avatar",
                   child: CircleAvatar(
                     radius: 18,
-                    backgroundImage: currentuser?.photo != null
-                        ? NetworkImage(currentuser!.photo!)
+                    backgroundImage: currentuser?.localProfilePhotoPath != null
+                        ? FileImage(File(currentuser!.localProfilePhotoPath!))
                         : null,
                     child: currentuser?.photo == null
                         ? const Icon(

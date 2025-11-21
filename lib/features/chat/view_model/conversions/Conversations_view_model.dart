@@ -214,7 +214,11 @@ class ConversationsViewModel extends _$ConversationsViewModel {
         print("Error loading conversations: ${failure.message}");
         return cachedConversations;
       }, (convs) => convs);
-
+      conversations.sort(
+        (a, b) => (b.lastMessageTime ?? b.updatedAt).compareTo(
+          a.lastMessageTime ?? a.updatedAt,
+        ),
+      );
       await ref
           .read(chatLocalRepositoryProvider)
           .upsertConversations(conversations);

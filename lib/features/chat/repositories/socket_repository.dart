@@ -114,8 +114,10 @@ class SocketRepository {
 
   // Listen to new real-time message
   void onNewMessage(Function(dynamic data) callback) {
-    _socket?.on("new-message", (data) => callback(data));
-  } // receiver
+    _socket?.on("new-message", (data) {
+      callback(data);
+    }); // receiver
+  }
 
   // Mark chat opened (make all messages READ)
   void openChat(String chatId) {

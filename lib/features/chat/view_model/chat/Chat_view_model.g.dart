@@ -41,7 +41,7 @@ final class ChatViewModelProvider
   }
 }
 
-String _$chatViewModelHash() => r'89d7a99ff591add5313d334907b45a6f919ce6e9';
+String _$chatViewModelHash() => r'46ece04edd3cbd2b6e9588045eb30c47da772648';
 
 abstract class _$ChatViewModel extends $Notifier<ChatState> {
   ChatState build();

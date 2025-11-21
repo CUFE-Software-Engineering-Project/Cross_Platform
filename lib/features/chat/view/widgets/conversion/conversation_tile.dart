@@ -35,13 +35,12 @@ class ConversationTile extends StatelessWidget {
       onTap: () {
         context.pushNamed(
           RouteConstants.ChatScreen,
-          pathParameters: {'recipientId': recipientId},
+          pathParameters: {'chatId': chatId},
           extra: {
-            'name': name,
+            'title': name,
             'avatarUrl': avatarUrl,
-            'username': username,
-            'chatId': chatId,
-            'isDMChat': isDMChat,
+            'subtitle': username,
+            'isGroup': isDMChat,
           },
         );
       },
@@ -53,7 +52,6 @@ class ConversationTile extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Avatar
             CircleAvatar(
               radius: 24,
               backgroundImage: avatarUrl != null
@@ -69,14 +67,12 @@ class ConversationTile extends StatelessWidget {
             ),
             const SizedBox(width: 12),
 
-            // Content
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      // Name
                       Flexible(
                         child: Text(
                           name,
@@ -89,7 +85,6 @@ class ConversationTile extends StatelessWidget {
                         ),
                       ),
 
-                      // Username (for DM chats)
                       if (isDMChat && username.isNotEmpty) ...[
                         const SizedBox(width: 4),
                         Flexible(
@@ -105,7 +100,6 @@ class ConversationTile extends StatelessWidget {
                         ),
                       ],
 
-                      // Time
                       Text(
                         ' · $time',
                         style: const TextStyle(

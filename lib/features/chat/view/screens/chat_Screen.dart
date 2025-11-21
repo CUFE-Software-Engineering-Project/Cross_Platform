@@ -6,12 +6,14 @@ import 'package:lite_x/features/chat/models/messagemodel.dart';
 
 import 'package:lite_x/features/chat/view/widgets/chat/MessageAppBar.dart';
 import 'package:lite_x/features/chat/view/widgets/chat/MessageBubble.dart';
+import 'package:lite_x/features/chat/view/widgets/chat/MessageOptionsSheet.dart';
 import 'package:lite_x/features/chat/view/widgets/chat/TypingIndicator.dart';
 import 'package:lite_x/features/chat/view/widgets/chat/message_input_bar.dart';
 import 'package:lite_x/core/classes/PickedImage.dart';
 import 'package:lite_x/features/chat/view_model/chat/Chat_view_model.dart';
 import 'package:lite_x/features/chat/view_model/conversions/Conversations_view_model.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
+import 'dart:io';
 
 class ChatScreen extends ConsumerStatefulWidget {
   final String chatId;
@@ -36,34 +38,87 @@ class ChatScreen extends ConsumerStatefulWidget {
 }
 
 class _ChatScreenState extends ConsumerState<ChatScreen> {
-  final ItemScrollController _itemScrollController = ItemScrollController();
-
+  late String _currentUserId;
   final ItemPositionsListener _itemPositionsListener =
       ItemPositionsListener.create();
-
+  bool _isExiting = false;
   bool _showScrollToBottomButton = false;
+  final ScrollController _scrollController = ScrollController();
+
+  ProviderSubscription<ChatState>? _chatSub;
 
   @override
   void initState() {
     super.initState();
+    _currentUserId = ref.read(currentUserProvider)!.id;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+
+      _setupChatSubscription();
+
+      ref.read(chatViewModelProvider.notifier).loadChat(widget.chatId);
+      ref
+          .read(conversationsViewModelProvider.notifier)
+          .markChatAsRead(widget.chatId);
+    });
+
     _itemPositionsListener.itemPositions.addListener(_scrollListener);
-    // ref
-    //     .read(conversationsViewModelProvider.notifier)
-    //     .markChatAsRead(widget.chatId);
+  }
+
+  void _setupChatSubscription() {
+    _chatSub = ref.listenManual<ChatState>(chatViewModelProvider, (
+      previous,
+      next,
+    ) {
+      if (_isExiting || !mounted) return;
+
+      final notifier = ref.read(chatViewModelProvider.notifier);
+      if (!notifier.isActiveChat(widget.chatId)) return;
+
+      final positions = _itemPositionsListener.itemPositions.value;
+      final isAtBottom =
+          positions.isEmpty ||
+          positions.any((pos) => pos.index == 0 && pos.itemLeadingEdge < 0.1);
+
+      final lastMsg = next.messages.lastOrNull;
+
+      if (lastMsg != null && (lastMsg.userId == _currentUserId || isAtBottom)) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (_isExiting || !mounted) return;
+          _scrollToBottom();
+        });
+      }
+    }, fireImmediately: false);
   }
 
   @override
   void dispose() {
+    _isExiting = true;
+
+    _chatSub?.close();
+    _chatSub = null;
+
     _itemPositionsListener.itemPositions.removeListener(_scrollListener);
+
+    try {
+      final notifier = ref.read(chatViewModelProvider.notifier);
+      notifier.sendTyping(false);
+      notifier.exitChat();
+    } catch (e) {
+      debugPrint("Error during dispose: $e");
+    }
+
     super.dispose();
   }
 
   void _scrollListener() {
+    if (_isExiting || !mounted) return;
+
     final positions = _itemPositionsListener.itemPositions.value;
     if (positions.isEmpty) return;
 
     final isBottomVisible = positions.any((pos) => pos.index == 0);
-
     final shouldShowButton = !isBottomVisible;
 
     if (shouldShowButton != _showScrollToBottomButton) {
@@ -74,55 +129,129 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 
   void _scrollToBottom() {
-    _itemScrollController.scrollTo(
-      index: 0,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
+    if (!mounted || _isExiting) return;
+    if (!_scrollController.hasClients) return;
+
+    _scrollController.animateTo(
+      0,
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOut,
     );
+  }
+
+  void _handleSendMessage(String text) {
+    if (_isExiting || !mounted) return;
+
+    final currentUser = ref.read(currentUserProvider);
+    if (currentUser == null || text.trim().isEmpty) return;
+
+    final tempId = DateTime.now().millisecondsSinceEpoch.toString();
+    final message = MessageModel(
+      id: tempId,
+      chatId: widget.chatId,
+      userId: currentUser.id,
+      content: text.trim(),
+      createdAt: DateTime.now(),
+      status: 'PENDING',
+      messageType: 'text',
+    );
+
+    ref.read(chatViewModelProvider.notifier).sendMessage(message);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_isExiting || !mounted) return;
+      _scrollToBottom();
+    });
+  }
+
+  void _handleSendImage(PickedImage pickedImage) {
+    if (_isExiting || !mounted) return;
+
+    final file = File(pickedImage.path!);
+    ref
+        .read(chatViewModelProvider.notifier)
+        .send_File_Message(file, 'image/${pickedImage.path!.split('.').last}');
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_isExiting || !mounted) return;
+      _scrollToBottom();
+    });
+  }
+
+  void _handleDeleteMessage(MessageModel message, bool forEveryone) {
+    print(
+      'Delete message ${message.id} for ${forEveryone ? "everyone" : "me"}',
+    );
+  }
+
+  void _handleEditMessage(MessageModel message) {
+    print('Edit message ${message.id}');
   }
 
   @override
   Widget build(BuildContext context) {
-    final chatviewmodel = ref.watch(chatViewModelProvider);
-    final currentuser = ref.watch(currentUserProvider);
-    List<MessageModel> messages = [];
-    if (currentuser == null) {
+    final chatState = ref.watch(chatViewModelProvider);
+    final currentUser = ref.watch(currentUserProvider);
+
+    if (currentUser == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
+
+    final messages = chatState.messages;
+
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      appBar: MessageAppBar(recipientName: widget.title),
+      appBar: MessageAppBar(
+        title: widget.title,
+        subtitle: widget.subtitle ?? '',
+      ),
       body: Column(
         children: [
           Expanded(
             child: Stack(
               children: [
-                ScrollablePositionedList.builder(
-                  itemScrollController: _itemScrollController,
-                  itemPositionsListener: _itemPositionsListener,
-                  reverse: true,
-                  padding: const EdgeInsets.symmetric(vertical: 10.0),
-                  itemCount: messages.length + 1,
-                  itemBuilder: (context, index) {
-                    if (index == messages.length) {
-                      return _buildProfileHeader();
-                    }
+                if (chatState.isLoading)
+                  const Center(child: CircularProgressIndicator())
+                else
+                  ListView.separated(
+                    controller: _scrollController,
+                    reverse: true,
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    itemCount: messages.length + 1,
+                    separatorBuilder: (_, __) => const SizedBox(height: 6),
+                    itemBuilder: (context, index) {
+                      if (index == messages.length)
+                        return _buildProfileHeader();
 
-                    final message = messages[index];
-                    final isMe = message.userId == currentuser.id;
+                      final message = messages[messages.length - index - 1];
+                      final isMe = message.userId == currentUser.id;
 
-                    return MessageBubble(
-                      message: message,
-                      isMe: isMe,
-                      showSenderName: message.senderName != null && !isMe,
-                      onLongPress: () => {},
-                      onTap: () => {},
-                      onMediaTap: (mediaIndex) => {},
-                    );
-                  },
-                ),
-                if (chatviewmodel.isRecipientTyping)
-                  TypingIndicator(userName: widget.title),
+                      return MessageBubble(
+                        message: message,
+                        isMe: isMe,
+                        showSenderName: message.senderName != null && !isMe,
+                        onLongPress: () {
+                          MessageOptionsSheet.show(
+                            context: context,
+                            message: message,
+                            isMe: isMe,
+                            onDeleteForMe: () =>
+                                _handleDeleteMessage(message, false),
+                            onDeleteForEveryone: () =>
+                                _handleDeleteMessage(message, true),
+                            onEdit: () => _handleEditMessage(message),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                if (chatState.isRecipientTyping)
+                  Positioned(
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    child: TypingIndicator(userName: widget.title),
+                  ),
 
                 _buildScrollToBottomButton(),
               ],
@@ -132,18 +261,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               child: MessageInputBar(
-                onSendMessage: (text) {
-                  //
-                  _scrollToBottom();
-                },
+                onSendMessage: _handleSendMessage,
                 onSendAudio: (audioPath) {
-                  //
+                  print('Send audio: $audioPath');
                 },
-                onSendImage: (PickedImage image) {
-                  //
-                },
+                onSendImage: _handleSendImage,
                 onSendGif: (gifUrl) {
-                  //
+                  print('Send GIF: $gifUrl');
+                },
+                onTypingChanged: (isTyping) {
+                  ref.read(chatViewModelProvider.notifier).sendTyping(isTyping);
                 },
               ),
             ),
@@ -213,7 +340,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           const SizedBox(height: 4),
 
           Text(
-            'Today', // mock
+            'Today',
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.bold,

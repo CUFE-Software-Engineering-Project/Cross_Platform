@@ -45,36 +45,45 @@ class ChatViewModel extends _$ChatViewModel {
   UserModel? _currentUser;
   String? _activeChatId;
   String? _myUserId;
-
+  bool _isSocketListenersSetup = false;
   @override
   ChatState build() {
     _chatRemoteRepository = ref.watch(chatRemoteRepositoryProvider);
     _chatLocalRepository = ref.watch(chatLocalRepositoryProvider);
     _socketRepository = ref.watch(socketRepositoryProvider);
     _currentUser = ref.watch(currentUserProvider);
+
     _setupSocketListeners();
+
     ref.onDispose(() {
       _socketRepository.disposeListeners();
     });
-    return ChatState(isLoading: true);
+    return ChatState(isLoading: false);
   }
 
+  bool isActiveChat(String chatId) => _activeChatId == chatId;
+
   void _setupSocketListeners() {
+    print("Setting up Socket Listeners in ViewModel...");
     _socketRepository.onNewMessage((data) {
+      print("ViewModel Received Message Event");
+      if (_activeChatId == null) return;
       if (data['chatId'] == _activeChatId) {
         handleIncomingMessage(data);
       }
     });
-
     _socketRepository.onMessageAdded((data) {
+      if (_activeChatId == null) return;
       handleMessageAdded(data);
     });
 
     _socketRepository.onMessagesRead((data) {
+      if (_activeChatId == null) return;
       handleMessagesRead(data);
     });
 
     _socketRepository.onTyping((data) {
+      if (_activeChatId == null) return;
       handleTypingEvent(data);
     });
   }
@@ -106,30 +115,46 @@ class ChatViewModel extends _$ChatViewModel {
       print("Error: No current user found");
       return;
     }
-    _activeChatId = chatId;
 
+    state = state.copyWith(isLoading: true);
+
+    _activeChatId = chatId;
     _myUserId = _currentUser!.id;
 
-    final cachedMessages = _chatLocalRepository.getMessagesForChat(chatId);
-
-    state = state.copyWith(messages: cachedMessages, isLoading: true);
+    final initialCachedMessages = _chatLocalRepository.getMessagesForChat(
+      chatId,
+    );
+    state = state.copyWith(messages: initialCachedMessages);
 
     final result = await _chatRemoteRepository.getInitialChatMessages(chatId);
 
-    final messages = result.fold((failure) {
-      print("Error loading messages: ${failure.message}");
-      return cachedMessages;
-    }, (msgs) => msgs);
+    if (_activeChatId != chatId) return;
 
-    await _chatLocalRepository.saveMessages(messages);
+    final messages = result.fold(
+      (failure) {
+        return _chatLocalRepository.getMessagesForChat(chatId);
+      },
+      (msgs) {
+        msgs.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+        return msgs;
+      },
+    );
+
+    if (result.isRight()) {
+      await _chatLocalRepository.saveMessages(messages);
+    }
+
+    if (_activeChatId != chatId) return;
 
     state = state.copyWith(messages: messages, isLoading: false);
 
-    _socketRepository.openChat(chatId); // mark all as read
+    _socketRepository.openChat(chatId);
   }
 
   // handle for receivers
   void handleIncomingMessage(Map<String, dynamic> data) async {
+    if (_activeChatId == null) return;
+
     final msg = MessageModel.fromApiResponse(data);
     if (msg.userId == _myUserId) {
       return;
@@ -203,10 +228,18 @@ class ChatViewModel extends _$ChatViewModel {
   // send message
   Future<void> sendMessage(MessageModel localMessage) async {
     assert(localMessage.media == null || localMessage.media!.isEmpty);
+
     _chatLocalRepository.saveMessage(localMessage);
     _chatLocalRepository.markMessageAsSent(localMessage.id);
-    final updated = [...state.messages, localMessage];
-    state = state.copyWith(messages: updated);
+
+    final isAlreadyInState = state.messages.any((m) => m.id == localMessage.id);
+
+    if (!isAlreadyInState) {
+      final updated = [...state.messages, localMessage];
+      updated.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+      state = state.copyWith(messages: updated);
+    }
+
     _socketRepository.sendMessage(localMessage.toApiRequest());
   }
 
@@ -222,6 +255,7 @@ class ChatViewModel extends _$ChatViewModel {
       type: filetype.contains("image") ? "IMAGE" : "VIDEO",
       size: await file.length(),
       name: file.path.split("/").last,
+      localPath: file.path,
     );
 
     final localMessage = MessageModel(
@@ -317,6 +351,8 @@ class ChatViewModel extends _$ChatViewModel {
   }
 
   void handleTypingEvent(dynamic data) {
+    if (_activeChatId == null) return;
+
     final typingChatId = data['chatId'] as String?;
     final typingUserId = data['userId'] as String?;
 
@@ -327,11 +363,15 @@ class ChatViewModel extends _$ChatViewModel {
   }
 
   void exitChat() {
+    final previousChatId = _activeChatId;
     _activeChatId = null;
-    state = state.copyWith(
-      isRecipientTyping: false,
-      messages: [],
-      isLoading: false,
-    );
+
+    if (previousChatId != null) {
+      state = ChatState(
+        isRecipientTyping: false,
+        messages: [],
+        isLoading: false,
+      );
+    }
   }
 }

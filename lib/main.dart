@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:lite_x/core/models/usermodel.dart';
 import 'package:lite_x/core/routes/AppRouter.dart';
+import 'package:lite_x/core/services/deep_link_service.dart';
 import 'package:lite_x/core/theme/app_theme.dart';
 import 'package:lite_x/features/chat/models/conversationmodel.dart';
 import 'package:lite_x/features/chat/models/mediamodel.dart';
@@ -19,6 +20,7 @@ void main() async {
 Future<void> init() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  DeepLinkService.init();
   await Hive.initFlutter();
   Hive.registerAdapter(UserModelAdapter());
   Hive.registerAdapter(ConversationModelAdapter());
@@ -26,7 +28,8 @@ Future<void> init() async {
   Hive.registerAdapter(MessageModelAdapter());
   // await Hive.deleteBoxFromDisk('userBox');
   // await Hive.deleteBoxFromDisk('tokenBox');
-
+  // await Hive.deleteBoxFromDisk<ConversationModel>('conversationsBox');
+  // await Hive.deleteBoxFromDisk<MessageModel>('messagesBox');
   await Hive.openBox<UserModel>('userBox');
   await Hive.openBox('tokenBox');
   await Hive.openBox<ConversationModel>('conversationsBox');

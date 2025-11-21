@@ -1,9 +1,5 @@
-import 'dart:io';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:fpdart/fpdart.dart';
-import 'package:lite_x/core/classes/AppFailure.dart';
 import 'package:lite_x/core/classes/PickedImage.dart';
-import 'package:lite_x/core/models/TokensModel.dart';
 import 'package:lite_x/core/models/usermodel.dart';
 import 'package:lite_x/features/auth/repositories/auth_local_repository.dart';
 import 'package:lite_x/features/auth/repositories/auth_remote_repository.dart';
@@ -178,22 +174,16 @@ class AuthViewModel extends _$AuthViewModel {
         if (fcmToken == null) {
           return;
         }
-        String osType;
-        if (Platform.isAndroid) {
-          osType = 'Android';
-        } else if (Platform.isIOS) {
-          osType = 'IOS';
-        } else {
-          osType = 'unknown';
-        }
+
         final result = await _authRemoteRepository.registerFcmToken(
           fcmToken: fcmToken,
-          osType: osType,
         );
         result.fold(
           (failure) =>
               print("FCM: Failed to register token: ${failure.message}"),
-          (message) => print("FCM: Token registered successfully: $message"),
+          (message) => print(
+            "FCM: Token registered successfully: $message",
+          ), // change later
         );
       } else {
         print('User declined or has not accepted permission');
@@ -459,24 +449,31 @@ class AuthViewModel extends _$AuthViewModel {
     );
   }
 
-  //--------------------------------------------------------------download photo ----------------------------------------------------------------------------------//
-
   //-----------------------------------------------google & github------------------------------------------------------------//
   Future<void> loginWithGoogle() async {
     state = AuthState.loading();
-    final result = await _authRemoteRepository.loginWithGoogle();
-    await _handleSocialLoginResult(result);
+    final result = await _authRemoteRepository.signInWithGoogleAndroid();
+    await result.fold(
+      (failure) async {
+        state = AuthState.error(failure.message);
+      },
+      (data) async {
+        final (user, tokens) = data;
+        await Future.wait([
+          _authLocalRepository.saveUser(user),
+          _authLocalRepository.saveTokens(tokens),
+        ]);
+        ref.read(currentUserProvider.notifier).adduser(user);
+        state = AuthState.authenticated('Signup successful');
+        _registerFcmToken();
+        _listenForFcmTokenRefresh();
+      },
+    );
   }
 
   Future<void> loginWithGithub() async {
     state = AuthState.loading();
     final result = await _authRemoteRepository.loginWithGithub();
-    await _handleSocialLoginResult(result);
-  }
-
-  Future<void> _handleSocialLoginResult(
-    Either<AppFailure, (UserModel, TokensModel)> result,
-  ) async {
     result.fold(
       (failure) {
         state = AuthState.error(failure.message);

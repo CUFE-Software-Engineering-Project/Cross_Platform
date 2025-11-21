@@ -95,6 +95,7 @@ class ChatRemoteRepository {
     String chatId,
   ) async {
     try {
+      print(chatId);
       final response = await _dio.get("api/dm/chat/$chatId");
       final data = response.data as Map<String, dynamic>;
 

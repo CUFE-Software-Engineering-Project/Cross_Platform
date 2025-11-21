@@ -1,8 +1,9 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:lite_x/core/theme/palette.dart';
 import 'package:lite_x/features/chat/models/messagemodel.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:lite_x/features/chat/models/mediamodel.dart';
 
 class MessageBubble extends StatelessWidget {
   final MessageModel message;
@@ -117,7 +118,7 @@ class _MessageContentBubble extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (message.hasMedia)
-            _MediaContent(message: message, onMediaTap: onMediaTap),
+            _MediaContent(message: message, onMediaTap: onMediaTap, isMe: isMe),
 
           if (message.content?.isNotEmpty ?? false)
             _TextContent(content: message.content!, hasMedia: message.hasMedia),
@@ -151,9 +152,14 @@ class _TextContent extends StatelessWidget {
 
 class _MediaContent extends StatelessWidget {
   final MessageModel message;
+  final bool isMe;
   final Function(int index)? onMediaTap;
 
-  const _MediaContent({required this.message, this.onMediaTap});
+  const _MediaContent({
+    required this.message,
+    this.onMediaTap,
+    required this.isMe,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -161,22 +167,26 @@ class _MediaContent extends StatelessWidget {
 
     final media = message.media!;
     if (media.length == 1) {
-      return _buildSingleMedia(media.first, 0);
+      return _buildSingleMedia(media.first, 0, context);
     }
     return _buildMediaGrid(media);
   }
 
-  Widget _buildSingleMedia(dynamic mediaItem, int index) {
+  Widget _buildSingleMedia(
+    MediaModel mediaItem,
+    int index,
+    BuildContext context,
+  ) {
     return GestureDetector(
       onTap: () => onMediaTap?.call(index),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxHeight: 300),
-        child: _buildMediaWidget(mediaItem),
+        child: _buildMediaWidget(mediaItem, context),
       ),
     );
   }
 
-  Widget _buildMediaGrid(List<dynamic> mediaList) {
+  Widget _buildMediaGrid(List<MediaModel> mediaList) {
     final itemCount = mediaList.length;
     final displayCount = itemCount > 4 ? 4 : itemCount;
     final hasMore = itemCount > 4;
@@ -197,7 +207,7 @@ class _MediaContent extends StatelessWidget {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              _buildMediaWidget(mediaList[index]),
+              _buildMediaWidget(mediaList[index], context),
               if (hasMore && index == displayCount - 1)
                 Container(
                   color: Colors.black54,
@@ -219,99 +229,19 @@ class _MediaContent extends StatelessWidget {
     );
   }
 
-  Widget _buildMediaWidget(dynamic mediaItem) {
-    final type = (mediaItem.type as String).toUpperCase();
+  Widget _buildMediaWidget(MediaModel mediaItem, BuildContext context) {
+    final type = mediaItem.type.toUpperCase();
 
     switch (type) {
       case 'IMAGE':
       case 'GIF':
-        return CachedNetworkImage(
-          imageUrl: mediaItem.url,
-          fit: BoxFit.cover,
-          placeholder: (context, url) => Container(
-            color: Colors.grey[800],
-            child: const Center(
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation(Palette.info),
-              ),
-            ),
-          ),
-          errorWidget: (context, url, error) => Container(
-            color: Colors.grey[800],
-            child: const Icon(Icons.broken_image, color: Colors.grey, size: 48),
-          ),
-        );
+        return _buildImageWidget(mediaItem, context);
 
       case 'VIDEO':
-        return Stack(
-          fit: StackFit.expand,
-          children: [
-            CachedNetworkImage(
-              imageUrl: mediaItem.url,
-              fit: BoxFit.cover,
-              placeholder: (context, url) => Container(color: Colors.grey[800]),
-              errorWidget: (context, url, error) => Container(
-                color: Colors.grey[800],
-                child: const Icon(Icons.videocam, color: Colors.grey, size: 48),
-              ),
-            ),
-            Center(
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: const BoxDecoration(
-                  color: Colors.black54,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.play_arrow,
-                  color: Colors.white,
-                  size: 32,
-                ),
-              ),
-            ),
-          ],
-        );
+        return _buildVideoThumbnail(mediaItem);
 
       case 'FILE':
-        return Container(
-          padding: const EdgeInsets.all(16),
-          color: Colors.grey[800],
-          child: Row(
-            children: [
-              const Icon(
-                Icons.insert_drive_file,
-                color: Palette.info,
-                size: 40,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      mediaItem.name ?? 'File',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      mediaItem.displaySize ?? 'Unknown size',
-                      style: TextStyle(color: Colors.grey[400], fontSize: 12),
-                    ),
-                  ],
-                ),
-              ),
-              const Icon(Icons.download, color: Colors.grey, size: 24),
-            ],
-          ),
-        );
+        return _buildFileWidget(mediaItem);
 
       default:
         return Container(
@@ -321,6 +251,173 @@ class _MediaContent extends StatelessWidget {
           ),
         );
     }
+  }
+
+  Widget _buildImageWidget(MediaModel mediaItem, BuildContext context) {
+    print(
+      "MEDIA DEBUG: Type: ${mediaItem.type}, LocalPath: ${mediaItem.localPath}, IsMe: $isMe",
+    );
+
+    if (mediaItem.localPath != null && mediaItem.localPath!.isNotEmpty) {
+      final file = File(mediaItem.localPath!);
+
+      return Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.file(
+            file,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              return _buildErrorPlaceholder();
+            },
+          ),
+
+          if (message.status == 'PENDING')
+            Container(
+              color: Colors.black38,
+              child: const Center(
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2,
+                ),
+              ),
+            ),
+        ],
+      );
+    }
+
+    return _buildDownloadingPlaceholder(mediaItem);
+  }
+
+  Widget _buildVideoThumbnail(MediaModel mediaItem) {
+    if (mediaItem.localPath != null && mediaItem.localPath!.isNotEmpty) {
+      return Stack(
+        fit: StackFit.expand,
+        children: [
+          Container(
+            color: Colors.black87,
+            child: const Center(
+              child: Icon(Icons.videocam, color: Colors.white54, size: 48),
+            ),
+          ),
+
+          Center(
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: const BoxDecoration(
+                color: Colors.black54,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.play_arrow,
+                color: Colors.white,
+                size: 32,
+              ),
+            ),
+          ),
+
+          if (message.status == 'PENDING')
+            Container(
+              color: Colors.black38,
+              child: const Center(
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2,
+                ),
+              ),
+            ),
+        ],
+      );
+    }
+
+    return _buildDownloadingPlaceholder(mediaItem);
+  }
+
+  Widget _buildDownloadingPlaceholder(MediaModel mediaItem) {
+    return Container(
+      height: 200,
+      color: Colors.grey[800],
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const CircularProgressIndicator(
+            color: Colors.white54,
+            strokeWidth: 2,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Downloading ${mediaItem.type.toLowerCase()}...',
+            style: const TextStyle(color: Colors.white54, fontSize: 12),
+          ),
+          if (mediaItem.size != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                mediaItem.displaySize,
+                style: TextStyle(color: Colors.grey[500], fontSize: 11),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorPlaceholder() {
+    return Container(
+      height: 200,
+      color: Colors.grey[800],
+      child: const Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.broken_image, color: Colors.grey, size: 48),
+          SizedBox(height: 8),
+          Text(
+            'Failed to load image',
+            style: TextStyle(color: Colors.grey, fontSize: 12),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFileWidget(MediaModel mediaItem) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      color: Colors.grey[800],
+      child: Row(
+        children: [
+          const Icon(Icons.insert_drive_file, color: Palette.info, size: 40),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  mediaItem.name ?? 'File',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  mediaItem.displaySize,
+                  style: TextStyle(color: Colors.grey[400], fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+          if (mediaItem.localPath == null)
+            const Icon(Icons.download, color: Colors.grey, size: 24)
+          else
+            const Icon(Icons.check_circle, color: Colors.green, size: 24),
+        ],
+      ),
+    );
   }
 }
 
@@ -353,18 +450,10 @@ class _MessageStatusAndTime extends StatelessWidget {
   Widget _buildStatusIcon() {
     switch (message.status.toUpperCase()) {
       case 'READ':
-        return const Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'Seen',
-              style: TextStyle(color: Palette.greycolor, fontSize: 12),
-            ),
-          ],
+        return const Text(
+          'Seen',
+          style: TextStyle(color: Palette.greycolor, fontSize: 12),
         );
-
-      case 'DELIVERED':
-        return const Icon(Icons.done_all, color: Palette.greycolor, size: 16);
 
       case 'SENT':
         return const Icon(Icons.check, color: Palette.greycolor, size: 16);
