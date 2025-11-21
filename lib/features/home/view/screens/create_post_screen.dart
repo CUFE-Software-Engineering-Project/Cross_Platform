@@ -1,6 +1,10 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lite_x/core/classes/PickedImage.dart';
 import 'package:lite_x/features/home/view_model/home_view_model.dart';
+import 'package:lite_x/features/media/upload_media.dart';
 
 enum PostPrivacy {
   everyone,
@@ -55,7 +59,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
   final TextEditingController _textController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
   bool _isPosting = false;
-  List<String> _selectedImages = [];
+  final List<File> _selectedImages = [];
   PostPrivacy _selectedPrivacy = PostPrivacy.everyone;
 
   @override
@@ -84,16 +88,40 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
     });
 
     try {
+      List<String> mediaIds = [];
+      if (_selectedImages.isNotEmpty) {
+        final uploadedIds = await upload_media(_selectedImages);
+        mediaIds = uploadedIds.where((id) => id.isNotEmpty).toList();
+
+        if (mediaIds.length != _selectedImages.length && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Some images failed to upload. Try again.'),
+              behavior: SnackBarBehavior.floating,
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+
+        if (mediaIds.isEmpty) {
+          throw Exception('Unable to upload selected images.');
+        }
+      }
+
       await ref
           .read(homeViewModelProvider.notifier)
           .createPost(
             content: _textController.text.trim(),
             replyControl: _selectedPrivacy.apiValue,
-            images: _selectedImages,
+            mediaIds: mediaIds,
             replyToId: widget.replyToId,
           );
 
       if (mounted) {
+        setState(() {
+          _textController.clear();
+          _selectedImages.clear();
+        });
         Navigator.pop(context, true);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -124,6 +152,92 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
         });
       }
     }
+  }
+
+  Future<void> _pickImage() async {
+    if (_selectedImages.length >= 4) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Maximum 4 images allowed per post.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    final picked = await pickImage();
+    if (picked?.file != null) {
+      setState(() {
+        _selectedImages.add(picked!.file!);
+      });
+    }
+  }
+
+  void _removeImage(int index) {
+    if (index < 0 || index >= _selectedImages.length) return;
+    setState(() {
+      _selectedImages.removeAt(index);
+    });
+  }
+
+  Widget _buildSelectedImagesPreview() {
+    if (_selectedImages.isEmpty) return const SizedBox.shrink();
+    final crossAxisCount = _selectedImages.length == 1 ? 1 : 2;
+    final double aspectRatio = _selectedImages.length == 1 ? 16 / 9 : 1;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '${_selectedImages.length} / 4 photos',
+          style: TextStyle(color: Colors.grey[500], fontSize: 13),
+        ),
+        const SizedBox(height: 8),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 8,
+            childAspectRatio: aspectRatio,
+          ),
+          itemCount: _selectedImages.length,
+          itemBuilder: (context, index) {
+            final file = _selectedImages[index];
+            return Stack(
+              children: [
+                Positioned.fill(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.file(file, fit: BoxFit.cover),
+                  ),
+                ),
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: InkWell(
+                    onTap: () => _removeImage(index),
+                    child: Container(
+                      decoration: const BoxDecoration(
+                        color: Colors.black54,
+                        shape: BoxShape.circle,
+                      ),
+                      padding: const EdgeInsets.all(4),
+                      child: const Icon(
+                        Icons.close,
+                        color: Colors.white,
+                        size: 16,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      ],
+    );
   }
 
   void _showPrivacyOptions() {
@@ -309,6 +423,10 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                     ],
                   ),
                   const SizedBox(height: 16),
+                  if (_selectedImages.isNotEmpty) ...[
+                    _buildSelectedImagesPreview(),
+                    const SizedBox(height: 16),
+                  ],
                 ],
               ),
             ),
@@ -369,14 +487,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
               children: [
                 IconButton(
                   icon: const Icon(Icons.image_outlined, color: Colors.blue),
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Image picker - Coming soon!'),
-                        behavior: SnackBarBehavior.floating,
-                      ),
-                    );
-                  },
+                  onPressed: _isPosting ? null : _pickImage,
                 ),
                 IconButton(
                   icon: const Icon(Icons.gif_box_outlined, color: Colors.blue),

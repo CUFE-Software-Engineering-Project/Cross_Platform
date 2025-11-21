@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -7,6 +9,8 @@ import 'package:lite_x/features/home/repositories/home_repository.dart';
 import 'package:lite_x/features/home/view/screens/reply_composer_screen.dart';
 import 'package:lite_x/features/home/view/screens/reply_thread_screen.dart';
 import 'package:lite_x/features/home/view/screens/quote_composer_screen.dart';
+import 'package:lite_x/features/home/view/widgets/media_gallery.dart';
+import 'package:lite_x/features/profile/view/screens/profile_screen.dart';
 import 'package:lite_x/features/home/view_model/home_view_model.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
@@ -24,6 +28,7 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
   List<TweetModel> replies = [];
   bool isLoading = true;
   String? currentUserId;
+  int? _viewCount;
 
   @override
   void initState() {
@@ -40,43 +45,48 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
     }
   }
 
+  void _openProfileFromUsername(String username) {
+    final normalized = _normalizeUsername(username);
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => ProfilePage(username: normalized)),
+    );
+  }
+
+  String _normalizeUsername(String username) {
+    if (username.isEmpty) return username;
+    return username.startsWith('@') ? username.substring(1) : username;
+  }
+
   Future<void> _loadTweetData() async {
-    setState(() {
-      isLoading = true;
-    });
+    final cachedTweet = _findCachedTweet(widget.tweetId);
+
+    if (mounted) {
+      setState(() {
+        mainTweet = cachedTweet;
+        replies = [];
+        isLoading = cachedTweet == null;
+        _viewCount = null;
+      });
+    }
 
     try {
-      final homeState = ref.read(homeViewModelProvider);
-      TweetModel? tweet;
+      final repository = ref.read(homeRepositoryProvider);
+      final fetchedTweet = await repository.getTweetById(widget.tweetId);
 
-      try {
-        tweet = homeState.tweets.firstWhere((t) => t.id == widget.tweetId);
-      } catch (e) {
-        try {
-          tweet = homeState.forYouTweets.firstWhere(
-            (t) => t.id == widget.tweetId,
-          );
-        } catch (e) {
-          try {
-            tweet = homeState.followingTweets.firstWhere(
-              (t) => t.id == widget.tweetId,
-            );
-          } catch (e) {
-            final repository = ref.read(homeRepositoryProvider);
-            tweet = await repository.getTweetById(widget.tweetId);
-          }
-        }
-      }
+      ref
+          .read(homeViewModelProvider.notifier)
+          .syncTweetFromServer(fetchedTweet);
 
       if (mounted) {
         setState(() {
-          mainTweet = tweet;
+          mainTweet = fetchedTweet;
         });
       }
 
-      await _loadReplies();
+      _loadTweetSummary(fetchedTweet.id);
+      await _loadRepliesForTweet(fetchedTweet.id);
     } catch (e) {
-      if (mounted) {
+      if (mounted && cachedTweet == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to load tweet: $e'),
@@ -93,13 +103,49 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
     }
   }
 
-  Future<void> _loadReplies() async {
-    if (mainTweet == null) return;
+  TweetModel? _findCachedTweet(String tweetId) {
+    final homeState = ref.read(homeViewModelProvider);
+    final sources = [
+      homeState.tweets,
+      homeState.forYouTweets,
+      homeState.followingTweets,
+    ];
 
+    for (final list in sources) {
+      try {
+        return list.firstWhere((tweet) => tweet.id == tweetId);
+      } catch (_) {
+        continue;
+      }
+    }
+
+    return null;
+  }
+
+  Future<void> _loadTweetSummary(String tweetId) async {
+    try {
+      final summary = await ref
+          .read(homeRepositoryProvider)
+          .getTweetSummary(tweetId);
+      if (mounted) {
+        setState(() {
+          _viewCount = summary.views;
+        });
+      }
+    } catch (e) {
+      if (mounted && _viewCount == null) {
+        setState(() {
+          _viewCount = 0;
+        });
+      }
+    }
+  }
+
+  Future<void> _loadRepliesForTweet(String tweetId) async {
     try {
       final loadedReplies = await ref
           .read(homeViewModelProvider.notifier)
-          .getReplies(mainTweet!.id);
+          .getReplies(tweetId);
 
       if (mounted) {
         setState(() {
@@ -131,12 +177,29 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
       mainTweet!.likes += newLikeState ? 1 : -1;
     });
 
+    final optimisticLikes = mainTweet!.likes;
+
     try {
       final repository = ref.read(homeRepositoryProvider);
-      // Pass current state (before toggle) to repository
-      await repository.toggleLike(mainTweet!.id, currentLikeState);
+      final updatedTweet = await repository.toggleLike(
+        mainTweet!.id,
+        currentLikeState,
+      );
 
-      // Keep the optimistic update - don't overwrite with server response
+      final normalizedTweet = updatedTweet.copyWith(
+        isLiked: newLikeState,
+        likes: optimisticLikes,
+      );
+
+      ref
+          .read(homeViewModelProvider.notifier)
+          .syncTweetFromServer(normalizedTweet);
+
+      if (mounted) {
+        setState(() {
+          mainTweet = normalizedTweet;
+        });
+      }
     } catch (e) {
       // Revert on error
       if (mounted) {
@@ -160,12 +223,29 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
       mainTweet!.retweets += newRetweetState ? 1 : -1;
     });
 
+    final optimisticRetweets = mainTweet!.retweets;
+
     try {
       final repository = ref.read(homeRepositoryProvider);
-      // Pass current state (before toggle) to repository
-      await repository.toggleRetweet(mainTweet!.id, currentRetweetState);
+      final updatedTweet = await repository.toggleRetweet(
+        mainTweet!.id,
+        currentRetweetState,
+      );
 
-      // Keep the optimistic update
+      final normalizedTweet = updatedTweet.copyWith(
+        isRetweeted: newRetweetState,
+        retweets: optimisticRetweets,
+      );
+
+      ref
+          .read(homeViewModelProvider.notifier)
+          .syncTweetFromServer(normalizedTweet);
+
+      if (mounted) {
+        setState(() {
+          mainTweet = normalizedTweet;
+        });
+      }
     } catch (e) {
       // Revert on error
       if (mounted) {
@@ -188,12 +268,28 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
       mainTweet!.isBookmarked = newBookmarkState;
     });
 
+    final optimisticBookmarkState = mainTweet!.isBookmarked;
+
     try {
       final repository = ref.read(homeRepositoryProvider);
-      // Pass current state (before toggle) to repository
-      await repository.toggleBookmark(mainTweet!.id, currentBookmarkState);
+      final updatedTweet = await repository.toggleBookmark(
+        mainTweet!.id,
+        currentBookmarkState,
+      );
 
-      // Keep the optimistic update
+      final normalizedTweet = updatedTweet.copyWith(
+        isBookmarked: optimisticBookmarkState,
+      );
+
+      ref
+          .read(homeViewModelProvider.notifier)
+          .syncTweetFromServer(normalizedTweet);
+
+      if (mounted) {
+        setState(() {
+          mainTweet = normalizedTweet;
+        });
+      }
     } catch (e) {
       // Revert on error
       if (mounted) {
@@ -276,7 +372,15 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
       ),
     );
 
-    if (result == true && mounted) {
+    if (result == true && mounted && mainTweet != null) {
+      ref
+          .read(homeViewModelProvider.notifier)
+          .incrementQuoteCount(mainTweet!.id);
+
+      setState(() {
+        mainTweet = mainTweet!.copyWith(quotes: mainTweet!.quotes + 1);
+      });
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Quote posted to your timeline'),
@@ -365,12 +469,6 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
           fontWeight: FontWeight.bold,
         ),
       ),
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.ios_share, color: Colors.white),
-          onPressed: () {},
-        ),
-      ],
     );
   }
 
@@ -396,40 +494,55 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
   }
 
   Widget _buildUserInfo() {
+    final profileTap = () =>
+        _openProfileFromUsername(mainTweet!.authorUsername);
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        CircleAvatar(
-          radius: 24,
-          backgroundImage: NetworkImage(mainTweet!.authorAvatar),
-          backgroundColor: Colors.grey[800],
+        GestureDetector(
+          onTap: profileTap,
+          behavior: HitTestBehavior.opaque,
+          child: CircleAvatar(
+            radius: 24,
+            backgroundImage: mainTweet!.authorAvatar.isNotEmpty
+                ? NetworkImage(mainTweet!.authorAvatar)
+                : null,
+            backgroundColor: Colors.grey[800],
+            child: mainTweet!.authorAvatar.isEmpty
+                ? const Icon(Icons.person, color: Colors.white)
+                : null,
+          ),
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Flexible(
-                    child: Text(
-                      mainTweet!.authorName,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
+          child: GestureDetector(
+            onTap: profileTap,
+            behavior: HitTestBehavior.opaque,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        mainTweet!.authorName,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 2),
-              Text(
-                mainTweet!.authorUsername,
-                style: TextStyle(color: Colors.grey[600], fontSize: 15),
-              ),
-            ],
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  mainTweet!.authorUsername,
+                  style: TextStyle(color: Colors.grey[600], fontSize: 15),
+                ),
+              ],
+            ),
           ),
         ),
         _buildActionButton(),
@@ -613,7 +726,9 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
           ),
         );
 
-        await _loadReplies();
+        if (mainTweet != null) {
+          await _loadRepliesForTweet(mainTweet!.id);
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -638,6 +753,7 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
             fontSize: 18,
             height: 1.4,
           ),
+          textDirection: _textDirectionFor(mainTweet!.content),
         ),
 
         if (mainTweet!.quotedTweet != null) ...[
@@ -646,37 +762,7 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
         ],
         if (mainTweet!.images.isNotEmpty) ...[
           const SizedBox(height: 16),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: Image.network(
-              mainTweet!.images.first,
-              width: double.infinity,
-              fit: BoxFit.cover,
-              loadingBuilder: (context, child, loadingProgress) {
-                if (loadingProgress == null) return child;
-                return Container(
-                  height: 200,
-                  color: Colors.grey[900],
-                  child: const Center(
-                    child: CircularProgressIndicator(color: Colors.blue),
-                  ),
-                );
-              },
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  height: 200,
-                  color: Colors.grey[900],
-                  child: const Center(
-                    child: Icon(
-                      Icons.broken_image,
-                      color: Colors.grey,
-                      size: 48,
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
+          MediaGallery(urls: mainTweet!.images, borderRadius: 16),
         ],
       ],
     );
@@ -696,8 +782,13 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
             children: [
               CircleAvatar(
                 radius: 14,
-                backgroundImage: NetworkImage(quotedTweet.authorAvatar),
+                backgroundImage: quotedTweet.authorAvatar.isNotEmpty
+                    ? NetworkImage(quotedTweet.authorAvatar)
+                    : null,
                 backgroundColor: Colors.grey[800],
+                child: quotedTweet.authorAvatar.isEmpty
+                    ? const Icon(Icons.person, color: Colors.white, size: 16)
+                    : null,
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -737,25 +828,15 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
           Text(
             quotedTweet.content,
             style: TextStyle(color: Colors.grey[300], fontSize: 15),
+            textDirection: _textDirectionFor(quotedTweet.content),
           ),
 
           if (quotedTweet.images.isNotEmpty) ...[
             const SizedBox(height: 8),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Image.network(
-                quotedTweet.images.first,
-                height: 150,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    height: 150,
-                    color: Colors.grey[800],
-                    child: const Icon(Icons.image, color: Colors.grey),
-                  );
-                },
-              ),
+            MediaGallery(
+              urls: quotedTweet.images,
+              borderRadius: 8,
+              minHeight: 120,
             ),
           ],
         ],
@@ -767,7 +848,8 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
     final formattedTime = DateFormat(
       'h:mm a · d MMM yy',
     ).format(mainTweet!.createdAt);
-    final views = 0; // TODO: Get views from backend when available
+    final viewsCount = _viewCount ?? 0;
+    final viewsLabel = '${_formatNumber(viewsCount)} Views';
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),
@@ -781,7 +863,7 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
           Text('·', style: TextStyle(color: Colors.grey[600])),
           const SizedBox(width: 4),
           Text(
-            '${_formatNumber(views)} Views',
+            viewsLabel,
             style: const TextStyle(
               color: Colors.white,
               fontSize: 15,
@@ -859,7 +941,7 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
               );
 
               if (result == true && mounted) {
-                await _loadReplies();
+                await _loadRepliesForTweet(mainTweet!.id);
 
                 await _loadTweetData();
               }
@@ -883,7 +965,7 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
             onTap: _toggleBookmark,
           ),
           _buildIconButton(
-            icon: Icons.ios_share,
+            icon: Icons.share_outlined,
             color: Colors.grey[600]!,
             onTap: () {},
           ),
@@ -908,6 +990,7 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
   }
 
   Widget _buildReplyCard(TweetModel reply) {
+    final profileTap = () => _openProfileFromUsername(reply.authorUsername);
     return InkWell(
       onTap: () {
         Navigator.push(
@@ -928,17 +1011,26 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            CircleAvatar(
-              radius: 20,
-              backgroundImage: NetworkImage(reply.authorAvatar),
-              backgroundColor: Colors.grey[800],
+            GestureDetector(
+              onTap: profileTap,
+              behavior: HitTestBehavior.opaque,
+              child: CircleAvatar(
+                radius: 20,
+                backgroundImage: reply.authorAvatar.isNotEmpty
+                    ? NetworkImage(reply.authorAvatar)
+                    : null,
+                backgroundColor: Colors.grey[800],
+                child: reply.authorAvatar.isEmpty
+                    ? const Icon(Icons.person, color: Colors.white)
+                    : null,
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildReplyHeader(reply),
+                  _buildReplyHeader(reply, onTap: profileTap),
                   const SizedBox(height: 4),
                   _buildReplyingTo(),
                   const SizedBox(height: 8),
@@ -949,17 +1041,11 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
                       fontSize: 15,
                       height: 1.4,
                     ),
+                    textDirection: _textDirectionFor(reply.content),
                   ),
                   if (reply.images.isNotEmpty) ...[
                     const SizedBox(height: 12),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Image.network(
-                        reply.images.first,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
+                    MediaGallery(urls: reply.images, borderRadius: 12),
                   ],
                   const SizedBox(height: 12),
                   _buildReplyActions(reply),
@@ -972,7 +1058,7 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
     );
   }
 
-  Widget _buildReplyHeader(TweetModel reply) {
+  Widget _buildReplyHeader(TweetModel reply, {VoidCallback? onTap}) {
     const String knownUserId = '6552d72c-3f27-445d-8ad8-bc22cda9ddd9';
     final bool isOwnReply =
         (currentUserId != null &&
@@ -983,30 +1069,34 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
     return Row(
       children: [
         Expanded(
-          child: Row(
-            children: [
-              Flexible(
-                child: Text(
-                  reply.authorName,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
+          child: GestureDetector(
+            onTap: onTap,
+            behavior: HitTestBehavior.opaque,
+            child: Row(
+              children: [
+                Flexible(
+                  child: Text(
+                    reply.authorName,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-              const SizedBox(width: 4),
-              Text(
-                reply.authorUsername,
-                style: TextStyle(color: Colors.grey[600], fontSize: 15),
-              ),
-              const SizedBox(width: 4),
-              Text(
-                '· ${timeago.format(reply.createdAt, locale: 'en_short')}',
-                style: TextStyle(color: Colors.grey[600], fontSize: 15),
-              ),
-            ],
+                const SizedBox(width: 4),
+                Text(
+                  reply.authorUsername,
+                  style: TextStyle(color: Colors.grey[600], fontSize: 15),
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  '· ${timeago.format(reply.createdAt, locale: 'en_short')}',
+                  style: TextStyle(color: Colors.grey[600], fontSize: 15),
+                ),
+              ],
+            ),
           ),
         ),
 
@@ -1045,9 +1135,12 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
           'Replying to ',
           style: TextStyle(color: Colors.grey[600], fontSize: 15),
         ),
-        Text(
-          mainTweet!.authorUsername,
-          style: const TextStyle(color: Colors.blue, fontSize: 15),
+        GestureDetector(
+          onTap: () => _openProfileFromUsername(mainTweet!.authorUsername),
+          child: Text(
+            mainTweet!.authorUsername,
+            style: const TextStyle(color: Colors.blue, fontSize: 15),
+          ),
         ),
       ],
     );
@@ -1068,7 +1161,7 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
             );
 
             if (result == true && mounted) {
-              await _loadReplies();
+              await _loadRepliesForTweet(mainTweet!.id);
               await _loadTweetData();
             }
           },
@@ -1087,7 +1180,7 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
           color: reply.isLiked ? Colors.pink : null,
         ),
         _buildReplyActionButton(Icons.bar_chart_outlined, ''),
-        _buildReplyActionButton(Icons.ios_share, ''),
+        _buildReplyActionButton(Icons.share_outlined, ''),
       ],
     );
   }
@@ -1117,7 +1210,7 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
           );
 
           if (result == true && mounted) {
-            await _loadReplies();
+            await _loadRepliesForTweet(mainTweet!.id);
 
             await _loadTweetData();
           }
@@ -1165,5 +1258,13 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
       return NumberFormat.decimalPattern().format(number);
     }
     return _formatNumber(number);
+  }
+
+  ui.TextDirection _textDirectionFor(String text) {
+    return _isArabicText(text) ? ui.TextDirection.rtl : ui.TextDirection.ltr;
+  }
+
+  bool _isArabicText(String text) {
+    return RegExp(r'[\u0600-\u06FF]').hasMatch(text);
   }
 }
