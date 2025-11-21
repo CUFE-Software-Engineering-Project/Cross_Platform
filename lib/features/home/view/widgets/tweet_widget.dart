@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'media_gallery.dart';
 import '../../models/tweet_model.dart';
 
 class TweetWidget extends StatelessWidget {
@@ -10,6 +11,7 @@ class TweetWidget extends StatelessWidget {
   final String tweetType;
   final String? imageUrl;
   final String? videoUrl;
+  final List<String> mediaUrls;
   final bool isVerified;
   final int replyCount;
   final int retweetCount;
@@ -43,6 +45,7 @@ class TweetWidget extends StatelessWidget {
     this.tweetType = 'TWEET',
     this.imageUrl,
     this.videoUrl,
+    this.mediaUrls = const [],
     this.isVerified = false,
     this.replyCount = 0,
     this.retweetCount = 0,
@@ -103,7 +106,9 @@ class TweetWidget extends StatelessWidget {
                         _buildQuotedTweet(),
                         const SizedBox(height: 12),
                       ],
-                      if (imageUrl != null || videoUrl != null) ...[
+                      if (mediaUrls.isNotEmpty ||
+                          imageUrl != null ||
+                          videoUrl != null) ...[
                         _buildMediaContent(),
                         const SizedBox(height: 12),
                       ],
@@ -447,68 +452,20 @@ class TweetWidget extends StatelessWidget {
   }
 
   Widget _buildMediaContent() {
-    return Container(
-      width: double.infinity,
-      constraints: const BoxConstraints(
-        maxHeight: 400, // Maximum height to prevent extremely tall images
-        minHeight: 150, // Minimum height for very small images
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: imageUrl != null
-            ? _buildImageContent()
-            : videoUrl != null
-            ? _buildVideoContent()
-            : const SizedBox.shrink(),
-      ),
-    );
-  }
+    final hasGallery = mediaUrls.isNotEmpty;
+    final hasImage = imageUrl != null;
+    final hasVideo = videoUrl != null;
 
-  Widget _buildImageContent() {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return Image.network(
-          imageUrl!,
-          width: double.infinity,
-          fit: BoxFit.cover,
-          loadingBuilder: (context, child, loadingProgress) {
-            if (loadingProgress == null) return child;
-            return Container(
-              height: 200,
-              color: Colors.grey[900],
-              child: Center(
-                child: CircularProgressIndicator(
-                  value: loadingProgress.expectedTotalBytes != null
-                      ? loadingProgress.cumulativeBytesLoaded /
-                            loadingProgress.expectedTotalBytes!
-                      : null,
-                  color: Colors.blue,
-                ),
-              ),
-            );
-          },
-          errorBuilder: (context, error, stackTrace) {
-            return Container(
-              height: 200,
-              color: Colors.grey[900],
-              child: const Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.broken_image, color: Colors.grey, size: 48),
-                    SizedBox(height: 8),
-                    Text(
-                      'Failed to load image',
-                      style: TextStyle(color: Colors.grey),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
+    if (!hasGallery && !hasImage && !hasVideo) {
+      return const SizedBox.shrink();
+    }
+
+    if (hasGallery || hasImage) {
+      final urls = hasGallery ? mediaUrls : [if (imageUrl != null) imageUrl!];
+      return MediaGallery(urls: urls);
+    }
+
+    return _buildVideoContent();
   }
 
   Widget _buildVideoContent() {

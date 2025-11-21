@@ -269,14 +269,14 @@ class HomeViewModel extends Notifier<HomeState> {
   Future<void> createPost({
     required String content,
     String replyControl = "EVERYONE",
-    List<String> images = const [],
+    List<String> mediaIds = const [],
     String? replyToId,
   }) async {
     try {
       final newTweet = await _repository.createPost(
         content: content,
         replyControl: replyControl,
-        images: images,
+        mediaIds: mediaIds,
         replyToId: replyToId,
       );
 
@@ -377,7 +377,7 @@ class HomeViewModel extends Notifier<HomeState> {
     required String quotedTweetId,
     required TweetModel quotedTweet,
     String replyControl = "EVERYONE",
-    List<String> images = const [],
+    List<String> mediaIds = const [],
   }) async {
     try {
       final newTweet = await _repository.createQuoteTweet(
@@ -385,7 +385,7 @@ class HomeViewModel extends Notifier<HomeState> {
         quotedTweetId: quotedTweetId,
         quotedTweet: quotedTweet,
         replyControl: replyControl,
-        images: images,
+        mediaIds: mediaIds,
       );
 
       // Quote tweets should only appear in the Following feed, not For You

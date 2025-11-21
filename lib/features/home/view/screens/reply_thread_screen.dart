@@ -5,6 +5,7 @@ import 'package:lite_x/core/providers/current_user_provider.dart';
 import 'package:lite_x/features/home/models/tweet_model.dart';
 import 'package:lite_x/features/home/repositories/home_repository.dart';
 import 'package:lite_x/features/home/view/screens/reply_composer_screen.dart';
+import 'package:lite_x/features/home/view/widgets/media_gallery.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
 class ReplyThreadScreen extends ConsumerStatefulWidget {
@@ -421,24 +422,7 @@ class _ReplyThreadScreenState extends ConsumerState<ReplyThreadScreen> {
           ),
           if (tweet.images.isNotEmpty) ...[
             const SizedBox(height: 12),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Image.network(
-                tweet.images.first,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return Container(
-                    height: 200,
-                    color: Colors.grey[900],
-                    child: const Center(
-                      child: CircularProgressIndicator(color: Colors.blue),
-                    ),
-                  );
-                },
-              ),
-            ),
+            MediaGallery(urls: tweet.images, borderRadius: 12),
           ],
           const SizedBox(height: 12),
           _inlineActions(tweet),
@@ -529,14 +513,7 @@ class _ReplyThreadScreenState extends ConsumerState<ReplyThreadScreen> {
                   ),
                   if (reply.images.isNotEmpty) ...[
                     const SizedBox(height: 12),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Image.network(
-                        reply.images.first,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
+                    MediaGallery(urls: reply.images, borderRadius: 12),
                   ],
                   const SizedBox(height: 12),
                   _inlineActions(reply),
@@ -621,14 +598,7 @@ class _ReplyThreadScreenState extends ConsumerState<ReplyThreadScreen> {
           ),
           if (tweet.images.isNotEmpty) ...[
             const SizedBox(height: 16),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: Image.network(
-                tweet.images.first,
-                width: double.infinity,
-                fit: BoxFit.cover,
-              ),
-            ),
+            MediaGallery(urls: tweet.images, borderRadius: 16),
           ],
           const SizedBox(height: 16),
           _timestampWithViews(tweet),

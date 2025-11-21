@@ -15,8 +15,8 @@ Lite X is a Flutter/Riverpod client for the X-like backend that exposes a comple
 - Flutter 3.22+ with Dart 3.
 - A running backend that implements the `/api/tweets/**` endpoints referenced in `lib/features/home/repositories/home_repository.dart`.
 - For help getting started with Flutter development, view the
-	[online documentation](https://docs.flutter.dev/), which offers tutorials,
-	samples, guidance on mobile development, and a full API reference.
+  [online documentation](https://docs.flutter.dev/), which offers tutorials,
+  samples, guidance on mobile development, and a full API reference.
 
 ## Settings Feature Architecture
 

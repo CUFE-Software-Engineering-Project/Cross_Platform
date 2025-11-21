@@ -7,14 +7,18 @@ import 'package:lite_x/features/media/view_model/providers.dart';
 
 Future<List<String>> upload_media(List<File> files) async {
   final container = ProviderContainer();
+  final limitedFiles = files.take(4).toList();
 
-  List<String> ids = [];
-  for (int i = 0; i < files.length; i++) {
+  final List<String> ids = [];
+  for (int i = 0; i < limitedFiles.length; i++) {
+    final file = limitedFiles[i];
     bool fail = false;
+    final fileName = file.path.split(Platform.pathSeparator).last;
+    final fileType = _getMediaType(file.path);
 
     // request upload
     final requestUpload = container.read(requestUploadProvider);
-    final requestUploadResponse = await requestUpload("file$i.jpeg", "IMAGE");
+    final requestUploadResponse = await requestUpload(fileName, fileType);
     RequestUploadModel requestUploadModel = RequestUploadModel(
       url: "",
       keyName: "",
@@ -34,7 +38,7 @@ Future<List<String>> upload_media(List<File> files) async {
 
     // upload
     final upload = container.read(uploadProvider);
-    final uploadResponse = await upload(requestUploadModel.url, files[i]);
+    final uploadResponse = await upload(requestUploadModel.url, file);
     uploadResponse.fold((l) {
       fail = true;
     }, (res) {});
@@ -69,6 +73,8 @@ Future<List<String>> upload_media(List<File> files) async {
     }
     ids.add(confirmUploadModel.id);
   }
+
+  container.dispose();
   return ids;
 }
 

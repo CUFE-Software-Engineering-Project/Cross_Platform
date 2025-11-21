@@ -250,12 +250,51 @@ List<String> _parseMediaList(dynamic source) {
     for (final item in source) {
       if (item is String && item.isNotEmpty) {
         urls.add(item);
-      } else if (item is Map) {
-        final map = item.map((key, value) => MapEntry(key.toString(), value));
-        final candidate =
-            map['url'] ?? map['mediaUrl'] ?? map['media_url'] ?? map['path'];
+        continue;
+      }
 
-        if (candidate is String && candidate.isNotEmpty) {
+      if (item is Map) {
+        final map = item.map((key, value) => MapEntry(key.toString(), value));
+
+        String? candidate;
+        final directCandidates = [
+          map['url'],
+          map['mediaUrl'],
+          map['media_url'],
+          map['path'],
+          map['mediaId'],
+          map['media_id'],
+          map['id'],
+        ];
+
+        for (final value in directCandidates) {
+          if (value is String && value.isNotEmpty) {
+            candidate = value;
+            break;
+          }
+        }
+
+        if (candidate == null && map['media'] is Map) {
+          final nested = (map['media'] as Map).map(
+            (key, value) => MapEntry(key.toString(), value),
+          );
+          final nestedCandidates = [
+            nested['url'],
+            nested['mediaUrl'],
+            nested['media_url'],
+            nested['path'],
+            nested['keyName'],
+            nested['id'],
+          ];
+          for (final value in nestedCandidates) {
+            if (value is String && value.isNotEmpty) {
+              candidate = value;
+              break;
+            }
+          }
+        }
+
+        if (candidate != null) {
           urls.add(candidate);
         }
       }

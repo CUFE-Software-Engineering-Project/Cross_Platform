@@ -9,6 +9,7 @@ import 'package:lite_x/features/home/repositories/home_repository.dart';
 import 'package:lite_x/features/home/view/screens/reply_composer_screen.dart';
 import 'package:lite_x/features/home/view/screens/reply_thread_screen.dart';
 import 'package:lite_x/features/home/view/screens/quote_composer_screen.dart';
+import 'package:lite_x/features/home/view/widgets/media_gallery.dart';
 import 'package:lite_x/features/profile/view/screens/profile_screen.dart';
 import 'package:lite_x/features/home/view_model/home_view_model.dart';
 import 'package:timeago/timeago.dart' as timeago;
@@ -761,37 +762,7 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
         ],
         if (mainTweet!.images.isNotEmpty) ...[
           const SizedBox(height: 16),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: Image.network(
-              mainTweet!.images.first,
-              width: double.infinity,
-              fit: BoxFit.cover,
-              loadingBuilder: (context, child, loadingProgress) {
-                if (loadingProgress == null) return child;
-                return Container(
-                  height: 200,
-                  color: Colors.grey[900],
-                  child: const Center(
-                    child: CircularProgressIndicator(color: Colors.blue),
-                  ),
-                );
-              },
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  height: 200,
-                  color: Colors.grey[900],
-                  child: const Center(
-                    child: Icon(
-                      Icons.broken_image,
-                      color: Colors.grey,
-                      size: 48,
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
+          MediaGallery(urls: mainTweet!.images, borderRadius: 16),
         ],
       ],
     );
@@ -862,21 +833,10 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
 
           if (quotedTweet.images.isNotEmpty) ...[
             const SizedBox(height: 8),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Image.network(
-                quotedTweet.images.first,
-                height: 150,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    height: 150,
-                    color: Colors.grey[800],
-                    child: const Icon(Icons.image, color: Colors.grey),
-                  );
-                },
-              ),
+            MediaGallery(
+              urls: quotedTweet.images,
+              borderRadius: 8,
+              minHeight: 120,
             ),
           ],
         ],
@@ -1085,14 +1045,7 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
                   ),
                   if (reply.images.isNotEmpty) ...[
                     const SizedBox(height: 12),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Image.network(
-                        reply.images.first,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
+                    MediaGallery(urls: reply.images, borderRadius: 12),
                   ],
                   const SizedBox(height: 12),
                   _buildReplyActions(reply),

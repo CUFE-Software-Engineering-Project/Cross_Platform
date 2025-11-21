@@ -255,6 +255,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           timeAgo: TweetWidget.formatTimeAgoShort(tweet.createdAt),
           content: tweet.content,
           imageUrl: tweet.images.isNotEmpty ? tweet.images.first : null,
+          mediaUrls: tweet.images,
           onProfileTap: () => _openProfile(tweet.authorUsername),
           replyCount: tweet.replies,
           retweetCount: tweet.retweets,
