@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:lite_x/features/profile/models/shared.dart';
 import 'package:lite_x/features/profile/models/user_model.dart';
 import 'package:lite_x/features/settings/models/settings_model.dart';
+import 'package:lite_x/features/settings/models/muted_users_response.dart';
 import 'settings_repo.dart';
 
 /// Mock-data implementation while backend endpoints are being finalized.
@@ -70,6 +71,40 @@ class SettingsRepoImpl implements SettingsRepo {
   Future<Either<Failure, List<UserModel>>> getMutedAccounts(String username) async {
     await Future.delayed(const Duration(milliseconds: 150));
     return Right(List<UserModel>.from(_muted));
+  }
+
+  @override
+  Future<Either<Failure, MutedUsersResponse>> fetchMutedAccounts({int limit = 30, String? cursor}) async {
+    try {
+      final response = await _dio.get(
+        'api/mutes',
+        queryParameters: {
+          'limit': limit,
+          if (cursor != null && cursor.isNotEmpty) 'cursor': cursor,
+        },
+      );
+      final data = MutedUsersResponse.fromJson(response.data as Map<String, dynamic>);
+      return Right(data);
+    } catch (e) {
+      return Left(Failure('Failed to fetch muted accounts'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, MutedUsersResponse>> fetchBlockedAccounts({int limit = 30, String? cursor}) async {
+    try {
+      final response = await _dio.get(
+        'api/blocks',
+        queryParameters: {
+          'limit': limit,
+          if (cursor != null && cursor.isNotEmpty) 'cursor': cursor,
+        },
+      );
+      final data = MutedUsersResponse.fromJson(response.data as Map<String, dynamic>);
+      return Right(data);
+    } catch (e) {
+      return Left(Failure('Failed to fetch blocked accounts'));
+    }
   }
 
   @override

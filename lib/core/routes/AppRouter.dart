@@ -37,7 +37,7 @@ import 'package:lite_x/features/settings/screens/ChangePassword_Screen.dart';
 
 class Approuter {
   static final GoRouter router = GoRouter(
-    initialLocation: "/settingandprivacyscreen",
+    initialLocation: "/splash",
     routes: [
       GoRoute(
         name: RouteConstants.splash,
