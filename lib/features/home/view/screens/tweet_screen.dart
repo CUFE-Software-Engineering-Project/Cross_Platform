@@ -10,7 +10,6 @@ import 'package:lite_x/features/home/view/screens/reply_composer_screen.dart';
 import 'package:lite_x/features/home/view/screens/reply_thread_screen.dart';
 import 'package:lite_x/features/home/view/screens/quote_composer_screen.dart';
 import 'package:lite_x/features/home/view/widgets/media_gallery.dart';
-import 'package:lite_x/features/home/view/widgets/tweet_summary_dialog.dart';
 import 'package:lite_x/features/profile/view/screens/profile_screen.dart';
 import 'package:lite_x/features/home/view_model/home_view_model.dart';
 import 'package:timeago/timeago.dart' as timeago;
@@ -301,163 +300,6 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
     }
   }
 
-  Future<void> _showSummaryDialog() async {
-    if (mainTweet == null) return;
-
-    try {
-      final repository = ref.read(homeRepositoryProvider);
-      final summary = await repository.getTweetSummary(mainTweet!.id);
-
-      if (mounted) {
-        showDialog(
-          context: context,
-          builder: (context) => TweetSummaryDialog(summary: summary),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to load summary: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
-
-  Future<void> _toggleReplyLike(TweetModel reply) async {
-    final currentLikeState = reply.isLiked;
-    final newLikeState = !currentLikeState;
-
-    // Optimistic UI update
-    setState(() {
-      final replyIndex = replies.indexWhere((r) => r.id == reply.id);
-      if (replyIndex != -1) {
-        replies[replyIndex].isLiked = newLikeState;
-        replies[replyIndex].likes += newLikeState ? 1 : -1;
-      }
-    });
-
-    try {
-      final repository = ref.read(homeRepositoryProvider);
-      await repository.toggleLike(reply.id, currentLikeState);
-
-      // Sync with home view model
-      final updatedReply = reply.copyWith(
-        isLiked: newLikeState,
-        likes: reply.likes + (newLikeState ? 1 : -1),
-      );
-      ref
-          .read(homeViewModelProvider.notifier)
-          .syncTweetFromServer(updatedReply);
-    } catch (e) {
-      // Revert on error
-      if (mounted) {
-        setState(() {
-          final replyIndex = replies.indexWhere((r) => r.id == reply.id);
-          if (replyIndex != -1) {
-            replies[replyIndex].isLiked = currentLikeState;
-            replies[replyIndex].likes += currentLikeState ? 1 : -1;
-          }
-        });
-      }
-    }
-  }
-
-  Future<void> _toggleReplyRetweet(TweetModel reply) async {
-    final currentRetweetState = reply.isRetweeted;
-    final newRetweetState = !currentRetweetState;
-
-    // Optimistic UI update
-    setState(() {
-      final replyIndex = replies.indexWhere((r) => r.id == reply.id);
-      if (replyIndex != -1) {
-        replies[replyIndex].isRetweeted = newRetweetState;
-        replies[replyIndex].retweets += newRetweetState ? 1 : -1;
-      }
-    });
-
-    try {
-      final repository = ref.read(homeRepositoryProvider);
-      await repository.toggleRetweet(reply.id, currentRetweetState);
-
-      // Sync with home view model
-      final updatedReply = reply.copyWith(
-        isRetweeted: newRetweetState,
-        retweets: reply.retweets + (newRetweetState ? 1 : -1),
-      );
-      ref
-          .read(homeViewModelProvider.notifier)
-          .syncTweetFromServer(updatedReply);
-    } catch (e) {
-      // Revert on error
-      if (mounted) {
-        setState(() {
-          final replyIndex = replies.indexWhere((r) => r.id == reply.id);
-          if (replyIndex != -1) {
-            replies[replyIndex].isRetweeted = currentRetweetState;
-            replies[replyIndex].retweets += currentRetweetState ? 1 : -1;
-          }
-        });
-      }
-    }
-  }
-
-  void _showRetweetMenuForReply(BuildContext context, TweetModel reply) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: const Color(0xFF1E1E1E),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (BuildContext modalContext) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: Icon(
-                  reply.isRetweeted ? Icons.close : Icons.repeat,
-                  color: Colors.white,
-                ),
-                title: Text(
-                  reply.isRetweeted ? 'Undo Retweet' : 'Retweet',
-                  style: const TextStyle(color: Colors.white),
-                ),
-                onTap: () {
-                  Navigator.pop(modalContext);
-                  _toggleReplyRetweet(reply);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.edit, color: Colors.white),
-                title: const Text(
-                  'Quote',
-                  style: TextStyle(color: Colors.white),
-                ),
-                onTap: () async {
-                  Navigator.pop(modalContext);
-                  final result = await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          QuoteComposerScreen(quotedTweet: reply),
-                    ),
-                  );
-
-                  if (result == true && mounted) {
-                    await _loadTweetData();
-                  }
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
   void _showRetweetMenu(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -588,32 +430,24 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: _buildAppBar(),
-      body: RefreshIndicator(
-        onRefresh: _loadTweetData,
-        color: const Color(0xFF1DA1F2),
-        backgroundColor: Colors.grey[900],
-        child: ListView(
-          children: [
-            _buildMainTweet(),
-            if (replies.isNotEmpty) ...[
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                child: Text(
-                  'Most relevant replies',
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
-                  ),
+      body: ListView(
+        children: [
+          _buildMainTweet(),
+          if (replies.isNotEmpty) ...[
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Text(
+                'Most relevant replies',
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
                 ),
               ),
-              ...replies.map((reply) => _buildReplyCard(reply)),
-            ],
+            ),
+            ...replies.map((reply) => _buildReplyCard(reply)),
           ],
-        ),
+        ],
       ),
       bottomNavigationBar: _buildReplyBar(),
     );
@@ -704,7 +538,7 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '@${mainTweet!.authorUsername}',
+                  mainTweet!.authorUsername,
                   style: TextStyle(color: Colors.grey[600], fontSize: 15),
                 ),
               ],
@@ -779,113 +613,12 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
   }
 
   void _showEditDialog() {
-    final TextEditingController controller = TextEditingController(
-      text: mainTweet!.content,
-    );
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1E1E1E),
-        title: const Text(
-          'Edit Tweet',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-        content: TextField(
-          controller: controller,
-          maxLines: null,
-          maxLength: 280,
-          autofocus: true,
-          style: const TextStyle(color: Colors.white, fontSize: 16),
-          decoration: InputDecoration(
-            hintText: 'What\'s happening?',
-            hintStyle: TextStyle(color: Colors.grey[600]),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey[800]!),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey[800]!),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFF1DA1F2)),
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
-          ),
-          TextButton(
-            onPressed: () async {
-              final newContent = controller.text.trim();
-              if (newContent.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Tweet cannot be empty'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-                return;
-              }
-
-              Navigator.pop(context);
-              await _updateTweet(newContent);
-            },
-            child: const Text(
-              'Save',
-              style: TextStyle(
-                color: Color(0xFF1DA1F2),
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Edit functionality coming soon!'),
+        backgroundColor: Colors.blue,
       ),
     );
-  }
-
-  Future<void> _updateTweet(String newContent) async {
-    if (mainTweet == null) return;
-
-    try {
-      final repository = ref.read(homeRepositoryProvider);
-      final updatedTweet = await repository.updateTweet(mainTweet!.id, {
-        'content': newContent,
-      });
-
-      if (mounted) {
-        setState(() {
-          mainTweet = updatedTweet;
-        });
-
-        ref
-            .read(homeViewModelProvider.notifier)
-            .syncTweetFromServer(updatedTweet);
-
-        // Reload the entire tweet screen to fetch fresh data
-        await _loadTweetData();
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Tweet updated successfully'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to update tweet: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
   }
 
   void _showDeleteDialog() {
@@ -1225,11 +958,6 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
             onTap: _toggleLike,
           ),
           _buildIconButton(
-            icon: Icons.auto_awesome,
-            color: const Color(0xFF1DA1F2),
-            onTap: _showSummaryDialog,
-          ),
-          _buildIconButton(
             icon: mainTweet!.isBookmarked
                 ? Icons.bookmark
                 : Icons.bookmark_border,
@@ -1359,7 +1087,7 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  '@${reply.authorUsername}',
+                  reply.authorUsername,
                   style: TextStyle(color: Colors.grey[600], fontSize: 15),
                 ),
                 const SizedBox(width: 4),
@@ -1442,21 +1170,14 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
             reply.replies > 0 ? reply.replies.toString() : '',
           ),
         ),
-        InkWell(
-          onTap: () => _showRetweetMenuForReply(context, reply),
-          child: _buildReplyActionButton(
-            Icons.repeat,
-            reply.retweets > 0 ? _formatNumber(reply.retweets) : '',
-            color: reply.isRetweeted ? Colors.green : null,
-          ),
+        _buildReplyActionButton(
+          Icons.repeat,
+          reply.retweets > 0 ? _formatNumber(reply.retweets) : '',
         ),
-        InkWell(
-          onTap: () => _toggleReplyLike(reply),
-          child: _buildReplyActionButton(
-            reply.isLiked ? Icons.favorite : Icons.favorite_border,
-            reply.likes > 0 ? _formatNumber(reply.likes) : '',
-            color: reply.isLiked ? Colors.pink : null,
-          ),
+        _buildReplyActionButton(
+          reply.isLiked ? Icons.favorite : Icons.favorite_border,
+          reply.likes > 0 ? _formatNumber(reply.likes) : '',
+          color: reply.isLiked ? Colors.pink : null,
         ),
         _buildReplyActionButton(Icons.bar_chart_outlined, ''),
         _buildReplyActionButton(Icons.share_outlined, ''),

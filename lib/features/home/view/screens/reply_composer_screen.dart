@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lite_x/core/classes/PickedImage.dart';
-import 'package:lite_x/core/providers/current_user_provider.dart';
 import 'package:lite_x/features/home/models/tweet_model.dart';
 import 'package:lite_x/features/home/view_model/home_view_model.dart';
 import 'package:lite_x/features/media/upload_media.dart';
@@ -23,14 +22,6 @@ class _ReplyComposerScreenState extends ConsumerState<ReplyComposerScreen> {
   final FocusNode _focusNode = FocusNode();
   bool _isPosting = false;
   final List<File> _selectedImages = [];
-
-  String? _getPhotoUrl(String? photo) {
-    if (photo == null || photo.isEmpty) return null;
-    if (photo.startsWith('http://') || photo.startsWith('https://')) {
-      return photo;
-    }
-    return 'https://litex.siematworld.online/media/$photo';
-  }
 
   @override
   void initState() {
@@ -205,9 +196,6 @@ class _ReplyComposerScreenState extends ConsumerState<ReplyComposerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final user = ref.watch(currentUserProvider);
-    final userPhotoUrl = _getPhotoUrl(user?.photo);
-
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: _buildAppBar(),
@@ -215,24 +203,18 @@ class _ReplyComposerScreenState extends ConsumerState<ReplyComposerScreen> {
         children: [
           Expanded(
             child: SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 12),
-                    _buildReplyingToTweet(),
-                    const SizedBox(height: 8),
-                    _buildReplyComposer(userPhotoUrl),
-                    if (_selectedImages.isNotEmpty) ...[
-                      const SizedBox(height: 12),
-                      Padding(
-                        padding: const EdgeInsets.only(left: 52),
-                        child: _buildSelectedImagesPreview(),
-                      ),
-                    ],
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildReplyingToTweet(),
+                  const SizedBox(height: 16),
+                  _buildReplyComposer(),
+                  if (_selectedImages.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    _buildSelectedImagesPreview(),
                   ],
-                ),
+                ],
               ),
             ),
           ),
@@ -243,35 +225,29 @@ class _ReplyComposerScreenState extends ConsumerState<ReplyComposerScreen> {
   }
 
   PreferredSizeWidget _buildAppBar() {
-    final canReply = _textController.text.trim().isNotEmpty && !_isPosting;
-
     return AppBar(
       backgroundColor: Colors.black,
       elevation: 0,
-      leading: TextButton(
+      leading: IconButton(
+        icon: const Icon(Icons.close, color: Colors.white),
         onPressed: () => Navigator.pop(context),
-        child: const Text(
-          'Cancel',
-          style: TextStyle(color: Colors.white, fontSize: 16),
-        ),
       ),
-      leadingWidth: 80,
       actions: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: ElevatedButton(
-            onPressed: canReply ? _postReply : null,
+            onPressed: _textController.text.trim().isEmpty || _isPosting
+                ? null
+                : _postReply,
             style: ElevatedButton.styleFrom(
-              backgroundColor: canReply
-                  ? const Color(0xFF1D9BF0)
-                  : const Color(0xFF1D9BF0).withOpacity(0.5),
+              backgroundColor: Colors.blue,
+              disabledBackgroundColor: Colors.blue.withOpacity(0.5),
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
               elevation: 0,
-              minimumSize: const Size(60, 32),
             ),
             child: _isPosting
                 ? const SizedBox(
@@ -284,7 +260,7 @@ class _ReplyComposerScreenState extends ConsumerState<ReplyComposerScreen> {
                   )
                 : const Text(
                     'Reply',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
           ),
         ),
@@ -293,8 +269,6 @@ class _ReplyComposerScreenState extends ConsumerState<ReplyComposerScreen> {
   }
 
   Widget _buildReplyingToTweet() {
-    final authorPhotoUrl = _getPhotoUrl(widget.replyingToTweet.authorAvatar);
-
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -302,18 +276,15 @@ class _ReplyComposerScreenState extends ConsumerState<ReplyComposerScreen> {
           children: [
             CircleAvatar(
               radius: 20,
+              backgroundImage: NetworkImage(
+                widget.replyingToTweet.authorAvatar,
+              ),
               backgroundColor: Colors.grey[800],
-              backgroundImage: authorPhotoUrl != null
-                  ? NetworkImage(authorPhotoUrl)
-                  : null,
-              child: authorPhotoUrl == null
-                  ? Icon(Icons.person, color: Colors.grey[600], size: 24)
-                  : null,
             ),
             Container(
               width: 2,
-              height: 48,
-              margin: const EdgeInsets.symmetric(vertical: 2),
+              height: 40,
+              margin: const EdgeInsets.symmetric(vertical: 4),
               color: Colors.grey[800],
             ),
           ],
@@ -325,24 +296,18 @@ class _ReplyComposerScreenState extends ConsumerState<ReplyComposerScreen> {
             children: [
               Row(
                 children: [
-                  Flexible(
-                    child: Text(
-                      widget.replyingToTweet.authorName,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                      ),
-                      overflow: TextOverflow.ellipsis,
+                  Text(
+                    widget.replyingToTweet.authorName,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
                     ),
                   ),
                   const SizedBox(width: 4),
-                  Flexible(
-                    child: Text(
-                      widget.replyingToTweet.authorUsername,
-                      style: TextStyle(color: Colors.grey[500], fontSize: 15),
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                  Text(
+                    widget.replyingToTweet.authorUsername,
+                    style: TextStyle(color: Colors.grey[600], fontSize: 15),
                   ),
                 ],
               ),
@@ -354,21 +319,21 @@ class _ReplyComposerScreenState extends ConsumerState<ReplyComposerScreen> {
                   fontSize: 15,
                   height: 1.4,
                 ),
-                maxLines: 5,
+                maxLines: 3,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 12),
-              RichText(
-                text: TextSpan(
-                  style: TextStyle(color: Colors.grey[500], fontSize: 15),
-                  children: [
-                    const TextSpan(text: 'Replying to '),
-                    TextSpan(
-                      text: widget.replyingToTweet.authorUsername,
-                      style: const TextStyle(color: Color(0xFF1D9BF0)),
-                    ),
-                  ],
-                ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Text(
+                    'Replying to ',
+                    style: TextStyle(color: Colors.grey[600], fontSize: 15),
+                  ),
+                  Text(
+                    widget.replyingToTweet.authorUsername,
+                    style: const TextStyle(color: Colors.blue, fontSize: 15),
+                  ),
+                ],
               ),
             ],
           ),
@@ -377,19 +342,14 @@ class _ReplyComposerScreenState extends ConsumerState<ReplyComposerScreen> {
     );
   }
 
-  Widget _buildReplyComposer(String? userPhotoUrl) {
+  Widget _buildReplyComposer() {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         CircleAvatar(
           radius: 20,
-          backgroundColor: Colors.grey[800],
-          backgroundImage: userPhotoUrl != null
-              ? NetworkImage(userPhotoUrl)
-              : null,
-          child: userPhotoUrl == null
-              ? Icon(Icons.person, color: Colors.grey[600], size: 24)
-              : null,
+          backgroundColor: Colors.blue,
+          child: const Icon(Icons.person, color: Colors.white, size: 24),
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -397,18 +357,11 @@ class _ReplyComposerScreenState extends ConsumerState<ReplyComposerScreen> {
             controller: _textController,
             focusNode: _focusNode,
             maxLines: null,
-            minLines: 3,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              height: 1.4,
-            ),
+            style: const TextStyle(color: Colors.white, fontSize: 18),
             decoration: InputDecoration(
               hintText: 'Post your reply',
-              hintStyle: TextStyle(color: Colors.grey[600], fontSize: 20),
+              hintStyle: TextStyle(color: Colors.grey[600], fontSize: 18),
               border: InputBorder.none,
-              contentPadding: EdgeInsets.zero,
-              isDense: true,
             ),
             onChanged: (text) {
               setState(() {}); // Update button state
@@ -421,65 +374,39 @@ class _ReplyComposerScreenState extends ConsumerState<ReplyComposerScreen> {
 
   Widget _buildBottomBar() {
     return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
+        color: Colors.black,
         border: Border(top: BorderSide(color: Colors.grey[900]!, width: 0.5)),
       ),
       child: SafeArea(
         top: false,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-          child: Row(
-            children: [
-              IconButton(
-                icon: const Icon(
-                  Icons.image_outlined,
-                  color: Color(0xFF1D9BF0),
-                ),
-                onPressed: _isPosting ? null : _pickImage,
-                iconSize: 20,
-                padding: const EdgeInsets.all(8),
-                constraints: const BoxConstraints(),
-              ),
-              IconButton(
-                icon: const Icon(
-                  Icons.gif_box_outlined,
-                  color: Color(0xFF1D9BF0),
-                ),
-                onPressed: _isPosting ? null : () {},
-                iconSize: 20,
-                padding: const EdgeInsets.all(8),
-                constraints: const BoxConstraints(),
-              ),
-              IconButton(
-                icon: const Icon(Icons.poll_outlined, color: Color(0xFF1D9BF0)),
-                onPressed: _isPosting ? null : () {},
-                iconSize: 20,
-                padding: const EdgeInsets.all(8),
-                constraints: const BoxConstraints(),
-              ),
-              IconButton(
-                icon: const Icon(
-                  Icons.emoji_emotions_outlined,
-                  color: Color(0xFF1D9BF0),
-                ),
-                onPressed: _isPosting ? null : () {},
-                iconSize: 20,
-                padding: const EdgeInsets.all(8),
-                constraints: const BoxConstraints(),
-              ),
-              IconButton(
-                icon: const Icon(
-                  Icons.calendar_today_outlined,
-                  color: Color(0xFF1D9BF0),
-                ),
-                onPressed: _isPosting ? null : () {},
-                iconSize: 20,
-                padding: const EdgeInsets.all(8),
-                constraints: const BoxConstraints(),
-              ),
-            ],
-          ),
+        child: Row(
+          children: [
+            _buildIconButton(Icons.image_outlined, onTap: _pickImage),
+            const SizedBox(width: 16),
+            _buildIconButton(Icons.gif_box_outlined),
+            const SizedBox(width: 16),
+            _buildIconButton(Icons.poll_outlined),
+            const SizedBox(width: 16),
+            _buildIconButton(Icons.emoji_emotions_outlined),
+            const SizedBox(width: 16),
+            _buildIconButton(Icons.calendar_today_outlined),
+            const SizedBox(width: 16),
+            _buildIconButton(Icons.location_on_outlined),
+          ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildIconButton(IconData icon, {VoidCallback? onTap}) {
+    return InkWell(
+      onTap: _isPosting ? null : onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Padding(
+        padding: const EdgeInsets.all(4),
+        child: Icon(icon, color: Colors.blue, size: 22),
       ),
     );
   }

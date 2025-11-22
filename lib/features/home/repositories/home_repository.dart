@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lite_x/core/providers/dio_interceptor.dart';
 import 'package:lite_x/features/home/models/tweet_model.dart';
 import 'package:lite_x/features/home/models/tweet_summary.dart';
-import 'package:lite_x/features/home/models/user_profile_model.dart';
 import 'package:lite_x/features/media/download_media.dart';
 
 final homeRepositoryProvider = Provider<HomeRepository>((ref) {
@@ -105,10 +104,7 @@ class HomeRepository {
     }
   }
 
-  Future<TweetModel> getTweetById(
-    String tweetId, {
-    bool fetchParent = true,
-  }) async {
+  Future<TweetModel> getTweetById(String tweetId) async {
     try {
       final response = await _dio.get('api/tweets/$tweetId');
 
@@ -120,26 +116,6 @@ class HomeRepository {
       if (tweet == null) {
         throw Exception('Failed to parse tweet data');
       }
-
-      // Fetch parent tweet if it's a quote tweet and parent is not already loaded
-      if (fetchParent &&
-          tweet.tweetType == 'QUOTE' &&
-          tweet.quotedTweetId != null &&
-          tweet.quotedTweet == null) {
-        try {
-          print('🔄 Fetching parent tweet: ${tweet.quotedTweetId}');
-          final parentTweet = await getTweetById(
-            tweet.quotedTweetId!,
-            fetchParent: false,
-          );
-          print('✅ Parent tweet fetched successfully');
-          return tweet.copyWith(quotedTweet: parentTweet);
-        } catch (e) {
-          print('⚠️ Failed to fetch parent tweet: $e');
-          // Return original tweet even if parent fetch fails
-        }
-      }
-
       return tweet;
     } on DioException catch (e) {
       throw _handleError(e);
@@ -209,17 +185,9 @@ class HomeRepository {
         );
       }
 
-      final data = {
-        'content': content,
-        'replyControl': replyControl,
-        'mediaIds': mediaIds,
-      };
-
-      print('📤 Creating post with data: $data'); // Debug log
+      final data = {'content': content, 'replyControl': replyControl};
 
       final response = await _dio.post('api/tweets', data: data);
-
-      print('📥 Post created response: ${response.statusCode}'); // Debug log
 
       Map<String, dynamic> tweetData;
 
@@ -300,11 +268,7 @@ class HomeRepository {
     List<String> mediaIds = const [],
   }) async {
     try {
-      final data = {
-        'content': content,
-        'replyControl': replyControl,
-        'mediaIds': mediaIds,
-      };
+      final data = {'content': content, 'replyControl': replyControl};
 
       final response = await _dio.post(
         'api/tweets/$tweetId/replies',
@@ -401,7 +365,6 @@ class HomeRepository {
         'content': content,
         'quotedTweetId': quotedTweetId,
         'replyControl': replyControl,
-        'mediaIds': mediaIds,
       };
 
       final response = await _dio.post(
@@ -474,22 +437,7 @@ class HomeRepository {
     }
 
     TweetModel? quoted = tweet.quotedTweet;
-    // If it's a quote tweet but quoted tweet is not loaded, try to fetch it
-    if (quoted == null &&
-        tweet.tweetType == 'QUOTE' &&
-        tweet.quotedTweetId != null &&
-        tweet.quotedTweetId!.isNotEmpty) {
-      try {
-        print(
-          '🔄 Hydrating quote tweet - fetching parent: ${tweet.quotedTweetId}',
-        );
-        quoted = await getTweetById(tweet.quotedTweetId!, fetchParent: false);
-        print('✅ Parent tweet hydrated successfully');
-      } catch (e) {
-        print('⚠️ Failed to fetch parent tweet for quote: $e');
-        // Continue without parent tweet
-      }
-    } else if (quoted != null) {
+    if (quoted != null) {
       quoted = await _hydrateTweet(quoted);
     }
 
@@ -688,24 +636,10 @@ class HomeRepository {
   Future<TweetSummary> getTweetSummary(String tweetId) async {
     try {
       final response = await _dio.get('api/tweets/$tweetId/summary');
-
-      // Handle both direct response and nested data structure
-      final Map<String, dynamic> data;
-      if (response.data is Map<String, dynamic>) {
-        if (response.data.containsKey('data')) {
-          data = response.data['data'] as Map<String, dynamic>;
-        } else {
-          data = response.data as Map<String, dynamic>;
-        }
-      } else {
-        data = _extractMap(response.data);
-      }
-
+      final data = _extractMap(response.data);
       return TweetSummary.fromJson(data);
     } on DioException catch (e) {
       throw _handleError(e);
-    } catch (e) {
-      throw Exception('Failed to parse tweet summary: $e');
     }
   }
 
@@ -788,15 +722,9 @@ class HomeRepository {
       final statusCode = error.response!.statusCode;
       final data = error.response!.data;
 
-      print('❌ API Error: $statusCode - $data'); // Debug log
-
       String message = 'Unknown error';
       if (data is Map && data.containsKey('message')) {
         message = data['message'];
-      } else if (data is Map && data.containsKey('error')) {
-        message = data['error'].toString();
-      } else if (data is String) {
-        message = data;
       }
 
       switch (statusCode) {
@@ -840,24 +768,6 @@ class HomeRepository {
     }
 
     return const [];
-  }
-
-  Future<UserProfileModel> getUserProfile(String username) async {
-    try {
-      print('📤 Fetching user profile for: $username');
-      final response = await _dio.get('api/users/$username');
-
-      print('📥 User profile response: ${response.data}');
-
-      final Map<String, dynamic> userData = _extractMap(response.data);
-      return UserProfileModel.fromJson(userData);
-    } on DioException catch (e) {
-      print('❌ Failed to fetch user profile: ${e.response?.data}');
-      throw _handleError(e);
-    } catch (e) {
-      print('❌ Unexpected error fetching user profile: $e');
-      rethrow;
-    }
   }
 
   Map<String, dynamic> _extractMap(dynamic data) {

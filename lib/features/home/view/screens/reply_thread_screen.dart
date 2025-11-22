@@ -295,69 +295,61 @@ class _ReplyThreadScreenState extends ConsumerState<ReplyThreadScreen> {
           ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: _loadThreadData,
-        color: const Color(0xFF1DA1F2),
-        backgroundColor: Colors.grey[900],
-        child: ListView(
-          controller: _scrollController,
-          children: [
-            _buildTimelineTweetCard(mainTweet),
-            const Divider(color: Color(0xFF2F3336), height: 1),
+      body: ListView(
+        controller: _scrollController,
+        children: [
+          _buildTimelineTweetCard(mainTweet),
+          const Divider(color: Color(0xFF2F3336), height: 1),
 
-            for (int i = 1; i < tweets.length - 1; i++) ...[
-              _buildCompactReply(
-                context,
-                tweets[i],
-                replyingTo: tweets[i - 1].authorUsername,
-                pathSoFar: widget.pathTweetIds.sublist(0, i + 1),
-              ),
-              const Divider(color: Color(0xFF2F3336), height: 1),
-            ],
-
-            Container(
-              key: _currentReplyKey,
-              child: _buildCurrentReplyDetail(
-                currentReply,
-                replyingTo: tweets.length > 1
-                    ? tweets[tweets.length - 2].authorUsername
-                    : null,
-              ),
+          for (int i = 1; i < tweets.length - 1; i++) ...[
+            _buildCompactReply(
+              context,
+              tweets[i],
+              replyingTo: tweets[i - 1].authorUsername,
+              pathSoFar: widget.pathTweetIds.sublist(0, i + 1),
             ),
             const Divider(color: Color(0xFF2F3336), height: 1),
-
-            if (childReplies.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                child: Text(
-                  'Most relevant replies',
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
-                  ),
-                ),
-              ),
-
-            ...childReplies.map(
-              (r) => Column(
-                children: [
-                  _buildCompactReply(
-                    context,
-                    r,
-                    replyingTo: currentReply.authorUsername,
-                    pathSoFar: [...widget.pathTweetIds, r.id],
-                  ),
-                  const Divider(color: Color(0xFF2F3336), height: 1),
-                ],
-              ),
-            ),
-            const SizedBox(height: 60),
           ],
-        ),
+
+          Container(
+            key: _currentReplyKey,
+            child: _buildCurrentReplyDetail(
+              currentReply,
+              replyingTo: tweets.length > 1
+                  ? tweets[tweets.length - 2].authorUsername
+                  : null,
+            ),
+          ),
+          const Divider(color: Color(0xFF2F3336), height: 1),
+
+          if (childReplies.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Text(
+                'Most relevant replies',
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                ),
+              ),
+            ),
+
+          ...childReplies.map(
+            (r) => Column(
+              children: [
+                _buildCompactReply(
+                  context,
+                  r,
+                  replyingTo: currentReply.authorUsername,
+                  pathSoFar: [...widget.pathTweetIds, r.id],
+                ),
+                const Divider(color: Color(0xFF2F3336), height: 1),
+              ],
+            ),
+          ),
+          const SizedBox(height: 60),
+        ],
       ),
       bottomNavigationBar: _buildReplyBar(),
     );
@@ -456,9 +448,6 @@ class _ReplyThreadScreenState extends ConsumerState<ReplyThreadScreen> {
       },
       child: Container(
         padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          border: Border(left: BorderSide(color: Colors.grey[800]!, width: 2)),
-        ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -487,7 +476,7 @@ class _ReplyThreadScreenState extends ConsumerState<ReplyThreadScreen> {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        '@${reply.authorUsername}',
+                        reply.authorUsername,
                         style: TextStyle(color: Colors.grey[600], fontSize: 15),
                       ),
                       const SizedBox(width: 4),
@@ -574,7 +563,7 @@ class _ReplyThreadScreenState extends ConsumerState<ReplyThreadScreen> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      '@${tweet.authorUsername}',
+                      tweet.authorUsername,
                       style: TextStyle(color: Colors.grey[600], fontSize: 15),
                     ),
                   ],

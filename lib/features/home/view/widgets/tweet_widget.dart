@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'expandable_text.dart';
 import 'media_gallery.dart';
 import '../../models/tweet_model.dart';
 
@@ -29,7 +28,6 @@ class TweetWidget extends StatelessWidget {
   final VoidCallback? onShare;
   final VoidCallback? onSave;
   final VoidCallback? onReach;
-  final VoidCallback? onSummary;
   final VoidCallback? onTap;
   final VoidCallback? onDelete;
   final VoidCallback? onProfileTap;
@@ -64,7 +62,6 @@ class TweetWidget extends StatelessWidget {
     this.onShare,
     this.onSave,
     this.onReach,
-    this.onSummary,
     this.onTap,
     this.onDelete,
     this.onProfileTap,
@@ -362,14 +359,12 @@ class TweetWidget extends StatelessWidget {
   }
 
   Widget _buildTweetText() {
-    return ExpandableText(
-      text: content,
-      maxLines: 4,
+    return Text(
+      content,
       style: const TextStyle(color: Colors.white, fontSize: 15, height: 1.4),
       textDirection: _isArabicText(content)
           ? TextDirection.rtl
           : TextDirection.ltr,
-      onReadMore: onTap,
     );
   }
 
@@ -551,18 +546,6 @@ class TweetWidget extends StatelessWidget {
                 compact: isNarrow,
               ),
             ),
-            if (onSummary != null)
-              Flexible(
-                child: _buildActionButton(
-                  icon: Icons.auto_awesome,
-                  count: 0,
-                  onTap: onSummary,
-                  compact: isNarrow,
-                  isActive: false,
-                  activeColor: const Color(0xFF1DA1F2),
-                  iconColor: const Color(0xFF1DA1F2),
-                ),
-              ),
             Flexible(child: _buildSaveButton(compact: isNarrow)),
             Flexible(
               child: _buildActionButton(
@@ -585,19 +568,14 @@ class TweetWidget extends StatelessWidget {
     bool compact = false,
     bool isActive = false,
     Color? activeColor,
-    Color? iconColor,
   }) {
-    final color =
-        iconColor ??
-        (isActive && activeColor != null ? activeColor : Colors.grey[500]);
+    final color = isActive && activeColor != null
+        ? activeColor
+        : Colors.grey[500];
 
-    return GestureDetector(
-      onTap: onTap != null
-          ? () {
-              onTap();
-            }
-          : null,
-      behavior: HitTestBehavior.opaque,
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
       child: Padding(
         padding: EdgeInsets.all(compact ? 4 : 8),
         child: Row(
@@ -630,9 +608,9 @@ class TweetWidget extends StatelessWidget {
   }
 
   Widget _buildSaveButton({bool compact = false}) {
-    return GestureDetector(
+    return InkWell(
       onTap: onSave,
-      behavior: HitTestBehavior.opaque,
+      borderRadius: BorderRadius.circular(20),
       child: Padding(
         padding: EdgeInsets.all(compact ? 4 : 8),
         child: Icon(
