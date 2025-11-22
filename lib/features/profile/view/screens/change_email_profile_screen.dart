@@ -101,12 +101,11 @@ class _ChangeEmailScreenProfileState
       },
       (r) async {
         // TODO:go to verify email
-        
 
-        // context.push(
-        //   "/verifyChangeEmailProfileScreen",
-        //   extra: [widget.profileData, newEmail],
-        // );
+        context.push(
+          "/verifyChangeEmailProfileScreen",
+          extra: [widget.profileData, newEmail],
+        );
       },
     );
     setState(() {
@@ -131,7 +130,6 @@ class _ChangeEmailScreenProfileState
 
   @override
   Widget build(BuildContext context) {
-    
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
