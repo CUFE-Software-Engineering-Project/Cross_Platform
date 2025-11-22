@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lite_x/core/providers/current_user_provider.dart';
+import 'package:lite_x/core/routes/Route_Constants.dart';
 import 'package:lite_x/core/theme/palette.dart';
+import 'package:lite_x/features/auth/view_model/auth_view_model.dart';
 import 'package:lite_x/features/settings/view/widgets/settings_responsive_scaffold.dart';
 
 class AccountInformationScreen extends ConsumerWidget {
@@ -18,19 +21,19 @@ class AccountInformationScreen extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (title.isNotEmpty) ...[
-            Text(
-              title,
-              style: const TextStyle(
-                color: Palette.textWhite,
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-              ),
+          Text(
+            title,
+            style: const TextStyle(
+              color: Palette.textWhite,
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
             ),
-            const SizedBox(height: 16),
-          ],
-          ...children,
+          ),
+          const SizedBox(height: 16),
         ],
-      );
+        ...children,
+      ],
+    );
   }
 
   Widget _field(String label, Widget value) {
@@ -41,7 +44,11 @@ class AccountInformationScreen extends ConsumerWidget {
         children: [
           Text(
             label,
-            style: const TextStyle(color: Palette.textWhite, fontSize: 18, fontWeight: FontWeight.w600),
+            style: const TextStyle(
+              color: Palette.textWhite,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
           ),
           const SizedBox(height: 4),
           value,
@@ -80,7 +87,10 @@ class AccountInformationScreen extends ConsumerWidget {
                   'Username',
                   Text(
                     username.isEmpty ? '-' : '@$username',
-                    style: const TextStyle(color: Palette.textSecondary, fontSize: 16),
+                    style: const TextStyle(
+                      color: Palette.textSecondary,
+                      fontSize: 16,
+                    ),
                   ),
                 ),
                 _field(
@@ -94,7 +104,10 @@ class AccountInformationScreen extends ConsumerWidget {
                   'Email',
                   Text(
                     email.isEmpty ? '-' : email,
-                    style: const TextStyle(color: Palette.textSecondary, fontSize: 16),
+                    style: const TextStyle(
+                      color: Palette.textSecondary,
+                      fontSize: 16,
+                    ),
                   ),
                 ),
                 Padding(
@@ -102,21 +115,42 @@ class AccountInformationScreen extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: const [
-                      Text('Country', style: TextStyle(color: Palette.textWhite, fontSize: 18, fontWeight: FontWeight.w600)),
+                      Text(
+                        'Country',
+                        style: TextStyle(
+                          color: Palette.textWhite,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                       SizedBox(height: 8),
-                      Text('Egypt', style: TextStyle(color: Palette.textSecondary, fontSize: 16)),
+                      Text(
+                        'Egypt',
+                        style: TextStyle(
+                          color: Palette.textSecondary,
+                          fontSize: 16,
+                        ),
+                      ),
                       SizedBox(height: 8),
                       Text.rich(
-                        TextSpan(children: [
-                          TextSpan(
-                            text: 'Select the country you live in. ',
-                            style: TextStyle(color: Palette.textSecondary, fontSize: 16),
-                          ),
-                          TextSpan(
-                            text: 'Learn more',
-                            style: TextStyle(color: Colors.blue, fontSize: 16),
-                          ),
-                        ]),
+                        TextSpan(
+                          children: [
+                            TextSpan(
+                              text: 'Select the country you live in. ',
+                              style: TextStyle(
+                                color: Palette.textSecondary,
+                                fontSize: 16,
+                              ),
+                            ),
+                            TextSpan(
+                              text: 'Learn more',
+                              style: TextStyle(
+                                color: Colors.blue,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -125,20 +159,39 @@ class AccountInformationScreen extends ConsumerWidget {
                   'Automation',
                   const Text(
                     'Manage your automated account.',
-                    style: TextStyle(color: Palette.textSecondary, fontSize: 16),
+                    style: TextStyle(
+                      color: Palette.textSecondary,
+                      fontSize: 16,
+                    ),
                   ),
                 ),
                 _field(
                   'Parody, commentary and fan account',
                   const Text(
                     'Manage your parody, commentary and fan account.',
-                    style: TextStyle(color: Palette.textSecondary, fontSize: 16),
+                    style: TextStyle(
+                      color: Palette.textSecondary,
+                      fontSize: 16,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 12),
-                const Text(
-                  'Log out',
-                  style: TextStyle(color: Colors.red, fontSize: 16, fontWeight: FontWeight.w600),
+                InkWell(
+                  onTap: () async {
+                    final authViewModel = ref.read(
+                      authViewModelProvider.notifier,
+                    );
+                    await authViewModel.logout();
+                    context.goNamed(RouteConstants.introscreen);
+                  },
+                  child: const Text(
+                    'Log out',
+                    style: TextStyle(
+                      color: Colors.red,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -149,7 +202,9 @@ class AccountInformationScreen extends ConsumerWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        _subtitle(ref); // keep provider call for side-effect-free compatibility (not used for placeholder)
+        _subtitle(
+          ref,
+        ); // keep provider call for side-effect-free compatibility (not used for placeholder)
         if (constraints.maxWidth > 600) {
           return SettingsResponsiveScaffold.web(
             title: 'Account information',

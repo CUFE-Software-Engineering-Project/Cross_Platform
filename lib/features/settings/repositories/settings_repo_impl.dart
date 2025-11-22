@@ -1,5 +1,6 @@
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
+import 'package:lite_x/features/media/download_media.dart';
 import 'package:lite_x/features/profile/models/shared.dart';
 import 'package:lite_x/features/profile/models/user_model.dart';
 import 'package:lite_x/features/settings/models/settings_model.dart';
@@ -71,6 +72,11 @@ class SettingsRepoImpl implements SettingsRepo {
     try {
       final res = await _dio.get("api/blocks");
       final List<dynamic> jsonList = res.data["users"];
+      for (int i = 0; i < jsonList.length; i++) {
+        final String photoId = jsonList[i]?["photo"] ?? "";
+        final photoUrl = await getMediaUrls([photoId]);
+        jsonList[i]["photo"] = photoUrl[0];
+      }
       final List<UserModel> users = jsonList.map((json) {
         final Map<String, dynamic> jsonMap = json as Map<String, dynamic>;
         return UserModel.fromJson(jsonMap);
@@ -88,10 +94,16 @@ class SettingsRepoImpl implements SettingsRepo {
     try {
       final res = await _dio.get("api/mutes");
       final List<dynamic> jsonList = res.data["users"];
+      for (int i = 0; i < jsonList.length; i++) {
+        final String photoId = jsonList[i]?["photo"] ?? "";
+        final photoUrl = await getMediaUrls([photoId]);
+        jsonList[i]["photo"] = photoUrl[0];
+      }
       final List<UserModel> users = jsonList.map((json) {
         final Map<String, dynamic> jsonMap = json as Map<String, dynamic>;
         return UserModel.fromJson(jsonMap);
       }).toList();
+
       return Right(users);
     } catch (e) {
       return Left(Failure("Can't get muted users, try again later.."));
@@ -99,7 +111,10 @@ class SettingsRepoImpl implements SettingsRepo {
   }
 
   @override
-  Future<Either<Failure, MutedUsersResponse>> fetchMutedAccounts({int limit = 30, String? cursor}) async {
+  Future<Either<Failure, MutedUsersResponse>> fetchMutedAccounts({
+    int limit = 30,
+    String? cursor,
+  }) async {
     try {
       final response = await _dio.get(
         'api/mutes',
@@ -108,7 +123,9 @@ class SettingsRepoImpl implements SettingsRepo {
           if (cursor != null && cursor.isNotEmpty) 'cursor': cursor,
         },
       );
-      final data = MutedUsersResponse.fromJson(response.data as Map<String, dynamic>);
+      final data = MutedUsersResponse.fromJson(
+        response.data as Map<String, dynamic>,
+      );
       return Right(data);
     } catch (e) {
       return Left(Failure('Failed to fetch muted accounts'));
@@ -116,7 +133,10 @@ class SettingsRepoImpl implements SettingsRepo {
   }
 
   @override
-  Future<Either<Failure, MutedUsersResponse>> fetchBlockedAccounts({int limit = 30, String? cursor}) async {
+  Future<Either<Failure, MutedUsersResponse>> fetchBlockedAccounts({
+    int limit = 30,
+    String? cursor,
+  }) async {
     try {
       final response = await _dio.get(
         'api/blocks',
@@ -125,7 +145,9 @@ class SettingsRepoImpl implements SettingsRepo {
           if (cursor != null && cursor.isNotEmpty) 'cursor': cursor,
         },
       );
-      final data = MutedUsersResponse.fromJson(response.data as Map<String, dynamic>);
+      final data = MutedUsersResponse.fromJson(
+        response.data as Map<String, dynamic>,
+      );
       return Right(data);
     } catch (e) {
       return Left(Failure('Failed to fetch blocked accounts'));
