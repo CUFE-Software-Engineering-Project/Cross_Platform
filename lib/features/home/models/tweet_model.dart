@@ -64,6 +64,9 @@ class TweetModel extends HiveObject {
   @HiveField(19)
   final String? userId;
 
+  @HiveField(20)
+  final String tweetType;
+
   TweetModel({
     required this.id,
     required this.content,
@@ -85,6 +88,7 @@ class TweetModel extends HiveObject {
     this.quotes = 0,
     this.bookmarks = 0,
     this.userId,
+    this.tweetType = 'TWEET',
   });
 
   TweetModel copyWith({
@@ -108,6 +112,7 @@ class TweetModel extends HiveObject {
     int? quotes,
     int? bookmarks,
     String? userId,
+    String? tweetType,
   }) {
     return TweetModel(
       id: id ?? this.id,
@@ -130,6 +135,7 @@ class TweetModel extends HiveObject {
       quotes: quotes ?? this.quotes,
       bookmarks: bookmarks ?? this.bookmarks,
       userId: userId ?? this.userId,
+      tweetType: tweetType ?? this.tweetType,
     );
   }
 
@@ -155,18 +161,16 @@ class TweetModel extends HiveObject {
       'quotes': quotes,
       'bookmarks': bookmarks,
       'userId': userId,
+      'tweetType': tweetType,
     };
   }
 
   factory TweetModel.fromJson(Map<String, dynamic> json) {
-
     final user = json['user'] as Map<String, dynamic>?;
+    final String normalizedTweetType = _normalizeTweetType(json);
 
     if (user != null) {
-
-    } else {
-
-    }
+    } else {}
 
     return TweetModel(
       id: json['id']?.toString() ?? '',
@@ -191,9 +195,7 @@ class TweetModel extends HiveObject {
       likes: (json['likesCount'] ?? json['likes'] ?? 0) as int,
       retweets: (json['retweetCount'] ?? json['retweets'] ?? 0) as int,
       replies: (json['repliesCount'] ?? json['replies'] ?? 0) as int,
-      images: json['images'] != null
-          ? List<String>.from(json['images'])
-          : (json['media'] != null ? List<String>.from(json['media']) : []),
+      images: _extractMediaUrls(json),
       isLiked: json['isLiked'] as bool? ?? false,
       isRetweeted: json['isRetweeted'] as bool? ?? false,
 
@@ -211,9 +213,8 @@ class TweetModel extends HiveObject {
       bookmarks: (json['bookmarksCount'] ?? json['bookmarks'] ?? 0) as int,
 
       userId: user?['id']?.toString() ?? json['userId']?.toString(),
-    )..let((tweet) {
-
-    });
+      tweetType: normalizedTweetType,
+    )..let((tweet) {});
   }
 }
 
@@ -222,4 +223,111 @@ extension _LetExtension<T> on T {
     block(this);
     return this;
   }
+}
+
+List<String> _extractMediaUrls(Map<String, dynamic> json) {
+  final mediaSources = [
+    json['images'],
+    json['media'],
+    json['tweetMedia'],
+    json['tweet_media'],
+  ];
+
+  for (final source in mediaSources) {
+    final urls = _parseMediaList(source);
+    if (urls.isNotEmpty) {
+      return urls;
+    }
+  }
+
+  return const [];
+}
+
+List<String> _parseMediaList(dynamic source) {
+  if (source is List) {
+    final urls = <String>[];
+
+    for (final item in source) {
+      if (item is String && item.isNotEmpty) {
+        urls.add(item);
+        continue;
+      }
+
+      if (item is Map) {
+        final map = item.map((key, value) => MapEntry(key.toString(), value));
+
+        String? candidate;
+        final directCandidates = [
+          map['url'],
+          map['mediaUrl'],
+          map['media_url'],
+          map['path'],
+          map['mediaId'],
+          map['media_id'],
+          map['id'],
+        ];
+
+        for (final value in directCandidates) {
+          if (value is String && value.isNotEmpty) {
+            candidate = value;
+            break;
+          }
+        }
+
+        if (candidate == null && map['media'] is Map) {
+          final nested = (map['media'] as Map).map(
+            (key, value) => MapEntry(key.toString(), value),
+          );
+          final nestedCandidates = [
+            nested['url'],
+            nested['mediaUrl'],
+            nested['media_url'],
+            nested['path'],
+            nested['keyName'],
+            nested['id'],
+          ];
+          for (final value in nestedCandidates) {
+            if (value is String && value.isNotEmpty) {
+              candidate = value;
+              break;
+            }
+          }
+        }
+
+        if (candidate != null) {
+          urls.add(candidate);
+        }
+      }
+    }
+
+    return urls;
+  }
+
+  return const [];
+}
+
+String _normalizeTweetType(Map<String, dynamic> json) {
+  final dynamic typeValue = json['tweetType'] ?? json['type'];
+  final String? normalized = typeValue?.toString().toUpperCase();
+
+  if (normalized != null && normalized.isNotEmpty) {
+    switch (normalized) {
+      case 'TWEET':
+      case 'QUOTE':
+      case 'REPLY':
+      case 'RETWEET':
+      case 'REPOST':
+        return normalized;
+    }
+  }
+
+  if (json['quotedTweetId'] != null || json['quotedTweet'] != null) {
+    return 'QUOTE';
+  }
+
+  if (json['parentId'] != null || json['replyToId'] != null) {
+    return 'REPLY';
+  }
+
+  return 'TWEET';
 }

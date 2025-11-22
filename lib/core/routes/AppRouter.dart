@@ -21,11 +21,18 @@ import 'package:lite_x/features/auth/view/screens/Log_In/VerificationForgot_Scre
 import 'package:lite_x/features/chat/view/screens/Search_Direct_messages.dart';
 // import 'package:lite_x/features/chat/view/screens/chat_Screen.dart';
 import 'package:lite_x/features/chat/view/screens/conversations_screen.dart';
+import 'package:lite_x/features/explore/view/explore_screen.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
+import 'package:lite_x/features/profile/models/shared.dart';
 import 'package:lite_x/features/profile/view/screens/birthdate_screen.dart';
 import 'package:lite_x/features/profile/view/screens/edit_profile_screen.dart';
 import 'package:lite_x/features/profile/view/screens/following_followers_screen.dart';
 import 'package:lite_x/features/profile/view/screens/profile_screen.dart';
+import 'package:lite_x/features/profile/view/screens/profile_search_screen.dart';
+import 'package:lite_x/features/profile/view/screens/profilecover_screen.dart';
+import 'package:lite_x/features/profile/view/screens/profilephoto_screen.dart'
+    hide ProfilePhotoScreenArgs;
+import 'package:lite_x/features/search/view/search_screen.dart';
 import 'package:lite_x/features/settings/screens/BlockedAccounts_Screen.dart';
 import 'package:lite_x/features/settings/screens/MuteAndBlock_Screen.dart';
 import 'package:lite_x/features/settings/screens/MutedAccounts_Screen.dart';
@@ -37,6 +44,7 @@ import 'package:lite_x/features/settings/screens/ChangePassword_Screen.dart';
 
 class Approuter {
   static final GoRouter router = GoRouter(
+    // initialLocation: "/exploreScreen",
     initialLocation: "/splash",
     routes: [
       GoRoute(
@@ -300,14 +308,50 @@ class Approuter {
         ),
       ),
 
-      // GoRoute(
-      //   name: RouteConstants.ChatScreen,
-      //   path: "/ChatScreen",
-      //   pageBuilder: (context, state) => CustomTransitionPage(
-      //     child: const ChatScreen(recipientId: "", recipientName: ""),
-      //     transitionsBuilder: _slideRightTransitionBuilder,
-      //   ),
-      // ),
+      GoRoute(
+        name: RouteConstants.SearchScreen,
+        path: "/searchScreen",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: SearchScreen(),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
+        name: RouteConstants.ExploreScreen,
+        path: "/exploreScreen",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: ExploreScreen(),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
+        name: RouteConstants.ProfilePhotoScreen,
+        path: "/profilePhotoScreen",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: ProfilephotoScreen(
+            profilePhotoScreenArgs: state.extra as ProfilePhotoScreenArgs,
+          ),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
+        name: RouteConstants.ProfileCoverScreen,
+        path: "/profileCoverScreen",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: ProfileCoverScreen(
+            profilePhotoScreenArgs: state.extra as ProfilePhotoScreenArgs,
+          ),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
+        name: RouteConstants.ProfileSearchScreen,
+        path: "/profileSearchScreen",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: ProfileSearchScreen(),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
     ],
     redirect: (context, state) {
       return null;

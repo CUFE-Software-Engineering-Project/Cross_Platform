@@ -58,13 +58,21 @@ class __Follow_Following_ButtonState
               }, (r) {});
             });
             isFollowing = false;
+            // ignore: unused_result
+            // ref.refresh(profileDataProvider(widget.profileData.username));
           } else {
             final follow = ref.read(followControllerProvider);
             follow(widget.profileData.username).then((res) {
-              res.fold((l) {
-                isFollowing = false;
-                setState(() {});
-              }, (r) {});
+              res.fold(
+                (l) {
+                  isFollowing = false;
+                  setState(() {});
+                },
+                (r) {
+                  // ignore: unused_result
+                  // ref.refresh(profileDataProvider(widget.profileData.username));
+                },
+              );
             });
             isFollowing = true;
           }
