@@ -7,6 +7,7 @@ import 'package:lite_x/features/profile/models/shared.dart';
 import 'package:lite_x/features/profile/models/user_model.dart';
 import 'package:lite_x/features/settings/repositories/settings_repo.dart';
 import 'package:lite_x/features/settings/models/settings_model.dart';
+import 'package:lite_x/features/settings/models/muted_users_response.dart';
 import 'package:lite_x/features/settings/view_model/providers.dart';
 import 'package:lite_x/features/settings/screens/BlockedAccounts_Screen.dart';
 import 'package:lite_x/features/settings/screens/MutedAccounts_Screen.dart';
@@ -38,6 +39,16 @@ class _FakeSettingsRepo implements SettingsRepo {
 
   @override
   Future<Either<Failure, void>> unMuteAccount(String username) async => const Right(());
+
+  @override
+  Future<Either<Failure, MutedUsersResponse>> fetchMutedAccounts({int limit = 30, String? cursor}) async {
+    return Right(MutedUsersResponse(users: muted, nextCursor: null, hasMore: false));
+  }
+
+  @override
+  Future<Either<Failure, MutedUsersResponse>> fetchBlockedAccounts({int limit = 30, String? cursor}) async {
+    return Right(MutedUsersResponse(users: blocked, nextCursor: null, hasMore: false));
+  }
 
   @override
   Future<Either<Failure, void>> followUser(String username) async => const Right(());

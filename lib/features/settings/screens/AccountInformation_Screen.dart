@@ -212,8 +212,10 @@ class AccountInformationScreen extends ConsumerWidget {
                 const SizedBox(height: 12),
                 InkWell(
                   onTap: () async {
-                    final a = AuthViewModel();
-                    await a.logout();
+                    final authViewModel = ref.read(
+                      authViewModelProvider.notifier,
+                    );
+                    await authViewModel.logout();
                     context.goNamed(RouteConstants.introscreen);
                   },
                   child: const Text(

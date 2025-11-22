@@ -1,6 +1,7 @@
 import 'package:dartz/dartz.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
+import 'package:flutter_riverpod/misc.dart';
 import 'package:lite_x/core/providers/current_user_provider.dart';
 import 'package:lite_x/core/providers/dio_interceptor.dart';
 import 'package:lite_x/features/profile/models/create_reply_model.dart';
@@ -98,6 +99,24 @@ final unBlockUserProvider = Provider((ref) {
     return repo.unBlockUser(username);
   };
 });
+
+final getBlockedUsersProvider =
+    FutureProvider.family<Either<Failure, List<UserModel>>, String>((
+      ref,
+      username,
+    ) {
+      final repo = ref.watch(profileRepoProvider);
+      return repo.getBlockedList(username);
+    });
+
+final getMutedUsersProvider =
+    FutureProvider.family<Either<Failure, List<UserModel>>, String>((
+      ref,
+      username,
+    ) {
+      final repo = ref.watch(profileRepoProvider);
+      return repo.getMutedList(username);
+    });
 
 final muteUserProvider = Provider((ref) {
   final repo = ref.watch(profileRepoProvider);

@@ -31,7 +31,7 @@ class MediaRepoImpL implements MediaRepo {
     try {
       final res = await _dio.post(
         "api/media/upload-request",
-        data: {"fileName": fileName, "contentType": "image/jpeg"},
+        data: {"fileName": fileName, "contentType": fileType},
       );
       final RequestUploadModel model = RequestUploadModel.fromJson(res.data);
       return (Right(model));
@@ -44,8 +44,8 @@ class MediaRepoImpL implements MediaRepo {
     String keyName,
   ) async {
     try {
-      print(keyName + "**//*****");
-      final res = await _dio.post("api/media/confirm-upload/$keyName");
+      final encodedKeyName = Uri.encodeComponent(keyName);
+      final res = await _dio.post("api/media/confirm-upload/$encodedKeyName");
       final ConfirmUploadModel model = ConfirmUploadModel.fromJson(res.data);
       return (Right(model));
     } catch (e) {

@@ -1,14 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
-
-// TODO: Change back to HomeTab.forYou when the For You endpoint is ready
-final homeTabProvider = StateProvider<HomeTab>((ref) => HomeTab.following);
-final tabPageControllerProvider = Provider<PageController>((ref) {
-  return PageController(initialPage: 1); // Start on Following tab (index 1)
-});
-
-enum HomeTab { forYou, following }
+import 'package:lite_x/features/home/view_model/home_state.dart';
+import 'package:lite_x/features/home/view_model/home_view_model.dart';
 
 class HomeTabBar extends ConsumerStatefulWidget {
   const HomeTabBar({super.key});
@@ -32,6 +25,9 @@ class _HomeTabBarState extends ConsumerState<HomeTabBar>
     _indicatorAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
+
+    final initialFeed = ref.read(homeViewModelProvider).currentFeed;
+    _animationController.value = initialFeed == FeedType.following ? 1.0 : 0.0;
   }
 
   @override
@@ -42,7 +38,9 @@ class _HomeTabBarState extends ConsumerState<HomeTabBar>
 
   @override
   Widget build(BuildContext context) {
-    final selectedTab = ref.watch(homeTabProvider);
+    final selectedFeed = ref.watch(
+      homeViewModelProvider.select((state) => state.currentFeed),
+    );
 
     return Container(
       height: 48,
@@ -54,26 +52,26 @@ class _HomeTabBarState extends ConsumerState<HomeTabBar>
               Expanded(
                 child: _TabButton(
                   title: 'For you',
-                  isSelected: selectedTab == HomeTab.forYou,
-                  onTap: () => _onTabSelected(HomeTab.forYou),
+                  isSelected: selectedFeed == FeedType.forYou,
+                  onTap: () => _onTabSelected(FeedType.forYou),
                 ),
               ),
               Expanded(
                 child: _TabButton(
                   title: 'Following',
-                  isSelected: selectedTab == HomeTab.following,
-                  onTap: () => _onTabSelected(HomeTab.following),
+                  isSelected: selectedFeed == FeedType.following,
+                  onTap: () => _onTabSelected(FeedType.following),
                 ),
               ),
             ],
           ),
-          _buildAnimatedIndicator(selectedTab),
+          _buildAnimatedIndicator(selectedFeed),
         ],
       ),
     );
   }
 
-  Widget _buildAnimatedIndicator(HomeTab selectedTab) {
+  Widget _buildAnimatedIndicator(FeedType selectedFeed) {
     return Positioned(
       bottom: 0,
       left: 0,
@@ -88,7 +86,7 @@ class _HomeTabBarState extends ConsumerState<HomeTabBar>
           return AnimatedContainer(
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeInOut,
-            margin: selectedTab == HomeTab.forYou
+            margin: selectedFeed == FeedType.forYou
                 ? EdgeInsets.only(right: indicatorPosition)
                 : EdgeInsets.only(left: indicatorPosition),
             width: tabWidth,
@@ -103,13 +101,14 @@ class _HomeTabBarState extends ConsumerState<HomeTabBar>
     );
   }
 
-  void _onTabSelected(HomeTab tab) {
-    ref.read(homeTabProvider.notifier).state = tab;
-    if (tab == HomeTab.following) {
+  void _onTabSelected(FeedType feed) {
+    if (feed == FeedType.following) {
       _animationController.forward();
     } else {
       _animationController.reverse();
     }
+
+    ref.read(homeViewModelProvider.notifier).switchFeed(feed);
   }
 }
 

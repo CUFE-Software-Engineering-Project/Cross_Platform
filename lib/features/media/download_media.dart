@@ -18,5 +18,6 @@ Future<List<String>> getMediaUrls(List<String> ids) async {
     );
   }
 
+  container.dispose();
   return urls;
 }

@@ -10,6 +10,8 @@ import 'package:lite_x/features/settings/repositories/settings_repo.dart';
 import 'package:lite_x/features/settings/repositories/settings_repo_impl.dart';
 import 'package:lite_x/features/settings/view_model/settings_basic_data_notifier.dart';
 import 'package:lite_x/features/settings/view_model/settings_basic_data_states.dart';
+import 'package:lite_x/features/settings/view_model/muted_users_notifier.dart';
+import 'package:lite_x/features/settings/view_model/blocked_users_notifier.dart';
 
 final settingsRepoProvider = Provider<SettingsRepo>((ref) {
 	final dio = ref.watch(dioProvider);
@@ -43,6 +45,16 @@ final mutedAccountsProvider = FutureProvider<Either<Failure, List<UserModel>>>((
 	return repo.getMutedAccounts(user.username);
 });
 
+final mutedUsersNotifierProvider = StateNotifierProvider.autoDispose<MutedUsersNotifier, MutedUsersState>((ref) {
+  final repo = ref.watch(settingsRepoProvider);
+  return MutedUsersNotifier(settingsRepo: repo);
+});
+
+final blockedUsersNotifierProvider = StateNotifierProvider.autoDispose<BlockedUsersNotifier, BlockedUsersState>((ref) {
+	final repo = ref.watch(settingsRepoProvider);
+	return BlockedUsersNotifier(settingsRepo: repo);
+});
+
 final blockControllerProvider = Provider((ref) {
 	final repo = ref.watch(settingsRepoProvider);
 	return (String username) => repo.blockAccount(username);
@@ -66,6 +78,11 @@ final unMuteControllerProvider = Provider((ref) {
 final followMutedAccountControllerProvider = Provider((ref) {
 	final repo = ref.watch(settingsRepoProvider);
 	return (String username) => repo.followUser(username);
+});
+
+final unFollowMutedAccountControllerProvider = Provider((ref) {
+	final repo = ref.watch(settingsRepoProvider);
+	return (String username) => repo.unFollowUser(username);
 });
 
 final updateSettingsControllerProvider = Provider((ref) {

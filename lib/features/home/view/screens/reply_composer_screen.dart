@@ -1,7 +1,11 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lite_x/core/classes/PickedImage.dart';
 import 'package:lite_x/features/home/models/tweet_model.dart';
 import 'package:lite_x/features/home/view_model/home_view_model.dart';
+import 'package:lite_x/features/media/upload_media.dart';
 
 class ReplyComposerScreen extends ConsumerStatefulWidget {
   final TweetModel replyingToTweet;
@@ -17,6 +21,7 @@ class _ReplyComposerScreenState extends ConsumerState<ReplyComposerScreen> {
   final TextEditingController _textController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
   bool _isPosting = false;
+  final List<File> _selectedImages = [];
 
   @override
   void initState() {
@@ -41,15 +46,21 @@ class _ReplyComposerScreenState extends ConsumerState<ReplyComposerScreen> {
     });
 
     try {
+      final mediaIds = await _uploadSelectedImages();
       await ref
           .read(homeViewModelProvider.notifier)
           .createPost(
             content: _textController.text.trim(),
             replyToId: widget.replyingToTweet.id,
             replyControl: "EVERYONE",
+            mediaIds: mediaIds,
           );
 
       if (mounted) {
+        setState(() {
+          _selectedImages.clear();
+          _textController.clear();
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Reply posted successfully'),
@@ -76,6 +87,113 @@ class _ReplyComposerScreenState extends ConsumerState<ReplyComposerScreen> {
     }
   }
 
+  Future<List<String>> _uploadSelectedImages() async {
+    if (_selectedImages.isEmpty) return [];
+    final uploadedIds = await upload_media(_selectedImages);
+    final mediaIds = uploadedIds.where((id) => id.isNotEmpty).toList();
+
+    if (mediaIds.length != _selectedImages.length && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Some images failed to upload. Try again.'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.orange,
+        ),
+      );
+    }
+
+    if (mediaIds.isEmpty) {
+      throw Exception('Unable to upload selected images.');
+    }
+    return mediaIds;
+  }
+
+  Future<void> _pickImage() async {
+    if (_selectedImages.length >= 4) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Maximum 4 images allowed per reply.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+    final picked = await pickImage();
+    if (picked?.file != null) {
+      setState(() {
+        _selectedImages.add(picked!.file!);
+      });
+    }
+  }
+
+  void _removeImage(int index) {
+    if (index < 0 || index >= _selectedImages.length) return;
+    setState(() {
+      _selectedImages.removeAt(index);
+    });
+  }
+
+  Widget _buildSelectedImagesPreview() {
+    if (_selectedImages.isEmpty) return const SizedBox.shrink();
+    final crossAxisCount = _selectedImages.length == 1 ? 1 : 2;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '${_selectedImages.length} / 4 photos',
+          style: TextStyle(color: Colors.grey[500], fontSize: 13),
+        ),
+        const SizedBox(height: 8),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 8,
+            childAspectRatio: _selectedImages.length == 1 ? 16 / 9 : 1.0,
+          ),
+          itemCount: _selectedImages.length,
+          itemBuilder: (context, index) {
+            return Stack(
+              children: [
+                Positioned.fill(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.file(
+                      _selectedImages[index],
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: InkWell(
+                    onTap: () => _removeImage(index),
+                    child: Container(
+                      decoration: const BoxDecoration(
+                        color: Colors.black54,
+                        shape: BoxShape.circle,
+                      ),
+                      padding: const EdgeInsets.all(4),
+                      child: const Icon(
+                        Icons.close,
+                        color: Colors.white,
+                        size: 16,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -92,6 +210,10 @@ class _ReplyComposerScreenState extends ConsumerState<ReplyComposerScreen> {
                   _buildReplyingToTweet(),
                   const SizedBox(height: 16),
                   _buildReplyComposer(),
+                  if (_selectedImages.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    _buildSelectedImagesPreview(),
+                  ],
                 ],
               ),
             ),
@@ -261,7 +383,7 @@ class _ReplyComposerScreenState extends ConsumerState<ReplyComposerScreen> {
         top: false,
         child: Row(
           children: [
-            _buildIconButton(Icons.image_outlined),
+            _buildIconButton(Icons.image_outlined, onTap: _pickImage),
             const SizedBox(width: 16),
             _buildIconButton(Icons.gif_box_outlined),
             const SizedBox(width: 16),
@@ -278,10 +400,9 @@ class _ReplyComposerScreenState extends ConsumerState<ReplyComposerScreen> {
     );
   }
 
-  Widget _buildIconButton(IconData icon) {
+  Widget _buildIconButton(IconData icon, {VoidCallback? onTap}) {
     return InkWell(
-      onTap: () {
-      },
+      onTap: _isPosting ? null : onTap,
       borderRadius: BorderRadius.circular(20),
       child: Padding(
         padding: const EdgeInsets.all(4),
