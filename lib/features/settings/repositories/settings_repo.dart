@@ -22,4 +22,5 @@ abstract class SettingsRepo {
   Future<Either<Failure, void>> muteAccount(String username);
   Future<Either<Failure, void>> unMuteAccount(String username);
   Future<Either<Failure, void>> followUser(String username);
+  Future<Either<Failure, void>> unFollowUser(String username);
 }

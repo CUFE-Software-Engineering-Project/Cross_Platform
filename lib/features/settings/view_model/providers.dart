@@ -80,6 +80,11 @@ final followMutedAccountControllerProvider = Provider((ref) {
 	return (String username) => repo.followUser(username);
 });
 
+final unFollowMutedAccountControllerProvider = Provider((ref) {
+	final repo = ref.watch(settingsRepoProvider);
+	return (String username) => repo.unFollowUser(username);
+});
+
 final updateSettingsControllerProvider = Provider((ref) {
   final repo = ref.watch(settingsRepoProvider);
   return (SettingsModel model) => repo.updateSettings(newModel: model);

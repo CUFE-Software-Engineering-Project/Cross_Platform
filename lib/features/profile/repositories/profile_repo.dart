@@ -24,10 +24,14 @@ abstract class ProfileRepo {
   Future<Either<Failure, ProfileModel>> updateProfile({
     required ProfileModel newModel,
   });
+
+  // block and mute
     Future<Either<Failure, void>> blockUser(String username);
   Future<Either<Failure, void>> unBlockUser(String username);
     Future<Either<Failure, void>> muteUser(String username);
   Future<Either<Failure, void>> unMuteUser(String username);
+Future<Either<Failure, List<UserModel>>> getMutedList(String userName);
+Future<Either<Failure, List<UserModel>>> getBlockedList(String userName);
 
   Future<Either<Failure, void>> updateProfileBanner(String userId, String mediaId);
   Future<Either<Failure, void>> updateProfilePhoto(String userId, String mediaId);

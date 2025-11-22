@@ -371,6 +371,7 @@ class ProfileRepoImpl implements ProfileRepo {
     }
   }
 
+  // block and mute
   Future<Either<Failure, void>> blockUser(String username) async {
     try {
       await _dio.post("api/blocks/$username");
@@ -404,6 +405,36 @@ class ProfileRepoImpl implements ProfileRepo {
       return const Right(());
     } catch (e) {
       return Left(Failure("couldn't unmute user"));
+    }
+  }
+
+  Future<Either<Failure, List<UserModel>>> getMutedList(String userName) async {
+    try {
+      final res = await _dio.get("api/mutes");
+      final List<dynamic> jsonList = res.data["users"];
+      final List<UserModel> users = jsonList.map((json) {
+        final Map<String, dynamic> jsonMap = json as Map<String, dynamic>;
+        return UserModel.fromJson(jsonMap);
+      }).toList();
+      return Right(users);
+    } catch (e) {
+      return Left(Failure("Can't get muted users, try again later.."));
+    }
+  }
+
+  Future<Either<Failure, List<UserModel>>> getBlockedList(
+    String userName,
+  ) async {
+    try {
+      final res = await _dio.get("api/blocks");
+      final List<dynamic> jsonList = res.data["users"];
+      final List<UserModel> users = jsonList.map((json) {
+        final Map<String, dynamic> jsonMap = json as Map<String, dynamic>;
+        return UserModel.fromJson(jsonMap);
+      }).toList();
+      return Right(users);
+    } catch (e) {
+      return Left(Failure("Can't get Blocked users, try again later.."));
     }
   }
 
