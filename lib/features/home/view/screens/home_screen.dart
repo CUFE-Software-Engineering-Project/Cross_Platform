@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lite_x/core/providers/current_user_provider.dart';
 import 'package:lite_x/core/view/screen/app_shell.dart';
 import 'package:lite_x/features/home/models/tweet_model.dart';
+import 'package:lite_x/features/home/providers/user_profile_provider.dart';
 import 'package:lite_x/features/home/view/screens/tweet_screen.dart';
 import 'package:lite_x/features/home/view_model/home_state.dart';
 import 'package:lite_x/features/home/view_model/home_view_model.dart';
@@ -48,6 +49,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final user = ref.read(currentUserProvider);
     if (user != null) {
       currentUserId = user.id;
+      // Load user profile data after the widget tree is built
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(userProfileControllerProvider).fetchUserProfile(user.username);
+      });
     }
   }
 
@@ -151,8 +156,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       ),
       floatingActionButton: ExpandableFab(
         mainIcon: Icons.add,
-        mainIconColor: Colors.blue,
-        mainBackgroundColor: Colors.white,
+        mainIconColor: Colors.white,
+        mainBackgroundColor: const Color(0xFF1DA1F2),
         onPrimaryAction: _openCreatePost,
         children: [
           ActionButton(
