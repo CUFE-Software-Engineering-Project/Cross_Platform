@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lite_x/core/providers/current_user_provider.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
+import 'package:lite_x/features/profile/models/shared.dart';
 import 'package:lite_x/features/profile/view/widgets/profile_search/explore_profile_screen_body.dart';
 import 'package:lite_x/features/profile/view_model/providers.dart';
 
@@ -60,32 +61,6 @@ class _ExploreProfileScreenState extends ConsumerState<ExploreProfileScreen> {
           SliverFillRemaining(child: Exploreprofilescreenbody()),
         ],
       ),
-    );
-  }
-}
-
-class BuildSmallProfileImage extends ConsumerWidget {
-  const BuildSmallProfileImage({super.key, required this.mediaId});
-  final String mediaId;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final media = ref.watch(mediaUrlsProvider([mediaId]));
-    return media.when(
-      data: (res) {
-        return CircleAvatar(
-          backgroundImage: CachedNetworkImageProvider(res[0]),
-          backgroundColor: Colors.grey,
-          radius: 10,
-          onBackgroundImageError: (exception, stackTrace) => null,
-        );
-      },
-      error: (err, _) {
-        return CircleAvatar(backgroundColor: Colors.grey, radius: 10);
-      },
-      loading: () {
-        return CircleAvatar(backgroundColor: Colors.grey, radius: 10);
-      },
     );
   }
 }

@@ -51,45 +51,13 @@ class ProfileRepoImpl implements ProfileRepo {
 
       final profileData = ProfileModel.fromJson(json);
       return Right(profileData);
-
-      // final profileData2 = profileData.copyWith(
-      //   avatarUrl:
-      //       "https://images.pexels.com/photos/2379005/pexels-photo-2379005.jpeg",
-      // );
-
-      // await Future.delayed(Duration(seconds: 1));
-
-      // return Right(
-      //   ProfileModel(
-      //     id: "",
-      //     username: "hazememam404",
-      //     displayName: "Hazem Emam",
-      //     bio:
-      //         "Hello from hazem emam fffffffffffffffffffffffffffffffffffffffffffffddddddddddddddddddddddddddddddddddd",
-      //     avatarUrl:
-      //         "https://images.pexels.com/photos/31510092/pexels-photo-31510092.jpeg",
-      //     bannerUrl:
-      //         "https://images.pexels.com/photos/1765033/pexels-photo-1765033.jpeg",
-      //     followersCount: 15,
-      //     followingCount: 20,
-      //     tweetsCount: 15,
-      //     isVerified: false,
-      //     joinedDate: formatDate(
-      //       DateTime(2004, 8, 21),
-      //       DateFormatType.fullDate,
-      //     ),
-      //     website: "https://google.cof",
-      //     location:
-      //         "cairo,Egyptfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffdddddddddddddddddddddddddddddd",
-      //     postCount: 2,
-      //     birthDate: formatDate(DateTime(2004, 8, 21), DateFormatType.fullDate),
-      //     isFollowing: false,
-      //     isFollower: false,
-      //     protectedAccount: false,
-      //     isBlockedByMe: true,
-      //     isMutedByMe: false,
-      //   ),
-      // );
+    } on DioException catch (e) {
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.sendTimeout) {
+        return Left(Failure('connection timeout, please try agin...'));
+      }
+      return Left(Failure('Failed to load profile data, try agian later...'));
     } catch (e) {
       print(e.toString());
       return Left(Failure('Failed to load profile data'));
@@ -120,7 +88,7 @@ class ProfileRepoImpl implements ProfileRepo {
 
       return Right(ProfileModel.fromJson(res.data));
     } catch (e) {
-      // print("----------\n${e.toString()}\n---------");
+      print("----------\n${e.toString()}\n---------");
       return Left(Failure("can't update profile data"));
     }
   }
@@ -130,7 +98,9 @@ class ProfileRepoImpl implements ProfileRepo {
     String username,
   ) async {
     try {
+      print("Start api ---------------------**");
       final res = await _dio.get("api/tweets/users/$username");
+      print("end api ---------------------**");
       final List<dynamic> jsonList = res.data["data"] ?? [];
 
       List<ProfileTweetModel> tweets = [];
@@ -146,22 +116,21 @@ class ProfileRepoImpl implements ProfileRepo {
             .map((media) => media["mediaId"] as String)
             .toList();
 
-        final List<String> userPhotoUrl = await getMediaUrls([profilePhotoId]);
+        // final List<String> userPhotoUrl = await getMediaUrls([profilePhotoId]);
 
-        final String profilePhotoUrl = userPhotoUrl[0];
+        // final String profilePhotoUrl = userPhotoUrl[0];
 
         // get timeAgo
         final String createTime = json["createdAt"] ?? "";
         final String timeAgo = getTimeAgo(createTime);
 
-        json["profileMediaUrl"] = profilePhotoUrl;
+        json["profileMediaId"] = profilePhotoId;
         json["mediaIds"] = tweetMediaIds;
         json["timeAgo"] = timeAgo;
 
         tweets.add(ProfileTweetModel.fromJson(json));
-        print("*****************************************");
       }
-
+      print("end repo posts ----------------**");
       return Right(tweets);
     } catch (e) {
       print(e.toString());

@@ -37,13 +37,8 @@ class ProfileNormalTweetWidget extends ConsumerWidget implements ProfileTweet {
                       "/profilescreen/${this.profileModel.username}",
                     );
                   },
-                  child: CircleAvatar(
-                    backgroundColor: Colors.grey,
-                    backgroundImage: CachedNetworkImageProvider(
-                      profileModel.avatarUrl,
-                    ),
-                    radius: 20,
-                    onBackgroundImageError: null,
+                  child: BuildSmallProfileImage(
+                    mediaId: profilePostModel.profileMediaId,
                   ),
                 ),
               ],

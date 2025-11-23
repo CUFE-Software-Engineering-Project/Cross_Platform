@@ -15,7 +15,7 @@ class ProfileTweetModel {
   final String userId;
   final String userUserName;
   final String userDisplayName;
-  final String profileMediaUrl;
+  final String profileMediaId;
   final bool verified;
   final bool protectedAccount;
   // final List<String> mediaUrls;
@@ -35,7 +35,7 @@ class ProfileTweetModel {
     required this.activityNumber,
     // required this.mediaUrls,
     required this.quotesCount,
-    required this.profileMediaUrl,
+    required this.profileMediaId,
     required this.protectedAccount,
     required this.userId,
     required this.userDisplayName,
@@ -77,7 +77,7 @@ class ProfileTweetModel {
       userDisplayName: json["user"]?["name"] ?? "",
       userId: json["user"]?["id"] ?? "",
       userUserName: json["user"]?["username"] ?? "",
-      profileMediaUrl: json["profileMediaUrl"] ?? "",
+      profileMediaId: json["profileMediaId"] ?? "",
       protectedAccount: json["user"]?["protectedAccount"] ?? false,
       verified: json["user"]?["verified"] ?? false,
       // mediaIds: meidaIds,

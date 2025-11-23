@@ -1,8 +1,11 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
 import 'package:lite_x/features/profile/models/profile_tweet_model.dart';
 import 'package:lite_x/features/profile/view/widgets/profile_tweets/profile_normal_tweet_widget.dart';
 import 'package:lite_x/features/profile/view/widgets/profile_tweets/profile_retweet_widget.dart';
+import 'package:lite_x/features/profile/view_model/providers.dart';
 
 abstract class Shared {
   static String formatCount(int count) {
@@ -296,3 +299,37 @@ String getTimeAgo(String backendTime) {
 }
 
 enum ProfileTabType { Posts, Media, Likes, Replies, Highlights, Articles }
+
+class BuildSmallProfileImage extends ConsumerWidget {
+  const BuildSmallProfileImage({super.key, required this.mediaId});
+  final String mediaId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final media = ref.watch(mediaUrlsProvider([mediaId]));
+    return media.when(
+      data: (res) {
+        return CircleAvatar(
+          backgroundImage: CachedNetworkImageProvider(res[0]),
+          backgroundColor: Colors.grey,
+          radius: 20,
+          onBackgroundImageError: (exception, stackTrace) => null,
+        );
+      },
+      error: (err, _) {
+        return CircleAvatar(
+          backgroundColor: Colors.grey,
+          radius: 20,
+          child: Icon(Icons.error),
+        );
+      },
+      loading: () {
+        return CircleAvatar(
+          backgroundColor: Colors.grey,
+          radius: 20,
+          child: CircularProgressIndicator(color: Colors.white),
+        );
+      },
+    );
+  }
+}
