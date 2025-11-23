@@ -294,3 +294,5 @@ String getTimeAgo(String backendTime) {
     return 'now';
   }
 }
+
+enum ProfileTabType { Posts, Media, Likes, Replies, Highlights, Articles }

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive_ce/hive.dart';
+import 'package:lite_x/core/providers/current_user_provider.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
 import 'package:lite_x/features/profile/models/profile_tweet_model.dart';
 import 'package:lite_x/features/profile/models/shared.dart';
@@ -38,10 +39,11 @@ class ProfileNormalTweetWidget extends ConsumerWidget implements ProfileTweet {
                   },
                   child: CircleAvatar(
                     backgroundColor: Colors.grey,
-                    backgroundImage: profileModel.avatarUrl.isNotEmpty
-                        ? NetworkImage(profileModel.avatarUrl)
-                        : null,
+                    backgroundImage: CachedNetworkImageProvider(
+                      profileModel.avatarUrl,
+                    ),
                     radius: 20,
+                    onBackgroundImageError: null,
                   ),
                 ),
               ],
@@ -108,7 +110,11 @@ class ProfileNormalTweetWidget extends ConsumerWidget implements ProfileTweet {
                         SizedBox(width: 8),
                         GestureDetector(
                           onTap: () {
-                            _openProfileTweetOptions(context);
+                            _openProfileTweetOptions(
+                              context,
+                              ref,
+                              this.profilePostModel,
+                            );
                           },
                           child: Icon(
                             Icons.more_vert,
@@ -139,6 +145,7 @@ class ProfileNormalTweetWidget extends ConsumerWidget implements ProfileTweet {
                     width: 350,
                     // height: 350,
                     constraints: BoxConstraints(maxHeight: 400),
+
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -481,10 +488,15 @@ class _InterActionsRowOfTweetState
   }
 }
 
-void _openProfileTweetOptions(BuildContext context) async {
+void _openProfileTweetOptions(
+  BuildContext context,
+  WidgetRef ref,
+  ProfileTweetModel tweet,
+) async {
   showModalBottomSheet(
     context: context,
     backgroundColor: Colors.black,
+
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
     ),
@@ -505,8 +517,30 @@ void _openProfileTweetOptions(BuildContext context) async {
             text: "Delete post",
             icon: Icons.delete,
             onPress: () async {
-              await Future.delayed(Duration(milliseconds: 100));
-
+              final delete = await ref.watch(deleteTweetProvider);
+              final res = await delete(tweet.id);
+              res.fold(
+                (l) {
+                  showSmallPopUpMessage(
+                    context: context,
+                    message: l.message,
+                    borderColor: Colors.red,
+                    icon: Icon(Icons.error, color: Colors.red),
+                  );
+                },
+                (r) {
+                  showSmallPopUpMessage(
+                    context: context,
+                    message: "Tweet deleted successfully",
+                    borderColor: Colors.blue,
+                    icon: Icon(Icons.check, color: Colors.blue),
+                  );
+                  final currentUser = ref.watch(currentUserProvider);
+                  if (currentUser != null)
+                    // ignore: unused_result
+                    ref.refresh(profilePostsProvider(currentUser.id));
+                },
+              );
               // TODO: make delete post logic
               context.pop();
             },

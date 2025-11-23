@@ -116,7 +116,7 @@ class CurrentSearchUser extends StatelessWidget {
             : AssetImage("assets/images/basic_user.jpeg"),
         radius: 22,
         backgroundColor: Colors.grey,
-        onForegroundImageError: (exception, stackTrace) => null,
+        onBackgroundImageError: (exception, stackTrace) => null,
       ),
       title: Flexible(
         child: Text(

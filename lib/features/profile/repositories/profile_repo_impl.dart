@@ -409,6 +409,15 @@ class ProfileRepoImpl implements ProfileRepo {
     }
   }
 
+  Future<Either<Failure, void>> deleteTweet(String tweetId) async {
+    try {
+      await _dio.delete("api/tweets/$tweetId");
+      return Right(());
+    } catch (e) {
+      return Left(Failure("Can't delete tweet"));
+    }
+  }
+
   Future<Either<Failure, List<TweetReplyModel>>> getTweetReplies(
     String tweetId,
   ) async {

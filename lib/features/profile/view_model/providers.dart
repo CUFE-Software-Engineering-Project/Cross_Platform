@@ -178,6 +178,13 @@ final tweetRepliesProvider =
       return repo.getTweetReplies(tweetId);
     });
 
+final deleteTweetProvider = Provider((ref) {
+  final repo = ref.watch(profileRepoProvider);
+  return (String tweetId) {
+    return repo.deleteTweet(tweetId);
+  };
+});
+
 // tweets reactions
 final likeTweetProvider = Provider((ref) {
   final repo = ref.watch(profileRepoProvider);

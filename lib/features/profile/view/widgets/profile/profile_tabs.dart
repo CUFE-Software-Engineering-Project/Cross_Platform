@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
 import 'package:lite_x/features/profile/models/profile_tweet_model.dart';
 import 'package:lite_x/features/profile/view/widgets/profile_tweets/profile_likes_tap.dart';
+import 'package:lite_x/features/profile/view/widgets/profile_tweets/profile_media_tap.dart';
 import 'package:lite_x/features/profile/view/widgets/profile_tweets/profile_normal_tweet_widget.dart';
 import 'package:lite_x/features/profile/view/widgets/profile_tweets/profile_posts_tab.dart';
 import 'package:lite_x/features/profile/view_model/providers.dart';
@@ -48,7 +49,7 @@ class ProfileTabs extends ConsumerWidget {
             const Center(child: Text("Replies Tab Content")), // Replies
             if (isMe) _buildHilightsTab(), // Highlights
             if (isMe) _buildArticlesTab(), // Articles
-            const Center(child: Text("Media Tab Content")), // Media
+            ProfileMediaTap(profileModel: this.profileData), // Media
             if (isMe) ProfileLikesTap(profileModel: this.profileData), // Likes
           ],
         ),

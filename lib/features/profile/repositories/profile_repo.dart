@@ -54,7 +54,7 @@ abstract class ProfileRepo {
   Future<Either<Failure, List<TweetReplyModel>>> getTweetReplies(
     String tweetId,
   );
-
+  Future<Either<Failure, void>> deleteTweet(String tweetId);
   //profile search
   Future<Either<Failure, List<SearchUserModel>>> profileCurrentSearch(
     String query,
