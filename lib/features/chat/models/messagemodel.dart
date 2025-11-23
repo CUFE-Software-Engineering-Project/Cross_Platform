@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:hive_ce/hive.dart';
-import 'package:lite_x/features/chat/models/mediamodel.dart';
 
 part "messagemodel.g.dart";
 
@@ -25,17 +24,15 @@ class MessageModel extends HiveObject {
   String status; // "PENDING","SENT","READ"
 
   @HiveField(6)
-  List<MediaModel>? media;
-  @HiveField(7)
   String? senderUsername;
 
-  @HiveField(8)
+  @HiveField(7)
   String? senderName;
 
-  @HiveField(9)
+  @HiveField(8)
   String? senderProfileMediaKey;
 
-  @HiveField(10)
+  @HiveField(9)
   String messageType; // text | image | video | gif | file
 
   MessageModel({
@@ -45,7 +42,6 @@ class MessageModel extends HiveObject {
     this.content,
     required this.createdAt,
     this.status = 'PENDING',
-    this.media,
     this.senderUsername,
     this.senderName,
     this.senderProfileMediaKey,
@@ -55,45 +51,13 @@ class MessageModel extends HiveObject {
   Map<String, dynamic> toApiRequest({List<String>? recipientIds}) {
     return {
       "chatId": chatId,
-      "data": {
-        "content": content,
-        "messageMedia": media?.map((m) => {"mediaId": m.id}).toList(),
-      },
+      "data": {"content": content},
       if (recipientIds != null) "recipientId": recipientIds,
     };
   }
 
   factory MessageModel.fromApiResponse(Map<String, dynamic> json) {
-    List<MediaModel>? mediaList;
-
-    final messageMedia = json['messageMedia'] as List<dynamic>?;
-
-    if (messageMedia != null && messageMedia.isNotEmpty) {
-      mediaList = messageMedia.map((message_media) {
-        final mediaJson = message_media['media'];
-        final mediaId = message_media['mediaId']; //used for download
-
-        return MediaModel.fromApiResponse(mediaJson, mediaMessageId: mediaId);
-      }).toList();
-    }
     final user = json['user'] as Map<String, dynamic>?;
-    String detectedType = 'text';
-    if (mediaList != null && mediaList.isNotEmpty) {
-      switch (mediaList.first.type.toUpperCase()) {
-        case 'IMAGE':
-          detectedType = 'image';
-          break;
-        case 'VIDEO':
-          detectedType = 'video';
-          break;
-        case 'GIF':
-          detectedType = 'gif';
-          break;
-        case 'FILE':
-          detectedType = 'file';
-          break;
-      }
-    }
     return MessageModel(
       id: json['id'] as String,
       chatId: json['chatId'] as String,
@@ -101,11 +65,10 @@ class MessageModel extends HiveObject {
       content: json['content'] as String?,
       createdAt: DateTime.parse(json['createdAt'] as String),
       status: json['status'] as String? ?? 'PENDING',
-      media: mediaList,
       senderUsername: user?['username'] as String?,
       senderName: user?['name'] as String?,
       senderProfileMediaKey: user?['profileMediaId'] as String?,
-      messageType: detectedType,
+      messageType: 'text',
     );
   }
 
@@ -116,7 +79,6 @@ class MessageModel extends HiveObject {
     String? content,
     DateTime? createdAt,
     String? status,
-    List<MediaModel>? media,
     String? senderUsername,
     String? senderName,
     String? senderProfileMediaKey,
@@ -130,7 +92,6 @@ class MessageModel extends HiveObject {
       content: content ?? this.content,
       createdAt: createdAt ?? this.createdAt,
       status: status ?? this.status,
-      media: media ?? this.media,
       senderUsername: senderUsername ?? this.senderUsername,
       senderName: senderName ?? this.senderName,
       senderProfileMediaKey:
@@ -147,7 +108,6 @@ class MessageModel extends HiveObject {
       'content': content,
       'createdAt': createdAt.toIso8601String(),
       'status': status,
-      'media': media?.map((x) => x.toMap()).toList(),
       'senderUsername': senderUsername,
       'senderName': senderName,
       'senderProfileMediaKey': senderProfileMediaKey,
@@ -163,13 +123,6 @@ class MessageModel extends HiveObject {
       content: map['content'] as String?,
       createdAt: DateTime.parse(map['createdAt'] as String),
       status: map['status'] as String? ?? 'PENDING',
-      media: map['media'] != null
-          ? List<MediaModel>.from(
-              (map['media'] as List).map(
-                (x) => MediaModel.fromMap(x as Map<String, dynamic>),
-              ),
-            )
-          : null,
       senderUsername: map['senderUsername'] as String?,
       senderName: map['senderName'] as String?,
       senderProfileMediaKey: map['senderProfileMediaKey'] as String?,
@@ -181,9 +134,6 @@ class MessageModel extends HiveObject {
 
   factory MessageModel.fromJson(String source) =>
       MessageModel.fromMap(json.decode(source) as Map<String, dynamic>);
-
-  bool get hasMedia => media != null && media!.isNotEmpty;
-  bool get isTextOnly => !hasMedia && content != null;
   bool get isPending => status == 'PENDING';
   bool get isSent =>
       status == 'SENT' || status == 'DELIVERED' || status == 'READ';

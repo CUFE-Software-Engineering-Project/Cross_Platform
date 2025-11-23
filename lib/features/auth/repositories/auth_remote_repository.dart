@@ -1,14 +1,11 @@
 // ignore_for_file: unused_catch_clause
-
 import 'dart:convert';
 import 'dart:io';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:google_sign_in/google_sign_in.dart' as signIn;
 import 'package:http/http.dart' as http;
-
 import 'package:lite_x/core/classes/AppFailure.dart';
 import 'package:lite_x/core/classes/PickedImage.dart';
 import 'package:lite_x/core/models/TokensModel.dart';
@@ -77,7 +74,13 @@ class AuthRemoteRepository {
   }
   //--------------------------------------------------------google-------------------------------------------------------------------//
 
-  final _googleSignIn = signIn.GoogleSignIn(scopes: ['email', 'profile']);
+  final _googleSignIn = signIn.GoogleSignIn(
+    serverClientId: "<WEB CLIENT ID FROM GOOGLE CLOUD>",
+    scopes: [
+      'email',
+      'https://www.googleapis.com/auth/userinfo.profile',
+    ], //  changed
+  );
 
   Future<Either<AppFailure, (UserModel, TokensModel)>>
   signInWithGoogleAndroid() async {
@@ -91,6 +94,8 @@ class AuthRemoteRepository {
 
       final googleAuth = await googleUser.authentication;
       final idToken = googleAuth.idToken;
+
+      debugPrint("GOOGLE ID TOKEN = $idToken");
 
       final resp = await http.post(
         Uri.parse("${apiUrl}oauth2/callback/android_google"),

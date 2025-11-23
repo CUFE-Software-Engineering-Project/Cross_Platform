@@ -1,16 +1,10 @@
-// ignore_for_file: unused_field, unused_local_variable
-
-import 'dart:io';
-
 import 'package:lite_x/core/models/usermodel.dart';
 import 'package:lite_x/core/providers/current_user_provider.dart';
-import 'package:lite_x/features/chat/models/mediamodel.dart';
 import 'package:lite_x/features/chat/models/messagemodel.dart';
 import 'package:lite_x/features/chat/repositories/chat_local_repository.dart';
 import 'package:lite_x/features/chat/repositories/chat_remote_repository.dart';
 import 'package:lite_x/features/chat/repositories/socket_repository.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-
 part 'Chat_view_model.g.dart';
 
 class ChatState {
@@ -45,7 +39,7 @@ class ChatViewModel extends _$ChatViewModel {
   UserModel? _currentUser;
   String? _activeChatId;
   String? _myUserId;
-  bool _isSocketListenersSetup = false;
+
   @override
   ChatState build() {
     _chatRemoteRepository = ref.watch(chatRemoteRepositoryProvider);
@@ -121,34 +115,86 @@ class ChatViewModel extends _$ChatViewModel {
     _activeChatId = chatId;
     _myUserId = _currentUser!.id;
 
-    final initialCachedMessages = _chatLocalRepository.getMessagesForChat(
-      chatId,
-    );
-    state = state.copyWith(messages: initialCachedMessages);
+    final localCached = _chatLocalRepository.getMessagesForChat(chatId);
+    state = state.copyWith(messages: localCached);
 
     final result = await _chatRemoteRepository.getInitialChatMessages(chatId);
 
-    if (_activeChatId != chatId) return;
-
-    final messages = result.fold(
-      (failure) {
-        return _chatLocalRepository.getMessagesForChat(chatId);
-      },
-      (msgs) {
-        msgs.sort((a, b) => a.createdAt.compareTo(b.createdAt));
-        return msgs;
-      },
-    );
-
-    if (result.isRight()) {
-      await _chatLocalRepository.saveMessages(messages);
+    if (_activeChatId != chatId) {
+      state = state.copyWith(isLoading: false);
+      return;
     }
 
-    if (_activeChatId != chatId) return;
+    await result.fold(
+      (failure) async {
+        print("Failed to fetch messages: ${failure.message}");
+        state = state.copyWith(isLoading: false);
+      },
+      (serverMessages) async {
+        final mergedMessages = await _mergeAndReconcileMessages(
+          localCached,
+          serverMessages,
+        );
 
-    state = state.copyWith(messages: messages, isLoading: false);
+        await _chatLocalRepository.saveMessages(serverMessages);
 
-    _socketRepository.openChat(chatId);
+        if (_activeChatId != chatId) {
+          state = state.copyWith(isLoading: false);
+          return;
+        }
+
+        state = state.copyWith(messages: mergedMessages, isLoading: false);
+        _socketRepository.openChat(chatId);
+      },
+    );
+  }
+
+  //for matching messages not send while internet is off
+  MessageModel? _findMatchingServerMessage(pending, serverMessages) {
+    for (final srv in serverMessages) {
+      if (srv.content == pending.content &&
+          srv.chatId == pending.chatId &&
+          srv.userId == pending.userId) {
+        return srv;
+      }
+    }
+    return null;
+  }
+
+  // reconcile the messages
+  Future<List<MessageModel>> _mergeAndReconcileMessages(
+    List<MessageModel> localMessages,
+    List<MessageModel> serverMessages,
+  ) async {
+    for (final srv in serverMessages) {
+      await _chatLocalRepository.deleteMessage(srv.id);
+    }
+
+    final Map<String, MessageModel> messageMap = {};
+
+    for (final srv in serverMessages) {
+      messageMap[srv.id] = srv;
+      await _chatLocalRepository.saveMessage(srv);
+    }
+
+    for (final localMsg in localMessages) {
+      if (localMsg.status != "PENDING") continue;
+
+      final match = _findMatchingServerMessage(localMsg, serverMessages);
+      if (match != null) {
+        await _chatLocalRepository.deleteMessage(localMsg.id);
+
+        messageMap[match.id] = match;
+      } else {
+        messageMap[localMsg.id] = localMsg;
+        await _chatLocalRepository.saveMessage(localMsg);
+      }
+    }
+
+    final merged = messageMap.values.toList();
+    merged.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+
+    return merged;
   }
 
   // handle for receivers
@@ -160,29 +206,10 @@ class ChatViewModel extends _$ChatViewModel {
       return;
     }
 
-    final exists = state.messages.any((m) {
-      if (m.id == msg.id) return true;
-      if (m.media != null &&
-          msg.media != null &&
-          m.media!.isNotEmpty &&
-          msg.media!.isNotEmpty &&
-          m.media!.first.id == msg.media!.first.id)
-        return true;
-
-      return false;
-    });
-
+    final exists = state.messages.any((m) => m.id == msg.id);
     if (exists) {
       _updateLocalMessageWithServerId(msg);
       return;
-    }
-
-    if (msg.media != null && msg.media!.isNotEmpty) {
-      for (var media in msg.media!) {
-        if (media.localPath == null) {
-          _download_media_for_receiver(msg, media);
-        }
-      }
     }
 
     final isActiveChat =
@@ -195,7 +222,6 @@ class ChatViewModel extends _$ChatViewModel {
     await _chatLocalRepository.saveMessage(msg);
 
     final updated = [...state.messages, msg];
-    updated.sort((a, b) => a.createdAt.compareTo(b.createdAt));
     state = state.copyWith(messages: updated);
     if (isActiveChat) {
       _socketRepository.openChat(_activeChatId!);
@@ -203,7 +229,7 @@ class ChatViewModel extends _$ChatViewModel {
   }
 
   void _updateLocalMessageWithServerId(MessageModel serverMsg) {
-    final index = state.messages.indexWhere(
+    final index = state.messages.lastIndexWhere(
       (m) => m.status == "PENDING" && m.chatId == serverMsg.chatId,
     );
 
@@ -214,7 +240,6 @@ class ChatViewModel extends _$ChatViewModel {
     final updatedMsg = tempMsg.copyWith(
       id: serverMsg.id,
       status: serverMsg.status,
-      media: serverMsg.media,
     );
 
     final updated = [...state.messages];
@@ -227,112 +252,16 @@ class ChatViewModel extends _$ChatViewModel {
 
   // send message
   Future<void> sendMessage(MessageModel localMessage) async {
-    assert(localMessage.media == null || localMessage.media!.isEmpty);
-
     _chatLocalRepository.saveMessage(localMessage);
-    _chatLocalRepository.markMessageAsSent(localMessage.id);
 
     final isAlreadyInState = state.messages.any((m) => m.id == localMessage.id);
 
     if (!isAlreadyInState) {
       final updated = [...state.messages, localMessage];
-      updated.sort((a, b) => a.createdAt.compareTo(b.createdAt));
       state = state.copyWith(messages: updated);
     }
 
     _socketRepository.sendMessage(localMessage.toApiRequest());
-  }
-
-  //send image/video
-  Future<void> send_File_Message(File file, String filetype) async {
-    if (_activeChatId == null || _myUserId == null) return;
-
-    final tempId = DateTime.now().millisecondsSinceEpoch.toString();
-
-    final local_Media = MediaModel(
-      id: tempId,
-      keyName: "",
-      type: filetype.contains("image") ? "IMAGE" : "VIDEO",
-      size: await file.length(),
-      name: file.path.split("/").last,
-      localPath: file.path,
-    );
-
-    final localMessage = MessageModel(
-      id: tempId,
-      chatId: _activeChatId!,
-      userId: _myUserId!,
-      createdAt: DateTime.now(),
-      status: 'PENDING',
-      messageType: local_Media.type == 'IMAGE' ? 'image' : 'video',
-      media: [local_Media],
-    );
-
-    _chatLocalRepository.saveMessage(localMessage);
-
-    state = state.copyWith(messages: [...state.messages, localMessage]);
-
-    final result = await _chatRemoteRepository.upload_Media_Message(
-      file: file,
-      fileType: filetype,
-    );
-
-    result.fold(
-      (failure) {
-        print("Upload failed: ${failure.message}");
-      },
-      (mediaData) async {
-        final serverMedia = local_Media.copyWith(
-          mediaMessageId: mediaData['mediaId'],
-          keyName: mediaData['keyName'],
-          localPath: file.path,
-        );
-
-        final socketMessage = localMessage.copyWith(
-          media: [serverMedia],
-          status: 'SENT',
-        );
-
-        _chatLocalRepository.saveMessage(socketMessage);
-
-        state = state.copyWith(
-          messages: [
-            ...state.messages.where((m) => m.id != tempId),
-            socketMessage,
-          ],
-        );
-        _socketRepository.sendMessage({
-          "chatId": _activeChatId,
-          "data": {
-            "content": "",
-            "messageMedia": [
-              {"mediaId": mediaData['mediaId']},
-            ],
-          },
-        });
-      },
-    );
-  }
-
-  // download_media_for receiver
-  Future<void> _download_media_for_receiver(
-    MessageModel msg,
-    MediaModel media,
-  ) async {
-    final result = await _chatRemoteRepository.downloadMedia(mediaId: media.id);
-    result.fold((fail) => print("download Failed"), (file) async {
-      final updatedMedia = media.copyWith(localPath: file.path);
-      final updatedMediaList = msg.media!
-          .map((m) => m.id == media.id ? updatedMedia : m)
-          .toList();
-      final updatedMsg = msg.copyWith(media: updatedMediaList);
-      await _chatLocalRepository.saveMessage(updatedMsg);
-      state = state.copyWith(
-        messages: state.messages
-            .map((m) => m.id == msg.id ? updatedMsg : m)
-            .toList(),
-      );
-    });
   }
 
   // handle read status event

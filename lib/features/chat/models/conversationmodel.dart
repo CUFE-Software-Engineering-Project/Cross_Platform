@@ -77,37 +77,12 @@ class ConversationModel extends HiveObject {
 
     if (messages.isNotEmpty) {
       final lastMsg = messages.last;
-      if (lastMsg['messageMedia'] != null &&
-          lastMsg['messageMedia'].isNotEmpty) {
-        final media = lastMsg['messageMedia'][0]['media'];
 
-        switch ((media['type'] as String).toUpperCase()) {
-          case 'IMAGE':
-            lastMessageType = 'image';
-            lastMessageContent = null;
-            break;
-          case 'VIDEO':
-            lastMessageType = 'video';
-            lastMessageContent = null;
-            break;
-          case 'GIF':
-            lastMessageType = 'gif';
-            lastMessageContent = null;
-            break;
-          case 'FILE':
-            lastMessageType = 'file';
-            lastMessageContent = null;
-            break;
-          default:
-            lastMessageType = 'text';
-        }
-      } else {
-        lastMessageType = 'text';
-        lastMessageContent = lastMsg['content'] as String?;
+      lastMessageType = 'text';
+      lastMessageContent = lastMsg['content'] as String?;
 
-        if (lastMessageContent != null && lastMessageContent.length > 80) {
-          lastMessageContent = lastMessageContent.substring(0, 80);
-        }
+      if (lastMessageContent != null && lastMessageContent.length > 80) {
+        lastMessageContent = lastMessageContent.substring(0, 80);
       }
 
       lastMessageTime = DateTime.parse(lastMsg['createdAt'] as String);

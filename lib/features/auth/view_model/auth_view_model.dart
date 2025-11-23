@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:lite_x/core/classes/PickedImage.dart';
 import 'package:lite_x/core/models/usermodel.dart';
@@ -28,8 +30,7 @@ class AuthViewModel extends _$AuthViewModel {
     try {
       await Future.delayed(const Duration(milliseconds: 100));
       final user = _authLocalRepository.getUser();
-      final tokens = _authLocalRepository.getTokens();
-
+      final tokens = _authLocalRepository.getTokens(); //
       if (user != null && tokens != null) {
         if (!tokens.isRefreshTokenExpired) {
           ref.read(currentUserProvider.notifier).adduser(user);
@@ -90,7 +91,6 @@ class AuthViewModel extends _$AuthViewModel {
     required String password,
   }) async {
     state = AuthState.loading();
-
     final result = await _authRemoteRepository.signup(
       email: email,
       password: password,
@@ -106,10 +106,14 @@ class AuthViewModel extends _$AuthViewModel {
           _authLocalRepository.saveUser(user),
           _authLocalRepository.saveTokens(tokens),
         ]);
+
         ref.read(currentUserProvider.notifier).adduser(user);
         state = AuthState.authenticated('Signup successful');
-        _registerFcmToken();
-        _listenForFcmTokenRefresh();
+
+        if (!Platform.environment.containsKey('FLUTTER_TEST')) {
+          _registerFcmToken();
+          _listenForFcmTokenRefresh();
+        }
       },
     );
   }

@@ -5,7 +5,6 @@
 import 'package:hive_ce/hive.dart';
 import 'package:lite_x/core/models/usermodel.dart';
 import 'package:lite_x/features/chat/models/conversationmodel.dart';
-import 'package:lite_x/features/chat/models/mediamodel.dart';
 import 'package:lite_x/features/chat/models/messagemodel.dart';
 import 'package:lite_x/features/chat/models/usersearchmodel.dart';
 import 'package:lite_x/features/home/models/tweet_model.dart';
@@ -13,7 +12,6 @@ import 'package:lite_x/features/home/models/tweet_model.dart';
 extension HiveRegistrar on HiveInterface {
   void registerAdapters() {
     registerAdapter(ConversationModelAdapter());
-    registerAdapter(MediaModelAdapter());
     registerAdapter(MessageModelAdapter());
     registerAdapter(TweetModelAdapter());
     registerAdapter(UserModelAdapter());
@@ -24,7 +22,6 @@ extension HiveRegistrar on HiveInterface {
 extension IsolatedHiveRegistrar on IsolatedHiveInterface {
   void registerAdapters() {
     registerAdapter(ConversationModelAdapter());
-    registerAdapter(MediaModelAdapter());
     registerAdapter(MessageModelAdapter());
     registerAdapter(TweetModelAdapter());
     registerAdapter(UserModelAdapter());

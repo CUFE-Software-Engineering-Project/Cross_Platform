@@ -9,11 +9,9 @@ import 'package:lite_x/features/chat/view/widgets/chat/MessageBubble.dart';
 import 'package:lite_x/features/chat/view/widgets/chat/MessageOptionsSheet.dart';
 import 'package:lite_x/features/chat/view/widgets/chat/TypingIndicator.dart';
 import 'package:lite_x/features/chat/view/widgets/chat/message_input_bar.dart';
-import 'package:lite_x/core/classes/PickedImage.dart';
 import 'package:lite_x/features/chat/view_model/chat/Chat_view_model.dart';
 import 'package:lite_x/features/chat/view_model/conversions/Conversations_view_model.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
-import 'dart:io';
 
 class ChatScreen extends ConsumerStatefulWidget {
   final String chatId;
@@ -44,6 +42,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   bool _isExiting = false;
   bool _showScrollToBottomButton = false;
   final ScrollController _scrollController = ScrollController();
+  late ChatViewModel notifier;
 
   ProviderSubscription<ChatState>? _chatSub;
 
@@ -51,7 +50,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   void initState() {
     super.initState();
     _currentUserId = ref.read(currentUserProvider)!.id;
-
+    notifier = ref.read(chatViewModelProvider.notifier);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
 
@@ -102,9 +101,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     _itemPositionsListener.itemPositions.removeListener(_scrollListener);
 
     try {
-      final notifier = ref.read(chatViewModelProvider.notifier);
-      notifier.sendTyping(false);
-      notifier.exitChat();
+      final savedNotifier = notifier;
+
+      Future.microtask(() {
+        savedNotifier.sendTyping(false);
+        savedNotifier.exitChat();
+      });
     } catch (e) {
       debugPrint("Error during dispose: $e");
     }
@@ -157,20 +159,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     );
 
     ref.read(chatViewModelProvider.notifier).sendMessage(message);
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_isExiting || !mounted) return;
-      _scrollToBottom();
-    });
-  }
-
-  void _handleSendImage(PickedImage pickedImage) {
-    if (_isExiting || !mounted) return;
-
-    final file = File(pickedImage.path!);
-    ref
-        .read(chatViewModelProvider.notifier)
-        .send_File_Message(file, 'image/${pickedImage.path!.split('.').last}');
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_isExiting || !mounted) return;
@@ -262,13 +250,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               child: MessageInputBar(
                 onSendMessage: _handleSendMessage,
-                onSendAudio: (audioPath) {
-                  print('Send audio: $audioPath');
-                },
-                onSendImage: _handleSendImage,
-                onSendGif: (gifUrl) {
-                  print('Send GIF: $gifUrl');
-                },
+                onSendAudio: null,
+                onSendImage: null,
+                onSendGif: null,
                 onTypingChanged: (isTyping) {
                   ref.read(chatViewModelProvider.notifier).sendTyping(isTyping);
                 },

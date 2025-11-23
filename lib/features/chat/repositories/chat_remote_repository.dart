@@ -1,19 +1,11 @@
-// ignore_for_file: unused_local_variable, unused_import, unused_catch_clause
-
-import 'dart:io';
-
 import 'package:dio/dio.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:lite_x/core/classes/AppFailure.dart';
-import 'package:lite_x/core/classes/PickedImage.dart';
-import 'package:lite_x/core/constants/server_constants.dart';
 import 'package:lite_x/core/providers/dio_interceptor.dart';
 import 'package:lite_x/features/chat/models/conversationmodel.dart';
 import 'package:lite_x/features/chat/models/messagemodel.dart';
 import 'package:lite_x/features/chat/models/usersearchmodel.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-
 part 'chat_remote_repository.g.dart';
 
 @Riverpod(keepAlive: true)
@@ -90,7 +82,6 @@ class ChatRemoteRepository {
   }
 
   //----------------------------------------------------get inital messages from getchatinfo without timestemp-------------------------------//
-
   Future<Either<AppFailure, List<MessageModel>>> getInitialChatMessages(
     String chatId,
   ) async {
@@ -146,7 +137,42 @@ class ChatRemoteRepository {
     }
   }
 
-  //---------------------------------------------------------------------------//
+  //---------------------------------------------------------------update group info -------------------------------------------------------------------------------------//
+  Future<Either<AppFailure, ConversationModel>> updateGroupInfo({
+    required String chatId,
+    required String currentUserId,
+    String? groupName,
+    String? groupDescription,
+    String? groupPhotoKey,
+  }) async {
+    try {
+      final response = await _dio.put(
+        "api/dm/chat/$chatId/group",
+        data: {
+          if (groupName != null) "name": groupName,
+          if (groupDescription != null) "description": groupDescription,
+          if (groupPhotoKey != null) "photo": groupPhotoKey,
+        },
+      );
+
+      final data = response.data as Map<String, dynamic>;
+      final updatedConversation = ConversationModel.fromApiResponse(
+        data,
+        currentUserId,
+      );
+
+      return Right(updatedConversation);
+    } on DioException catch (e) {
+      final errorMessage =
+          e.response?.data["message"] ??
+          e.response?.data["error"] ??
+          "Failed to update group info";
+      return Left(AppFailure(message: errorMessage));
+    } catch (e) {
+      return Left(AppFailure(message: e.toString()));
+    }
+  }
+
   //-----------------------------------------------------------get messages of the conversation-------------------------------------------------------------------------//
   Future<Either<AppFailure, List<MessageModel>>> getMessagesChat(
     String chatId, {
@@ -262,113 +288,6 @@ class ChatRemoteRepository {
           e.response?.data["message"] ??
           e.response?.data["error"] ??
           "Failed to delete chat";
-      return Left(AppFailure(message: errorMessage));
-    } catch (e) {
-      return Left(AppFailure(message: e.toString()));
-    }
-  }
-
-  //---------------------------------------------------------------------media of message ---------------------------------------------------------------------------------//
-  Future<Either<AppFailure, Map<String, dynamic>>> upload_Media_Message({
-    required File file,
-    required String fileType,
-  }) async {
-    try {
-      final fileName = file.path.split('/').last;
-      final requestResponse = await _dio.post(
-        'api/media/upload-request',
-        data: {'fileName': fileName, 'contentType': fileType},
-      );
-
-      final String presignedUrl = requestResponse.data['url'];
-      final String keyName = requestResponse.data['keyName'];
-      final fileBytes = await file.readAsBytes();
-
-      final newDio = Dio(
-        BaseOptions(
-          headers: {
-            'Content-Type': fileType,
-            'Content-Length': fileBytes.length,
-          },
-        ),
-      );
-
-      await newDio.put(presignedUrl, data: Stream.fromIterable([fileBytes]));
-
-      final confirmResponse = await _dio.post(
-        'api/media/confirm-upload/$keyName',
-      );
-
-      final mediaId = confirmResponse.data['newMedia']['id'].toString();
-
-      final newMediaKey = confirmResponse.data['newMedia']['keyName'] as String;
-      print("MEDIA ID AFTER UPLOAD: $mediaId");
-
-      return right({'mediaId': mediaId, 'keyName': newMediaKey});
-    } on DioException catch (e) {
-      return left(AppFailure(message: 'Upload failed'));
-    } catch (e) {
-      return left(AppFailure(message: e.toString()));
-    }
-  }
-
-  //------------------------------------------------------------------download the media------------------------------------------------------------------------------//
-  Future<Either<AppFailure, File>> downloadMedia({
-    required String mediaId,
-  }) async {
-    try {
-      final response = await _dio.get('api/media/download-request/$mediaId');
-      final String downloadUrl = response.data['url'];
-
-      final newDio = Dio();
-      final imageResponse = await newDio.get(
-        downloadUrl,
-        options: Options(responseType: ResponseType.bytes),
-      );
-
-      final directory = await getTemporaryDirectory();
-      final filePath =
-          '${directory.path}/downloaded_${DateTime.now().millisecondsSinceEpoch}.jpg';
-
-      final file = File(filePath);
-      await file.writeAsBytes(imageResponse.data);
-
-      return right(file);
-    } catch (e) {
-      return left(AppFailure(message: 'Download failed $e'));
-    }
-  }
-
-  //---------------------------------------------------------------update group info -------------------------------------------------------------------------------------//
-  Future<Either<AppFailure, ConversationModel>> updateGroupInfo({
-    required String chatId,
-    required String currentUserId,
-    String? groupName,
-    String? groupDescription,
-    String? groupPhotoKey,
-  }) async {
-    try {
-      final response = await _dio.put(
-        "api/dm/chat/$chatId/group",
-        data: {
-          if (groupName != null) "name": groupName,
-          if (groupDescription != null) "description": groupDescription,
-          if (groupPhotoKey != null) "photo": groupPhotoKey,
-        },
-      );
-
-      final data = response.data as Map<String, dynamic>;
-      final updatedConversation = ConversationModel.fromApiResponse(
-        data,
-        currentUserId,
-      );
-
-      return Right(updatedConversation);
-    } on DioException catch (e) {
-      final errorMessage =
-          e.response?.data["message"] ??
-          e.response?.data["error"] ??
-          "Failed to update group info";
       return Left(AppFailure(message: errorMessage));
     } catch (e) {
       return Left(AppFailure(message: e.toString()));

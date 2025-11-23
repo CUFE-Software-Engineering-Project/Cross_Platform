@@ -153,22 +153,27 @@ class ConversationsViewModel extends _$ConversationsViewModel {
     if (_currentUser == null) {
       return Left(AppFailure(message: "No current user found"));
     }
-
     try {
       final result = await _chatRemoteRepository.create_chat(
         recipientIds: recipientIds,
         Current_UserId: _currentUser!.id,
         DMChat: isDMChat,
       );
+      return result.fold((failure) => Left(failure), (serverChat) async {
+        final localChat = _chatLocalRepository.getConversationById(
+          serverChat.id,
+        );
 
-      return result.fold((failure) => Left(failure), (newChat) async {
-        await _chatLocalRepository.upsertConversations([newChat]);
+        if (localChat != null) {
+          return Right(localChat);
+        }
+        await _chatLocalRepository.upsertConversations([serverChat]);
 
         final currentList = state.value ?? [];
 
         final updatedList = List<ConversationModel>.from(currentList)
-          ..removeWhere((c) => c.id == newChat.id)
-          ..add(newChat);
+          ..removeWhere((c) => c.id == serverChat.id)
+          ..add(serverChat);
 
         updatedList.sort((a, b) {
           final aTime = a.lastMessageTime ?? a.updatedAt;
@@ -178,7 +183,7 @@ class ConversationsViewModel extends _$ConversationsViewModel {
 
         state = AsyncValue.data(updatedList);
 
-        return Right(newChat);
+        return Right(serverChat);
       });
     } catch (e) {
       return Left(AppFailure(message: e.toString()));

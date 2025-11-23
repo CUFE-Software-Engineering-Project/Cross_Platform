@@ -33,6 +33,11 @@ class ChatLocalRepository {
     return _conversationsBox.values.toList();
   }
 
+  //
+  ConversationModel? getConversationById(String id) {
+    return _conversationsBox.get(id);
+  }
+
   // save Message
   Future<void> saveMessage(MessageModel message) async {
     await _messagesBox.put(message.id, message);
@@ -47,8 +52,7 @@ class ChatLocalRepository {
 
   // get messages by chat_id
   List<MessageModel> getMessagesForChat(String chatId) {
-    return _messagesBox.values.where((msg) => msg.chatId == chatId).toList()
-      ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+    return _messagesBox.values.where((msg) => msg.chatId == chatId).toList();
   }
 
   // update message status

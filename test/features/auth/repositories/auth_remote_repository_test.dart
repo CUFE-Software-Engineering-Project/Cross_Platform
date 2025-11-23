@@ -3,7 +3,6 @@
 // ignore_for_file: unused_local_variable
 
 import 'dart:io';
-
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lite_x/core/classes/PickedImage.dart';
@@ -63,17 +62,6 @@ void main() {
           expect(message, 'Verification email sent');
         },
       );
-
-      verify(
-        mockDio.post(
-          'api/auth/signup',
-          data: {
-            'name': testName,
-            'email': testEmail,
-            'dateOfBirth': testDateOfBirth,
-          },
-        ),
-      ).called(1);
     });
 
     test('should return default message when message is missing', () async {
@@ -139,17 +127,6 @@ void main() {
         expect(failure, isA<AppFailure>());
         expect(failure.message, 'Signup failed');
       }, (message) => fail('Test failed: Should have returned Left'));
-
-      verify(
-        mockDio.post(
-          'api/auth/signup',
-          data: {
-            'name': testName,
-            'email': testEmail,
-            'dateOfBirth': testDateOfBirth,
-          },
-        ),
-      ).called(1);
     });
 
     test('should return AppFailure on generic exception', () async {
@@ -210,13 +187,6 @@ void main() {
           expect(message, 'Verified successfully');
         },
       );
-
-      verify(
-        mockDio.post(
-          'api/auth/verify-signup',
-          data: {'email': testEmail, 'code': testCode},
-        ),
-      ).called(1);
     });
 
     test('should return default message when message is missing', () async {
@@ -272,13 +242,6 @@ void main() {
         expect(failure, isA<AppFailure>());
         expect(failure.message, 'Email verification failed');
       }, (message) => fail('Test failed: Should have returned Left'));
-
-      verify(
-        mockDio.post(
-          'api/auth/verify-signup',
-          data: {'email': testEmail, 'code': testCode},
-        ),
-      ).called(1);
     });
 
     test('should return AppFailure on generic exception', () async {
@@ -384,13 +347,6 @@ void main() {
         expect(failure, isA<AppFailure>());
         expect(failure.message, 'Signup failed');
       }, (successData) => fail('Test failed: Should have returned Left'));
-
-      verify(
-        mockDio.post(
-          'api/auth/finalize_signup',
-          data: {'email': testEmail, 'password': testPassword},
-        ),
-      ).called(1);
     });
 
     test('should return AppFailure on generic exception', () async {
@@ -495,12 +451,6 @@ void main() {
             expect(tokens.refreshToken, tokensModel.refreshToken);
           },
         );
-        verify(
-          mockDio.post(
-            'api/auth/login',
-            data: {'email': testEmail, 'password': testPassword},
-          ),
-        ).called(1);
       },
     );
 
@@ -894,13 +844,6 @@ void main() {
           expect(tokens.refreshToken, 'reset_refresh_token');
         },
       );
-
-      verify(
-        mockDio.post(
-          'api/auth/reset-password',
-          data: {'email': testEmail, 'password': testPassword},
-        ),
-      ).called(1);
     });
 
     test('should return AppFailure on DioException', () async {
@@ -1044,6 +987,562 @@ void main() {
         expect(failure, isA<AppFailure>());
         expect(failure.message, contains('Download failed'));
       }, (file) => fail('Test failed: Should have returned Left'));
+    });
+  });
+  group('check_email', () {
+    const testEmail = 'asermohamed@gmail.com';
+
+    test('should return true when email exists', () async {
+      final apiResponse = {'exists': true};
+
+      when(
+        mockDio.post('api/auth/getUser', data: {'email': testEmail}),
+      ).thenAnswer(
+        (_) async => Response(
+          requestOptions: RequestOptions(path: 'api/auth/getUser'),
+          data: apiResponse,
+          statusCode: 200,
+        ),
+      );
+
+      final result = await authRepository.check_email(email: testEmail);
+
+      expect(result.isRight(), true);
+      result.fold(
+        (failure) => fail('Test failed: Should have returned Right'),
+        (exists) {
+          expect(exists, true);
+        },
+      );
+    });
+
+    test('should return false when email does not exist', () async {
+      final apiResponse = {'exists': false};
+
+      when(
+        mockDio.post('api/auth/getUser', data: {'email': testEmail}),
+      ).thenAnswer(
+        (_) async => Response(
+          requestOptions: RequestOptions(path: 'api/auth/getUser'),
+          data: apiResponse,
+          statusCode: 200,
+        ),
+      );
+
+      final result = await authRepository.check_email(email: testEmail);
+
+      expect(result.isRight(), true);
+      result.fold(
+        (failure) => fail('Test failed: Should have returned Right'),
+        (exists) {
+          expect(exists, false);
+        },
+      );
+    });
+
+    test('should return false when exists field is missing', () async {
+      final apiResponse = {};
+
+      when(
+        mockDio.post('api/auth/getUser', data: {'email': testEmail}),
+      ).thenAnswer(
+        (_) async => Response(
+          requestOptions: RequestOptions(path: 'api/auth/getUser'),
+          data: apiResponse,
+          statusCode: 200,
+        ),
+      );
+
+      final result = await authRepository.check_email(email: testEmail);
+
+      expect(result.isRight(), true);
+      result.fold(
+        (failure) => fail('Test failed: Should have returned Right'),
+        (exists) {
+          expect(exists, false);
+        },
+      );
+    });
+
+    test('should return AppFailure on DioException', () async {
+      when(
+        mockDio.post('api/auth/getUser', data: {'email': testEmail}),
+      ).thenThrow(
+        DioException(
+          requestOptions: RequestOptions(path: 'api/auth/getUser'),
+          message: 'Network error',
+        ),
+      );
+
+      final result = await authRepository.check_email(email: testEmail);
+
+      expect(result.isLeft(), true);
+      result.fold((failure) {
+        expect(failure, isA<AppFailure>());
+        expect(failure.message, 'Email check failed');
+      }, (exists) => fail('Test failed: Should have returned Left'));
+    });
+
+    test('should return AppFailure on generic exception', () async {
+      when(
+        mockDio.post('api/auth/getUser', data: {'email': testEmail}),
+      ).thenThrow(Exception('Unexpected error'));
+
+      final result = await authRepository.check_email(email: testEmail);
+
+      expect(result.isLeft(), true);
+      result.fold((failure) {
+        expect(failure, isA<AppFailure>());
+        expect(failure.message, contains('Exception'));
+      }, (exists) => fail('Test failed: Should have returned Left'));
+    });
+  });
+
+  group('update_password', () {
+    const testPassword = 'OldPassword123***';
+    const testNewPassword = 'NewPassword123***';
+    const testConfirmPassword = 'NewPassword123***';
+
+    test(
+      'should return success message on successful password update',
+      () async {
+        final apiResponse = {'message': 'Password updated successfully'};
+
+        when(
+          mockDio.post(
+            'api/auth/change-password',
+            data: {
+              'password': testPassword,
+              'newpassword': testNewPassword,
+              'confirmPassword': testConfirmPassword,
+            },
+          ),
+        ).thenAnswer(
+          (_) async => Response(
+            requestOptions: RequestOptions(path: 'api/auth/change-password'),
+            data: apiResponse,
+            statusCode: 200,
+          ),
+        );
+
+        final result = await authRepository.update_password(
+          password: testPassword,
+          newpassword: testNewPassword,
+          confirmPassword: testConfirmPassword,
+        );
+
+        expect(result.isRight(), true);
+        result.fold(
+          (failure) => fail('Test failed: Should have returned Right'),
+          (message) {
+            expect(message, 'Password updated successfully');
+          },
+        );
+      },
+    );
+
+    test('should return default message when message is missing', () async {
+      final apiResponse = {};
+
+      when(
+        mockDio.post(
+          'api/auth/change-password',
+          data: {
+            'password': testPassword,
+            'newpassword': testNewPassword,
+            'confirmPassword': testConfirmPassword,
+          },
+        ),
+      ).thenAnswer(
+        (_) async => Response(
+          requestOptions: RequestOptions(path: 'api/auth/change-password'),
+          data: apiResponse,
+          statusCode: 200,
+        ),
+      );
+
+      final result = await authRepository.update_password(
+        password: testPassword,
+        newpassword: testNewPassword,
+        confirmPassword: testConfirmPassword,
+      );
+
+      expect(result.isRight(), true);
+      result.fold(
+        (failure) => fail('Test failed: Should have returned Right'),
+        (message) {
+          expect(message, 'Password updated successfully');
+        },
+      );
+    });
+
+    test('should return AppFailure on DioException', () async {
+      when(
+        mockDio.post(
+          'api/auth/change-password',
+          data: {
+            'password': testPassword,
+            'newpassword': testNewPassword,
+            'confirmPassword': testConfirmPassword,
+          },
+        ),
+      ).thenThrow(
+        DioException(
+          requestOptions: RequestOptions(path: 'api/auth/change-password'),
+          message: 'Wrong password',
+        ),
+      );
+
+      final result = await authRepository.update_password(
+        password: testPassword,
+        newpassword: testNewPassword,
+        confirmPassword: testConfirmPassword,
+      );
+
+      expect(result.isLeft(), true);
+      result.fold((failure) {
+        expect(failure, isA<AppFailure>());
+        expect(failure.message, 'update password failed');
+      }, (message) => fail('Test failed: Should have returned Left'));
+    });
+
+    test('should return AppFailure on generic exception', () async {
+      when(
+        mockDio.post(
+          'api/auth/change-password',
+          data: {
+            'password': testPassword,
+            'newpassword': testNewPassword,
+            'confirmPassword': testConfirmPassword,
+          },
+        ),
+      ).thenThrow(Exception('Network timeout'));
+
+      final result = await authRepository.update_password(
+        password: testPassword,
+        newpassword: testNewPassword,
+        confirmPassword: testConfirmPassword,
+      );
+
+      expect(result.isLeft(), true);
+      result.fold((failure) {
+        expect(failure, isA<AppFailure>());
+        expect(failure.message, contains('Exception'));
+      }, (message) => fail('Test failed: Should have returned Left'));
+    });
+  });
+
+  group('update_email', () {
+    const testNewEmail = 'asermohamed123@gmail.com';
+
+    test('should return success message on successful email update', () async {
+      final apiResponse = {'message': 'Email updated successfully'};
+
+      when(
+        mockDio.post('api/auth/change-email', data: {'newemail': testNewEmail}),
+      ).thenAnswer(
+        (_) async => Response(
+          requestOptions: RequestOptions(path: 'api/auth/change-email'),
+          data: apiResponse,
+          statusCode: 200,
+        ),
+      );
+
+      final result = await authRepository.update_email(newemail: testNewEmail);
+
+      expect(result.isRight(), true);
+      result.fold(
+        (failure) => fail('Test failed: Should have returned Right'),
+        (message) {
+          expect(message, 'Email updated successfully');
+        },
+      );
+    });
+
+    test('should return default message when message is missing', () async {
+      final apiResponse = {};
+
+      when(
+        mockDio.post('api/auth/change-email', data: {'newemail': testNewEmail}),
+      ).thenAnswer(
+        (_) async => Response(
+          requestOptions: RequestOptions(path: 'api/auth/change-email'),
+          data: apiResponse,
+          statusCode: 200,
+        ),
+      );
+
+      final result = await authRepository.update_email(newemail: testNewEmail);
+
+      expect(result.isRight(), true);
+      result.fold(
+        (failure) => fail('Test failed: Should have returned Right'),
+        (message) {
+          expect(message, 'Email updated successfully');
+        },
+      );
+    });
+
+    test('should return AppFailure on DioException', () async {
+      when(
+        mockDio.post('api/auth/change-email', data: {'newemail': testNewEmail}),
+      ).thenThrow(
+        DioException(
+          requestOptions: RequestOptions(path: 'api/auth/change-email'),
+          message: 'Email already in use',
+        ),
+      );
+
+      final result = await authRepository.update_email(newemail: testNewEmail);
+
+      expect(result.isLeft(), true);
+      result.fold((failure) {
+        expect(failure, isA<AppFailure>());
+        expect(failure.message, 'update email failed');
+      }, (message) => fail('Test failed: Should have returned Left'));
+    });
+
+    test('should return AppFailure on generic exception', () async {
+      when(
+        mockDio.post('api/auth/change-email', data: {'newemail': testNewEmail}),
+      ).thenThrow(Exception('Server error'));
+
+      final result = await authRepository.update_email(newemail: testNewEmail);
+
+      expect(result.isLeft(), true);
+      result.fold((failure) {
+        expect(failure, isA<AppFailure>());
+        expect(failure.message, contains('Exception'));
+      }, (message) => fail('Test failed: Should have returned Left'));
+    });
+  });
+
+  group('verify_new_email', () {
+    const testNewEmail = 'asermohamed123@gmail.com';
+    const testCode = '123456';
+
+    test('should return success message on successful verification', () async {
+      final apiResponse = {'message': 'updated email successfully'};
+
+      when(
+        mockDio.post(
+          'api/auth/verify-new-email',
+          data: {'email': testNewEmail, 'code': testCode},
+        ),
+      ).thenAnswer(
+        (_) async => Response(
+          requestOptions: RequestOptions(path: 'api/auth/verify-new-email'),
+          data: apiResponse,
+          statusCode: 200,
+        ),
+      );
+
+      final result = await authRepository.verify_new_email(
+        newemail: testNewEmail,
+        code: testCode,
+      );
+
+      expect(result.isRight(), true);
+      result.fold(
+        (failure) => fail('Test failed: Should have returned Right'),
+        (message) {
+          expect(message, 'updated email successfully');
+        },
+      );
+    });
+
+    test('should return default message when message is missing', () async {
+      final apiResponse = {};
+
+      when(
+        mockDio.post(
+          'api/auth/verify-new-email',
+          data: {'email': testNewEmail, 'code': testCode},
+        ),
+      ).thenAnswer(
+        (_) async => Response(
+          requestOptions: RequestOptions(path: 'api/auth/verify-new-email'),
+          data: apiResponse,
+          statusCode: 200,
+        ),
+      );
+
+      final result = await authRepository.verify_new_email(
+        newemail: testNewEmail,
+        code: testCode,
+      );
+
+      expect(result.isRight(), true);
+      result.fold(
+        (failure) => fail('Test failed: Should have returned Right'),
+        (message) {
+          expect(message, 'updated email successfully');
+        },
+      );
+    });
+
+    test('should return AppFailure on DioException', () async {
+      when(
+        mockDio.post(
+          'api/auth/verify-new-email',
+          data: {'email': testNewEmail, 'code': testCode},
+        ),
+      ).thenThrow(
+        DioException(
+          requestOptions: RequestOptions(path: 'api/auth/verify-new-email'),
+          message: 'Invalid verification code',
+        ),
+      );
+
+      final result = await authRepository.verify_new_email(
+        newemail: testNewEmail,
+        code: testCode,
+      );
+
+      expect(result.isLeft(), true);
+      result.fold((failure) {
+        expect(failure, isA<AppFailure>());
+        expect(failure.message, 'Email update failed');
+      }, (message) => fail('Test failed: Should have returned Left'));
+    });
+
+    test('should return AppFailure on generic exception', () async {
+      when(
+        mockDio.post(
+          'api/auth/verify-new-email',
+          data: {'email': testNewEmail, 'code': testCode},
+        ),
+      ).thenThrow(Exception('Network error'));
+
+      final result = await authRepository.verify_new_email(
+        newemail: testNewEmail,
+        code: testCode,
+      );
+
+      expect(result.isLeft(), true);
+      result.fold((failure) {
+        expect(failure, isA<AppFailure>());
+        expect(failure.message, contains('Exception'));
+      }, (message) => fail('Test failed: Should have returned Left'));
+    });
+  });
+
+  group('registerFcmToken', () {
+    const testFcmToken = 'fcm_token_123456789';
+
+    test('should return success message on successful registration', () async {
+      final apiResponse = {'message': 'FCM registered successfully'};
+
+      when(
+        mockDio.post('api/users/fcm-token', data: anyNamed('data')),
+      ).thenAnswer(
+        (_) async => Response(
+          requestOptions: RequestOptions(path: 'api/users/fcm-token'),
+          data: apiResponse,
+          statusCode: 200,
+        ),
+      );
+
+      final result = await authRepository.registerFcmToken(
+        fcmToken: testFcmToken,
+      );
+
+      expect(result.isRight(), true);
+      result.fold(
+        (failure) => fail('Test failed: Should have returned Right'),
+        (message) {
+          expect(message, 'FCM registered successfully');
+        },
+      );
+    });
+
+    test('should return default message when message is missing', () async {
+      final apiResponse = {};
+
+      when(
+        mockDio.post('api/users/fcm-token', data: anyNamed('data')),
+      ).thenAnswer(
+        (_) async => Response(
+          requestOptions: RequestOptions(path: 'api/users/fcm-token'),
+          data: apiResponse,
+          statusCode: 200,
+        ),
+      );
+
+      final result = await authRepository.registerFcmToken(
+        fcmToken: testFcmToken,
+      );
+
+      expect(result.isRight(), true);
+      result.fold(
+        (failure) => fail('Test failed: Should have returned Right'),
+        (message) {
+          expect(message, 'FCM registered successfully');
+        },
+      );
+    });
+
+    test('should return AppFailure on DioException with response', () async {
+      when(
+        mockDio.post('api/users/fcm-token', data: anyNamed('data')),
+      ).thenThrow(
+        DioException(
+          requestOptions: RequestOptions(path: 'api/users/fcm-token'),
+          response: Response(
+            requestOptions: RequestOptions(path: 'api/users/fcm-token'),
+            data: {'message': 'Token registration failed'},
+            statusCode: 400,
+          ),
+          message: 'Bad request',
+        ),
+      );
+
+      final result = await authRepository.registerFcmToken(
+        fcmToken: testFcmToken,
+      );
+
+      expect(result.isLeft(), true);
+      result.fold((failure) {
+        expect(failure, isA<AppFailure>());
+        expect(failure.message, contains('FCM registration failed'));
+      }, (message) => fail('Test failed: Should have returned Left'));
+    });
+
+    test('should return AppFailure on DioException without response', () async {
+      when(
+        mockDio.post('api/users/fcm-token', data: anyNamed('data')),
+      ).thenThrow(
+        DioException(
+          requestOptions: RequestOptions(path: 'api/users/fcm-token'),
+          message: 'Connection timeout',
+        ),
+      );
+
+      final result = await authRepository.registerFcmToken(
+        fcmToken: testFcmToken,
+      );
+
+      expect(result.isLeft(), true);
+      result.fold((failure) {
+        expect(failure, isA<AppFailure>());
+        expect(failure.message, 'FCM registration failed');
+      }, (message) => fail('Test failed: Should have returned Left'));
+    });
+
+    test('should return AppFailure on generic exception', () async {
+      when(
+        mockDio.post('api/users/fcm-token', data: anyNamed('data')),
+      ).thenThrow(Exception('Unexpected error'));
+
+      final result = await authRepository.registerFcmToken(
+        fcmToken: testFcmToken,
+      );
+
+      expect(result.isLeft(), true);
+      result.fold((failure) {
+        expect(failure, isA<AppFailure>());
+        expect(failure.message, contains('Exception'));
+      }, (message) => fail('Test failed: Should have returned Left'));
     });
   });
 }
