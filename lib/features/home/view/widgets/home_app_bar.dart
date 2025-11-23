@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:go_router/go_router.dart';
-import 'package:lite_x/core/routes/Route_Constants.dart';
 import 'package:lite_x/features/home/view/widgets/home_tab_bar.dart';
 import 'package:lite_x/features/home/view/widgets/profile_avatar.dart';
 
@@ -42,7 +40,6 @@ class HomeAppBar extends ConsumerWidget implements PreferredSizeWidget {
                 children: [
                   ProfileAvatar(scaffoldKey: scaffoldKey),
                   Expanded(child: Center(child: _buildXLogo())),
-                  _buildSearchButton(context),
                   _buildSettingsButton(context, settings),
                 ],
               ),
@@ -65,15 +62,6 @@ class HomeAppBar extends ConsumerWidget implements PreferredSizeWidget {
         width: 24,
         height: 24,
       ),
-    );
-  }
-
-  Widget _buildSearchButton(BuildContext context) {
-    return IconButton(
-      onPressed: () => _openSearch(context),
-      icon: const Icon(Icons.search, color: Colors.white, size: 22),
-      padding: EdgeInsets.zero,
-      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
     );
   }
 
@@ -112,17 +100,6 @@ class HomeAppBar extends ConsumerWidget implements PreferredSizeWidget {
       ),
       builder: (context) => _buildSettingsBottomSheet(context),
     );
-  }
-
-  void _openSearch(BuildContext context) {
-    // ScaffoldMessenger.of(context).showSnackBar(
-    //   const SnackBar(
-    //     content: Text('Search is coming soon'),
-    //     backgroundColor: Color(0xFF1DA1F2),
-    //     behavior: SnackBarBehavior.floating,
-    //   ),
-    // );
-    context.goNamed(RouteConstants.ExploreProfileScreen);
   }
 
   Widget _buildSettingsBottomSheet(BuildContext context) {
