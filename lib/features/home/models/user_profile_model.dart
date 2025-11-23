@@ -38,6 +38,7 @@ class UserProfileModel {
   final String joinDate;
   final String? profileMediaId;
   final MediaModel? profileMedia;
+  final String? resolvedProfilePhotoUrl;
   final String? coverMediaId;
   final MediaModel? coverMedia;
   final int followersCount;
@@ -56,6 +57,7 @@ class UserProfileModel {
     required this.joinDate,
     this.profileMediaId,
     this.profileMedia,
+    this.resolvedProfilePhotoUrl,
     this.coverMediaId,
     this.coverMedia,
     this.followersCount = 0,
@@ -63,10 +65,16 @@ class UserProfileModel {
   });
 
   String? get profilePhotoUrl {
-    if (profileMedia != null) {
+    if (resolvedProfilePhotoUrl != null &&
+        resolvedProfilePhotoUrl!.isNotEmpty) {
+      print('🖼️ Profile photo URL (resolved): $resolvedProfilePhotoUrl');
+      return resolvedProfilePhotoUrl;
+    }
+
+    if (profileMedia != null && profileMedia!.keyName.isNotEmpty) {
       final url =
           'https://litex.siematworld.online/media/${profileMedia!.keyName}';
-      print('🖼️ Profile photo URL: $url');
+      print('🖼️ Profile photo URL (keyName): $url');
       return url;
     }
     print('⚠️ No profile media found');
@@ -117,6 +125,7 @@ class UserProfileModel {
       joinDate: json['joinDate']?.toString() ?? '',
       profileMediaId: json['profileMediaId']?.toString(),
       profileMedia: profileMedia,
+      resolvedProfilePhotoUrl: null,
       coverMediaId: json['coverMediaId']?.toString(),
       coverMedia: json['coverMedia'] != null
           ? MediaModel.fromJson(json['coverMedia'] as Map<String, dynamic>)
@@ -140,6 +149,7 @@ class UserProfileModel {
       'joinDate': joinDate,
       'profileMediaId': profileMediaId,
       'profileMedia': profileMedia?.toJson(),
+      'resolvedProfilePhotoUrl': resolvedProfilePhotoUrl,
       'coverMediaId': coverMediaId,
       'coverMedia': coverMedia?.toJson(),
       'followersCount': followersCount,
@@ -160,6 +170,7 @@ class UserProfileModel {
     String? joinDate,
     String? profileMediaId,
     MediaModel? profileMedia,
+    String? resolvedProfilePhotoUrl,
     String? coverMediaId,
     MediaModel? coverMedia,
     int? followersCount,
@@ -178,6 +189,8 @@ class UserProfileModel {
       joinDate: joinDate ?? this.joinDate,
       profileMediaId: profileMediaId ?? this.profileMediaId,
       profileMedia: profileMedia ?? this.profileMedia,
+      resolvedProfilePhotoUrl:
+          resolvedProfilePhotoUrl ?? this.resolvedProfilePhotoUrl,
       coverMediaId: coverMediaId ?? this.coverMediaId,
       coverMedia: coverMedia ?? this.coverMedia,
       followersCount: followersCount ?? this.followersCount,
