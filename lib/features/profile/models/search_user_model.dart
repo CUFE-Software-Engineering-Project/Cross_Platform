@@ -4,7 +4,7 @@ class SearchUserModel {
   final String name;
   final bool verified;
   final String bio;
-  final String? profileMedia;
+  final String profileMedia;
   final num followers;
   final num score;
   final bool isFollowing;
@@ -30,7 +30,7 @@ class SearchUserModel {
       name: json['name'] ?? '',
       verified: json['verified'] ?? false,
       bio: json['bio'] ?? '',
-      profileMedia: json['profileMedia'],
+      profileMedia: json['profileMedia'] ?? "",
       followers: json['_count']?['followers'] ?? 0,
       score: json['score'] ?? 0,
       isFollowing: json['isFollowing'] ?? false,

@@ -38,9 +38,14 @@ class RouteConstants {
   static String ProfileCoverScreen = "ProfileCoverScreen";
   static String ProfileSearchScreen = "ProfileSearchScreen";
 
+  static String ChangeEmailProfileScreen = "ChangeEmailProfileScreen";
+  static String VerifyChangeEmailProfileScreen =
+      "VerifyChangeEmailProfileScreen";
+
   // search feature
   static String SearchScreen = "SearchScreen";
 
   // explore feature
   static String ExploreScreen = "ExploreScreen";
+  static String ExploreProfileScreen = "ExploreProfileScreen";
 }

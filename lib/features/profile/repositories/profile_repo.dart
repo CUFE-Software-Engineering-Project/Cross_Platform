@@ -11,7 +11,7 @@ import 'package:lite_x/features/profile/models/user_model.dart';
 
 abstract class ProfileRepo {
   Future<Either<Failure, ProfileModel>> getProfileData(String userName);
-  
+
   Future<Either<Failure, List<UserModel>>> getFollowers(String userName);
   Future<Either<Failure, List<UserModel>>> getFollowings(String userName);
   Future<Either<Failure, List<UserModel>>> getVerifiedFollowers(
@@ -26,15 +26,22 @@ abstract class ProfileRepo {
   });
 
   // block and mute
-    Future<Either<Failure, void>> blockUser(String username);
-  Future<Either<Failure, void>> unBlockUser(String username);
-    Future<Either<Failure, void>> muteUser(String username);
-  Future<Either<Failure, void>> unMuteUser(String username);
-Future<Either<Failure, List<UserModel>>> getMutedList(String userName);
-Future<Either<Failure, List<UserModel>>> getBlockedList(String userName);
+  Future<Either<Failure, void>> blockUser(String username);
 
-  Future<Either<Failure, void>> updateProfileBanner(String userId, String mediaId);
-  Future<Either<Failure, void>> updateProfilePhoto(String userId, String mediaId);
+  Future<Either<Failure, void>> unBlockUser(String username);
+  Future<Either<Failure, void>> muteUser(String username);
+  Future<Either<Failure, void>> unMuteUser(String username);
+  Future<Either<Failure, List<UserModel>>> getMutedList(String userName);
+  Future<Either<Failure, List<UserModel>>> getBlockedList(String userName);
+
+  Future<Either<Failure, void>> updateProfileBanner(
+    String userId,
+    String mediaId,
+  );
+  Future<Either<Failure, void>> updateProfilePhoto(
+    String userId,
+    String mediaId,
+  );
 
   // tweets
   Future<Either<Failure, List<ProfileTweetModel>>> getProfilePosts(
@@ -49,8 +56,9 @@ Future<Either<Failure, List<UserModel>>> getBlockedList(String userName);
   );
 
   //profile search
-  Future<Either<Failure, List<SearchUserModel>>> profileCurrentSearch(String query);
-
+  Future<Either<Failure, List<SearchUserModel>>> profileCurrentSearch(
+    String query,
+  );
 
   // tweets interactions
   Future<Either<Failure, void>> likeTweet(String tweetId);
@@ -62,4 +70,15 @@ Future<Either<Failure, List<UserModel>>> getBlockedList(String userName);
     CreateReplyModel createreplyModel,
   );
 
+  // emain and password
+  Future<Either<Failure, void>> changeEmailProfile(String newEmail);
+  Future<Either<Failure, void>> verifyChangeEmailProfile(
+    String newEmail,
+    String code,
+  );
+  Future<Either<Failure, void>> changePasswordProfile(
+    String oldPassword,
+    String newPassword,
+    String confirmNewPassword,
+  );
 }

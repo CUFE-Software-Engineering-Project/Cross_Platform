@@ -5,6 +5,9 @@ import 'package:lite_x/core/providers/current_user_provider.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
 import 'package:lite_x/core/theme/palette.dart';
 import 'package:lite_x/features/auth/view_model/auth_view_model.dart';
+import 'package:lite_x/features/profile/models/profile_model.dart';
+import 'package:lite_x/features/profile/models/shared.dart';
+import 'package:lite_x/features/profile/view_model/providers.dart';
 import 'package:lite_x/features/settings/view/widgets/settings_responsive_scaffold.dart';
 
 class AccountInformationScreen extends ConsumerWidget {
@@ -100,13 +103,44 @@ class AccountInformationScreen extends ConsumerWidget {
                     style: TextStyle(color: Colors.blue, fontSize: 16),
                   ),
                 ),
-                _field(
-                  'Email',
-                  Text(
-                    email.isEmpty ? '-' : email,
-                    style: const TextStyle(
-                      color: Palette.textSecondary,
-                      fontSize: 16,
+                InkWell(
+                  onTap: () async {
+                    final res = await ref.watch(profileDataProvider(username));
+                    res.when(
+                      data: (data) {
+                        data.fold(
+                          (l) {
+                            showSmallPopUpMessage(
+                              context: context,
+                              message: "can't get user email",
+                              borderColor: Colors.red,
+                              icon: Icon(Icons.error),
+                            );
+                          },
+                          (r) {
+                            context.push("/changeEmailProfileScreen", extra: r);
+                          },
+                        );
+                      },
+                      error: (err, _) {
+                        showSmallPopUpMessage(
+                          context: context,
+                          message: "can't get user email",
+                          borderColor: Colors.red,
+                          icon: Icon(Icons.error),
+                        );
+                      },
+                      loading: () {},
+                    );
+                  },
+                  child: _field(
+                    'Email',
+                    Text(
+                      email.isEmpty ? '-' : email,
+                      style: const TextStyle(
+                        color: Palette.textSecondary,
+                        fontSize: 16,
+                      ),
                     ),
                   ),
                 ),

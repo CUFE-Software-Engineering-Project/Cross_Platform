@@ -40,7 +40,9 @@ class ProfilePostsList extends ConsumerWidget {
             return RefreshIndicator(
               onRefresh: () async {
                 // ignore: unused_result
-                await ref.refresh(profilePostsProvider(this.profile.username));
+                ref.refresh(profilePostsProvider(this.profile.username));
+                // ignore: unused_result
+                ref.refresh(profileLikesProvider(this.profile.username));
                 // ignore: unused_result
                 ref.refresh(profileDataProvider(this.profile.username));
               },
@@ -74,7 +76,6 @@ class ProfilePostsList extends ConsumerWidget {
             ref.refresh(profilePostsProvider(this.profile.username));
           },
         );
-        ;
       },
       loading: () {
         return const Center(child: CircularProgressIndicator());

@@ -185,13 +185,16 @@ class TweetModel extends HiveObject {
           json['authorUsername']?.toString() ??
           'unknown',
       authorAvatar:
-          _extractProfileMedia(user) ?? json['authorAvatar']?.toString() ?? '',
+          user?['profileMedia']?.toString() ??
+          user?['profilePicture']?.toString() ??
+          json['authorAvatar']?.toString() ??
+          '',
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'])
           : DateTime.now(),
-      likes: _toInt(json['likesCount'] ?? json['likes']),
-      retweets: _toInt(json['retweetCount'] ?? json['retweets']),
-      replies: _toInt(json['repliesCount'] ?? json['replies']),
+      likes: (json['likesCount'] ?? json['likes'] ?? 0) as int,
+      retweets: (json['retweetCount'] ?? json['retweets'] ?? 0) as int,
+      replies: (json['repliesCount'] ?? json['replies'] ?? 0) as int,
       images: _extractMediaUrls(json),
       isLiked: json['isLiked'] as bool? ?? false,
       isRetweeted: json['isRetweeted'] as bool? ?? false,
@@ -201,19 +204,13 @@ class TweetModel extends HiveObject {
           ? List<String>.from(json['replyIds'])
           : [],
       isBookmarked: json['isBookmarked'] as bool? ?? false,
-      quotedTweetId:
-          json['quotedTweetId']?.toString() ??
-          (normalizedTweetType == 'QUOTE'
-              ? json['parentId']?.toString()
-              : null),
+      quotedTweetId: json['quotedTweetId']?.toString(),
       quotedTweet: json['quotedTweet'] != null
           ? TweetModel.fromJson(json['quotedTweet'] as Map<String, dynamic>)
-          : (json['parent'] != null && json['parent'] is Map
-                ? TweetModel.fromJson(json['parent'] as Map<String, dynamic>)
-                : null),
+          : null,
 
-      quotes: _toInt(json['quotesCount'] ?? json['quotes']),
-      bookmarks: _toInt(json['bookmarksCount'] ?? json['bookmarks']),
+      quotes: (json['quotesCount'] ?? json['quotes'] ?? 0) as int,
+      bookmarks: (json['bookmarksCount'] ?? json['bookmarks'] ?? 0) as int,
 
       userId: user?['id']?.toString() ?? json['userId']?.toString(),
       tweetType: normalizedTweetType,
@@ -333,39 +330,4 @@ String _normalizeTweetType(Map<String, dynamic> json) {
   }
 
   return 'TWEET';
-}
-
-String? _extractProfileMedia(Map<String, dynamic>? user) {
-  if (user == null) return null;
-
-  // Handle profileMedia object with id
-  final profileMedia = user['profileMedia'];
-  if (profileMedia is Map<String, dynamic>) {
-    final id = profileMedia['id']?.toString();
-    if (id != null && id.isNotEmpty) {
-      return id;
-    }
-  }
-
-  // Fallback to direct string values
-  if (profileMedia is String && profileMedia.isNotEmpty) {
-    return profileMedia;
-  }
-
-  final profilePicture = user['profilePicture']?.toString();
-  if (profilePicture != null && profilePicture.isNotEmpty) {
-    return profilePicture;
-  }
-
-  return null;
-}
-
-int _toInt(dynamic value) {
-  if (value == null) return 0;
-  if (value is int) return value;
-  if (value is double) return value.round();
-  if (value is String) {
-    return int.tryParse(value) ?? 0;
-  }
-  return 0;
 }

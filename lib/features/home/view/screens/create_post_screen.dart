@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lite_x/core/classes/PickedImage.dart';
 import 'package:lite_x/features/home/view_model/home_view_model.dart';
 import 'package:lite_x/features/media/upload_media.dart';
-import 'package:lite_x/core/providers/current_user_provider.dart';
 
 enum PostPrivacy {
   everyone,
@@ -39,7 +38,7 @@ enum PostPrivacy {
       case PostPrivacy.everyone:
         return 'EVERYONE';
       case PostPrivacy.following:
-        return 'FOLLOWINGS';
+        return 'FOLLOWING';
       case PostPrivacy.mentioned:
         return 'MENTIONED';
     }
@@ -325,52 +324,36 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
     );
   }
 
-  String? _getPhotoUrl(String? photo) {
-    if (photo == null || photo.isEmpty) return null;
-    if (photo.startsWith('http://') || photo.startsWith('https://')) {
-      return photo;
-    }
-    return 'https://litex.siematworld.online/media/$photo';
-  }
-
   @override
   Widget build(BuildContext context) {
-    final user = ref.watch(currentUserProvider);
     final canPost = _textController.text.trim().isNotEmpty && !_isPosting;
-    final photoUrl = _getPhotoUrl(user?.photo);
 
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
         elevation: 0,
-        leading: TextButton(
+        leading: IconButton(
+          icon: const Icon(Icons.close, color: Colors.white),
           onPressed: () => Navigator.pop(context),
-          child: const Text(
-            'Cancel',
-            style: TextStyle(color: Colors.white, fontSize: 16),
-          ),
         ),
-        leadingWidth: 80,
         actions: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: ElevatedButton(
               onPressed: canPost ? _postTweet : null,
               style: ElevatedButton.styleFrom(
-                backgroundColor: canPost
-                    ? const Color(0xFF1D9BF0)
-                    : const Color(0xFF1D9BF0).withOpacity(0.5),
+                backgroundColor: Colors.blue,
+                disabledBackgroundColor: Colors.blue.withOpacity(0.5),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
+                  horizontal: 20,
                   vertical: 8,
                 ),
                 elevation: 0,
-                minimumSize: const Size(60, 32),
               ),
               child: _isPosting
                   ? const SizedBox(
@@ -381,9 +364,9 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                         color: Colors.white,
                       ),
                     )
-                  : Text(
-                      widget.replyToId != null ? 'Reply' : 'Post',
-                      style: const TextStyle(
+                  : const Text(
+                      'Post',
+                      style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
                       ),
@@ -396,190 +379,168 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
         children: [
           Expanded(
             child: SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 12),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        CircleAvatar(
-                          radius: 20,
-                          backgroundColor: Colors.grey[800],
-                          backgroundImage: photoUrl != null
-                              ? NetworkImage(photoUrl)
-                              : null,
-                          child: photoUrl == null
-                              ? Icon(
-                                  Icons.person,
-                                  color: Colors.grey[600],
-                                  size: 24,
-                                )
-                              : null,
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              if (widget.replyToUsername != null) ...[
-                                Padding(
-                                  padding: const EdgeInsets.only(bottom: 8),
-                                  child: Text(
-                                    'Replying to ${widget.replyToUsername}',
-                                    style: const TextStyle(
-                                      color: Color(0xFF1D9BF0),
-                                      fontSize: 15,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                              TextField(
-                                controller: _textController,
-                                focusNode: _focusNode,
-                                maxLines: null,
-                                minLines: 3,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 20,
-                                  height: 1.4,
-                                ),
-                                decoration: InputDecoration(
-                                  hintText: widget.replyToId != null
-                                      ? 'Post your reply'
-                                      : "What's happening?",
-                                  hintStyle: TextStyle(
-                                    color: Colors.grey[600],
-                                    fontSize: 20,
-                                  ),
-                                  border: InputBorder.none,
-                                  contentPadding: EdgeInsets.zero,
-                                  isDense: true,
-                                ),
-                              ),
-                            ],
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 8),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      CircleAvatar(
+                        radius: 20,
+                        backgroundColor: Colors.blue,
+                        child: Text(
+                          'V',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                      ],
-                    ),
-                    if (_selectedImages.isNotEmpty) ...[
-                      const SizedBox(height: 12),
-                      Padding(
-                        padding: const EdgeInsets.only(left: 52),
-                        child: _buildSelectedImagesPreview(),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: TextField(
+                          controller: _textController,
+                          focusNode: _focusNode,
+                          maxLines: null,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                          ),
+                          decoration: InputDecoration(
+                            hintText: "What's happening?",
+                            hintStyle: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 16,
+                            ),
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                        ),
                       ),
                     ],
-                    const SizedBox(height: 12),
-                    if (widget.replyToId == null)
-                      Padding(
-                        padding: const EdgeInsets.only(left: 52),
-                        child: InkWell(
-                          onTap: _showPrivacyOptions,
-                          borderRadius: BorderRadius.circular(20),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                _selectedPrivacy.icon,
-                                color: const Color(0xFF1D9BF0),
-                                size: 16,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                _selectedPrivacy.label,
-                                style: const TextStyle(
-                                  color: Color(0xFF1D9BF0),
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+                  ),
+                  const SizedBox(height: 16),
+                  if (_selectedImages.isNotEmpty) ...[
+                    _buildSelectedImagesPreview(),
+                    const SizedBox(height: 16),
                   ],
-                ),
+                ],
               ),
             ),
           ),
           Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
               border: Border(
-                top: BorderSide(color: Colors.grey[900]!, width: 0.5),
+                top: BorderSide(color: Colors.grey[800]!, width: 1),
               ),
             ),
-            child: SafeArea(
-              top: false,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                child: Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(
-                        Icons.image_outlined,
-                        color: Color(0xFF1D9BF0),
-                      ),
-                      onPressed: _isPosting ? null : _pickImage,
-                      iconSize: 20,
-                      padding: const EdgeInsets.all(8),
-                      constraints: const BoxConstraints(),
+            child: Row(
+              children: [
+                InkWell(
+                  onTap: _showPrivacyOptions,
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
                     ),
-                    IconButton(
-                      icon: const Icon(
-                        Icons.gif_box_outlined,
-                        color: Color(0xFF1D9BF0),
-                      ),
-                      onPressed: _isPosting ? null : () {},
-                      iconSize: 20,
-                      padding: const EdgeInsets.all(8),
-                      constraints: const BoxConstraints(),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.blue, width: 1),
+                      borderRadius: BorderRadius.circular(20),
                     ),
-                    IconButton(
-                      icon: const Icon(
-                        Icons.poll_outlined,
-                        color: Color(0xFF1D9BF0),
-                      ),
-                      onPressed: _isPosting ? null : () {},
-                      iconSize: 20,
-                      padding: const EdgeInsets.all(8),
-                      constraints: const BoxConstraints(),
-                    ),
-                    IconButton(
-                      icon: const Icon(
-                        Icons.emoji_emotions_outlined,
-                        color: Color(0xFF1D9BF0),
-                      ),
-                      onPressed: _isPosting ? null : () {},
-                      iconSize: 20,
-                      padding: const EdgeInsets.all(8),
-                      constraints: const BoxConstraints(),
-                    ),
-                    IconButton(
-                      icon: const Icon(
-                        Icons.calendar_today_outlined,
-                        color: Color(0xFF1D9BF0),
-                      ),
-                      onPressed: _isPosting ? null : () {},
-                      iconSize: 20,
-                      padding: const EdgeInsets.all(8),
-                      constraints: const BoxConstraints(),
-                    ),
-                    if (widget.replyToId == null)
-                      IconButton(
-                        icon: const Icon(
-                          Icons.location_on_outlined,
-                          color: Color(0xFF1D9BF0),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          _selectedPrivacy.icon,
+                          color: Colors.blue,
+                          size: 16,
                         ),
-                        onPressed: _isPosting ? null : () {},
-                        iconSize: 20,
-                        padding: const EdgeInsets.all(8),
-                        constraints: const BoxConstraints(),
-                      ),
-                  ],
+                        const SizedBox(width: 6),
+                        Text(
+                          _selectedPrivacy.label,
+                          style: const TextStyle(
+                            color: Colors.blue,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            decoration: BoxDecoration(
+              border: Border(
+                top: BorderSide(color: Colors.grey[800]!, width: 1),
               ),
+            ),
+            child: Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.image_outlined, color: Colors.blue),
+                  onPressed: _isPosting ? null : _pickImage,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.gif_box_outlined, color: Colors.blue),
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('GIF picker - Coming soon!'),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  },
+                ),
+                IconButton(
+                  icon: const Icon(Icons.poll_outlined, color: Colors.blue),
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Poll creator - Coming soon!'),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  },
+                ),
+                IconButton(
+                  icon: const Icon(
+                    Icons.location_on_outlined,
+                    color: Colors.blue,
+                  ),
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Location - Coming soon!'),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  },
+                ),
+                const Spacer(),
+                IconButton(
+                  icon: const Icon(
+                    Icons.add_circle_outline,
+                    color: Colors.blue,
+                  ),
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('More options - Coming soon!'),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  },
+                ),
+              ],
             ),
           ),
         ],

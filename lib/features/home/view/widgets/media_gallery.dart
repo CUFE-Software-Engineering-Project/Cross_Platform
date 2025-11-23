@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'image_viewer_screen.dart';
 
 /// Renders up to four images in a Twitter-style grid while falling back to a
 /// placeholder when URLs are still being resolved.
@@ -28,22 +27,22 @@ class MediaGallery extends StatelessWidget {
         width: double.infinity,
         constraints: BoxConstraints(minHeight: minHeight, maxHeight: maxHeight),
         color: Colors.grey[900],
-        child: _buildLayout(context, media),
+        child: _buildLayout(media),
       ),
     );
   }
 
-  Widget _buildLayout(BuildContext context, List<String> images) {
+  Widget _buildLayout(List<String> images) {
     if (images.length == 1) {
-      return _buildNetworkImage(context, images.first, 0, images);
+      return _buildNetworkImage(images.first);
     }
     if (images.length == 2) {
       return Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(child: _buildNetworkImage(context, images[0], 0, images)),
+          Expanded(child: _buildNetworkImage(images[0])),
           const SizedBox(width: 4),
-          Expanded(child: _buildNetworkImage(context, images[1], 1, images)),
+          Expanded(child: _buildNetworkImage(images[1])),
         ],
       );
     }
@@ -51,19 +50,15 @@ class MediaGallery extends StatelessWidget {
       return Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(child: _buildNetworkImage(context, images[0], 0, images)),
+          Expanded(child: _buildNetworkImage(images[0])),
           const SizedBox(width: 4),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Expanded(
-                  child: _buildNetworkImage(context, images[1], 1, images),
-                ),
+                Expanded(child: _buildNetworkImage(images[1])),
                 const SizedBox(height: 4),
-                Expanded(
-                  child: _buildNetworkImage(context, images[2], 2, images),
-                ),
+                Expanded(child: _buildNetworkImage(images[2])),
               ],
             ),
           ),
@@ -78,13 +73,9 @@ class MediaGallery extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Expanded(
-                child: _buildNetworkImage(context, images[0], 0, images),
-              ),
+              Expanded(child: _buildNetworkImage(images[0])),
               const SizedBox(height: 4),
-              Expanded(
-                child: _buildNetworkImage(context, images[3], 3, images),
-              ),
+              Expanded(child: _buildNetworkImage(images[3])),
             ],
           ),
         ),
@@ -93,13 +84,9 @@ class MediaGallery extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Expanded(
-                child: _buildNetworkImage(context, images[1], 1, images),
-              ),
+              Expanded(child: _buildNetworkImage(images[1])),
               const SizedBox(height: 4),
-              Expanded(
-                child: _buildNetworkImage(context, images[2], 2, images),
-              ),
+              Expanded(child: _buildNetworkImage(images[2])),
             ],
           ),
         ),
@@ -107,48 +94,32 @@ class MediaGallery extends StatelessWidget {
     );
   }
 
-  Widget _buildNetworkImage(
-    BuildContext context,
-    String url,
-    int index,
-    List<String> allImages,
-  ) {
+  Widget _buildNetworkImage(String url) {
     if (!_isValidMediaUrl(url)) {
       return _buildPendingMediaPlaceholder();
     }
 
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) =>
-                ImageViewerScreen(imageUrls: allImages, initialIndex: index),
+    return Image.network(
+      url,
+      fit: BoxFit.cover,
+      loadingBuilder: (context, child, progress) {
+        if (progress == null) return child;
+        return Container(
+          color: Colors.grey[900],
+          child: Center(
+            child: CircularProgressIndicator(
+              value: progress.expectedTotalBytes != null
+                  ? progress.cumulativeBytesLoaded /
+                        progress.expectedTotalBytes!
+                  : null,
+              color: Colors.blue,
+            ),
           ),
         );
       },
-      child: Image.network(
-        url,
-        fit: BoxFit.cover,
-        loadingBuilder: (context, child, progress) {
-          if (progress == null) return child;
-          return Container(
-            color: Colors.grey[900],
-            child: Center(
-              child: CircularProgressIndicator(
-                value: progress.expectedTotalBytes != null
-                    ? progress.cumulativeBytesLoaded /
-                          progress.expectedTotalBytes!
-                    : null,
-                color: Colors.blue,
-              ),
-            ),
-          );
-        },
-        errorBuilder: (context, error, stackTrace) {
-          return _buildPendingMediaPlaceholder();
-        },
-      ),
+      errorBuilder: (context, error, stackTrace) {
+        return _buildPendingMediaPlaceholder();
+      },
     );
   }
 

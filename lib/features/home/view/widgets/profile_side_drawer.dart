@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lite_x/core/providers/current_user_provider.dart';
-import 'package:lite_x/features/home/providers/user_profile_provider.dart';
 
 class ProfileSideDrawer extends ConsumerWidget {
   const ProfileSideDrawer({super.key});
@@ -10,202 +9,123 @@ class ProfileSideDrawer extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
-    final profileState = ref.watch(userProfileProvider);
 
     return Drawer(
       backgroundColor: Colors.black,
       child: SafeArea(
-        child: profileState.when(
-          data: (profile) => _buildDrawerContent(context, ref, user, profile),
-          loading: () => _buildLoadingDrawer(context, ref, user),
-          error: (_, __) => _buildDrawerContent(context, ref, user, null),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDrawerContent(
-    BuildContext context,
-    WidgetRef ref,
-    dynamic user,
-    dynamic profile,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              CircleAvatar(
-                radius: 32,
-                backgroundColor: Colors.grey[850],
-                backgroundImage: profile?.profilePhotoUrl != null
-                    ? NetworkImage(profile!.profilePhotoUrl!)
-                    : (user?.photo != null && user!.photo!.isNotEmpty
-                          ? NetworkImage(user.photo!)
-                          : null),
-                child:
-                    profile?.profilePhotoUrl == null &&
-                        (user?.photo == null || user?.photo?.isEmpty == true)
-                    ? Icon(Icons.person, color: Colors.grey[500], size: 32)
-                    : null,
-              ),
-              const SizedBox(height: 12),
-              Text(
-                profile?.name ?? user?.name ?? 'User',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  CircleAvatar(
+                    radius: 32,
+                    backgroundColor: Colors.grey[850],
+                    backgroundImage:
+                        user?.photo != null && user!.photo!.isNotEmpty
+                        ? NetworkImage(user.photo!)
+                        : null,
+                    child: user?.photo == null || user?.photo?.isEmpty == true
+                        ? Icon(Icons.person, color: Colors.grey[500], size: 32)
+                        : null,
+                  ),
+                  const SizedBox(height: 12),
                   Text(
-                    '@${profile?.username ?? user?.username ?? 'username'}',
+                    user?.name ?? 'Yara Elbaki',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '@${user?.username ?? 'FaroukYara21241'}',
                     style: TextStyle(color: Colors.grey[500], fontSize: 14),
                   ),
-                  if (profile?.verified == true) ...[
-                    const SizedBox(width: 4),
-                    Icon(
-                      Icons.verified,
-                      color: const Color(0xFF1DA1F2),
-                      size: 16,
-                    ),
-                  ],
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  _buildStat(
-                    '${profile?.followingCount ?? user?.interests.length ?? 0}',
-                    'Following',
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      _buildStat('${user?.interests.length ?? 0}', 'Following'),
+                      const SizedBox(width: 16),
+                      _buildStat('0', 'Followers'),
+                    ],
                   ),
-                  const SizedBox(width: 16),
-                  _buildStat('${profile?.followersCount ?? 0}', 'Followers'),
                 ],
               ),
-            ],
-          ),
+            ),
+            const Divider(color: Color(0xFF1f1f1f), height: 1),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                children: [
+                  _DrawerItem(
+                    icon: Icons.person_outline,
+                    label: 'Profile',
+                    onTap: () {
+                      Navigator.pop(context);
+                      if (user != null) {
+                        context.push("/profilescreen/${user.username}");
+                      }
+                    },
+                  ),
+                  _DrawerItem(
+                    icon: Icons.stars_outlined,
+                    label: 'Premium',
+                    onTap: () {},
+                  ),
+                  _DrawerItem(
+                    icon: Icons.chat_bubble_outline,
+                    trailing: _buildBadge('Beta'),
+                    label: 'Chat',
+                    onTap: () {},
+                  ),
+                  _DrawerItem(
+                    icon: Icons.bookmark_border,
+                    label: 'Bookmarks',
+                    onTap: () {},
+                  ),
+                  _DrawerItem(
+                    icon: Icons.list_alt_outlined,
+                    label: 'Lists',
+                    onTap: () {},
+                  ),
+                  _DrawerItem(
+                    icon: Icons.south_america_outlined,
+                    label: 'Spaces',
+                    onTap: () {},
+                  ),
+                  _DrawerItem(
+                    icon: Icons.monetization_on_outlined,
+                    label: 'Monetization',
+                    onTap: () {},
+                  ),
+                  const Divider(
+                    color: Color(0xFF1f1f1f),
+                    height: 24,
+                    thickness: 0.5,
+                  ),
+                  _DrawerItem(
+                    icon: Icons.settings_outlined,
+                    label: 'Settings & Support',
+                    trailing: const Icon(
+                      Icons.keyboard_arrow_down,
+                      color: Colors.white,
+                    ),
+                    onTap: () {
+                      Navigator.pop(context);
+                      context.push("/settingandprivacyscreen");
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
-        const Divider(color: Color(0xFF1f1f1f), height: 1),
-        Expanded(
-          child: ListView(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            children: [
-              _DrawerItem(
-                icon: Icons.person_outline,
-                label: 'Profile',
-                onTap: () {
-                  Navigator.pop(context);
-                  if (user != null) {
-                    context.push("/profilescreen/${user.username}");
-                  }
-                },
-              ),
-              _DrawerItem(
-                icon: Icons.stars_outlined,
-                label: 'Premium',
-                onTap: () {},
-              ),
-              _DrawerItem(
-                icon: Icons.chat_bubble_outline,
-                trailing: _buildBadge('Beta'),
-                label: 'Chat',
-                onTap: () {},
-              ),
-              _DrawerItem(
-                icon: Icons.bookmark_border,
-                label: 'Bookmarks',
-                onTap: () {},
-              ),
-              _DrawerItem(
-                icon: Icons.list_alt_outlined,
-                label: 'Lists',
-                onTap: () {},
-              ),
-              _DrawerItem(
-                icon: Icons.south_america_outlined,
-                label: 'Spaces',
-                onTap: () {},
-              ),
-              _DrawerItem(
-                icon: Icons.monetization_on_outlined,
-                label: 'Monetization',
-                onTap: () {},
-              ),
-              const Divider(
-                color: Color(0xFF1f1f1f),
-                height: 24,
-                thickness: 0.5,
-              ),
-              _DrawerItem(
-                icon: Icons.settings_outlined,
-                label: 'Settings & Support',
-                trailing: const Icon(
-                  Icons.keyboard_arrow_down,
-                  color: Colors.white,
-                ),
-                onTap: () {
-                  Navigator.pop(context);
-                  context.push("/settingandprivacyscreen");
-                },
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildLoadingDrawer(
-    BuildContext context,
-    WidgetRef ref,
-    dynamic user,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              CircleAvatar(
-                radius: 32,
-                backgroundColor: Colors.grey[850],
-                child: const CircularProgressIndicator(strokeWidth: 2),
-              ),
-              const SizedBox(height: 12),
-              Container(height: 20, width: 150, color: Colors.grey[850]),
-              const SizedBox(height: 8),
-              Container(height: 14, width: 100, color: Colors.grey[850]),
-            ],
-          ),
-        ),
-        const Divider(color: Color(0xFF1f1f1f), height: 1),
-        Expanded(
-          child: ListView(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            children: [
-              _DrawerItem(
-                icon: Icons.person_outline,
-                label: 'Profile',
-                onTap: () {
-                  Navigator.pop(context);
-                  if (user != null) {
-                    context.push("/profilescreen/${user.username}");
-                  }
-                },
-              ),
-            ],
-          ),
-        ),
-      ],
+      ),
     );
   }
 
