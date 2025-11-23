@@ -17,7 +17,7 @@ class ProfileLikesList extends ConsumerWidget {
 
     return asyncLikes.when(
       data: (either) {
-        return either.fold(
+        return either.fold( 
           (l) {
             return Center(child: Text(l.message));
           },

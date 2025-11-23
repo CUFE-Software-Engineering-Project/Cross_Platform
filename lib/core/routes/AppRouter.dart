@@ -27,6 +27,7 @@ import 'package:lite_x/features/profile/models/shared.dart';
 import 'package:lite_x/features/profile/view/screens/birthdate_screen.dart';
 import 'package:lite_x/features/profile/view/screens/change_email_profile_screen.dart';
 import 'package:lite_x/features/profile/view/screens/edit_profile_screen.dart';
+import 'package:lite_x/features/profile/view/screens/explore_profile_screen.dart';
 import 'package:lite_x/features/profile/view/screens/following_followers_screen.dart';
 import 'package:lite_x/features/profile/view/screens/profile_screen.dart';
 import 'package:lite_x/features/profile/view/screens/profile_search_screen.dart';
@@ -49,7 +50,7 @@ import 'package:lite_x/features/settings/screens/ChangePassword_Screen.dart';
 
 class Approuter {
   static final GoRouter router = GoRouter(
-    // initialLocation: "/exploreScreen",
+    // initialLocation: "/appshell",
     initialLocation: "/splash",
     // initialExtra: ProfileModel(
     //   id: "",
@@ -399,6 +400,14 @@ class Approuter {
           child: ChangeEmailProfileScreen(
             profileData: state.extra as ProfileModel,
           ),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
+        name: RouteConstants.ExploreProfileScreen,
+        path: "/exploreProfileScreen",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: ExploreProfileScreen(),
           transitionsBuilder: _slideRightTransitionBuilder,
         ),
       ),

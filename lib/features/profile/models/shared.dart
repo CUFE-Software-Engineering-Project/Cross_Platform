@@ -204,6 +204,8 @@ ProfileTweet getCorrectTweetType(
   if (type == TweetType.ReTweet)
     return ProfileRetweetWidget(profileModel: pm, tweetModel: tweetModel);
 
+  // if(type == TweetType.Quote)
+
   return ProfileNormalTweetWidget(
     profileModel: pm,
     profilePostModel: tweetModel,

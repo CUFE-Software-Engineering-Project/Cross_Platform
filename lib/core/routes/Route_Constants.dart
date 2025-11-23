@@ -47,4 +47,5 @@ class RouteConstants {
 
   // explore feature
   static String ExploreScreen = "ExploreScreen";
+  static String ExploreProfileScreen = "ExploreProfileScreen";
 }

@@ -18,7 +18,7 @@ class ProfileTweetModel {
   final String profileMediaUrl;
   final bool verified;
   final bool protectedAccount;
-  final List<String> mediaUrls;
+  // final List<String> mediaUrls;
   final TweetType type;
   final List<String> mediaIds;
 
@@ -33,7 +33,7 @@ class ProfileTweetModel {
     required this.isRepostedWithMe,
     required this.isLikedByMe,
     required this.activityNumber,
-    required this.mediaUrls,
+    // required this.mediaUrls,
     required this.quotesCount,
     required this.profileMediaUrl,
     required this.protectedAccount,
@@ -57,9 +57,9 @@ class ProfileTweetModel {
     else if (typeString.toLowerCase() == "reply")
       type = TweetType.Reply;
     final List<dynamic> mediaIdsRes = json["tweetMedia"] ?? [];
-    final List<String> meidaIds = mediaIdsRes.map((json) {
-      return json["mediaId"] as String;
-    }).toList();
+    // final List<String> meidaIds = mediaIdsRes.map((json) {
+    //   return json["mediaId"] as String;
+    // }).toList();
     return ProfileTweetModel(
       id: json['id'] ?? "",
       text: json['content'] ?? "",
@@ -72,15 +72,15 @@ class ProfileTweetModel {
       isRepostedWithMe: json['isRetweeted'] ?? false,
       activityNumber: json['activityNumber'] ?? 0,
       isSavedByMe: json['isBookmarked'] ?? false,
-      mediaUrls: json['mediaUrls'] ?? [],
+      mediaIds: json['mediaIds'] ?? [],
       type: type,
       userDisplayName: json["user"]?["name"] ?? "",
       userId: json["user"]?["id"] ?? "",
       userUserName: json["user"]?["username"] ?? "",
-      profileMediaUrl: json["profileMedia"] ?? "",
+      profileMediaUrl: json["profileMediaUrl"] ?? "",
       protectedAccount: json["user"]?["protectedAccount"] ?? false,
       verified: json["user"]?["verified"] ?? false,
-      mediaIds: meidaIds,
+      // mediaIds: meidaIds,
     );
   }
   // ------------------------------------------

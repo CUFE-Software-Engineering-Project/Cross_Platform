@@ -135,11 +135,6 @@ class ProfileRepoImpl implements ProfileRepo {
 
       List<ProfileTweetModel> tweets = [];
       for (int i = 0; i < jsonList.length; i++) {
-        print(
-          "***********************" +
-              "media${i}" +
-              "**************************",
-        );
         final Map<String, dynamic> json = jsonList[i] as Map<String, dynamic>;
         if (json["tweetType"]?.toLowerCase() == "reply") continue;
         // get profile photo url and tweet medial urls
@@ -151,21 +146,16 @@ class ProfileRepoImpl implements ProfileRepo {
             .map((media) => media["mediaId"] as String)
             .toList();
 
-        final List<String> urls = await getMediaUrls(
-          [profilePhotoId] + tweetMediaIds,
-        );
+        final List<String> userPhotoUrl = await getMediaUrls([profilePhotoId]);
 
-        for (int i = 0; i < urls.length; i++)
-          print("--------------\n" + urls[i] + "\n---------------------------");
-        final String profilePhotoUrl = urls[0];
-        final List<String> tweetMediaUrls = urls.skip(1).toList();
+        final String profilePhotoUrl = userPhotoUrl[0];
 
         // get timeAgo
         final String createTime = json["createdAt"] ?? "";
         final String timeAgo = getTimeAgo(createTime);
 
-        json["profileMedia"] = profilePhotoUrl;
-        json["mediaUrls"] = tweetMediaUrls;
+        json["profileMediaUrl"] = profilePhotoUrl;
+        json["mediaIds"] = tweetMediaIds;
         json["timeAgo"] = timeAgo;
 
         tweets.add(ProfileTweetModel.fromJson(json));
@@ -183,51 +173,41 @@ class ProfileRepoImpl implements ProfileRepo {
   Future<Either<Failure, List<ProfileTweetModel>>> getProfileLikes(
     String username,
   ) async {
-    // await Future.delayed(const Duration(seconds: 2)); // Simulate network delay
     try {
-      final List<Map<String, dynamic>> rawPostData = [
-        {
-          "id": "post_001",
-          "text":
-              "Excited to share my latest project! Flutter makes UI development",
-          "timeAgo": "5m",
-          "likes": 1,
-          "retweets": 8,
-          "repost": 50,
-          "replies": 3,
-          "tweetType": "reTweet",
-          "isLikedByMe": true,
-          "isSaveByMe": true,
-          "activityNumber": 36,
-          "mediaUrls": [
-            "https://images.pexels.com/photos/34188568/pexels-photo-34188568.jpeg",
-            "https://images.pexels.com/photos/34051342/pexels-photo-34051342.jpeg",
-            "https://images.pexels.com/photos/34182536/pexels-photo-34182536.jpeg",
-            "https://media.istockphoto.com/id/158002966/photo/painted-x-mark.jpg?b=1&s=612x612&w=0&k=20&c=W-XB39kzx5Y1U5eHU7gBZzgd4k2oqo0G3bRrch3jUZk=",
-          ],
-        },
-        {
-          "id": "post_002",
-          "text":
-              "A quick update on the server migration: everything went smoothly! Downtime was minimal. Thanks to the team! A quick update on the server migration: everything went smoothly! Downtime was minimal. Thanks to the team! \n A quick update on the server migration: everything went smoothly! Downtime was minimal. Thanks to the team!",
-          "timeAgo": "2h",
-          "likes": 120,
-          "retweets": 6,
-          "replies": 10,
-          "isLikedByMe": true,
-          "activityNumber": 20,
-          "mediaUrls": [
-            "https://media.istockphoto.com/id/158002966/photo/painted-x-mark.jpg?b=1&s=612x612&w=0&k=20&c=W-XB39kzx5Y1U5eHU7gBZzgd4k2oqo0G3bRrch3jUZk=",
-          ],
-        },
-      ];
+      final res = await _dio.get("api/tweets/users/$username");
+      final List<dynamic> jsonList = res.data["data"] ?? [];
 
-      await Future.delayed(Duration(seconds: 2));
-      final List<ProfileTweetModel> profilePosts = rawPostData
-          .map((json) => ProfileTweetModel.fromJson(json))
-          .toList();
-      return Right(profilePosts);
+      List<ProfileTweetModel> tweets = [];
+      for (int i = 0; i < jsonList.length; i++) {
+        final Map<String, dynamic> json = jsonList[i] as Map<String, dynamic>;
+        if (json["tweetType"]?.toLowerCase() == "reply") continue;
+        // get profile photo url and tweet medial urls
+        final String profilePhotoId =
+            json["user"]?["profileMedia"]?["id"] ?? "";
+
+        final List<dynamic> tweetMediaIdsDynamic = json["tweetMedia"] ?? [];
+        final List<String> tweetMediaIds = tweetMediaIdsDynamic
+            .map((media) => media["mediaId"] as String)
+            .toList();
+
+        final List<String> userPhotoUrl = await getMediaUrls([profilePhotoId]);
+
+        final String profilePhotoUrl = userPhotoUrl[0];
+
+        // get timeAgo
+        final String createTime = json["createdAt"] ?? "";
+        final String timeAgo = getTimeAgo(createTime);
+
+        json["profileMediaUrl"] = profilePhotoUrl;
+        json["mediaIds"] = tweetMediaIds;
+        json["timeAgo"] = timeAgo;
+
+        tweets.add(ProfileTweetModel.fromJson(json));
+      }
+
+      return Right(tweets);
     } catch (e) {
+      print(e.toString());
       return Left(Failure('Failed to load profile posts'));
     }
   }
@@ -505,9 +485,14 @@ class ProfileRepoImpl implements ProfileRepo {
 
       final List<Map<String, dynamic>> rawResults =
           List<Map<String, dynamic>>.from(res.data["users"] ?? []);
+      for (int i = 0; i < rawResults.length; i++) {
+        final String mediaId = rawResults[i]["profileMedia"] ?? "";
+        final mediaUrls = await getMediaUrls([mediaId]);
+        rawResults[i]["profileMedia"] = mediaUrls[0];
+      }
       final List<SearchUserModel> currentResults = rawResults.map((element) {
         SearchUserModel user = SearchUserModel.fromJson(element);
-        return user.copyWith(profileMedia: "https://picsum.photos/200/300");
+        return user;
       }).toList();
       return Right(currentResults);
     } catch (e) {
@@ -553,20 +538,25 @@ class ProfileRepoImpl implements ProfileRepo {
     String confirmNewPassword,
   ) async {
     try {
+      print(
+        {
+          "oldPassword": oldPassword,
+          "newPassword": newPassword,
+          "confirmPassword": confirmNewPassword,
+        }.toString(),
+      );
       await _dio.post(
         "api/auth/change-password",
         data: {
-          {
-            "oldPassword": oldPassword,
-            "newPassword": newPassword,
-            "confirmPassword": confirmNewPassword,
-          },
+          "oldPassword": oldPassword,
+          "newPassword": newPassword,
+          "confirmPassword": confirmNewPassword,
         },
       );
       return Right(());
     } on DioException catch (e) {
       final String errorMessage =
-          e.response?.data["error"] ?? "can't change password";
+          e.response?.data["error"] ?? "can't change, try again later";
       return (Left(Failure(errorMessage)));
     } catch (e) {
       return (Left(Failure("can't change password")));

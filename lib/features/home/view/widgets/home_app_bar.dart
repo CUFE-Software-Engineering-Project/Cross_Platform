@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:go_router/go_router.dart';
+import 'package:lite_x/core/routes/Route_Constants.dart';
 import 'package:lite_x/features/home/view/widgets/home_tab_bar.dart';
 import 'package:lite_x/features/home/view/widgets/profile_avatar.dart';
 
@@ -113,13 +115,14 @@ class HomeAppBar extends ConsumerWidget implements PreferredSizeWidget {
   }
 
   void _openSearch(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Search is coming soon'),
-        backgroundColor: Color(0xFF1DA1F2),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    // ScaffoldMessenger.of(context).showSnackBar(
+    //   const SnackBar(
+    //     content: Text('Search is coming soon'),
+    //     backgroundColor: Color(0xFF1DA1F2),
+    //     behavior: SnackBarBehavior.floating,
+    //   ),
+    // );
+    context.goNamed(RouteConstants.ExploreProfileScreen);
   }
 
   Widget _buildSettingsBottomSheet(BuildContext context) {

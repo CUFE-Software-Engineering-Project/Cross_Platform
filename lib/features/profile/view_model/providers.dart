@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/legacy.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:lite_x/core/providers/current_user_provider.dart';
 import 'package:lite_x/core/providers/dio_interceptor.dart';
+import 'package:lite_x/features/media/download_media.dart';
 import 'package:lite_x/features/profile/models/create_reply_model.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
 import 'package:lite_x/features/profile/models/profile_tweet_model.dart';
@@ -262,3 +263,11 @@ final myUserNameProvider = Provider<String>((ref) {
 //   // final user = ref.watch(currentUserProvider.select((e) => e!.username));
 //   return "hazememam";
 // });
+
+final mediaUrlsProvider = FutureProvider.family<List<String>, List<String>>((
+  ref,
+  mediaIds,
+) async {
+  // Replace this with your actual function that fetches media URLs
+  return await getMediaUrls(mediaIds);
+});
