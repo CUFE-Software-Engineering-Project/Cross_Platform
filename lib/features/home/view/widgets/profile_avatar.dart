@@ -25,13 +25,6 @@ class ProfileAvatar extends ConsumerWidget {
     final user = ref.watch(currentUserProvider);
     final profileState = ref.watch(userProfileProvider);
 
-    // Debug logging
-    print('👤 User photo: ${user?.photo}');
-    print('👤 User name: ${user?.name}');
-    print(
-      '📊 Profile state: ${profileState.when(data: (p) => 'data - photo: ${p?.profilePhotoUrl}', loading: () => 'loading', error: (e, _) => 'error: $e')}',
-    );
-
     return GestureDetector(
       onTap: () => _openDrawer(),
       child: Container(
@@ -42,6 +35,12 @@ class ProfileAvatar extends ConsumerWidget {
             // Use profile photo from API if available, otherwise fall back to user photo
             final photoUrl =
                 profile?.profilePhotoUrl ?? _getPhotoUrl(user?.photo);
+
+            print(
+              '🖼️ ProfileAvatar - Profile Photo URL: ${profile?.profilePhotoUrl}',
+            );
+            print('🖼️ ProfileAvatar - User Photo: ${user?.photo}');
+            print('🖼️ ProfileAvatar - Final Photo URL: $photoUrl');
 
             return CircleAvatar(
               radius: 16,

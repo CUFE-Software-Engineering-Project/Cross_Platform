@@ -7,6 +7,18 @@ import 'package:lite_x/features/home/providers/user_profile_provider.dart';
 class ProfileSideDrawer extends ConsumerWidget {
   const ProfileSideDrawer({super.key});
 
+  String? _getPhotoUrl(String? photo) {
+    if (photo == null || photo.isEmpty) return null;
+
+    // If it's already a full URL, return it
+    if (photo.startsWith('http://') || photo.startsWith('https://')) {
+      return photo;
+    }
+
+    // Otherwise, construct the full media URL
+    return 'https://litex.siematworld.online/media/$photo';
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
@@ -43,12 +55,12 @@ class ProfileSideDrawer extends ConsumerWidget {
                 backgroundColor: Colors.grey[850],
                 backgroundImage: profile?.profilePhotoUrl != null
                     ? NetworkImage(profile!.profilePhotoUrl!)
-                    : (user?.photo != null && user!.photo!.isNotEmpty
-                          ? NetworkImage(user.photo!)
+                    : (_getPhotoUrl(user?.photo) != null
+                          ? NetworkImage(_getPhotoUrl(user!.photo)!)
                           : null),
                 child:
                     profile?.profilePhotoUrl == null &&
-                        (user?.photo == null || user?.photo?.isEmpty == true)
+                        _getPhotoUrl(user?.photo) == null
                     ? Icon(Icons.person, color: Colors.grey[500], size: 32)
                     : null,
               ),

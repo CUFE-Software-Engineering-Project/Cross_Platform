@@ -7,6 +7,8 @@ import 'package:lite_x/features/home/models/tweet_model.dart';
 import 'package:lite_x/features/home/view/widgets/media_gallery.dart';
 import 'package:lite_x/features/home/view_model/home_view_model.dart';
 import 'package:lite_x/features/media/upload_media.dart';
+import 'package:lite_x/core/providers/current_user_provider.dart';
+import 'package:lite_x/features/home/providers/user_profile_provider.dart';
 
 class QuoteComposerScreen extends ConsumerStatefulWidget {
   final TweetModel quotedTweet;
@@ -23,6 +25,14 @@ class _QuoteComposerScreenState extends ConsumerState<QuoteComposerScreen> {
   final FocusNode _focusNode = FocusNode();
   bool _isPosting = false;
   final List<File> _selectedImages = [];
+
+  String? _getPhotoUrl(String? photo) {
+    if (photo == null || photo.isEmpty) return null;
+    if (photo.startsWith('http://') || photo.startsWith('https://')) {
+      return photo;
+    }
+    return 'https://litex.siematworld.online/media/$photo';
+  }
 
   @override
   void initState() {
@@ -111,7 +121,8 @@ class _QuoteComposerScreenState extends ConsumerState<QuoteComposerScreen> {
   }
 
   Future<void> _pickImage() async {
-    if (_selectedImages.length >= 4) {
+    final remainingSlots = 4 - _selectedImages.length;
+    if (remainingSlots <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Maximum 4 images allowed per quote.'),
@@ -120,12 +131,17 @@ class _QuoteComposerScreenState extends ConsumerState<QuoteComposerScreen> {
       );
       return;
     }
-    final picked = await pickImage();
-    if (picked?.file != null) {
-      setState(() {
-        _selectedImages.add(picked!.file!);
-      });
-    }
+
+    final pickedList = await pickImages(maxImages: remainingSlots);
+    if (pickedList.isEmpty) return;
+
+    setState(() {
+      for (final picked in pickedList) {
+        if (picked.file != null) {
+          _selectedImages.add(picked.file!);
+        }
+      }
+    });
   }
 
   void _removeImage(int index) {
@@ -249,6 +265,24 @@ class _QuoteComposerScreenState extends ConsumerState<QuoteComposerScreen> {
   }
 
   Widget _buildQuoteComposer() {
+    final user = ref.watch(currentUserProvider);
+    final profileState = ref.watch(userProfileProvider);
+
+    // Use profile photo from API if available, otherwise fall back to user photo
+    String? userPhotoUrl;
+    profileState.when(
+      data: (profile) {
+        userPhotoUrl = profile?.profilePhotoUrl ?? _getPhotoUrl(user?.photo);
+        print('🖼️ Quote Composer - Photo URL: $userPhotoUrl');
+      },
+      loading: () {
+        userPhotoUrl = _getPhotoUrl(user?.photo);
+      },
+      error: (_, __) {
+        userPhotoUrl = _getPhotoUrl(user?.photo);
+      },
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -258,7 +292,12 @@ class _QuoteComposerScreenState extends ConsumerState<QuoteComposerScreen> {
             CircleAvatar(
               radius: 20,
               backgroundColor: Colors.grey[700],
-              child: const Icon(Icons.person, color: Colors.white, size: 24),
+              backgroundImage: userPhotoUrl != null
+                  ? NetworkImage(userPhotoUrl!)
+                  : null,
+              child: userPhotoUrl == null
+                  ? const Icon(Icons.person, color: Colors.white, size: 24)
+                  : null,
             ),
             const SizedBox(width: 12),
             Expanded(

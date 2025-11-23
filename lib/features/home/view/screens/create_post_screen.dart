@@ -6,6 +6,7 @@ import 'package:lite_x/core/classes/PickedImage.dart';
 import 'package:lite_x/features/home/view_model/home_view_model.dart';
 import 'package:lite_x/features/media/upload_media.dart';
 import 'package:lite_x/core/providers/current_user_provider.dart';
+import 'package:lite_x/features/home/providers/user_profile_provider.dart';
 
 enum PostPrivacy {
   everyone,
@@ -156,7 +157,8 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
   }
 
   Future<void> _pickImage() async {
-    if (_selectedImages.length >= 4) {
+    final remainingSlots = 4 - _selectedImages.length;
+    if (remainingSlots <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Maximum 4 images allowed per post.'),
@@ -166,12 +168,16 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
       return;
     }
 
-    final picked = await pickImage();
-    if (picked?.file != null) {
-      setState(() {
-        _selectedImages.add(picked!.file!);
-      });
-    }
+    final pickedList = await pickImages(maxImages: remainingSlots);
+    if (pickedList.isEmpty) return;
+
+    setState(() {
+      for (final picked in pickedList) {
+        if (picked.file != null) {
+          _selectedImages.add(picked.file!);
+        }
+      }
+    });
   }
 
   void _removeImage(int index) {
@@ -336,8 +342,23 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(currentUserProvider);
+    final profileState = ref.watch(userProfileProvider);
     final canPost = _textController.text.trim().isNotEmpty && !_isPosting;
-    final photoUrl = _getPhotoUrl(user?.photo);
+
+    // Use profile photo from API if available, otherwise fall back to user photo
+    String? photoUrl;
+    profileState.when(
+      data: (profile) {
+        photoUrl = profile?.profilePhotoUrl ?? _getPhotoUrl(user?.photo);
+        print('🖼️ Create Post - Photo URL: $photoUrl');
+      },
+      loading: () {
+        photoUrl = _getPhotoUrl(user?.photo);
+      },
+      error: (_, __) {
+        photoUrl = _getPhotoUrl(user?.photo);
+      },
+    );
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -409,7 +430,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                           radius: 20,
                           backgroundColor: Colors.grey[800],
                           backgroundImage: photoUrl != null
-                              ? NetworkImage(photoUrl)
+                              ? NetworkImage(photoUrl!)
                               : null,
                           child: photoUrl == null
                               ? Icon(
