@@ -347,8 +347,11 @@ class _ProfileHeaderState extends ConsumerState<ProfileHeader> {
                   image: widget.profileData.bannerUrl.isEmpty
                       ? null
                       : DecorationImage(
-                          image: NetworkImage(widget.profileData.bannerUrl),
+                          image: CachedNetworkImageProvider(
+                            widget.profileData.bannerUrl,
+                          ),
                           fit: BoxFit.cover,
+                          onError: (exception, stackTrace) => null,
                         ),
                 ),
               ),
@@ -419,9 +422,11 @@ class _ProfileHeaderState extends ConsumerState<ProfileHeader> {
                               child: CircleAvatar(
                                 radius: 40,
                                 backgroundColor: Colors.black,
-                                backgroundImage: NetworkImage(
+                                backgroundImage: CachedNetworkImageProvider(
                                   widget.profileData.avatarUrl,
                                 ),
+                                onBackgroundImageError:
+                                    (exception, stackTrace) => null,
                               ),
                             ),
                           ),

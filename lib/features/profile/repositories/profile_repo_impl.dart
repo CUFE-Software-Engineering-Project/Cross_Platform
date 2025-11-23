@@ -48,6 +48,7 @@ class ProfileRepoImpl implements ProfileRepo {
 
       json["profileMedia"] = profilePhotoUrl;
       json["coverMedia"] = profileBannerUrl;
+      json["avatarId"] = profilePhotoId;
 
       final profileData = ProfileModel.fromJson(json);
       return Right(profileData);
@@ -129,6 +130,10 @@ class ProfileRepoImpl implements ProfileRepo {
         json["timeAgo"] = timeAgo;
 
         tweets.add(ProfileTweetModel.fromJson(json));
+        print(
+          "id$i" +
+              "${json['profileMediaId']}--------------------*****--------------",
+        );
       }
       print("end repo posts ----------------**");
       return Right(tweets);
