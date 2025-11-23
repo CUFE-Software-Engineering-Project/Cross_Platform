@@ -46,7 +46,7 @@ class ProfileTabs extends ConsumerWidget {
         body: TabBarView(
           children: [
             ProfilePostsTab(profileModel: this.profileData),
-            const Center(child: Text("Replies Tab Content")), // Replies
+            _buildRepliesTab(), // Replies
             if (isMe) _buildHilightsTab(), // Highlights
             if (isMe) _buildArticlesTab(), // Articles
             ProfileMediaTap(profileModel: this.profileData), // Media
@@ -135,5 +135,23 @@ Widget _buildArticlesTab() {
         ),
       ],
     ),
+  );
+}
+
+Widget _buildRepliesTab() {
+  return ListView(
+    children: [
+      Padding(
+        padding: const EdgeInsets.all(24),
+        child: Text(
+          "Nothing to see here -- yet.",
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 35,
+          ),
+        ),
+      ),
+    ],
   );
 }

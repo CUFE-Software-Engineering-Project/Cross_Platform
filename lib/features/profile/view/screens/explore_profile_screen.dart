@@ -28,7 +28,9 @@ class _ExploreProfileScreenState extends ConsumerState<ExploreProfileScreen> {
             pinned: true,
             leading: Padding(
               padding: EdgeInsets.all(5).copyWith(left: 10),
-              child: BuildSmallProfileImage(mediaId: currentUser?.photo ?? ""),
+              child: BuildSmallProfileImage(
+                userId: currentUser?.username ?? "",
+              ),
             ),
             title: GestureDetector(
               onTap: () {

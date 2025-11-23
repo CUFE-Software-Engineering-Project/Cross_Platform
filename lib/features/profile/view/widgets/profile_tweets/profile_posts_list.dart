@@ -52,6 +52,24 @@ class ProfilePostsList extends ConsumerWidget {
             } else
               filteredData = data;
 
+            if (filteredData.isEmpty) {
+              return ListView(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Text(
+                      "Nothing to see here -- yet.",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 35,
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            }
+
             final List<ProfileTweet> posts = filteredData.map((post) {
               return getCorrectTweetType(post, profile);
             }).toList();
