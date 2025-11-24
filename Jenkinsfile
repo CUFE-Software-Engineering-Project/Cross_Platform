@@ -139,39 +139,47 @@ EOF
 
     post {
         success {
-            emailext (
-                subject: "✅ Jenkins Build SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                body: """
-                    <h2>Build Successful! 🎉</h2>
-                    <p><strong>Job:</strong> ${env.JOB_NAME}</p>
-                    <p><strong>Build Number:</strong> ${env.BUILD_NUMBER}</p>
-                    <p><strong>Build URL:</strong> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
-                    <p><strong>Docker Image:</strong> ${DOCKER_IMAGE}:build-${BUILD_TAG}</p>
-                    <hr>
-                    <p>The application has been successfully processed.</p>
-                """,
-                to: "${EMAIL_RECIPIENTS}",
-                mimeType: 'text/html'
-            )
+            script {
+                def recipients = env.COMMIT_EMAILS ?: env.JENKINS_EMAIL
+                emailext (
+                    subject: "✅ Jenkins Backend Build SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                    body: """
+                        <h2>Backend Build Successful! 🎉</h2>
+                        <p><strong>Job:</strong> ${env.JOB_NAME}</p>
+                        <p><strong>Build Number:</strong> ${env.BUILD_NUMBER}</p>
+                        <p><strong>Build URL:</strong> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
+                        <p><strong>Docker Image:</strong> ${DOCKER_IMAGE}:${BUILD_TAG}</p>
+                        <hr>
+                        <p>The backend application has been successfully deployed to Kubernetes.</p>
+                        <p><strong>Deployment:</strong> swe-node-deployment</p>
+                        <p><strong>Namespace:</strong> swe-twitter</p>
+                    """,
+                    to: recipients,
+                    mimeType: 'text/html'
+                )
+            }
         }
-
+        
         failure {
-            emailext (
-                subject: "❌ Jenkins Build FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                body: """
-                    <h2>Build Failed! ⚠️</h2>
-                    <p><strong>Job:</strong> ${env.JOB_NAME}</p>
-                    <p><strong>Build Number:</strong> ${env.BUILD_NUMBER}</p>
-                    <p><strong>Build URL:</strong> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
-                    <p><strong>Console Output:</strong> <a href="${env.BUILD_URL}console">${env.BUILD_URL}console</a></p>
-                    <hr>
-                    <p>Please check the console output for error details.</p>
-                """,
-                to: "${EMAIL_RECIPIENTS}",
-                mimeType: 'text/html'
-            )
+            script {
+                def recipients = env.COMMIT_EMAILS ?: env.JENKINS_EMAIL
+                emailext (
+                    subject: "❌ Jenkins Backend Build FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                    body: """
+                        <h2>Backend Build Failed! ⚠️</h2>
+                        <p><strong>Job:</strong> ${env.JOB_NAME}</p>
+                        <p><strong>Build Number:</strong> ${env.BUILD_NUMBER}</p>
+                        <p><strong>Build URL:</strong> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
+                        <p><strong>Console Output:</strong> <a href="${env.BUILD_URL}console">${env.BUILD_URL}console</a></p>
+                        <hr>
+                        <p>Please check the console output for error details.</p>
+                    """,
+                    to: recipients,
+                    mimeType: 'text/html'
+                )
+            }
         }
-
+    
         always {
             echo "Pipeline completed."
         }
