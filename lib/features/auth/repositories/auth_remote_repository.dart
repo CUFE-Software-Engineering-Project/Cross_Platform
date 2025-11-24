@@ -76,7 +76,7 @@ class AuthRemoteRepository {
 
   final _googleSignIn = signIn.GoogleSignIn(
     serverClientId:
-        "https://1096363232606-2fducjadk56bt4nsreqkj2jna7oiomga.apps.googleusercontent.com",
+        "1096363232606-2fducjadk56bt4nsreqkj2jna7oiomga.apps.googleusercontent.com",
     scopes: ['email', 'https://www.googleapis.com/auth/userinfo.profile'],
   );
 
