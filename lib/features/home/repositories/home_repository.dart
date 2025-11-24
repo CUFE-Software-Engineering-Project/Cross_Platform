@@ -513,6 +513,12 @@ class HomeRepository {
         data: {'tweetId': tweetId, 'mediaIds': filteredIds},
       );
     } on DioException catch (e) {
+      final errorMsg = _handleError(e).toLowerCase();
+      // Suppress duplicate media errors as the media is already attached
+      if (errorMsg.contains('duplicate') || errorMsg.contains('already')) {
+        print('⚠️ Media already attached to tweet (suppressing error)');
+        return;
+      }
       throw Exception(_handleError(e));
     }
   }

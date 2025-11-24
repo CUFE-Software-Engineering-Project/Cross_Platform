@@ -31,17 +31,13 @@ Future<PickedImage?> pickImage() async {
 Future<List<PickedImage>> pickImages({int maxImages = 4}) async {
   try {
     final ImagePicker picker = ImagePicker();
-    final List<XFile> images = await picker.pickMultiImage();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
 
-    if (images.isEmpty) return [];
+    if (image == null) return [];
 
-    return images.take(maxImages).map((image) {
-      return PickedImage(
-        file: File(image.path),
-        name: image.name,
-        path: image.path,
-      );
-    }).toList();
+    return [
+      PickedImage(file: File(image.path), name: image.name, path: image.path),
+    ];
   } catch (e) {
     return [];
   }
