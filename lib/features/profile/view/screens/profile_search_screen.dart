@@ -118,21 +118,17 @@ class CurrentSearchUser extends StatelessWidget {
         backgroundColor: Colors.grey,
         onBackgroundImageError: (exception, stackTrace) => null,
       ),
-      title: Flexible(
-        child: Text(
-          user.name,
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-          ),
+      title: Text(
+        user.name,
+        style: TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+          fontSize: 16,
         ),
       ),
-      subtitle: Flexible(
-        child: Text(
-          "@${user.username}",
-          style: TextStyle(color: Colors.grey, fontSize: 14),
-        ),
+      subtitle: Text(
+        "@${user.username}",
+        style: TextStyle(color: Colors.grey, fontSize: 14),
       ),
     );
   }
