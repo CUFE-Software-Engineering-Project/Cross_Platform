@@ -47,9 +47,14 @@ abstract class ProfileRepo {
   Future<Either<Failure, List<ProfileTweetModel>>> getProfilePosts(
     String username,
   );
+  Future<Either<Failure, List<ProfileTweetModel>>> getMediaPosts(
+    String username,
+  );
   Future<Either<Failure, List<ProfileTweetModel>>> getProfileLikes(
     String username,
   );
+
+  Future<Either<Failure, ProfileTweetModel>> getProfileTweet(String tweetId);
   Future<Either<Failure, void>> createTweet(CreateTweetModel createTweetModel);
   Future<Either<Failure, List<TweetReplyModel>>> getTweetReplies(
     String tweetId,

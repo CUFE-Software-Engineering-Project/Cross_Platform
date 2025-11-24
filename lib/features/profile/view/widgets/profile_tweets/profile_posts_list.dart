@@ -20,7 +20,8 @@ class ProfilePostsList extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final asyncPosts = ref.watch(profilePostsProvider(this.profile.username));
+    final asyncPosts = tabType == ProfileTabType.Posts? ref.watch(profilePostsProvider(this.profile.username)): tabType == ProfileTabType.Likes? ref.watch(profileLikesProvider(this.profile.username)): ref.watch(profileMediaProvider(this.profile.username));
+    ;
 
     return asyncPosts.when(
       data: (either) {
@@ -35,7 +36,7 @@ class ProfilePostsList extends ConsumerWidget {
               ),
               onRefresh: () async {
                 // ignore: unused_result
-                ref.refresh(profilePostsProvider(this.profile.username));
+                ref.refresh(profileLikesProvider(this.profile.username));
               },
             );
           },

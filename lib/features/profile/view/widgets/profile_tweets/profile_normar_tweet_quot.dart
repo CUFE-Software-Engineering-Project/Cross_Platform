@@ -11,8 +11,8 @@ import 'package:lite_x/features/profile/models/shared.dart';
 import 'package:lite_x/features/profile/view_model/providers.dart';
 import 'package:readmore/readmore.dart';
 
-class ProfileNormalTweetWidget extends ConsumerWidget implements ProfileTweet {
-  const ProfileNormalTweetWidget({
+class ProfileNormarTweetQuot extends ConsumerWidget implements ProfileTweet {
+  const ProfileNormarTweetQuot({
     required this.profileModel,
     required this.profilePostModel,
   });
@@ -21,7 +21,7 @@ class ProfileNormalTweetWidget extends ConsumerWidget implements ProfileTweet {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Padding(
-      padding: const EdgeInsets.all(8.0).copyWith(right: 16),
+      padding: const EdgeInsets.all(8.0).copyWith(left: 0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -156,7 +156,7 @@ class ProfileNormalTweetWidget extends ConsumerWidget implements ProfileTweet {
                     child: TweetMediaGrid(mediaIds: profilePostModel.mediaIds),
                     clipBehavior: Clip.hardEdge,
                   ),
-                InterActionsRowOfTweet(tweet: this.profilePostModel),
+                // InterActionsRowOfTweet(tweet: this.profilePostModel),
               ],
             ),
           ),
@@ -231,7 +231,267 @@ Widget buildPhotoSection(List<dynamic> photos) {
   return const SizedBox.shrink();
 }
 
+class InterActionsRowOfTweet extends ConsumerStatefulWidget {
+  const InterActionsRowOfTweet({super.key, required this.tweet});
+  final ProfileTweetModel tweet;
 
+  @override
+  ConsumerState<ConsumerStatefulWidget> createState() =>
+      _InterActionsRowOfTweetState();
+}
+
+class _InterActionsRowOfTweetState
+    extends ConsumerState<InterActionsRowOfTweet> {
+  late bool isLikedByMeLocal;
+  late int likesCount;
+  late bool isSavedByMeLocal;
+  @override
+  void initState() {
+    isLikedByMeLocal = widget.tweet.isLikedByMe;
+    likesCount = widget.tweet.likes;
+    isSavedByMeLocal = widget.tweet.isSavedByMe;
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          GestureDetector(
+            onTap: () {
+              //   TODO: open replying page
+            },
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                SvgPicture.asset(
+                  "assets/svg/reply.svg",
+                  width: 20,
+                  height: 20,
+                  colorFilter: const ColorFilter.mode(
+                    Colors.grey,
+                    BlendMode.srcIn,
+                  ),
+                ),
+                if (widget.tweet.replies > 0)
+                  Text(
+                    Shared.formatCount(widget.tweet.replies),
+                    style: TextStyle(color: Colors.grey, fontSize: 15),
+                  ),
+              ],
+            ),
+          ),
+          GestureDetector(
+            onTap: () {
+              //   TODO: do repost action
+            },
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SvgPicture.asset(
+                  "assets/svg/repost.svg",
+                  width: 20,
+                  height: 20,
+                  colorFilter: ColorFilter.mode(
+                    widget.tweet.isRepostedWithMe
+                        ? Color(0XFF00B87B)
+                        : Colors.grey,
+                    BlendMode.srcIn,
+                  ),
+                ),
+                if (widget.tweet.retweets > 0)
+                  Text(
+                    Shared.formatCount(widget.tweet.retweets),
+                    style: TextStyle(
+                      color: widget.tweet.isRepostedWithMe
+                          ? Color(0XFF00B87B)
+                          : Colors.grey,
+                      fontSize: 15,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          GestureDetector(
+            onTap: () {
+              //   TODO: do like action
+              if (isLikedByMeLocal) {
+                final unlike = ref.watch(unlikeTweetProvider);
+                unlike(widget.tweet.id).then((res) {
+                  res.fold((l) {
+                    isLikedByMeLocal = true;
+                    likesCount += 1;
+                    showSmallPopUpMessage(
+                      context: context,
+                      message: l.message,
+                      borderColor: Colors.red,
+                      icon: Icon(Icons.error, color: Colors.red),
+                    );
+                    if (mounted) setState(() {});
+                  }, (r) {});
+                });
+              } else {
+                final like = ref.watch(likeTweetProvider);
+                like(widget.tweet.id).then((res) {
+                  res.fold((l) {
+                    isLikedByMeLocal = false;
+                    likesCount -= 1;
+                    showSmallPopUpMessage(
+                      context: context,
+                      message: l.message,
+                      borderColor: Colors.red,
+                      icon: Icon(Icons.error, color: Colors.red),
+                    );
+                    if (mounted) setState(() {});
+                  }, (r) {});
+                });
+              }
+              if (mounted)
+                setState(() {
+                  if (isLikedByMeLocal)
+                    likesCount -= 1;
+                  else
+                    likesCount += 1;
+                  isLikedByMeLocal = !isLikedByMeLocal;
+                });
+            },
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SvgPicture.asset(
+                  isLikedByMeLocal
+                      ? "assets/svg/like_filled.svg"
+                      : "assets/svg/like.svg",
+                  width: 20,
+                  height: 20,
+                  colorFilter: ColorFilter.mode(
+                    isLikedByMeLocal ? Color(0XFFF6187E) : Colors.grey,
+                    BlendMode.srcIn,
+                  ),
+                ),
+                if (likesCount > 0)
+                  Text(
+                    Shared.formatCount(likesCount),
+                    style: TextStyle(
+                      color: isLikedByMeLocal ? Color(0XFFF6187E) : Colors.grey,
+                      fontSize: 15,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          GestureDetector(
+            onTap: () {
+              //   TODO: do activity action
+            },
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SvgPicture.asset(
+                  "assets/svg/activity.svg",
+                  width: 20,
+                  height: 20,
+                  colorFilter: ColorFilter.mode(Colors.grey, BlendMode.srcIn),
+                ),
+                if (widget.tweet.activityNumber > 0)
+                  Text(
+                    Shared.formatCount(widget.tweet.activityNumber),
+                    style: TextStyle(color: Colors.grey, fontSize: 15),
+                  ),
+              ],
+            ),
+          ),
+          Row(
+            children: [
+              GestureDetector(
+                onTap: () {
+                  //   TODO: do like action
+                  if (isSavedByMeLocal) {
+                    final unSave = ref.watch(unSaveTweetProvider);
+                    unSave(widget.tweet.id).then((res) {
+                      res.fold(
+                        (l) {
+                          isSavedByMeLocal = true;
+                          showSmallPopUpMessage(
+                            context: context,
+                            message: l.message,
+                            borderColor: Colors.red,
+                            icon: Icon(Icons.error, color: Colors.red),
+                          );
+                          if (mounted) setState(() {});
+                        },
+                        (r) {
+                          showSmallPopUpMessage(
+                            context: context,
+                            message: "Post removed from your Bookmarks",
+                            borderColor: Colors.blue,
+                            icon: Icon(
+                              Icons.bookmark_remove,
+                              color: Colors.blue,
+                            ),
+                          );
+                        },
+                      );
+                    });
+                  } else {
+                    final save = ref.watch(saveTweetProvider);
+                    save(widget.tweet.id).then((res) {
+                      res.fold(
+                        (l) {
+                          isSavedByMeLocal = false;
+                          showSmallPopUpMessage(
+                            context: context,
+                            message: l.message,
+                            borderColor: Colors.red,
+                            icon: Icon(Icons.error, color: Colors.red),
+                          );
+                          if (mounted) setState(() {});
+                        },
+                        (r) {
+                          showSmallPopUpMessage(
+                            context: context,
+                            message: "Post added to your Bookmarks",
+                            borderColor: Colors.blue,
+                            icon: Icon(Icons.bookmark_add, color: Colors.blue),
+                          );
+                        },
+                      );
+                    });
+                  }
+                  if (mounted)
+                    setState(() {
+                      isSavedByMeLocal = !isSavedByMeLocal;
+                    });
+                },
+                child: SvgPicture.asset(
+                  isSavedByMeLocal
+                      ? "assets/svg/save_filled.svg"
+                      : "assets/svg/save.svg",
+                  width: 20,
+                  height: 20,
+                  colorFilter: ColorFilter.mode(
+                    isSavedByMeLocal ? Colors.blue : Colors.grey,
+                    BlendMode.srcIn,
+                  ),
+                ),
+              ),
+              SizedBox(width: 8),
+              GestureDetector(
+                onTap: () {
+                  //   TODO: do share action
+                },
+                child: Icon(Icons.share_outlined, color: Colors.grey, size: 20),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 void _openProfileTweetOptions(
   BuildContext context,

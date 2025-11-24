@@ -148,7 +148,9 @@ class _ProfileHeaderState extends ConsumerState<ProfileHeader> {
                                 radius: 40,
                                 backgroundColor: Colors.black,
                                 backgroundImage: CachedNetworkImageProvider(
-                                  widget.profileData.avatarUrl,
+                                  widget.profileData.avatarUrl.isNotEmpty
+                                      ? widget.profileData.avatarUrl
+                                      : unkownUserAvatar,
                                 ),
                                 onBackgroundImageError:
                                     (exception, stackTrace) => null,
@@ -423,7 +425,9 @@ class _ProfileHeaderState extends ConsumerState<ProfileHeader> {
                                 radius: 40,
                                 backgroundColor: Colors.black,
                                 backgroundImage: CachedNetworkImageProvider(
-                                  widget.profileData.avatarUrl,
+                                  widget.profileData.avatarUrl.isNotEmpty
+                                      ? widget.profileData.avatarUrl
+                                      : unkownUserAvatar,
                                 ),
                                 onBackgroundImageError:
                                     (exception, stackTrace) => null,

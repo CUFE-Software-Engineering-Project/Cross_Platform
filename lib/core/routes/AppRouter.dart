@@ -340,7 +340,7 @@ class Approuter {
       ),
 
       GoRoute(
-        name: RouteConstants.ChatScreen,
+        name: RouteConstants.VerifyChangeEmailProfileScreen,
         path: "/verifyChangeEmailProfileScreen",
         pageBuilder: (context, state) => CustomTransitionPage(
           child: VerifyChangeEmailProfileScreen(

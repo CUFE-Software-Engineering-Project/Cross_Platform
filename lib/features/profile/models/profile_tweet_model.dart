@@ -21,6 +21,7 @@ class ProfileTweetModel {
   // final List<String> mediaUrls;
   final TweetType type;
   final List<String> mediaIds;
+  final String parentId;
 
   ProfileTweetModel({
     required this.id,
@@ -43,6 +44,7 @@ class ProfileTweetModel {
     required this.verified,
     required this.type,
     required this.mediaIds,
+    required this.parentId,
   });
 
   factory ProfileTweetModel.fromJson(Map<String, dynamic> json) {
@@ -80,6 +82,7 @@ class ProfileTweetModel {
       profileMediaId: json["profileMediaId"] ?? "",
       protectedAccount: json["user"]?["protectedAccount"] ?? false,
       verified: json["user"]?["verified"] ?? false,
+      parentId: json["parentId"] ?? "",
       // mediaIds: meidaIds,
     );
   }

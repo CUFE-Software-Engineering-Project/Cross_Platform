@@ -99,9 +99,9 @@ class ProfileRepoImpl implements ProfileRepo {
     String username,
   ) async {
     try {
-      print("Start api ---------------------**");
+      // print("Start api ---------------------**");
       final res = await _dio.get("api/tweets/users/$username");
-      print("end api ---------------------**");
+      // print("end api ---------------------**");
       final List<dynamic> jsonList = res.data["data"] ?? [];
 
       List<ProfileTweetModel> tweets = [];
@@ -130,25 +130,69 @@ class ProfileRepoImpl implements ProfileRepo {
         json["timeAgo"] = timeAgo;
 
         tweets.add(ProfileTweetModel.fromJson(json));
-        print(
-          "id$i" +
-              "${json['profileMediaId']}--------------------*****--------------",
-        );
+        // print(
+        //   "id$i" +
+        //       "${json['profileMediaId']}--------------------*****--------------",
+        // );
       }
-      print("end repo posts ----------------**");
+      // print("end repo posts ----------------**");
       return Right(tweets);
     } catch (e) {
-      print(e.toString());
+      print(e.toString() + "--------------+++++++++++++++++");
+      return Left(Failure('Failed to load profile posts'));
+    }
+  }
+
+  Future<Either<Failure, ProfileTweetModel>> getProfileTweet(
+    String tweetId,
+  ) async {
+    try {
+      // print("Start api ---------------------**");
+      final res = await _dio.get("api/tweets/$tweetId");
+      // print("end api ---------------------**");
+
+      final Map<String, dynamic> json = res.data as Map<String, dynamic>;
+      // get profile photo url and tweet medial urls
+      final String profilePhotoId = json["user"]?["profileMedia"]?["id"] ?? "";
+
+      final List<dynamic> tweetMediaIdsDynamic = json["tweetMedia"] ?? [];
+      final List<String> tweetMediaIds = tweetMediaIdsDynamic
+          .map((media) => media["mediaId"] as String)
+          .toList();
+
+      // final List<String> userPhotoUrl = await getMediaUrls([profilePhotoId]);
+
+      // final String profilePhotoUrl = userPhotoUrl[0];
+
+      // get timeAgo
+      final String createTime = json["createdAt"] ?? "";
+      final String timeAgo = getTimeAgo(createTime);
+
+      json["profileMediaId"] = profilePhotoId;
+      json["mediaIds"] = tweetMediaIds;
+      json["timeAgo"] = timeAgo;
+
+      // print(
+      //   "id$i" +
+      //       "${json['profileMediaId']}--------------------*****--------------",
+      // );
+
+      // print("end repo posts ----------------**");
+      return Right(ProfileTweetModel.fromJson(json));
+    } catch (e) {
+      print(e.toString() + "--------------+++++++++++++++++");
       return Left(Failure('Failed to load profile posts'));
     }
   }
 
   @override
-  Future<Either<Failure, List<ProfileTweetModel>>> getProfileLikes(
+  Future<Either<Failure, List<ProfileTweetModel>>> getMediaPosts(
     String username,
   ) async {
     try {
+      // print("Start api ---------------------**");
       final res = await _dio.get("api/tweets/users/$username");
+      // print("end api ---------------------**");
       final List<dynamic> jsonList = res.data["data"] ?? [];
 
       List<ProfileTweetModel> tweets = [];
@@ -164,25 +208,83 @@ class ProfileRepoImpl implements ProfileRepo {
             .map((media) => media["mediaId"] as String)
             .toList();
 
-        final List<String> userPhotoUrl = await getMediaUrls([profilePhotoId]);
+        // final List<String> userPhotoUrl = await getMediaUrls([profilePhotoId]);
 
-        final String profilePhotoUrl = userPhotoUrl[0];
+        // final String profilePhotoUrl = userPhotoUrl[0];
 
         // get timeAgo
         final String createTime = json["createdAt"] ?? "";
         final String timeAgo = getTimeAgo(createTime);
 
-        json["profileMediaUrl"] = profilePhotoUrl;
+        json["profileMediaId"] = profilePhotoId;
         json["mediaIds"] = tweetMediaIds;
         json["timeAgo"] = timeAgo;
 
         tweets.add(ProfileTweetModel.fromJson(json));
+        // print(
+        //   "id$i" +
+        //       "${json['profileMediaId']}--------------------*****--------------",
+        // );
       }
-
+      // print("end repo posts ----------------**");
       return Right(tweets);
     } catch (e) {
-      print(e.toString());
+      // print(e.toString());
       return Left(Failure('Failed to load profile posts'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<ProfileTweetModel>>> getProfileLikes(
+    String username,
+  ) async {
+    try {
+      try {
+        // print("Start api ---------------------**");
+        final res = await _dio.get("api/tweets/users/$username");
+        // print("end api ---------------------**");
+        final List<dynamic> jsonList = res.data["data"] ?? [];
+
+        List<ProfileTweetModel> tweets = [];
+        for (int i = 0; i < jsonList.length; i++) {
+          final Map<String, dynamic> json = jsonList[i] as Map<String, dynamic>;
+          if (json["tweetType"]?.toLowerCase() == "reply") continue;
+          // get profile photo url and tweet medial urls
+          final String profilePhotoId =
+              json["user"]?["profileMedia"]?["id"] ?? "";
+
+          final List<dynamic> tweetMediaIdsDynamic = json["tweetMedia"] ?? [];
+          final List<String> tweetMediaIds = tweetMediaIdsDynamic
+              .map((media) => media["mediaId"] as String)
+              .toList();
+
+          // final List<String> userPhotoUrl = await getMediaUrls([profilePhotoId]);
+
+          // final String profilePhotoUrl = userPhotoUrl[0];
+
+          // get timeAgo
+          final String createTime = json["createdAt"] ?? "";
+          final String timeAgo = getTimeAgo(createTime);
+
+          json["profileMediaId"] = profilePhotoId;
+          json["mediaIds"] = tweetMediaIds;
+          json["timeAgo"] = timeAgo;
+
+          tweets.add(ProfileTweetModel.fromJson(json));
+          // print(
+          //   "id$i" +
+          //       "${json['profileMediaId']}--------------------*****--------------",
+          // );
+        }
+        // print("end repo posts ----------------**");
+        return Right(tweets);
+      } catch (e) {
+        // print(e.toString());
+        return Left(Failure('Failed to load profile posts'));
+      }
+    } catch (e) {
+      // print(e.toString());
+      return Left(Failure('Failed to load profile likes'));
     }
   }
 

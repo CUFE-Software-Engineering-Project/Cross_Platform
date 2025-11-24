@@ -160,6 +160,15 @@ final profilePostsProvider =
       return repo.getProfilePosts(username);
     });
 
+final profileMediaProvider =
+    FutureProvider.family<Either<Failure, List<ProfileTweetModel>>, String>((
+      ref,
+      username,
+    ) {
+      final repo = ref.watch(profileRepoProvider);
+      return repo.getMediaPosts(username);
+    });
+
 final profileLikesProvider =
     FutureProvider.family<Either<Failure, List<ProfileTweetModel>>, String>((
       ref,
@@ -167,6 +176,15 @@ final profileLikesProvider =
     ) {
       final repo = ref.watch(profileRepoProvider);
       return repo.getProfileLikes(username);
+    });
+
+final profileTweetProvider =
+    FutureProvider.family<Either<Failure, ProfileTweetModel>, String>((
+      ref,
+      tweetId,
+    ) {
+      final repo = ref.watch(profileRepoProvider);
+      return repo.getProfileTweet(tweetId);
     });
 
 final tweetRepliesProvider =
