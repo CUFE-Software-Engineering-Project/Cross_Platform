@@ -139,7 +139,6 @@ class MutedAccountsScreen extends ConsumerWidget {
   }
 
   Widget _list(WidgetRef ref, BuildContext context) {
-    final currentUser = ref.watch(currentUserProvider);
     final asyncValue = ref.watch(mutedAccountsProvider);
     return asyncValue.when(
       loading: () => const Center(child: CircularProgressIndicator()),
