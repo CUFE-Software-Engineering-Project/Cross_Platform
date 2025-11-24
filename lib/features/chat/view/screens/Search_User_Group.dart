@@ -46,13 +46,13 @@ class _SearchUserGroupState extends ConsumerState<SearchUserGroup> {
 
     _searchQuery = query;
     _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 300), () async {
+    _debounce = Timer(const Duration(milliseconds: 500), () async {
       if (!mounted) return;
       if (query.isNotEmpty) {
         final users = await ref
             .read(conversationsViewModelProvider.notifier)
             .searchUsers(query);
-
+        if (!mounted) return;
         ref.read(searchResultsProvider.notifier).state = users;
       } else {
         ref.read(searchResultsProvider.notifier).state = [];
@@ -303,10 +303,9 @@ class _SearchUserGroupState extends ConsumerState<SearchUserGroup> {
                           style: const TextStyle(color: Colors.grey),
                         ),
                         trailing: _isGrouping
-                            ? Icon(
-                                isSelected ? Icons.check : null,
-                                color: Colors.grey[600],
-                              )
+                            ? (isSelected
+                                  ? Icon(Icons.check, color: Colors.grey[600])
+                                  : null)
                             : null,
                         onTap: () => _onUserTapped(user),
                       );

@@ -65,7 +65,7 @@ class ChatLocalRepository {
     }
   }
 
-  // When user sends a message -> mark as SENT immediately
+  // When user sends a message -> mark as sent immediately
   Future<void> markMessageAsSent(String messageId) async {
     final msg = _messagesBox.get(messageId);
     if (msg != null) {
