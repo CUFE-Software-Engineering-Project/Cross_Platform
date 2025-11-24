@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lite_x/core/view/screen/app_shell.dart';
 import 'package:lite_x/features/auth/view/screens/Create_Account/Interests.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
+import 'package:lite_x/features/auth/view/screens/Create_Account/UserName_Screen.dart';
 import 'package:lite_x/features/auth/view/screens/Intro_Screen.dart';
 import 'package:lite_x/core/view/screen/Splash_Screen.dart';
 import 'package:lite_x/features/auth/view/screens/Create_Account/CreateAccount_Screen.dart';
@@ -218,7 +219,7 @@ class Approuter {
         name: RouteConstants.usernamesettings,
         path: "/usernamesettings",
         pageBuilder: (context, state) => CustomTransitionPage(
-          child: const UsernameScreen(),
+          child: const UsernameSettings(),
           transitionsBuilder: _slideRightTransitionBuilder,
         ),
       ),
