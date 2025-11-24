@@ -114,18 +114,17 @@ class CurrentSearchUser extends StatelessWidget {
             ? CachedNetworkImageProvider(user.profileMedia)
             : AssetImage("assets/images/basic_user.jpeg"),
         radius: 22,
-        backgroundColor: Colors.grey,
+        // backgroundColor: Colors.grey,
         onBackgroundImageError: (exception, stackTrace) => null,
       ),
-      title: Flexible(
-        child: Text(
-          user.name,
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-          ),
+      title: Text(
+        user.name,
+        style: TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+          fontSize: 16,
         ),
+        overflow: TextOverflow.ellipsis,
       ),
       subtitle: Flexible(
         child: Text(
