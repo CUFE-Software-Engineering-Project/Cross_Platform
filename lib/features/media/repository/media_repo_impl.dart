@@ -2,8 +2,6 @@ import 'dart:io';
 
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
-import 'package:lite_x/core/classes/AppFailure.dart';
-import 'package:lite_x/core/classes/PickedImage.dart';
 import 'package:lite_x/features/profile/models/shared.dart';
 import 'package:lite_x/features/media/models/confirm_upload_model.dart';
 import 'package:lite_x/features/media/models/request_upload_model.dart';

@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
 import 'package:lite_x/features/profile/view/widgets/profile/profile_header.dart';
 import 'package:lite_x/features/profile/view/widgets/profile/profile_tabs.dart';
-import 'package:lite_x/features/profile/view_model/providers.dart';
 
 class ProfileScreenBody extends ConsumerStatefulWidget {
   final ProfileModel profileData;

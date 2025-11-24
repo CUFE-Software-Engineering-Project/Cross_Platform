@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
 import 'package:lite_x/features/profile/models/profile_tweet_model.dart';
 import 'package:lite_x/features/profile/models/shared.dart';
-import 'package:lite_x/features/profile/view/widgets/profile_tweets/profile_normal_tweet_widget.dart';
 import 'package:lite_x/features/profile/view/widgets/profile_tweets/profile_normar_tweet_quot.dart'
     hide InterActionsRowOfTweet;
 import 'package:lite_x/features/profile/view_model/providers.dart';

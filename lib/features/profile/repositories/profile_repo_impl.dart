@@ -2,7 +2,6 @@ import 'package:dio/dio.dart';
 import 'package:lite_x/features/media/download_media.dart';
 import 'package:lite_x/features/profile/models/create_reply_model.dart';
 import 'package:lite_x/features/profile/models/create_tweet_model.dart';
-import 'package:lite_x/features/profile/models/follower_model.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
 import 'package:lite_x/features/profile/models/profile_tweet_model.dart';
 import 'package:lite_x/features/profile/models/search_user_model.dart';

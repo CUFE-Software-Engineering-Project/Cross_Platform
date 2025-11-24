@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
 import 'package:lite_x/features/profile/models/search_user_model.dart';
-import 'package:lite_x/features/profile/models/user_model.dart';
 import 'package:lite_x/features/profile/view_model/providers.dart';
 
 class ProfileSearchScreen extends ConsumerStatefulWidget {

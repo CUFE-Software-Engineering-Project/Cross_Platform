@@ -16,8 +16,6 @@ import 'package:lite_x/features/auth/view/screens/Log_In/LoginPasswordScreen.dar
 import 'package:lite_x/features/auth/view/screens/Log_In/Login_Screen.dart';
 import 'package:lite_x/features/auth/view/screens/Create_Account/Password_Screen.dart';
 import 'package:lite_x/features/auth/view/screens/Create_Account/Upload_Profile_Photo_Screen.dart';
-import 'package:lite_x/features/auth/view/screens/Create_Account/UserName_Screen.dart'
-    hide UsernameScreen;
 import 'package:lite_x/features/auth/view/screens/Create_Account/Verification_Screen.dart';
 import 'package:lite_x/features/auth/view/screens/Log_In/VerificationForgot_Screen.dart';
 import 'package:lite_x/features/chat/view/screens/Search_Direct_messages.dart';
