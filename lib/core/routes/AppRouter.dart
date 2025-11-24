@@ -1,8 +1,9 @@
+// ignore_for_file: undefined_hidden_name
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lite_x/core/view/screen/app_shell.dart';
 import 'package:lite_x/features/auth/view/screens/Create_Account/Interests.dart';
-import 'package:lite_x/features/chat/view/TestChatScreen.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
 import 'package:lite_x/features/auth/view/screens/Intro_Screen.dart';
 import 'package:lite_x/core/view/screen/Splash_Screen.dart';
@@ -19,7 +20,8 @@ import 'package:lite_x/features/auth/view/screens/Create_Account/UserName_Screen
 import 'package:lite_x/features/auth/view/screens/Create_Account/Verification_Screen.dart';
 import 'package:lite_x/features/auth/view/screens/Log_In/VerificationForgot_Screen.dart';
 import 'package:lite_x/features/chat/view/screens/Search_Direct_messages.dart';
-// import 'package:lite_x/features/chat/view/screens/chat_Screen.dart';
+import 'package:lite_x/features/chat/view/screens/Search_User_Group.dart';
+import 'package:lite_x/features/chat/view/screens/chat_Screen.dart';
 import 'package:lite_x/features/chat/view/screens/conversations_screen.dart';
 import 'package:lite_x/features/explore/view/explore_screen.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
@@ -251,6 +253,14 @@ class Approuter {
         ),
       ),
       GoRoute(
+        name: RouteConstants.SearchUserGroup,
+        path: "/SearchUserGroup",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: const SearchUserGroup(),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
         name: RouteConstants.BirthDateScreen,
         path: "/birthDateScreen",
         pageBuilder: (context, state) => CustomTransitionPage(
@@ -258,14 +268,7 @@ class Approuter {
           transitionsBuilder: _slideRightTransitionBuilder,
         ),
       ),
-      GoRoute(
-        name: RouteConstants.TestChatScreen,
-        path: "/TestChatScreen",
-        pageBuilder: (context, state) => CustomTransitionPage(
-          child: const TestChatScreen(),
-          transitionsBuilder: _slideRightTransitionBuilder,
-        ),
-      ),
+
       GoRoute(
         name: RouteConstants.SearchDirectMessages,
         path: "/SearchDirectMessages",
@@ -339,6 +342,25 @@ class Approuter {
         ),
       ),
 
+      GoRoute(
+        name: RouteConstants.ChatScreen,
+        path: "/ChatScreen/:chatId",
+        pageBuilder: (context, state) {
+          final chatId = state.pathParameters['chatId']!;
+          final extraData = state.extra as Map<String, dynamic>;
+
+          return CustomTransitionPage(
+            child: ChatScreen(
+              chatId: chatId,
+              title: extraData['title'],
+              subtitle: extraData['subtitle'],
+              profileImage: extraData['avatarUrl'],
+              isGroup: extraData['isGroup'] ?? false,
+            ),
+            transitionsBuilder: _slideRightTransitionBuilder,
+          );
+        },
+      ),
       GoRoute(
         name: RouteConstants.ChatScreen,
         path: "/verifyChangeEmailProfileScreen",

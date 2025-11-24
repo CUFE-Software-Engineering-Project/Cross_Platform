@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:hive_ce/hive.dart';
 
 part 'usermodel.g.dart';
@@ -38,6 +39,8 @@ class UserModel {
 
   @HiveField(10)
   final Set<String> interests;
+  @HiveField(11)
+  final String? localProfilePhotoPath;
 
   UserModel({
     required this.name,
@@ -52,6 +55,7 @@ class UserModel {
 
     this.tfaVerified,
     this.interests = const {},
+    this.localProfilePhotoPath,
   });
 
   UserModel copyWith({
@@ -67,6 +71,7 @@ class UserModel {
     bool? loginCodesSet,
     bool? tfaVerified,
     Set<String>? interests,
+    String? localProfilePhotoPath,
   }) {
     return UserModel(
       name: name ?? this.name,
@@ -80,6 +85,8 @@ class UserModel {
       isVerified: isVerified ?? this.isVerified,
       tfaVerified: tfaVerified ?? this.tfaVerified,
       interests: interests ?? this.interests,
+      localProfilePhotoPath:
+          localProfilePhotoPath ?? this.localProfilePhotoPath,
     );
   }
 
@@ -155,7 +162,7 @@ class UserModel {
         other.isEmailVerified == isEmailVerified &&
         other.isVerified == isVerified &&
         other.tfaVerified == tfaVerified &&
-        other.interests == interests;
+        setEquals(other.interests, interests);
   }
 
   @override

@@ -1,343 +1,296 @@
 import 'package:dio/dio.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:lite_x/core/classes/AppFailure.dart';
-import 'package:lite_x/core/constants/server_constants.dart';
+import 'package:lite_x/core/providers/dio_interceptor.dart';
 import 'package:lite_x/features/chat/models/conversationmodel.dart';
 import 'package:lite_x/features/chat/models/messagemodel.dart';
+import 'package:lite_x/features/chat/models/usersearchmodel.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-
 part 'chat_remote_repository.g.dart';
 
 @Riverpod(keepAlive: true)
 ChatRemoteRepository chatRemoteRepository(Ref ref) {
-  return ChatRemoteRepository(dio: Dio(BASE_OPTIONS));
+  final dio = ref.watch(dioProvider);
+  return ChatRemoteRepository(dio: dio);
 }
 
 class ChatRemoteRepository {
   final Dio _dio;
-
   ChatRemoteRepository({required Dio dio}) : _dio = dio;
+  //--------------------------------------------------search users to choose to chat with him or them according to group or not ----------------------------------------//
+  Future<Either<AppFailure, List<UserSearchModel>>> searchUsers(
+    String query,
+  ) async {
+    try {
+      final response = await _dio.get(
+        "api/users/search",
+        queryParameters: {"query": query},
+      );
 
-  // Get chat information by chat ID
-  // GET /api/dm/chat/{chatId}
-  Future<Either<AppFailure, ConversationModel>> getChatById(
+      final data = response.data as Map<String, dynamic>;
+
+      final List<dynamic> list = data["users"] ?? [];
+
+      final users = list
+          .map((e) => UserSearchModel.fromMap(e as Map<String, dynamic>))
+          .toList();
+
+      return Right(users);
+    } on DioException catch (e) {
+      print("DIO RESPONSE DATA: ${e.response?.data}");
+      final errorMessage =
+          e.response?.data["message"] ??
+          e.response?.data["error"] ??
+          "Failed to search users";
+
+      return Left(AppFailure(message: errorMessage));
+    } catch (e) {
+      print("GENERAL ERROR: ${e.toString()}");
+      return Left(AppFailure(message: e.toString()));
+    }
+  }
+
+  //----------------------------------------------------------------create chat ---------------------------------------------------------------------//
+  Future<Either<AppFailure, ConversationModel>> create_chat({
+    required List<String> recipientIds,
+    required String Current_UserId,
+    required bool DMChat,
+  }) async {
+    try {
+      final response = await _dio.post(
+        "api/dm/chat/create-chat",
+        data: {"participant_ids": recipientIds, "DMChat": DMChat},
+      );
+      final data = response.data["newChat"] as Map<String, dynamic>;
+      print("RESPONSE => ${response.data}");
+
+      final conversation = ConversationModel.fromApiResponse(
+        data,
+        Current_UserId,
+      );
+
+      return Right(conversation);
+    } on DioException catch (e) {
+      final errorMessage =
+          e.response?.data["message"] ??
+          e.response?.data["error"] ??
+          "Failed to create chat";
+      return Left(AppFailure(message: errorMessage));
+    } catch (e) {
+      return Left(AppFailure(message: e.toString()));
+    }
+  }
+
+  //----------------------------------------------------get inital messages from getchatinfo without timestemp-------------------------------//
+  Future<Either<AppFailure, List<MessageModel>>> getInitialChatMessages(
     String chatId,
   ) async {
     try {
-      final response = await _dio.get('/api/dm/chat/$chatId');
+      print(chatId);
+      final response = await _dio.get("api/dm/chat/$chatId");
+      final data = response.data as Map<String, dynamic>;
 
-      if (response.statusCode == 200) {
-        final conversation = ConversationModel.fromApiResponse(response.data);
-        return right(conversation);
-      }
+      final List<dynamic> messagesList = data['messages'] ?? [];
 
-      return left(
-        AppFailure(message: response.data['error'] ?? 'Failed to get chat'),
-      );
+      final messages = messagesList
+          .map((msg) => MessageModel.fromApiResponse(msg))
+          .toList();
+
+      return Right(messages);
     } on DioException catch (e) {
-      return left(
-        AppFailure(
-          message: e.response?.data['error'] ?? e.message ?? 'Network error',
-        ),
-      );
+      final errorMessage =
+          e.response?.data["message"] ??
+          e.response?.data["error"] ??
+          "Failed to get initial messages";
+      return Left(AppFailure(message: errorMessage));
     } catch (e) {
-      return left(AppFailure(message: e.toString()));
+      return Left(AppFailure(message: e.toString()));
     }
   }
 
-  // Retrieve all chats for a user
-  // GET /api/dm/chat/{userId}
-  Future<Either<AppFailure, List<ConversationModel>>> getUserChats(
-    String userId,
+  //----------------------------------------------------get user chats-----------------------------------------------------------------//
+  Future<Either<AppFailure, List<ConversationModel>>> getuserchats(
+    String Current_UserId,
   ) async {
     try {
-      final response = await _dio.get('/api/dm/chat/$userId');
+      final response = await _dio.get("api/dm/chat/user");
 
-      if (response.statusCode == 200) {
-        final List<dynamic> chatsData = response.data;
-        final conversations = chatsData
-            .map((chat) => ConversationModel.fromApiResponse(chat))
-            .toList();
-        return right(conversations);
-      }
+      final List<dynamic> chatsList = response.data as List<dynamic>;
+      final conversations = chatsList
+          .map(
+            (chat) => ConversationModel.fromApiResponse(
+              chat as Map<String, dynamic>,
+              Current_UserId,
+            ),
+          )
+          .toList();
 
-      return left(
-        AppFailure(message: response.data['error'] ?? 'Failed to get chats'),
-      );
+      return Right(conversations);
     } on DioException catch (e) {
-      return left(
-        AppFailure(
-          message: e.response?.data['error'] ?? e.message ?? 'Network error',
-        ),
-      );
+      final errorMessage =
+          e.response?.data["message"] ??
+          e.response?.data["error"] ??
+          "Failed to get user chats";
+      return Left(AppFailure(message: errorMessage));
     } catch (e) {
-      return left(AppFailure(message: e.toString()));
+      return Left(AppFailure(message: e.toString()));
     }
   }
 
-  // Create a new chat
-  // POST /api/dm/chat/{userId}/createchat
-  Future<Either<AppFailure, ConversationModel>> createChat({
-    required String userId,
-    required bool isDMChat,
-    required List<String> participantIds,
+  //---------------------------------------------------------------update group info -------------------------------------------------------------------------------------//
+  Future<Either<AppFailure, ConversationModel>> updateGroupInfo({
+    required String chatId,
+    required String currentUserId,
     String? groupName,
-    String? groupPhoto,
     String? groupDescription,
+    String? groupPhotoKey,
   }) async {
     try {
-      final requestData = {
-        'DMChat': isDMChat,
-        'participant_ids': participantIds,
-      };
-      if (!isDMChat) {
-        if (groupName != null) requestData['name'] = groupName;
-        if (groupPhoto != null) requestData['photo'] = groupPhoto;
-        if (groupDescription != null) {
-          requestData['description'] = groupDescription;
-        }
-      }
-
-      final response = await _dio.post(
-        '/api/dm/chat/$userId/createchat',
-        data: requestData,
-      );
-
-      if (response.statusCode == 201) {
-        final conversation = ConversationModel.fromApiResponse(response.data);
-        return right(conversation);
-      }
-
-      return left(
-        AppFailure(message: response.data['error'] ?? 'Failed to create chat'),
-      );
-    } on DioException catch (e) {
-      return left(
-        AppFailure(
-          message: e.response?.data['error'] ?? e.message ?? 'Network error',
-        ),
-      );
-    } catch (e) {
-      return left(AppFailure(message: e.toString()));
-    }
-  }
-
-  // Delete a chat
-  // DELETE /api/dm/chat/{chatId}
-  Future<Either<AppFailure, String>> deleteChat(String chatId) async {
-    try {
-      final response = await _dio.delete('/api/dm/chat/$chatId');
-
-      if (response.statusCode == 200) {
-        return right(response.data['message'] ?? 'Chat deleted successfully');
-      }
-
-      return left(
-        AppFailure(message: response.data['error'] ?? 'Failed to delete chat'),
-      );
-    } on DioException catch (e) {
-      return left(
-        AppFailure(
-          message: e.response?.data['error'] ?? e.message ?? 'Network error',
-        ),
-      );
-    } catch (e) {
-      return left(AppFailure(message: e.toString()));
-    }
-  }
-
-  // Update group chat details
-  // PUT /api/dm/chat/{chatId}/group
-  Future<Either<AppFailure, ConversationModel>> updateGroupChat({
-    required String chatId,
-    String? name,
-    String? description,
-    String? photo,
-  }) async {
-    try {
-      final requestData = <String, dynamic>{};
-      if (name != null) requestData['name'] = name;
-      if (description != null) requestData['description'] = description;
-      if (photo != null) requestData['photo'] = photo;
-
       final response = await _dio.put(
-        '/api/dm/chat/$chatId/group',
-        data: requestData,
-      );
-
-      if (response.statusCode == 200) {
-        final conversation = ConversationModel.fromApiResponse(response.data);
-        return right(conversation);
-      }
-
-      return left(
-        AppFailure(message: response.data['error'] ?? 'Failed to update group'),
-      );
-    } on DioException catch (e) {
-      return left(
-        AppFailure(
-          message: e.response?.data['error'] ?? e.message ?? 'Network error',
-        ),
-      );
-    } catch (e) {
-      return left(AppFailure(message: e.toString()));
-    }
-  }
-
-  // Send a message to a chat
-  // POST /api/dm/chat/{userId}/message
-  Future<Either<AppFailure, MessageModel>> sendMessage({
-    required String userId,
-    required String chatId,
-    required List<String> recipientIds,
-    String? content,
-    List<Map<String, dynamic>>? mediaData,
-  }) async {
-    try {
-      final requestData = {
-        'chatId': chatId,
-        'recipientId': recipientIds,
-        'data': {
-          'content': content,
-          if (mediaData != null && mediaData.isNotEmpty)
-            'messageMedia': mediaData,
+        "api/dm/chat/$chatId/group",
+        data: {
+          if (groupName != null) "name": groupName,
+          if (groupDescription != null) "description": groupDescription,
+          if (groupPhotoKey != null) "photo": groupPhotoKey,
         },
-      };
-
-      final response = await _dio.post(
-        '/api/dm/chat/$userId/message',
-        data: requestData,
       );
 
-      if (response.statusCode == 201) {
-        final message = MessageModel.fromApiResponse(response.data);
-        return right(message);
-      }
-
-      return left(
-        AppFailure(message: response.data['error'] ?? 'Failed to send message'),
+      final data = response.data as Map<String, dynamic>;
+      final updatedConversation = ConversationModel.fromApiResponse(
+        data,
+        currentUserId,
       );
+
+      return Right(updatedConversation);
     } on DioException catch (e) {
-      return left(
-        AppFailure(
-          message: e.response?.data['error'] ?? e.message ?? 'Network error',
-        ),
-      );
+      final errorMessage =
+          e.response?.data["message"] ??
+          e.response?.data["error"] ??
+          "Failed to update group info";
+      return Left(AppFailure(message: errorMessage));
     } catch (e) {
-      return left(AppFailure(message: e.toString()));
+      return Left(AppFailure(message: e.toString()));
     }
   }
 
-  // Update message status
-  // PUT /api/dm/chat/{chatId}/messageStatus
-  Future<Either<AppFailure, String>> updateMessageStatus({
-    required String chatId,
-    required String status,
+  //-----------------------------------------------------------get messages of the conversation-------------------------------------------------------------------------//
+  Future<Either<AppFailure, List<MessageModel>>> getMessagesChat(
+    String chatId, {
+    required DateTime lastMessageTimestamp,
   }) async {
-    try {
-      final response = await _dio.put(
-        '/api/dm/chat/$chatId/messageStatus',
-        data: {'status': status},
-      );
-
-      if (response.statusCode == 200) {
-        return right(response.data['status'] ?? 'Status updated');
-      }
-
-      return left(
-        AppFailure(
-          message: response.data['error'] ?? 'Failed to update status',
-        ),
-      );
-    } on DioException catch (e) {
-      return left(
-        AppFailure(
-          message: e.response?.data['error'] ?? e.message ?? 'Network error',
-        ),
-      );
-    } catch (e) {
-      return left(AppFailure(message: e.toString()));
-    }
-  }
-
-  // Get unseen messages count for a specific chat
-  // GET /api/dm/chat/{chatId}/unseenMessagesCount
-  Future<Either<AppFailure, int>> getUnseenMessagesCount(String chatId) async {
     try {
       final response = await _dio.get(
-        '/api/dm/chat/$chatId/unseenMessagesCount',
+        "api/dm/chat/$chatId/messages",
+        queryParameters: {
+          "lastMessageTimestamp": lastMessageTimestamp.toIso8601String(),
+        },
       );
 
-      if (response.statusCode == 200) {
-        return right(response.data['unseenMessagesCount'] ?? 0);
-      }
+      final List<dynamic> messagesList = response.data as List<dynamic>;
 
-      return left(
-        AppFailure(message: response.data['error'] ?? 'Failed to get count'),
-      );
+      final messages = messagesList
+          .map(
+            (msg) => MessageModel.fromApiResponse(msg as Map<String, dynamic>),
+          )
+          .toList();
+
+      return Right(messages);
     } on DioException catch (e) {
-      return left(
-        AppFailure(
-          message: e.response?.data['error'] ?? e.message ?? 'Network error',
-        ),
-      );
+      final errorMessage =
+          e.response?.data["message"] ??
+          e.response?.data["error"] ??
+          "Failed to get messages";
+      return Left(AppFailure(message: errorMessage));
     } catch (e) {
-      return left(AppFailure(message: e.toString()));
+      return Left(AppFailure(message: e.toString()));
     }
   }
 
-  /// Get unseen chats count for a user
-  /// GET /api/dm/chat/{userId}/unseenChats
-  Future<Either<AppFailure, int>> getUnseenChatsCount(String userId) async {
+  //----------------------------------------------------------------------get unseen count of one chat------------------------------------------------------------------------//
+  Future<Either<AppFailure, int>> getUnseenCountOfChat(String chatId) async {
     try {
-      final response = await _dio.get('/api/dm/chat/$userId/unseenChats');
-
-      if (response.statusCode == 200) {
-        return right(response.data['unseenChatsCount'] ?? 0);
-      }
-
-      return left(
-        AppFailure(message: response.data['error'] ?? 'Failed to get count'),
+      final response = await _dio.get(
+        "api/dm/chat/$chatId/unseen-messages-count",
       );
+
+      final data = response.data as Map<String, dynamic>;
+      final unseenCount = data["unseenMessagesCount"] as int? ?? 0;
+
+      return Right(unseenCount);
     } on DioException catch (e) {
-      return left(
-        AppFailure(
-          message: e.response?.data['error'] ?? e.message ?? 'Network error',
-        ),
-      );
+      final errorMessage =
+          e.response?.data["message"] ??
+          e.response?.data["error"] ??
+          "Failed to get unseen count";
+      return Left(AppFailure(message: errorMessage));
     } catch (e) {
-      return left(AppFailure(message: e.toString()));
+      return Left(AppFailure(message: e.toString()));
     }
   }
 
-  // added future
-  Future<Either<AppFailure, MessageModel>> sendTextMessage({
-    required String userId,
-    required String chatId,
-    required List<String> recipientIds,
-    required String content,
-  }) {
-    return sendMessage(
-      userId: userId,
-      chatId: chatId,
-      recipientIds: recipientIds,
-      content: content,
-    );
+  //-----------------------------------------------------------------get unseen count of all messages of all chats --------------------------------------------------------------------------//
+  Future<Either<AppFailure, int>> getUnseenCountAllChats() async {
+    try {
+      final response = await _dio.get("api/dm/chat/all-unseen-messages-count");
+
+      final data = response.data as Map<String, dynamic>;
+      final totalUnseenCount = data["totalUnseenMessages"] as int? ?? 0;
+
+      return Right(totalUnseenCount);
+    } on DioException catch (e) {
+      final errorMessage =
+          e.response?.data["message"] ??
+          e.response?.data["error"] ??
+          "Failed to get all unseen count";
+      return Left(AppFailure(message: errorMessage));
+    } catch (e) {
+      return Left(AppFailure(message: e.toString()));
+    }
   }
 
-  Future<Either<AppFailure, MessageModel>> sendMediaMessage({
-    required String userId,
-    required String chatId,
-    required List<String> recipientIds,
-    required List<Map<String, dynamic>> mediaData,
-    String? content,
-  }) {
-    return sendMessage(
-      userId: userId,
-      chatId: chatId,
-      recipientIds: recipientIds,
-      content: content,
-      mediaData: mediaData,
-    );
+  //--------------------------------------------------------------get chat info --------------------------------------------------------------------------//
+  Future<Either<AppFailure, ConversationModel>> getChatInfo(
+    String chatId,
+    String currentUserId,
+  ) async {
+    try {
+      final response = await _dio.get("api/dm/chat/$chatId");
+
+      final data = response.data as Map<String, dynamic>;
+      final conversation = ConversationModel.fromApiResponse(
+        data,
+        currentUserId,
+      );
+
+      return Right(conversation);
+    } on DioException catch (e) {
+      final errorMessage =
+          e.response?.data["message"] ??
+          e.response?.data["error"] ??
+          "Failed to get chat info";
+      return Left(AppFailure(message: errorMessage));
+    } catch (e) {
+      return Left(AppFailure(message: e.toString()));
+    }
+  }
+
+  //------------------------------------------------------------------delete chat from conversions---------------------------------------------------------------------------//
+  Future<Either<AppFailure, bool>> deleteChat(String chatId) async {
+    try {
+      final response = await _dio.delete("api/dm/chat/$chatId");
+
+      final data = response.data as Map<String, dynamic>;
+      final success = data["success"] as bool? ?? true;
+
+      return Right(success);
+    } on DioException catch (e) {
+      final errorMessage =
+          e.response?.data["message"] ??
+          e.response?.data["error"] ??
+          "Failed to delete chat";
+      return Left(AppFailure(message: errorMessage));
+    } catch (e) {
+      return Left(AppFailure(message: e.toString()));
+    }
   }
 }

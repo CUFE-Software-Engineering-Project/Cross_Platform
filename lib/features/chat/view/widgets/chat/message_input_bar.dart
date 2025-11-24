@@ -9,17 +9,18 @@ import 'package:giphy_get/giphy_get.dart';
 import 'package:lite_x/core/theme/palette.dart';
 
 class MessageInputBar extends ConsumerStatefulWidget {
-  final Function(String)? onSendMessage;
+  final Function(String text) onSendMessage;
   final Function(String)? onSendAudio;
   final Function(PickedImage)? onSendImage;
   final Function(String)? onSendGif;
-
+  final Function(bool isTyping)? onTypingChanged;
   const MessageInputBar({
     super.key,
-    this.onSendMessage,
+    required this.onSendMessage,
     this.onSendAudio,
     this.onSendImage,
     this.onSendGif,
+    this.onTypingChanged,
   });
 
   @override
@@ -28,9 +29,11 @@ class MessageInputBar extends ConsumerStatefulWidget {
 
 class _MessageInputBarState extends ConsumerState<MessageInputBar>
     with SingleTickerProviderStateMixin {
-  final String _giphyApiKey = dotenv.env["giphyApiKey"]!;
+  final String _giphyApiKey = dotenv.env["giphyApiKey"] ?? "";
   late AnimationController _colorController;
   final TextEditingController _textController = TextEditingController();
+  Timer? _typingTimer;
+  bool _isTyping = false;
   final FocusNode _focusNode = FocusNode();
   final AudioPlayer _audioPlayer = AudioPlayer();
 
@@ -47,6 +50,7 @@ class _MessageInputBarState extends ConsumerState<MessageInputBar>
       duration: const Duration(seconds: 1),
     )..repeat(reverse: true);
     _setupAudioPlayer();
+    _textController.addListener(_onTextChanged);
   }
 
   Future<void> _stopPlayback() async {
@@ -84,6 +88,8 @@ class _MessageInputBarState extends ConsumerState<MessageInputBar>
     _recordingTimer?.cancel();
     _playerStateSubscription?.cancel();
     _positionSubscription?.cancel();
+    _typingTimer?.cancel();
+    _textController.removeListener(_onTextChanged);
     _textController.dispose();
     _colorController.dispose();
     _focusNode.dispose();
@@ -91,12 +97,41 @@ class _MessageInputBarState extends ConsumerState<MessageInputBar>
     super.dispose();
   }
 
-  Future<void> _handleSendMessage() async {
-    final text = _textController.text.trim();
-    if (text.isNotEmpty) {
-      widget.onSendMessage?.call(text);
-      _textController.clear();
+  void _onTextChanged() {
+    final hasText = _textController.text.trim().isNotEmpty;
+
+    if (hasText && !_isTyping) {
+      _isTyping = true;
+      widget.onTypingChanged?.call(true);
     }
+    _typingTimer?.cancel();
+
+    if (hasText) {
+      _typingTimer = Timer(const Duration(seconds: 2), () {
+        if (_isTyping && mounted) {
+          _isTyping = false;
+          widget.onTypingChanged?.call(false);
+        }
+      });
+    } else if (_isTyping) {
+      _isTyping = false;
+      widget.onTypingChanged?.call(false);
+    }
+  }
+
+  void _handleSend() {
+    final text = _textController.text.trim();
+    if (text.isEmpty) return;
+
+    if (_isTyping) {
+      _isTyping = false;
+      widget.onTypingChanged?.call(false);
+    }
+    _typingTimer?.cancel();
+
+    widget.onSendMessage(text);
+    _textController.clear();
+    _focusNode.requestFocus();
   }
 
   Future<void> _selectImage() async {
@@ -113,11 +148,32 @@ class _MessageInputBarState extends ConsumerState<MessageInputBar>
           .startRecording();
       if (success) {
         _recordingTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-          ref.read(audioRecorderProvider.notifier).updateRecordingDuration();
+          if (mounted) {
+            ref.read(audioRecorderProvider.notifier).updateRecordingDuration();
+          }
         });
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Failed to start recording. Please check microphone permissions.',
+              ),
+              backgroundColor: Palette.border,
+            ),
+          );
+        }
       }
     } catch (e) {
       debugPrint('Error starting recording: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Recording error: $e'),
+            backgroundColor: Palette.border,
+          ),
+        );
+      }
     }
   }
 
@@ -127,6 +183,14 @@ class _MessageInputBarState extends ConsumerState<MessageInputBar>
       await ref.read(audioRecorderProvider.notifier).stopRecording();
     } catch (e) {
       debugPrint('Error stopping recording: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error stopping recording: $e'),
+            backgroundColor: Palette.border,
+          ),
+        );
+      }
     }
   }
 
@@ -155,6 +219,14 @@ class _MessageInputBarState extends ConsumerState<MessageInputBar>
       }
     } catch (e) {
       debugPrint("Error toggling playback: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Playback error: $e'),
+            backgroundColor: Palette.border,
+          ),
+        );
+      }
     }
   }
 
@@ -227,6 +299,7 @@ class _MessageInputBarState extends ConsumerState<MessageInputBar>
             size: 26,
           ),
           onPressed: _selectImage,
+          tooltip: 'Send image',
           constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
         ),
         IconButton(
@@ -236,6 +309,7 @@ class _MessageInputBarState extends ConsumerState<MessageInputBar>
             size: 26,
           ),
           onPressed: _toggleGifPicker,
+          tooltip: 'Send GIF',
           constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
         ),
         Expanded(
@@ -259,6 +333,7 @@ class _MessageInputBarState extends ConsumerState<MessageInputBar>
               contentPadding: EdgeInsets.symmetric(horizontal: 2, vertical: 8),
             ),
             style: const TextStyle(color: Color(0xFFFFFFFF), fontSize: 16),
+            // onSubmitted: (_) => _handleSend(),
           ),
         ),
         ValueListenableBuilder<TextEditingValue>(
@@ -271,8 +346,9 @@ class _MessageInputBarState extends ConsumerState<MessageInputBar>
                 color: hastext ? Palette.kBrandBlue : Palette.kBrandPurple,
                 size: 24,
               ),
-              onPressed: hastext ? _handleSendMessage : _startRecording,
+              onPressed: hastext ? _handleSend : _startRecording,
               onLongPress: !hastext ? _startRecording : null,
+              tooltip: hastext ? 'Send message' : 'Record audio',
               constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
             );
           },
