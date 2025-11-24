@@ -11,6 +11,28 @@ pipeline {
     }
 
     stages {
+        stage('Get Commit Info') {
+            steps {
+                script {
+                    // Get the commit author's email
+                    def commitEmail = sh(
+                        script: "git --no-pager show -s --format='%ae' HEAD",
+                        returnStdout: true
+                    ).trim()
+                    
+                    // Validate email
+                    if (commitEmail && commitEmail.contains('@')) {
+                        env.COMMIT_EMAILS = commitEmail
+                    } else {
+                        echo "Warning: Could not get commit email, using default"
+                        env.COMMIT_EMAILS = env.JENKINS_EMAIL
+                    }
+                    
+                    echo "Email will be sent to: ${env.COMMIT_EMAILS}"
+                }
+            }
+        }
+        
         stage("SCM Checkout") {
             steps {
                 script {
