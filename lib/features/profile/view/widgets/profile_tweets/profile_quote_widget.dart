@@ -38,7 +38,23 @@ class ProfileQuoteWidget extends ConsumerWidget implements ProfileTweet {
             data: (res) {
               return res.fold(
                 (l) {
-                  return Center(child: Text(l.message));
+                  return ListView(
+                    shrinkWrap: true,
+                    physics: NeverScrollableScrollPhysics(),
+                    children: [
+                      SizedBox(height: 5),
+                      Center(child: Text(l.message)),
+                      IconButton(
+                        onPressed: () async {
+                          // ignore: unused_result
+                          ref.refresh(
+                            profileTweetProvider(this.tweetModel.parentId),
+                          );
+                        },
+                        icon: Icon(Icons.refresh, color: Colors.white),
+                      ),
+                    ],
+                  );
                 },
                 (r) {
                   return ProfileNormarTweetQuot(

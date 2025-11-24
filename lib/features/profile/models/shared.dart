@@ -322,9 +322,10 @@ class _BuildSmallProfileImageState
     if (mounted) {
       // TODO: implement initState
       if (widget.mediaId == null && widget.userId == null) {
-        setState(() {
-          _loading = false;
-        });
+        if (mounted)
+          setState(() {
+            _loading = false;
+          });
         return;
       } else if (widget.mediaId == null) {
         final currentUser = ref.watch(currentUserProvider);
@@ -334,17 +335,19 @@ class _BuildSmallProfileImageState
         profileData.whenData((data) {
           data.fold(
             (l) {
-              setState(() {
-                _loading = false;
-                _media =
-                    "https://t4.ftcdn.net/jpg/09/64/89/19/360_F_964891988_aeRrD7Ee7IhmKQhYkCrkrfE6UHtILfPp.jpg";
-              });
+              if (mounted)
+                setState(() {
+                  _loading = false;
+                  _media =
+                      "https://t4.ftcdn.net/jpg/09/64/89/19/360_F_964891988_aeRrD7Ee7IhmKQhYkCrkrfE6UHtILfPp.jpg";
+                });
             },
             (r) {
               _media = r.avatarUrl;
-              setState(() {
-                _loading = false;
-              });
+              if (mounted)
+                setState(() {
+                  _loading = false;
+                });
             },
           );
         });
@@ -352,9 +355,10 @@ class _BuildSmallProfileImageState
       } else if (widget.mediaId!.isEmpty) {}
       getMediaUrls([widget.mediaId!]).then((res) {
         _media = res[0];
-        setState(() {
-          _loading = false;
-        });
+        if (mounted)
+          setState(() {
+            _loading = false;
+          });
       });
     } else
       return;

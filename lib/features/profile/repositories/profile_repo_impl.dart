@@ -181,7 +181,7 @@ class ProfileRepoImpl implements ProfileRepo {
       return Right(ProfileTweetModel.fromJson(json));
     } catch (e) {
       print(e.toString() + "--------------+++++++++++++++++");
-      return Left(Failure('Failed to load profile posts'));
+      return Left(Failure('Failed to load Tweet'));
     }
   }
 
