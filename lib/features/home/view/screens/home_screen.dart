@@ -3,15 +3,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lite_x/core/providers/current_user_provider.dart';
 import 'package:lite_x/core/view/screen/app_shell.dart';
 import 'package:lite_x/features/home/models/tweet_model.dart';
+import 'package:lite_x/features/home/providers/user_profile_provider.dart';
 import 'package:lite_x/features/home/view/screens/tweet_screen.dart';
 import 'package:lite_x/features/home/view_model/home_state.dart';
 import 'package:lite_x/features/home/view_model/home_view_model.dart';
 import 'package:lite_x/features/home/view/widgets/home_app_bar.dart';
-import 'package:lite_x/features/home/view/widgets/home_tab_bar.dart';
 import 'package:lite_x/features/home/view/widgets/tweet_widget.dart';
 import 'package:lite_x/features/home/view/screens/create_post_screen.dart';
 import 'package:lite_x/features/home/view/screens/quote_composer_screen.dart';
 import 'package:lite_x/features/home/view/widgets/profile_side_drawer.dart';
+import 'package:lite_x/features/home/view/widgets/expandable_fab.dart';
+import 'package:lite_x/features/profile/view/screens/profile_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -47,7 +49,30 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final user = ref.read(currentUserProvider);
     if (user != null) {
       currentUserId = user.id;
+      // Load user profile data after the widget tree is built
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(userProfileControllerProvider).fetchUserProfile(user.username);
+      });
     }
+  }
+
+  Future<void> _openCreatePost() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const CreatePostScreen()),
+    );
+  }
+
+  void _openProfile(String username) {
+    final normalized = _normalizeUsername(username);
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => ProfilePage(username: normalized)),
+    );
+  }
+
+  String _normalizeUsername(String username) {
+    if (username.isEmpty) return username;
+    return username.startsWith('@') ? username.substring(1) : username;
   }
 
   @override
@@ -60,8 +85,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   void _onScroll() {
-    final selectedTab = ref.read(homeTabProvider);
-    final activeController = selectedTab == HomeTab.forYou
+    final currentFeed = ref.read(homeViewModelProvider).currentFeed;
+    final activeController = currentFeed == FeedType.forYou
         ? _forYouScrollController
         : _followingScrollController;
 
@@ -84,24 +109,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    final selectedTab = ref.watch(homeTabProvider);
     final homeState = ref.watch(homeViewModelProvider);
-
-    ref.listen<HomeTab>(homeTabProvider, (previous, next) {
-      final feedType = next == HomeTab.forYou
-          ? FeedType.forYou
-          : FeedType.following;
-      ref.read(homeViewModelProvider.notifier).switchFeed(feedType);
-    });
-
-    List<TweetModel> tweets;
-    if (selectedTab == HomeTab.forYou) {
-      tweets = homeState.forYouTweets;
-    } else {
-      tweets = homeState.followingTweets;
-    }
-
-    final feedName = selectedTab == HomeTab.forYou ? "For You" : "Following";
+    final currentFeed = homeState.currentFeed;
+    final tweets = currentFeed == FeedType.forYou
+        ? homeState.forYouTweets
+        : homeState.followingTweets;
+    final feedName = currentFeed == FeedType.forYou ? "For You" : "Following";
 
     return Scaffold(
       key: _scaffoldKey,
@@ -114,7 +127,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         color: Colors.white,
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          controller: selectedTab == HomeTab.forYou
+          controller: currentFeed == FeedType.forYou
               ? _forYouScrollController
               : _followingScrollController,
           slivers: [
@@ -141,15 +154,46 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const CreatePostScreen()),
-          );
-        },
-        backgroundColor: Colors.blue,
-        child: const Icon(Icons.add, color: Colors.white, size: 28),
+      floatingActionButton: ExpandableFab(
+        mainIcon: Icons.add,
+        mainIconColor: Colors.white,
+        mainBackgroundColor: const Color(0xFF1DA1F2),
+        onPrimaryAction: _openCreatePost,
+        children: [
+          ActionButton(
+            icon: Icons.videocam,
+            label: 'Go Live',
+            onPressed: () {
+              // TODO: Implement Go Live functionality
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Go Live feature coming soon'),
+                  backgroundColor: Colors.blue,
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            },
+          ),
+          ActionButton(
+            icon: Icons.groups,
+            label: 'Spaces',
+            onPressed: () {
+              // TODO: Implement Spaces functionality
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Spaces feature coming soon'),
+                  backgroundColor: Colors.blue,
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            },
+          ),
+          ActionButton(
+            icon: Icons.image,
+            label: 'Photos',
+            onPressed: _openCreatePost,
+          ),
+        ],
       ),
     );
   }
@@ -211,9 +255,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           tweetId: tweet.id,
           userDisplayName: tweet.authorName,
           username: tweet.authorUsername,
+          avatarUrl: tweet.authorAvatar.isNotEmpty ? tweet.authorAvatar : null,
+          tweetType: tweet.tweetType,
           timeAgo: TweetWidget.formatTimeAgoShort(tweet.createdAt),
           content: tweet.content,
           imageUrl: tweet.images.isNotEmpty ? tweet.images.first : null,
+          mediaUrls: tweet.images,
+          onProfileTap: () => _openProfile(tweet.authorUsername),
           replyCount: tweet.replies,
           retweetCount: tweet.retweets,
           likeCount: tweet.likes,

@@ -18,7 +18,7 @@ class HomeState {
     this.isLoading = false,
     this.error,
     this.isRefreshing = false,
-    this.currentFeed = FeedType.forYou,
+    this.currentFeed = FeedType.following,
   });
 
   HomeState copyWith({

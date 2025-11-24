@@ -1,4 +1,13 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lite_x/core/providers/current_user_provider.dart';
+import 'package:lite_x/features/media/download_media.dart';
+import 'package:lite_x/features/profile/models/profile_model.dart';
+import 'package:lite_x/features/profile/models/profile_tweet_model.dart';
+import 'package:lite_x/features/profile/view/widgets/profile_tweets/profile_normal_tweet_widget.dart';
+import 'package:lite_x/features/profile/view/widgets/profile_tweets/profile_retweet_widget.dart';
+import 'package:lite_x/features/profile/view_model/providers.dart';
 
 abstract class Shared {
   static String formatCount(int count) {
@@ -139,7 +148,6 @@ DateTime? parseFormattedDate(String formattedDate) {
   return DateTime(year, month, day);
 }
 
-
 Future<bool?> showPopupMessage({
   required BuildContext context,
   required Text title,
@@ -179,4 +187,192 @@ Future<bool?> showPopupMessage({
       );
     },
   );
+}
+
+class ProfilePhotoScreenArgs {
+  final bool isMe;
+  final ProfileModel profileModel;
+
+  ProfilePhotoScreenArgs({required this.isMe, required this.profileModel});
+}
+
+enum TweetType { Tweet, ReTweet, Quote, Reply }
+
+abstract class ProfileTweet implements Widget {}
+
+ProfileTweet getCorrectTweetType(
+  ProfileTweetModel tweetModel,
+  ProfileModel pm,
+) {
+  TweetType type = tweetModel.type;
+
+  if (type == TweetType.ReTweet)
+    return ProfileRetweetWidget(profileModel: pm, tweetModel: tweetModel);
+
+  // if(type == TweetType.Quote)
+
+  return ProfileNormalTweetWidget(
+    profileModel: pm,
+    profilePostModel: tweetModel,
+  );
+}
+
+void showSmallPopUpMessage({
+  required BuildContext context,
+  required String message,
+  required Color borderColor,
+  required Icon icon,
+}) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Center(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            icon,
+            SizedBox(width: 10),
+            Flexible(
+              child: Text(
+                message,
+                style: TextStyle(fontSize: 16),
+                overflow: TextOverflow.clip,
+              ),
+            ),
+          ],
+        ),
+      ),
+      duration: Duration(seconds: 2),
+      behavior: SnackBarBehavior.floating,
+      margin: EdgeInsets.all(30),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(width: 0.8, color: borderColor),
+      ),
+    ),
+  );
+}
+
+String getTimeAgo(String backendTime) {
+  try {
+    DateTime postTime = DateTime.parse(backendTime);
+    DateTime currentTime = DateTime.now().toUtc();
+    Duration difference = currentTime.difference(postTime);
+
+    if (difference.isNegative) {
+      return 'now';
+    }
+
+    int seconds = difference.inSeconds;
+
+    if (seconds < 60) {
+      return '${seconds}s';
+    }
+
+    int minutes = difference.inMinutes;
+    if (minutes < 60) {
+      return '${minutes}m';
+    }
+
+    int hours = difference.inHours;
+    if (hours < 24) {
+      return '${hours}h';
+    }
+
+    int days = difference.inDays;
+    if (days < 7) {
+      return '${days}d';
+    }
+
+    if (days < 30) {
+      int weeks = (days / 7).floor();
+      return '${weeks}w';
+    }
+
+    if (days < 365) {
+      int months = (days / 30).floor();
+      return '${months}mo';
+    }
+
+    int years = (days / 365).floor();
+    return '${years}y';
+  } catch (e) {
+    return 'now';
+  }
+}
+
+enum ProfileTabType { Posts, Media, Likes, Replies, Highlights, Articles }
+
+class BuildSmallProfileImage extends ConsumerStatefulWidget {
+  BuildSmallProfileImage({super.key, this.mediaId, this.userId});
+  String? mediaId;
+  String? userId;
+
+  @override
+  ConsumerState<ConsumerStatefulWidget> createState() =>
+      _BuildSmallProfileImageState();
+}
+
+class _BuildSmallProfileImageState
+    extends ConsumerState<BuildSmallProfileImage> {
+  String _media = "";
+  void _getMedia() async {
+    // TODO: implement initState
+    if (widget.mediaId == null && widget.userId == null) {
+      setState(() {
+        _loading = false;
+      });
+      return;
+    } else if (widget.mediaId == null) {
+      final currentUser = ref.watch(currentUserProvider);
+      final profileData = ref.watch(
+        profileDataProvider(currentUser?.username ?? ""),
+      );
+      profileData.whenData((data) {
+        data.fold(
+          (l) {
+            setState(() {
+              _loading = false;
+            });
+          },
+          (r) {
+            _media = r.avatarUrl;
+            setState(() {
+              _loading = false;
+            });
+          },
+        );
+      });
+      return;
+    } else if (widget.mediaId!.isEmpty) {}
+    getMediaUrls([widget.mediaId!]).then((res) {
+      _media = res[0];
+      setState(() {
+        _loading = false;
+      });
+    });
+  }
+
+  bool _loading = true;
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading == true) {
+      _getMedia();
+      return CircleAvatar(
+        backgroundColor: Colors.grey,
+        radius: 20,
+        child: Padding(
+          padding: const EdgeInsets.all(10.0),
+          child: CircularProgressIndicator(color: Colors.white),
+        ),
+      );
+    }
+
+    return CircleAvatar(
+      backgroundImage: CachedNetworkImageProvider(_media),
+      backgroundColor: Colors.grey,
+      radius: 20,
+      onBackgroundImageError: (exception, stackTrace) => null,
+    );
+  }
 }

@@ -21,6 +21,7 @@ class HomeViewModel extends Notifier<HomeState> {
       forYouTweets: [],
       followingTweets: [],
       isLoading: true,
+      currentFeed: FeedType.following,
     );
   }
 
@@ -268,14 +269,14 @@ class HomeViewModel extends Notifier<HomeState> {
   Future<void> createPost({
     required String content,
     String replyControl = "EVERYONE",
-    List<String> images = const [],
+    List<String> mediaIds = const [],
     String? replyToId,
   }) async {
     try {
       final newTweet = await _repository.createPost(
         content: content,
         replyControl: replyControl,
-        images: images,
+        mediaIds: mediaIds,
         replyToId: replyToId,
       );
 
@@ -322,6 +323,29 @@ class HomeViewModel extends Notifier<HomeState> {
     }
   }
 
+  /// Keeps the cached feeds in sync with backend mutations that happen
+  /// outside the home timelines (e.g. from the tweet detail screen).
+  void syncTweetFromServer(TweetModel updatedTweet) {
+    _updateTweetInAllFeeds(
+      updatedTweet.id,
+      (t) => t.copyWith(
+        likes: updatedTweet.likes,
+        retweets: updatedTweet.retweets,
+        replies: updatedTweet.replies,
+        replyIds: updatedTweet.replyIds,
+        isLiked: updatedTweet.isLiked,
+        isRetweeted: updatedTweet.isRetweeted,
+        isBookmarked: updatedTweet.isBookmarked,
+        quotes: updatedTweet.quotes,
+        bookmarks: updatedTweet.bookmarks,
+      ),
+    );
+  }
+
+  void incrementQuoteCount(String tweetId) {
+    _updateTweetInAllFeeds(tweetId, (t) => t.copyWith(quotes: t.quotes + 1));
+  }
+
   List<TweetModel> _updateParentTweetInList(
     List<TweetModel> tweets,
     String parentId,
@@ -353,7 +377,7 @@ class HomeViewModel extends Notifier<HomeState> {
     required String quotedTweetId,
     required TweetModel quotedTweet,
     String replyControl = "EVERYONE",
-    List<String> images = const [],
+    List<String> mediaIds = const [],
   }) async {
     try {
       final newTweet = await _repository.createQuoteTweet(
@@ -361,7 +385,7 @@ class HomeViewModel extends Notifier<HomeState> {
         quotedTweetId: quotedTweetId,
         quotedTweet: quotedTweet,
         replyControl: replyControl,
-        images: images,
+        mediaIds: mediaIds,
       );
 
       // Quote tweets should only appear in the Following feed, not For You
@@ -377,6 +401,8 @@ class HomeViewModel extends Notifier<HomeState> {
         followingTweets: updatedFollowing,
         // Don't add to forYouTweets
       );
+
+      incrementQuoteCount(quotedTweetId);
     } catch (e) {
       state = state.copyWith(error: 'Failed to create quote tweet: $e');
     }

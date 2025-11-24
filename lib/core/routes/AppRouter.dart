@@ -1,3 +1,5 @@
+// ignore_for_file: undefined_hidden_name
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lite_x/core/view/screen/app_shell.dart';
@@ -21,20 +23,62 @@ import 'package:lite_x/features/chat/view/screens/Search_Direct_messages.dart';
 import 'package:lite_x/features/chat/view/screens/Search_User_Group.dart';
 import 'package:lite_x/features/chat/view/screens/chat_Screen.dart';
 import 'package:lite_x/features/chat/view/screens/conversations_screen.dart';
+import 'package:lite_x/features/explore/view/explore_screen.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
+import 'package:lite_x/features/profile/models/shared.dart';
 import 'package:lite_x/features/profile/view/screens/birthdate_screen.dart';
+import 'package:lite_x/features/profile/view/screens/change_email_profile_screen.dart';
 import 'package:lite_x/features/profile/view/screens/edit_profile_screen.dart';
+import 'package:lite_x/features/profile/view/screens/explore_profile_screen.dart';
 import 'package:lite_x/features/profile/view/screens/following_followers_screen.dart';
 import 'package:lite_x/features/profile/view/screens/profile_screen.dart';
+import 'package:lite_x/features/profile/view/screens/profile_search_screen.dart';
+import 'package:lite_x/features/profile/view/screens/profilecover_screen.dart';
+import 'package:lite_x/features/profile/view/screens/profilephoto_screen.dart'
+    hide ProfilePhotoScreenArgs;
+
+import 'package:lite_x/features/profile/view/screens/verify_change_email_profile_screen.dart';
+
+import 'package:lite_x/features/search/view/search_screen.dart';
+
 import 'package:lite_x/features/settings/screens/BlockedAccounts_Screen.dart';
 import 'package:lite_x/features/settings/screens/MuteAndBlock_Screen.dart';
 import 'package:lite_x/features/settings/screens/MutedAccounts_Screen.dart';
 import 'package:lite_x/features/settings/screens/PrivacyAndSafety_Screen.dart';
 import 'package:lite_x/features/settings/screens/SettingsAndPrivacy_Screen.dart';
+import 'package:lite_x/features/settings/screens/YourAccount_Screen.dart';
+import 'package:lite_x/features/settings/screens/AccountInformation_Screen.dart';
+import 'package:lite_x/features/settings/screens/ChangePassword_Screen.dart';
 
 class Approuter {
   static final GoRouter router = GoRouter(
+    // initialLocation: "/appshell",
     initialLocation: "/splash",
+    // initialExtra: ProfileModel(
+    //   id: "",
+    //   username: "hazememam",
+    //   displayName: "Hazem Emam",
+    //   email: "hazem@gmail.com",
+    //   bio: "Hello from hazem emam ",
+    //   avatarUrl:
+    //       "https://images.pexels.com/photos/31510092/pexels-photo-31510092.jpeg",
+    //   bannerUrl:
+    //       "https://images.pexels.com/photos/1765033/pexels-photo-1765033.jpeg",
+    //   followersCount: 15,
+    //   followingCount: 20,
+    //   tweetsCount: 15,
+    //   isVerified: false,
+    //   joinedDate: formatDate(DateTime(2004, 8, 21), DateFormatType.fullDate),
+    //   website: "https://google.cof",
+    //   location: "cairo",
+    //   postCount: 2,
+    //   birthDate: formatDate(DateTime(2004, 8, 21), DateFormatType.fullDate),
+    //   isFollowing: false,
+    //   isFollower: false,
+    //   protectedAccount: false,
+    //   isBlockedByMe: true,
+    //   isMutedByMe: false,
+    // ),
     routes: [
       GoRoute(
         name: RouteConstants.splash,
@@ -171,6 +215,14 @@ class Approuter {
         ),
       ),
       GoRoute(
+        name: RouteConstants.changePasswordScreen,
+        path: "/change-password",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: const ChangePasswordScreen(),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
         name: RouteConstants.ChangePasswordFeedback,
         path: "/ChangePasswordFeedback",
         pageBuilder: (context, state) => CustomTransitionPage(
@@ -273,6 +325,22 @@ class Approuter {
           transitionsBuilder: _slideRightTransitionBuilder,
         ),
       ),
+      GoRoute(
+        name: RouteConstants.youraccountscreen,
+        path: "/youraccount",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: const YourAccountScreen(),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
+        name: RouteConstants.accountinformationscreen,
+        path: "/accountinformation",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: const AccountInformationScreen(),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
 
       GoRoute(
         name: RouteConstants.ChatScreen,
@@ -292,6 +360,78 @@ class Approuter {
             transitionsBuilder: _slideRightTransitionBuilder,
           );
         },
+      ),
+      GoRoute(
+        name: RouteConstants.ChatScreen,
+        path: "/verifyChangeEmailProfileScreen",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: VerifyChangeEmailProfileScreen(
+            extra: state.extra as List<dynamic>,
+          ),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
+        name: RouteConstants.SearchScreen,
+        path: "/searchScreen",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: SearchScreen(),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
+        name: RouteConstants.ExploreScreen,
+        path: "/exploreScreen",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: ExploreScreen(),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
+        name: RouteConstants.ProfilePhotoScreen,
+        path: "/profilePhotoScreen",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: ProfilephotoScreen(
+            profilePhotoScreenArgs: state.extra as ProfilePhotoScreenArgs,
+          ),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
+        name: RouteConstants.ProfileCoverScreen,
+        path: "/profileCoverScreen",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: ProfileCoverScreen(
+            profilePhotoScreenArgs: state.extra as ProfilePhotoScreenArgs,
+          ),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
+        name: RouteConstants.ProfileSearchScreen,
+        path: "/profileSearchScreen",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: ProfileSearchScreen(),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
+        name: RouteConstants.ChangeEmailProfileScreen,
+        path: "/changeEmailProfileScreen",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: ChangeEmailProfileScreen(
+            profileData: state.extra as ProfileModel,
+          ),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
+        name: RouteConstants.ExploreProfileScreen,
+        path: "/exploreProfileScreen",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: ExploreProfileScreen(),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
       ),
     ],
     redirect: (context, state) {

@@ -1,23 +1,33 @@
 import 'package:dio/dio.dart';
+import 'package:lite_x/features/media/download_media.dart';
+import 'package:lite_x/features/profile/models/create_reply_model.dart';
+import 'package:lite_x/features/profile/models/create_tweet_model.dart';
+import 'package:lite_x/features/profile/models/follower_model.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
-import 'package:lite_x/features/profile/models/profile_post_model.dart';
+import 'package:lite_x/features/profile/models/profile_tweet_model.dart';
+import 'package:lite_x/features/profile/models/search_user_model.dart';
 import 'package:lite_x/features/profile/models/shared.dart';
 import 'package:dartz/dartz.dart';
+import 'package:lite_x/features/profile/models/tweet_reply_model.dart';
 import 'package:lite_x/features/profile/models/user_model.dart';
 import 'package:lite_x/features/profile/repositories/profile_repo.dart';
 
-String baseUrl =
-    "https://app-fd6adf10-3923-46c1-83f7-08c318e4c982.cleverapps.io";
+// String baseUrl =
+//     "https://app-fd6adf10-3923-46c1-83f7-08c318e4c982.cleverapps.io";
 
 class ProfileRepoImpl implements ProfileRepo {
-  final Dio _dio;
+  Dio _dio;
   ProfileRepoImpl(Dio d) : _dio = d {
-    // _dio = Dio(BaseOptions(
-    //   baseUrl: "https://app-0f5255eb-2937-4300-9eef-5015b844f731.cleverapps.io/",
-    //   headers: {
-    //     "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VybmFtZSI6ImhhemVtMTIzIiwiZW1haWwiOiJlemtjZXcwc3VvQGlsbHViZC5jb20iLCJyb2xlIjoidXNlciIsImlkIjoiOTk3NGM3NjctYjRjOC00YWIwLThlMzItZWY1NmMyZGVlZDg3IiwiZXhwIjoxNzYyMTkxMzQ1LCJpYXQiOjE3NjIxODc3NDUsInZlcnNpb24iOjAsImp0aSI6IjY2OWQ4ZmYwLWJmOWItNDA0OC05Y2E4LTZmYjNkMjg1ZjBlYiIsImRldmlkIjoiZGFmZjQwYmEtZTBhYi00MTNmLThmMTUtMzdiMWM2MjhkNzZkIn0.gYuvpY81qf6vrJk-2eKlyRF9wAoEtnooua_rYbWcBrg",
-    //   }
-    // ));
+    // _dio = Dio(
+    //   BaseOptions(
+    //     baseUrl:
+    //         "https://app-dbef67eb-9a2e-44fa-abff-3e8b83204d9c.cleverapps.io/",
+    //     headers: {
+    //       "Authorization":
+    //           "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VybmFtZSI6ImhhemVtZW1hbSIsImVtYWlsIjoiaGF6ZW1AenVkcGNrLmNvbSIsInJvbGUiOiJ1c2VyIiwiaWQiOiJmM2EwZDdmNC0zZDMwLTQ2NjgtOTkyZi1kN2E2ZGM0NjUyNDEiLCJleHAiOjE3NjM2NjczMjcsImlhdCI6MTc2MzY2MzcyNywidmVyc2lvbiI6MiwianRpIjoiNzkzOTI0ZDAtYzAxMi00NTk5LTk4NWYtOTgyNTdlYTIyZmRhIiwiZGV2aWQiOiJlNGY2YTRkZi03MzVkLTRlZGItYTIxZi0wZDZkMTA5Y2M1YmUifQ.PdXybFYl0DyMKIuwCeoi17awgHz72zQlBFR_W1m0IU4",
+    //     },
+    //   ),
+    // );
   }
 
   @override
@@ -25,14 +35,32 @@ class ProfileRepoImpl implements ProfileRepo {
     final Response res;
     try {
       res = await _dio.get("api/users/$userName");
-      final profileData = ProfileModel.fromJson(res.data);
-      final profileData2 = profileData.copyWith(
-        avatarUrl:
-            "https://images.pexels.com/photos/2379005/pexels-photo-2379005.jpeg",
-      );
+      final Map<String, dynamic> json = res.data;
+      final String profilePhotoId = json["profileMediaId"] ?? "";
+      final String profileBannerId = json["coverMediaId"] ?? "";
 
-      return Right(profileData2);
+      List<String> urls = await getMediaUrls([profilePhotoId, profileBannerId]);
+
+      print(urls[0]);
+      print(urls[1]);
+      final String profilePhotoUrl = urls[0];
+      final String profileBannerUrl = urls[1];
+
+      json["profileMedia"] = profilePhotoUrl;
+      json["coverMedia"] = profileBannerUrl;
+      json["avatarId"] = profilePhotoId;
+
+      final profileData = ProfileModel.fromJson(json);
+      return Right(profileData);
+    } on DioException catch (e) {
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.sendTimeout) {
+        return Left(Failure('connection timeout, please try agin...'));
+      }
+      return Left(Failure('Failed to load profile data, try agian later...'));
     } catch (e) {
+      print(e.toString());
       return Left(Failure('Failed to load profile data'));
     }
   }
@@ -61,58 +89,128 @@ class ProfileRepoImpl implements ProfileRepo {
 
       return Right(ProfileModel.fromJson(res.data));
     } catch (e) {
-      // print("----------\n${e.toString()}\n---------");
+      print("----------\n${e.toString()}\n---------");
       return Left(Failure("can't update profile data"));
     }
   }
 
   @override
-  Future<Either<Failure, List<ProfilePostModel>>> getProfilePosts() async {
-    // await Future.delayed(const Duration(seconds: 2)); // Simulate network delay
+  Future<Either<Failure, List<ProfileTweetModel>>> getProfilePosts(
+    String username,
+  ) async {
     try {
-      final List<Map<String, dynamic>> rawPostData = [
-        {
-          "id": "post_001",
-          "text":
-              "Excited to share my latest project! Flutter makes UI development",
-          "timeAgo": "5m",
-          "likes": 25,
-          "retweets": 8,
-          "repost": 50,
-          "replies": 3,
-          "isLiked": false,
-          "activityNumber": 36,
-          "mediaUrls": [
-            "https://images.pexels.com/photos/34188568/pexels-photo-34188568.jpeg",
-            "https://images.pexels.com/photos/34182536/pexels-photo-34182536.jpeg",
-            "https://images.pexels.com/photos/34182536/pexels-photo-34182536.jpeg",
-            "https://media.istockphoto.com/id/158002966/photo/painted-x-mark.jpg?b=1&s=612x612&w=0&k=20&c=W-XB39kzx5Y1U5eHU7gBZzgd4k2oqo0G3bRrch3jUZk=",
-          ],
-        },
-        {
-          "id": "post_002",
-          "text":
-              "A quick update on the server migration: everything went smoothly! Downtime was minimal. Thanks to the team!",
-          "timeAgo": "2h",
-          "likes": 120,
-          "retweets": 8,
-          "replies": 10,
-          "isLiked": true,
-          "activityNumber": 20,
-          "mediaUrls": [
-            "https://media.istockphoto.com/id/158002966/photo/painted-x-mark.jpg?b=1&s=612x612&w=0&k=20&c=W-XB39kzx5Y1U5eHU7gBZzgd4k2oqo0G3bRrch3jUZk=",
-          ],
-        },
-      ];
+      print("Start api ---------------------**");
+      final res = await _dio.get("api/tweets/users/$username");
+      print("end api ---------------------**");
+      final List<dynamic> jsonList = res.data["data"] ?? [];
 
-      final List<ProfilePostModel> profilePosts = rawPostData
-          .map((json) => ProfilePostModel.fromJson(json))
-          .toList();
-      return Right(profilePosts);
+      List<ProfileTweetModel> tweets = [];
+      for (int i = 0; i < jsonList.length; i++) {
+        final Map<String, dynamic> json = jsonList[i] as Map<String, dynamic>;
+        if (json["tweetType"]?.toLowerCase() == "reply") continue;
+        // get profile photo url and tweet medial urls
+        final String profilePhotoId =
+            json["user"]?["profileMedia"]?["id"] ?? "";
+
+        final List<dynamic> tweetMediaIdsDynamic = json["tweetMedia"] ?? [];
+        final List<String> tweetMediaIds = tweetMediaIdsDynamic
+            .map((media) => media["mediaId"] as String)
+            .toList();
+
+        // final List<String> userPhotoUrl = await getMediaUrls([profilePhotoId]);
+
+        // final String profilePhotoUrl = userPhotoUrl[0];
+
+        // get timeAgo
+        final String createTime = json["createdAt"] ?? "";
+        final String timeAgo = getTimeAgo(createTime);
+
+        json["profileMediaId"] = profilePhotoId;
+        json["mediaIds"] = tweetMediaIds;
+        json["timeAgo"] = timeAgo;
+
+        tweets.add(ProfileTweetModel.fromJson(json));
+        print(
+          "id$i" +
+              "${json['profileMediaId']}--------------------*****--------------",
+        );
+      }
+      print("end repo posts ----------------**");
+      return Right(tweets);
     } catch (e) {
+      print(e.toString());
       return Left(Failure('Failed to load profile posts'));
     }
   }
+
+  @override
+  Future<Either<Failure, List<ProfileTweetModel>>> getProfileLikes(
+    String username,
+  ) async {
+    try {
+      final res = await _dio.get("api/tweets/users/$username");
+      final List<dynamic> jsonList = res.data["data"] ?? [];
+
+      List<ProfileTweetModel> tweets = [];
+      for (int i = 0; i < jsonList.length; i++) {
+        final Map<String, dynamic> json = jsonList[i] as Map<String, dynamic>;
+        if (json["tweetType"]?.toLowerCase() == "reply") continue;
+        // get profile photo url and tweet medial urls
+        final String profilePhotoId =
+            json["user"]?["profileMedia"]?["id"] ?? "";
+
+        final List<dynamic> tweetMediaIdsDynamic = json["tweetMedia"] ?? [];
+        final List<String> tweetMediaIds = tweetMediaIdsDynamic
+            .map((media) => media["mediaId"] as String)
+            .toList();
+
+        final List<String> userPhotoUrl = await getMediaUrls([profilePhotoId]);
+
+        final String profilePhotoUrl = userPhotoUrl[0];
+
+        // get timeAgo
+        final String createTime = json["createdAt"] ?? "";
+        final String timeAgo = getTimeAgo(createTime);
+
+        json["profileMediaUrl"] = profilePhotoUrl;
+        json["mediaIds"] = tweetMediaIds;
+        json["timeAgo"] = timeAgo;
+
+        tweets.add(ProfileTweetModel.fromJson(json));
+      }
+
+      return Right(tweets);
+    } catch (e) {
+      print(e.toString());
+      return Left(Failure('Failed to load profile posts'));
+    }
+  }
+
+  Future<Either<Failure, void>> updateProfileBanner(
+    String userId,
+    String mediaId,
+  ) async {
+    try {
+      await _dio.patch("api/users/banner/$userId/$mediaId");
+      return const Right(());
+    } catch (e) {
+      return Left(Failure("couldn't update banner"));
+    }
+  }
+
+  Future<Either<Failure, void>> updateProfilePhoto(
+    String userId,
+    String mediaId,
+  ) async {
+    try {
+      await _dio.patch("api/users/profile-picture/$userId/$mediaId");
+      return const Right(());
+    } catch (e) {
+      return Left(Failure("couldn't update profile picture"));
+    }
+  }
+
+  // user interactions
 
   Future<Either<Failure, List<UserModel>>> getFollowers(String userName) async {
     // await Future.delayed(const Duration(seconds: 1));
@@ -200,6 +298,251 @@ class ProfileRepoImpl implements ProfileRepo {
       return const Right(());
     } catch (e) {
       return Left(Failure("couldn't unfollow user"));
+    }
+  }
+
+  // block and mute
+  Future<Either<Failure, void>> blockUser(String username) async {
+    try {
+      await _dio.post("api/blocks/$username");
+      return const Right(());
+    } catch (e) {
+      return Left(Failure("couldn't block user"));
+    }
+  }
+
+  Future<Either<Failure, void>> unBlockUser(String username) async {
+    try {
+      await _dio.delete("api/blocks/$username");
+      return const Right(());
+    } catch (e) {
+      return Left(Failure("couldn't unblock user"));
+    }
+  }
+
+  Future<Either<Failure, void>> muteUser(String username) async {
+    try {
+      await _dio.post("api/mutes/$username");
+      return const Right(());
+    } catch (e) {
+      return Left(Failure("couldn't mute user"));
+    }
+  }
+
+  Future<Either<Failure, void>> unMuteUser(String username) async {
+    try {
+      await _dio.delete("api/mutes/$username");
+      return const Right(());
+    } catch (e) {
+      return Left(Failure("couldn't unmute user"));
+    }
+  }
+
+  Future<Either<Failure, List<UserModel>>> getMutedList(String userName) async {
+    try {
+      final res = await _dio.get("api/mutes");
+      final List<dynamic> jsonList = res.data["users"];
+      final List<UserModel> users = jsonList.map((json) {
+        final Map<String, dynamic> jsonMap = json as Map<String, dynamic>;
+        return UserModel.fromJson(jsonMap);
+      }).toList();
+      return Right(users);
+    } catch (e) {
+      return Left(Failure("Can't get muted users, try again later.."));
+    }
+  }
+
+  Future<Either<Failure, List<UserModel>>> getBlockedList(
+    String userName,
+  ) async {
+    try {
+      final res = await _dio.get("api/blocks");
+      final List<dynamic> jsonList = res.data["users"];
+      final List<UserModel> users = jsonList.map((json) {
+        final Map<String, dynamic> jsonMap = json as Map<String, dynamic>;
+        return UserModel.fromJson(jsonMap);
+      }).toList();
+      return Right(users);
+    } catch (e) {
+      return Left(Failure("Can't get Blocked users, try again later.."));
+    }
+  }
+
+  // tweets
+  Future<Either<Failure, String>> createTweet(
+    CreateTweetModel createTweetModel,
+  ) async {
+    try {
+      final response = await _dio.post(
+        "api/tweets",
+        data: createTweetModel.toJson(),
+      );
+      return Right((response.data["id"] ?? ""));
+    } catch (e) {
+      return Left(Failure("Can't create tweet"));
+    }
+  }
+
+  Future<Either<Failure, void>> deleteTweet(String tweetId) async {
+    try {
+      await _dio.delete("api/tweets/$tweetId");
+      return Right(());
+    } catch (e) {
+      return Left(Failure("Can't delete tweet"));
+    }
+  }
+
+  Future<Either<Failure, List<TweetReplyModel>>> getTweetReplies(
+    String tweetId,
+  ) async {
+    try {
+      final response = await _dio.get("api/tweets/$tweetId/replies");
+      final List<Map<String, dynamic>> rawReplies = response.data;
+      final List<TweetReplyModel> replyModels = rawReplies
+          .map((json) => TweetReplyModel.fromJson(json))
+          .toList();
+      return Right((replyModels));
+    } catch (e) {
+      return Left(Failure("Can't get tweet replies"));
+    }
+  }
+
+  // tweets interactions
+  Future<Either<Failure, void>> likeTweet(String tweetId) async {
+    try {
+      await _dio.post("api/tweets/$tweetId/likes");
+      return const Right(());
+    } catch (e) {
+      return Left(Failure("Can't like tweet"));
+    }
+  }
+
+  Future<Either<Failure, void>> unLikeTweet(String tweetId) async {
+    try {
+      await _dio.delete("api/tweets/$tweetId/likes");
+      return const Right(());
+    } catch (e) {
+      return Left(Failure("Can't unlike tweet"));
+    }
+  }
+
+  Future<Either<Failure, void>> saveTweet(String tweetId) async {
+    try {
+      await _dio.post("api/tweets/$tweetId/bookmark");
+      return const Right(());
+    } catch (e) {
+      return Left(Failure("Can't bookmark this tweet"));
+    }
+  }
+
+  Future<Either<Failure, void>> unSaveTweet(String tweetId) async {
+    try {
+      await _dio.delete("api/tweets/$tweetId/bookmark");
+      return const Right(());
+    } catch (e) {
+      return Left(Failure("Can't remove bookmark from this tweet"));
+    }
+  }
+
+  Future<Either<Failure, void>> replyOnTweet(
+    String tweetId,
+    CreateReplyModel createreplyModel,
+  ) async {
+    try {
+      await _dio.post("api/tweets/$tweetId/replies", data: createreplyModel);
+      return const Right(());
+    } catch (e) {
+      return Left(Failure("Can't reply on tweet"));
+    }
+  }
+
+  // search
+  Future<Either<Failure, List<SearchUserModel>>> profileCurrentSearch(
+    String query,
+  ) async {
+    try {
+      final res = await _dio.get(
+        "api/users/search",
+        queryParameters: {"query": query},
+      );
+
+      final List<Map<String, dynamic>> rawResults =
+          List<Map<String, dynamic>>.from(res.data["users"] ?? []);
+      for (int i = 0; i < rawResults.length; i++) {
+        final String mediaId = rawResults[i]["profileMedia"] ?? "";
+        final mediaUrls = await getMediaUrls([mediaId]);
+        rawResults[i]["profileMedia"] = mediaUrls[0];
+      }
+      final List<SearchUserModel> currentResults = rawResults.map((element) {
+        SearchUserModel user = SearchUserModel.fromJson(element);
+        return user;
+      }).toList();
+      return Right(currentResults);
+    } catch (e) {
+      return Left(Failure("Can't get search results"));
+    }
+  }
+
+  Future<Either<Failure, void>> changeEmailProfile(String newEmail) async {
+    try {
+      await _dio.post("api/auth/change-email", data: {"email": newEmail});
+      // await Future.delayed(Duration(seconds: 3));
+      return Right(());
+    } catch (e) {
+      print(e);
+      return Left(Failure("couldn't change email, Please try again later"));
+    }
+  }
+
+  Future<Either<Failure, void>> verifyChangeEmailProfile(
+    String newEmail,
+    String code,
+  ) async {
+    try {
+      print(newEmail);
+      print(code);
+      await _dio.post(
+        "api/auth/verify-new-email",
+        data: {"email": newEmail, "code": code.toString()},
+      );
+      return Right(());
+    } on DioException catch (e) {
+      final String errorMessage =
+          e.response?.data["error"] ?? "can't verify code";
+      return (Left(Failure(errorMessage)));
+    } catch (e) {
+      return (Left(Failure("can't verify code")));
+    }
+  }
+
+  Future<Either<Failure, void>> changePasswordProfile(
+    String oldPassword,
+    String newPassword,
+    String confirmNewPassword,
+  ) async {
+    try {
+      print(
+        {
+          "oldPassword": oldPassword,
+          "newPassword": newPassword,
+          "confirmPassword": confirmNewPassword,
+        }.toString(),
+      );
+      await _dio.post(
+        "api/auth/change-password",
+        data: {
+          "oldPassword": oldPassword,
+          "newPassword": newPassword,
+          "confirmPassword": confirmNewPassword,
+        },
+      );
+      return Right(());
+    } on DioException catch (e) {
+      final String errorMessage =
+          e.response?.data["error"] ?? "can't change, try again later";
+      return (Left(Failure(errorMessage)));
+    } catch (e) {
+      return (Left(Failure("can't change password")));
     }
   }
 }

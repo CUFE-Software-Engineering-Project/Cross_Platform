@@ -9,6 +9,7 @@ import 'package:lite_x/core/services/deep_link_service.dart';
 import 'package:lite_x/core/theme/app_theme.dart';
 import 'package:lite_x/features/chat/models/conversationmodel.dart';
 import 'package:lite_x/features/chat/models/messagemodel.dart';
+import 'package:lite_x/features/search/models/search_history_hive_model.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -33,6 +34,8 @@ Future<void> init() async {
   await Hive.openBox<ConversationModel>('conversationsBox');
   await Hive.openBox<MessageModel>('messagesBox');
   await dotenv.load(fileName: ".env");
+
+  await Hive.openBox<SearchHistoryHiveModel>('search_history');
 }
 
 class MyApp extends StatelessWidget {

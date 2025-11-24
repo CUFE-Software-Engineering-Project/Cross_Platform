@@ -5,6 +5,7 @@ import 'package:lite_x/core/providers/current_user_provider.dart';
 import 'package:lite_x/features/home/models/tweet_model.dart';
 import 'package:lite_x/features/home/repositories/home_repository.dart';
 import 'package:lite_x/features/home/view/screens/reply_composer_screen.dart';
+import 'package:lite_x/features/home/view/widgets/media_gallery.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
 class ReplyThreadScreen extends ConsumerStatefulWidget {
@@ -24,6 +25,7 @@ class _ReplyThreadScreenState extends ConsumerState<ReplyThreadScreen> {
   List<TweetModel> childReplies = [];
   bool isLoading = true;
   String? currentUserId;
+  final Map<String, int> _viewCounts = {};
 
   @override
   void initState() {
@@ -167,6 +169,8 @@ class _ReplyThreadScreenState extends ConsumerState<ReplyThreadScreen> {
           isLoading = false;
         });
 
+        _prefetchViewCounts([...loadedTweets.values, ...replies]);
+
         WidgetsBinding.instance.addPostFrameCallback((_) {
           _scrollToCurrentReply();
         });
@@ -175,6 +179,40 @@ class _ReplyThreadScreenState extends ConsumerState<ReplyThreadScreen> {
       if (mounted) {
         setState(() => isLoading = false);
       }
+    }
+  }
+
+  Future<void> _prefetchViewCounts(List<TweetModel> tweets) async {
+    final tweetsToFetch = tweets
+        .where((tweet) => !_viewCounts.containsKey(tweet.id))
+        .toList();
+
+    if (tweetsToFetch.isEmpty) {
+      return;
+    }
+
+    try {
+      final repository = ref.read(homeRepositoryProvider);
+      final results = await Future.wait(
+        tweetsToFetch.map((tweet) async {
+          try {
+            final summary = await repository.getTweetSummary(tweet.id);
+            return MapEntry(tweet.id, summary.views);
+          } catch (_) {
+            return MapEntry(tweet.id, 0);
+          }
+        }),
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        for (final entry in results) {
+          _viewCounts[entry.key] = entry.value;
+        }
+      });
+    } catch (_) {
+      // Ignore summary failures to avoid interrupting the thread rendering
     }
   }
 
@@ -257,61 +295,69 @@ class _ReplyThreadScreenState extends ConsumerState<ReplyThreadScreen> {
           ),
         ],
       ),
-      body: ListView(
-        controller: _scrollController,
-        children: [
-          _buildTimelineTweetCard(mainTweet),
-          const Divider(color: Color(0xFF2F3336), height: 1),
-
-          for (int i = 1; i < tweets.length - 1; i++) ...[
-            _buildCompactReply(
-              context,
-              tweets[i],
-              replyingTo: tweets[i - 1].authorUsername,
-              pathSoFar: widget.pathTweetIds.sublist(0, i + 1),
-            ),
+      body: RefreshIndicator(
+        onRefresh: _loadThreadData,
+        color: const Color(0xFF1DA1F2),
+        backgroundColor: Colors.grey[900],
+        child: ListView(
+          controller: _scrollController,
+          children: [
+            _buildTimelineTweetCard(mainTweet),
             const Divider(color: Color(0xFF2F3336), height: 1),
-          ],
 
-          Container(
-            key: _currentReplyKey,
-            child: _buildCurrentReplyDetail(
-              currentReply,
-              replyingTo: tweets.length > 1
-                  ? tweets[tweets.length - 2].authorUsername
-                  : null,
-            ),
-          ),
-          const Divider(color: Color(0xFF2F3336), height: 1),
+            for (int i = 1; i < tweets.length - 1; i++) ...[
+              _buildCompactReply(
+                context,
+                tweets[i],
+                replyingTo: tweets[i - 1].authorUsername,
+                pathSoFar: widget.pathTweetIds.sublist(0, i + 1),
+              ),
+              const Divider(color: Color(0xFF2F3336), height: 1),
+            ],
 
-          if (childReplies.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Text(
-                'Most relevant replies',
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                ),
+            Container(
+              key: _currentReplyKey,
+              child: _buildCurrentReplyDetail(
+                currentReply,
+                replyingTo: tweets.length > 1
+                    ? tweets[tweets.length - 2].authorUsername
+                    : null,
               ),
             ),
+            const Divider(color: Color(0xFF2F3336), height: 1),
 
-          ...childReplies.map(
-            (r) => Column(
-              children: [
-                _buildCompactReply(
-                  context,
-                  r,
-                  replyingTo: currentReply.authorUsername,
-                  pathSoFar: [...widget.pathTweetIds, r.id],
+            if (childReplies.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
                 ),
-                const Divider(color: Color(0xFF2F3336), height: 1),
-              ],
+                child: Text(
+                  'Most relevant replies',
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                  ),
+                ),
+              ),
+
+            ...childReplies.map(
+              (r) => Column(
+                children: [
+                  _buildCompactReply(
+                    context,
+                    r,
+                    replyingTo: currentReply.authorUsername,
+                    pathSoFar: [...widget.pathTweetIds, r.id],
+                  ),
+                  const Divider(color: Color(0xFF2F3336), height: 1),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 60),
-        ],
+            const SizedBox(height: 60),
+          ],
+        ),
       ),
       bottomNavigationBar: _buildReplyBar(),
     );
@@ -384,24 +430,7 @@ class _ReplyThreadScreenState extends ConsumerState<ReplyThreadScreen> {
           ),
           if (tweet.images.isNotEmpty) ...[
             const SizedBox(height: 12),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Image.network(
-                tweet.images.first,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return Container(
-                    height: 200,
-                    color: Colors.grey[900],
-                    child: const Center(
-                      child: CircularProgressIndicator(color: Colors.blue),
-                    ),
-                  );
-                },
-              ),
-            ),
+            MediaGallery(urls: tweet.images, borderRadius: 12),
           ],
           const SizedBox(height: 12),
           _inlineActions(tweet),
@@ -427,6 +456,9 @@ class _ReplyThreadScreenState extends ConsumerState<ReplyThreadScreen> {
       },
       child: Container(
         padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          border: Border(left: BorderSide(color: Colors.grey[800]!, width: 2)),
+        ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -455,7 +487,7 @@ class _ReplyThreadScreenState extends ConsumerState<ReplyThreadScreen> {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        reply.authorUsername,
+                        '@${reply.authorUsername}',
                         style: TextStyle(color: Colors.grey[600], fontSize: 15),
                       ),
                       const SizedBox(width: 4),
@@ -492,14 +524,7 @@ class _ReplyThreadScreenState extends ConsumerState<ReplyThreadScreen> {
                   ),
                   if (reply.images.isNotEmpty) ...[
                     const SizedBox(height: 12),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Image.network(
-                        reply.images.first,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
+                    MediaGallery(urls: reply.images, borderRadius: 12),
                   ],
                   const SizedBox(height: 12),
                   _inlineActions(reply),
@@ -549,7 +574,7 @@ class _ReplyThreadScreenState extends ConsumerState<ReplyThreadScreen> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      tweet.authorUsername,
+                      '@${tweet.authorUsername}',
                       style: TextStyle(color: Colors.grey[600], fontSize: 15),
                     ),
                   ],
@@ -584,14 +609,7 @@ class _ReplyThreadScreenState extends ConsumerState<ReplyThreadScreen> {
           ),
           if (tweet.images.isNotEmpty) ...[
             const SizedBox(height: 16),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: Image.network(
-                tweet.images.first,
-                width: double.infinity,
-                fit: BoxFit.cover,
-              ),
-            ),
+            MediaGallery(urls: tweet.images, borderRadius: 16),
           ],
           const SizedBox(height: 16),
           _timestampWithViews(tweet),
@@ -776,7 +794,10 @@ class _ReplyThreadScreenState extends ConsumerState<ReplyThreadScreen> {
 
   Widget _timestampWithViews(TweetModel t) {
     final formattedTime = DateFormat('h:mm a · d MMM yy').format(t.createdAt);
-    final views = 0; // TODO: Get views from backend when available
+    final views = _viewCounts[t.id];
+    final viewsLabel = views == null
+        ? '... Views'
+        : '${_formatNumber(views)} Views';
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),
@@ -790,7 +811,7 @@ class _ReplyThreadScreenState extends ConsumerState<ReplyThreadScreen> {
           Text('·', style: TextStyle(color: Colors.grey[600])),
           const SizedBox(width: 4),
           Text(
-            '${_formatNumber(views)} Views',
+            viewsLabel,
             style: const TextStyle(
               color: Colors.white,
               fontSize: 15,

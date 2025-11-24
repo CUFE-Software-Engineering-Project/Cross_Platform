@@ -19,6 +19,10 @@ class ProfileModel {
   final bool isFollowing;
   final bool isFollower;
   final bool protectedAccount;
+  final bool isBlockedByMe;
+  final bool isMutedByMe;
+  final String email;
+  final String avatarId;
 
   const ProfileModel({
     required this.id,
@@ -39,6 +43,10 @@ class ProfileModel {
     required this.isFollowing,
     required this.isFollower,
     required this.protectedAccount,
+    required this.isBlockedByMe,
+    required this.isMutedByMe,
+    required this.email,
+    required this.avatarId,
   });
 
   factory ProfileModel.fromJson(Map<String, dynamic> json) {
@@ -81,11 +89,13 @@ class ProfileModel {
       birthDate: birthDateFormated,
       isFollowing: json['isFollowing'] ?? false,
       isFollower: json['isFollower'] ?? false,
-      protectedAccount: json['protectedAccount'] ?? false
+      protectedAccount: json['protectedAccount'] ?? false,
+      isBlockedByMe: json['blocked'] ?? false,
+      isMutedByMe: json['muted'] ?? false,
+      email: json["email"] ?? "",
+      avatarId: json["avatarId"] ?? "",
     );
   }
-
- 
 
   Map<String, dynamic> toJson() {
     String? joinedDateIso;
@@ -142,6 +152,10 @@ class ProfileModel {
     bool? isFollowing,
     bool? isFollower,
     bool? protectedAccount,
+    bool? isBlockedByMe,
+    bool? isMutedByMe,
+    String? email,
+    String? avatarId,
   }) {
     return ProfileModel(
       id: id ?? this.id,
@@ -161,7 +175,11 @@ class ProfileModel {
       birthDate: birthDate ?? this.birthDate,
       isFollowing: isFollowing ?? this.isFollowing,
       isFollower: isFollower ?? this.isFollower,
-      protectedAccount: protectedAccount?? this.protectedAccount
+      protectedAccount: protectedAccount ?? this.protectedAccount,
+      isBlockedByMe: isBlockedByMe ?? this.isBlockedByMe,
+      isMutedByMe: isMutedByMe ?? this.isMutedByMe,
+      email: email ?? this.email,
+      avatarId: avatarId ?? this.avatarId,
     );
   }
 }
