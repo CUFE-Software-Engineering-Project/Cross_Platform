@@ -7,6 +7,7 @@ pipeline {
         DOCKER_REGISTRY_CREDENTIALS = 'dockerhub-credentials'
         KUBE_CONFIG_CREDENTIALS = 'kubeconfig-file'
         EMAIL_RECIPIENTS = 'asxcchcv@gmail.com'
+        JENKINS_EMAIL = 'asxcchcv@gmail.com'
         GIT_CREDENTIALS = 'github-token'
     }
 
