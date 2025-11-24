@@ -25,8 +25,8 @@ Future<void> init() async {
   Hive.registerAdapter(UserModelAdapter());
   Hive.registerAdapter(ConversationModelAdapter());
   Hive.registerAdapter(MessageModelAdapter());
-  // await Hive.deleteBoxFromDisk('userBox');
-  // await Hive.deleteBoxFromDisk('tokenBox');
+  await Hive.deleteBoxFromDisk('userBox');
+  await Hive.deleteBoxFromDisk('tokenBox');
   // await Hive.deleteBoxFromDisk('conversationsBox');
   // await Hive.deleteBoxFromDisk('messagesBox');
   await Hive.openBox<UserModel>('userBox');

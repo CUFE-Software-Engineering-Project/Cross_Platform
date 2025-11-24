@@ -16,7 +16,8 @@ import 'package:lite_x/features/auth/view/screens/Log_In/LoginPasswordScreen.dar
 import 'package:lite_x/features/auth/view/screens/Log_In/Login_Screen.dart';
 import 'package:lite_x/features/auth/view/screens/Create_Account/Password_Screen.dart';
 import 'package:lite_x/features/auth/view/screens/Create_Account/Upload_Profile_Photo_Screen.dart';
-import 'package:lite_x/features/auth/view/screens/Create_Account/UserName_Screen.dart';
+import 'package:lite_x/features/auth/view/screens/Create_Account/UserName_Screen.dart'
+    hide UsernameScreen;
 import 'package:lite_x/features/auth/view/screens/Create_Account/Verification_Screen.dart';
 import 'package:lite_x/features/auth/view/screens/Log_In/VerificationForgot_Screen.dart';
 import 'package:lite_x/features/chat/view/screens/Search_Direct_messages.dart';
@@ -46,6 +47,7 @@ import 'package:lite_x/features/settings/screens/MuteAndBlock_Screen.dart';
 import 'package:lite_x/features/settings/screens/MutedAccounts_Screen.dart';
 import 'package:lite_x/features/settings/screens/PrivacyAndSafety_Screen.dart';
 import 'package:lite_x/features/settings/screens/SettingsAndPrivacy_Screen.dart';
+import 'package:lite_x/features/settings/screens/UserName_Screen.dart';
 import 'package:lite_x/features/settings/screens/YourAccount_Screen.dart';
 import 'package:lite_x/features/settings/screens/AccountInformation_Screen.dart';
 import 'package:lite_x/features/settings/screens/ChangePassword_Screen.dart';
@@ -215,6 +217,14 @@ class Approuter {
         ),
       ),
       GoRoute(
+        name: RouteConstants.usernamesettings,
+        path: "/usernamesettings",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: const UsernameScreen(),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
         name: RouteConstants.changePasswordScreen,
         path: "/change-password",
         pageBuilder: (context, state) => CustomTransitionPage(
@@ -362,7 +372,7 @@ class Approuter {
         },
       ),
       GoRoute(
-        name: RouteConstants.ChatScreen,
+        name: RouteConstants.VerifyChangeEmailProfileScreen,
         path: "/verifyChangeEmailProfileScreen",
         pageBuilder: (context, state) => CustomTransitionPage(
           child: VerifyChangeEmailProfileScreen(
