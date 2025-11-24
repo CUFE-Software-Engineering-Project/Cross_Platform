@@ -232,7 +232,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     ),
                   ],
                 ),
-                _buildLoadingDialog(),
+                _buildLoadingDialog("Update Profile..."),
               ],
             ),
         ],
@@ -241,7 +241,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   }
 }
 
-Widget _buildLoadingDialog() {
+Widget _buildLoadingDialog(String text) {
   return Dialog(
     backgroundColor: const Color.fromARGB(255, 45, 45, 46),
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -255,7 +255,7 @@ Widget _buildLoadingDialog() {
           CircularProgressIndicator(color: Colors.white),
           SizedBox(width: 16),
           Text(
-            'Updating profile...',
+            text,
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w700,

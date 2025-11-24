@@ -1,8 +1,10 @@
 import 'package:dartz/dartz.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
+import 'package:flutter_riverpod/misc.dart';
 import 'package:lite_x/core/providers/current_user_provider.dart';
 import 'package:lite_x/core/providers/dio_interceptor.dart';
+import 'package:lite_x/features/media/download_media.dart';
 import 'package:lite_x/features/profile/models/create_reply_model.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
 import 'package:lite_x/features/profile/models/profile_tweet_model.dart';
@@ -99,6 +101,24 @@ final unBlockUserProvider = Provider((ref) {
   };
 });
 
+final getBlockedUsersProvider =
+    FutureProvider.family<Either<Failure, List<UserModel>>, String>((
+      ref,
+      username,
+    ) {
+      final repo = ref.watch(profileRepoProvider);
+      return repo.getBlockedList(username);
+    });
+
+final getMutedUsersProvider =
+    FutureProvider.family<Either<Failure, List<UserModel>>, String>((
+      ref,
+      username,
+    ) {
+      final repo = ref.watch(profileRepoProvider);
+      return repo.getMutedList(username);
+    });
+
 final muteUserProvider = Provider((ref) {
   final repo = ref.watch(profileRepoProvider);
   return (String username) {
@@ -157,6 +177,13 @@ final tweetRepliesProvider =
       final repo = ref.watch(profileRepoProvider);
       return repo.getTweetReplies(tweetId);
     });
+
+final deleteTweetProvider = Provider((ref) {
+  final repo = ref.watch(profileRepoProvider);
+  return (String tweetId) {
+    return repo.deleteTweet(tweetId);
+  };
+});
 
 // tweets reactions
 final likeTweetProvider = Provider((ref) {
@@ -243,3 +270,11 @@ final myUserNameProvider = Provider<String>((ref) {
 //   // final user = ref.watch(currentUserProvider.select((e) => e!.username));
 //   return "hazememam";
 // });
+
+final mediaUrlsProvider = FutureProvider.family<List<String>, List<String>>((
+  ref,
+  mediaIds,
+) async {
+  // Replace this with your actual function that fetches media URLs
+  return await getMediaUrls(mediaIds);
+});

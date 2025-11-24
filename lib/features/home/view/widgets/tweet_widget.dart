@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'expandable_text.dart';
+import 'media_gallery.dart';
 import '../../models/tweet_model.dart';
 
 class TweetWidget extends StatelessWidget {
@@ -6,8 +8,11 @@ class TweetWidget extends StatelessWidget {
   final String username;
   final String timeAgo;
   final String content;
+  final String? avatarUrl;
+  final String tweetType;
   final String? imageUrl;
   final String? videoUrl;
+  final List<String> mediaUrls;
   final bool isVerified;
   final int replyCount;
   final int retweetCount;
@@ -24,8 +29,10 @@ class TweetWidget extends StatelessWidget {
   final VoidCallback? onShare;
   final VoidCallback? onSave;
   final VoidCallback? onReach;
+  final VoidCallback? onSummary;
   final VoidCallback? onTap;
   final VoidCallback? onDelete;
+  final VoidCallback? onProfileTap;
   final String? tweetId;
   final bool isOwnTweet;
   final TweetModel? quotedTweet;
@@ -36,8 +43,11 @@ class TweetWidget extends StatelessWidget {
     required this.username,
     required this.timeAgo,
     required this.content,
+    this.avatarUrl,
+    this.tweetType = 'TWEET',
     this.imageUrl,
     this.videoUrl,
+    this.mediaUrls = const [],
     this.isVerified = false,
     this.replyCount = 0,
     this.retweetCount = 0,
@@ -54,8 +64,10 @@ class TweetWidget extends StatelessWidget {
     this.onShare,
     this.onSave,
     this.onReach,
+    this.onSummary,
     this.onTap,
     this.onDelete,
+    this.onProfileTap,
     this.tweetId,
     this.isOwnTweet = false,
     this.quotedTweet,
@@ -73,34 +85,41 @@ class TweetWidget extends StatelessWidget {
             bottom: BorderSide(color: Colors.grey[800]!, width: 0.5),
           ),
         ),
-        child: Row(
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            CircleAvatar(
-              radius: 20,
-              backgroundColor: Colors.grey[700],
-              child: const Icon(Icons.person, color: Colors.white, size: 24),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildUserInfoRow(context),
-                  const SizedBox(height: 8),
-                  _buildTweetText(),
-                  const SizedBox(height: 12),
-                  if (quotedTweet != null) ...[
-                    _buildQuotedTweet(),
-                    const SizedBox(height: 12),
-                  ],
-                  if (imageUrl != null || videoUrl != null) ...[
-                    _buildMediaContent(),
-                    const SizedBox(height: 12),
-                  ],
-                  _buildActionButtons(),
-                ],
-              ),
+            if (_contextLabel != null) ...[
+              _buildContextPill(_contextLabel!),
+              const SizedBox(height: 12),
+            ],
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildAvatar(),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildUserInfoRow(context),
+                      const SizedBox(height: 8),
+                      _buildTweetText(),
+                      const SizedBox(height: 12),
+                      if (quotedTweet != null) ...[
+                        _buildQuotedTweet(),
+                        const SizedBox(height: 12),
+                      ],
+                      if (mediaUrls.isNotEmpty ||
+                          imageUrl != null ||
+                          videoUrl != null) ...[
+                        _buildMediaContent(),
+                        const SizedBox(height: 12),
+                      ],
+                      _buildActionButtons(),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -108,60 +127,90 @@ class TweetWidget extends StatelessWidget {
     );
   }
 
+  Widget _buildAvatar() {
+    final hasAvatar = avatarUrl != null && avatarUrl!.isNotEmpty;
+    final avatar = CircleAvatar(
+      radius: 20,
+      backgroundColor: Colors.grey[700],
+      backgroundImage: hasAvatar ? NetworkImage(avatarUrl!) : null,
+      child: hasAvatar
+          ? null
+          : const Icon(Icons.person, color: Colors.white, size: 24),
+    );
+
+    if (onProfileTap == null) {
+      return avatar;
+    }
+
+    return GestureDetector(
+      onTap: onProfileTap,
+      behavior: HitTestBehavior.opaque,
+      child: avatar,
+    );
+  }
+
   Widget _buildUserInfoRow(BuildContext context) {
     return Row(
       children: [
         Expanded(
-          child: Row(
-            children: [
-              Flexible(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Flexible(
-                      child: Text(
-                        userDisplayName,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
+          child: GestureDetector(
+            onTap: onProfileTap,
+            behavior: HitTestBehavior.opaque,
+            child: Row(
+              children: [
+                Flexible(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          userDisplayName,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                    if (isVerified) ...[
-                      const SizedBox(width: 4),
-                      const Icon(Icons.verified, color: Colors.blue, size: 16),
+                      if (isVerified) ...[
+                        const SizedBox(width: 4),
+                        const Icon(
+                          Icons.verified,
+                          color: Colors.blue,
+                          size: 16,
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: Text(
-                  '·',
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Text(
+                    '·',
+                    style: TextStyle(color: Colors.grey[500], fontSize: 15),
+                  ),
+                ),
+                Flexible(
+                  child: Text(
+                    username.startsWith('@') ? username : '@$username',
+                    style: TextStyle(color: Colors.grey[500], fontSize: 15),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Text(
+                    '·',
+                    style: TextStyle(color: Colors.grey[500], fontSize: 15),
+                  ),
+                ),
+                Text(
+                  timeAgo,
                   style: TextStyle(color: Colors.grey[500], fontSize: 15),
                 ),
-              ),
-              Flexible(
-                child: Text(
-                  username.startsWith('@') ? username : '@$username',
-                  style: TextStyle(color: Colors.grey[500], fontSize: 15),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: Text(
-                  '·',
-                  style: TextStyle(color: Colors.grey[500], fontSize: 15),
-                ),
-              ),
-              Text(
-                timeAgo,
-                style: TextStyle(color: Colors.grey[500], fontSize: 15),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
         IconButton(
@@ -313,12 +362,14 @@ class TweetWidget extends StatelessWidget {
   }
 
   Widget _buildTweetText() {
-    return Text(
-      content,
+    return ExpandableText(
+      text: content,
+      maxLines: 4,
       style: const TextStyle(color: Colors.white, fontSize: 15, height: 1.4),
       textDirection: _isArabicText(content)
           ? TextDirection.rtl
           : TextDirection.ltr,
+      onReadMore: onTap,
     );
   }
 
@@ -406,68 +457,20 @@ class TweetWidget extends StatelessWidget {
   }
 
   Widget _buildMediaContent() {
-    return Container(
-      width: double.infinity,
-      constraints: const BoxConstraints(
-        maxHeight: 400, // Maximum height to prevent extremely tall images
-        minHeight: 150, // Minimum height for very small images
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: imageUrl != null
-            ? _buildImageContent()
-            : videoUrl != null
-            ? _buildVideoContent()
-            : const SizedBox.shrink(),
-      ),
-    );
-  }
+    final hasGallery = mediaUrls.isNotEmpty;
+    final hasImage = imageUrl != null;
+    final hasVideo = videoUrl != null;
 
-  Widget _buildImageContent() {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return Image.network(
-          imageUrl!,
-          width: double.infinity,
-          fit: BoxFit.cover,
-          loadingBuilder: (context, child, loadingProgress) {
-            if (loadingProgress == null) return child;
-            return Container(
-              height: 200,
-              color: Colors.grey[900],
-              child: Center(
-                child: CircularProgressIndicator(
-                  value: loadingProgress.expectedTotalBytes != null
-                      ? loadingProgress.cumulativeBytesLoaded /
-                            loadingProgress.expectedTotalBytes!
-                      : null,
-                  color: Colors.blue,
-                ),
-              ),
-            );
-          },
-          errorBuilder: (context, error, stackTrace) {
-            return Container(
-              height: 200,
-              color: Colors.grey[900],
-              child: const Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.broken_image, color: Colors.grey, size: 48),
-                    SizedBox(height: 8),
-                    Text(
-                      'Failed to load image',
-                      style: TextStyle(color: Colors.grey),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
+    if (!hasGallery && !hasImage && !hasVideo) {
+      return const SizedBox.shrink();
+    }
+
+    if (hasGallery || hasImage) {
+      final urls = hasGallery ? mediaUrls : [if (imageUrl != null) imageUrl!];
+      return MediaGallery(urls: urls);
+    }
+
+    return _buildVideoContent();
   }
 
   Widget _buildVideoContent() {
@@ -548,6 +551,18 @@ class TweetWidget extends StatelessWidget {
                 compact: isNarrow,
               ),
             ),
+            if (onSummary != null)
+              Flexible(
+                child: _buildActionButton(
+                  icon: Icons.auto_awesome,
+                  count: 0,
+                  onTap: onSummary,
+                  compact: isNarrow,
+                  isActive: false,
+                  activeColor: const Color(0xFF1DA1F2),
+                  iconColor: const Color(0xFF1DA1F2),
+                ),
+              ),
             Flexible(child: _buildSaveButton(compact: isNarrow)),
             Flexible(
               child: _buildActionButton(
@@ -570,14 +585,19 @@ class TweetWidget extends StatelessWidget {
     bool compact = false,
     bool isActive = false,
     Color? activeColor,
+    Color? iconColor,
   }) {
-    final color = isActive && activeColor != null
-        ? activeColor
-        : Colors.grey[500];
+    final color =
+        iconColor ??
+        (isActive && activeColor != null ? activeColor : Colors.grey[500]);
 
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
+    return GestureDetector(
+      onTap: onTap != null
+          ? () {
+              onTap();
+            }
+          : null,
+      behavior: HitTestBehavior.opaque,
       child: Padding(
         padding: EdgeInsets.all(compact ? 4 : 8),
         child: Row(
@@ -610,9 +630,9 @@ class TweetWidget extends StatelessWidget {
   }
 
   Widget _buildSaveButton({bool compact = false}) {
-    return InkWell(
+    return GestureDetector(
       onTap: onSave,
-      borderRadius: BorderRadius.circular(20),
+      behavior: HitTestBehavior.opaque,
       child: Padding(
         padding: EdgeInsets.all(compact ? 4 : 8),
         child: Icon(
@@ -636,6 +656,36 @@ class TweetWidget extends StatelessWidget {
 
   bool _isArabicText(String text) {
     return RegExp(r'[\u0600-\u06FF]').hasMatch(text);
+  }
+
+  String? get _contextLabel {
+    switch (tweetType.toUpperCase()) {
+      case 'REPLY':
+        return 'Reply';
+      case 'RETWEET':
+      case 'REPOST':
+        return 'Repost';
+      default:
+        return null;
+    }
+  }
+
+  Widget _buildContextPill(String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.grey[900],
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: Colors.grey[400],
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
   }
 
   void _showRetweetMenu(BuildContext context) {
@@ -695,6 +745,7 @@ class TweetWidget extends StatelessWidget {
       },
     );
   }
+
   static String formatTimeAgoShort(DateTime dateTime) {
     final now = DateTime.now();
     final difference = now.difference(dateTime);

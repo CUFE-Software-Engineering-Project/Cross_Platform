@@ -1,6 +1,8 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lite_x/core/routes/Route_Constants.dart';
 import 'package:lite_x/features/profile/models/search_user_model.dart';
 import 'package:lite_x/features/profile/models/user_model.dart';
 import 'package:lite_x/features/profile/view_model/providers.dart';
@@ -37,7 +39,14 @@ class _ProfileSearchScreenState extends ConsumerState<ProfileSearchScreen> {
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
-            leading: BackButton(),
+            leading: BackButton(
+              onPressed: () {
+                if (context.canPop())
+                  context.pop();
+                else
+                  context.goNamed(RouteConstants.homescreen);
+              },
+            ),
             titleSpacing: 0,
             title: TextFormField(
               autofocus: true,
@@ -102,12 +111,12 @@ class CurrentSearchUser extends StatelessWidget {
       horizontalTitleGap: 10,
       enableFeedback: true,
       leading: CircleAvatar(
-        backgroundImage:
-            user.profileMedia != null && user.profileMedia!.isNotEmpty
-            ? NetworkImage(user.profileMedia!)
+        backgroundImage: user.profileMedia.isNotEmpty
+            ? CachedNetworkImageProvider(user.profileMedia)
             : AssetImage("assets/images/basic_user.jpeg"),
         radius: 22,
         backgroundColor: Colors.grey,
+        onBackgroundImageError: (exception, stackTrace) => null,
       ),
       title: Flexible(
         child: Text(

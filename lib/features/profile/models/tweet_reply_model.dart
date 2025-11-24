@@ -9,7 +9,7 @@ class TweetReplyModel {
   final int repliesCount;
   final int quotesCount;
   final String replyControl;
-  final String parentId;
+  final String parentId; 
   final String tweetType;
   final UserReplyModel user;
 

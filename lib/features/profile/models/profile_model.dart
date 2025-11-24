@@ -22,6 +22,7 @@ class ProfileModel {
   final bool isBlockedByMe;
   final bool isMutedByMe;
   final String email;
+  final String avatarId;
 
   const ProfileModel({
     required this.id,
@@ -45,6 +46,7 @@ class ProfileModel {
     required this.isBlockedByMe,
     required this.isMutedByMe,
     required this.email,
+    required this.avatarId,
   });
 
   factory ProfileModel.fromJson(Map<String, dynamic> json) {
@@ -90,7 +92,8 @@ class ProfileModel {
       protectedAccount: json['protectedAccount'] ?? false,
       isBlockedByMe: json['blocked'] ?? false,
       isMutedByMe: json['muted'] ?? false,
-      email: json["email"] ?? ",",
+      email: json["email"] ?? "",
+      avatarId: json["avatarId"] ?? "",
     );
   }
 
@@ -152,6 +155,7 @@ class ProfileModel {
     bool? isBlockedByMe,
     bool? isMutedByMe,
     String? email,
+    String? avatarId,
   }) {
     return ProfileModel(
       id: id ?? this.id,
@@ -175,6 +179,7 @@ class ProfileModel {
       isBlockedByMe: isBlockedByMe ?? this.isBlockedByMe,
       isMutedByMe: isMutedByMe ?? this.isMutedByMe,
       email: email ?? this.email,
+      avatarId: avatarId ?? this.avatarId,
     );
   }
 }

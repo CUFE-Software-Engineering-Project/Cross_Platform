@@ -1,7 +1,14 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lite_x/core/classes/PickedImage.dart';
 import 'package:lite_x/features/home/models/tweet_model.dart';
+import 'package:lite_x/features/home/view/widgets/media_gallery.dart';
 import 'package:lite_x/features/home/view_model/home_view_model.dart';
+import 'package:lite_x/features/media/upload_media.dart';
+import 'package:lite_x/core/providers/current_user_provider.dart';
+import 'package:lite_x/features/home/providers/user_profile_provider.dart';
 
 class QuoteComposerScreen extends ConsumerStatefulWidget {
   final TweetModel quotedTweet;
@@ -17,6 +24,15 @@ class _QuoteComposerScreenState extends ConsumerState<QuoteComposerScreen> {
   final TextEditingController _textController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
   bool _isPosting = false;
+  final List<File> _selectedImages = [];
+
+  String? _getPhotoUrl(String? photo) {
+    if (photo == null || photo.isEmpty) return null;
+    if (photo.startsWith('http://') || photo.startsWith('https://')) {
+      return photo;
+    }
+    return 'https://litex.siematworld.online/media/$photo';
+  }
 
   @override
   void initState() {
@@ -41,6 +57,7 @@ class _QuoteComposerScreenState extends ConsumerState<QuoteComposerScreen> {
     });
 
     try {
+      final mediaIds = await _uploadSelectedImages();
       await ref
           .read(homeViewModelProvider.notifier)
           .createQuoteTweet(
@@ -48,9 +65,14 @@ class _QuoteComposerScreenState extends ConsumerState<QuoteComposerScreen> {
             quotedTweetId: widget.quotedTweet.id,
             quotedTweet: widget.quotedTweet,
             replyControl: "EVERYONE",
+            mediaIds: mediaIds,
           );
 
       if (mounted) {
+        setState(() {
+          _selectedImages.clear();
+          _textController.clear();
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Quote posted successfully'),
@@ -75,6 +97,102 @@ class _QuoteComposerScreenState extends ConsumerState<QuoteComposerScreen> {
         });
       }
     }
+  }
+
+  Future<List<String>> _uploadSelectedImages() async {
+    if (_selectedImages.isEmpty) return [];
+    final uploadedIds = await upload_media(_selectedImages);
+    final mediaIds = uploadedIds.where((id) => id.isNotEmpty).toList();
+
+    if (mediaIds.length != _selectedImages.length && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Some images failed to upload. Try again.'),
+          backgroundColor: Colors.orange,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+
+    if (mediaIds.isEmpty) {
+      throw Exception('Unable to upload selected images.');
+    }
+    return mediaIds;
+  }
+
+  Future<void> _pickImage() async {
+    final remainingSlots = 4 - _selectedImages.length;
+    if (remainingSlots <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Maximum 4 images allowed per quote.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    final pickedList = await pickImages(maxImages: remainingSlots);
+    if (pickedList.isEmpty) return;
+
+    setState(() {
+      for (final picked in pickedList) {
+        if (picked.file != null) {
+          _selectedImages.add(picked.file!);
+        }
+      }
+    });
+  }
+
+  void _removeImage(int index) {
+    if (index < 0 || index >= _selectedImages.length) return;
+    setState(() {
+      _selectedImages.removeAt(index);
+    });
+  }
+
+  Widget _buildSelectedImagesPreview() {
+    if (_selectedImages.isEmpty) return const SizedBox.shrink();
+    final crossAxisCount = _selectedImages.length == 1 ? 1 : 2;
+
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: crossAxisCount,
+        crossAxisSpacing: 8,
+        mainAxisSpacing: 8,
+        childAspectRatio: _selectedImages.length == 1 ? 16 / 9 : 1.0,
+      ),
+      itemCount: _selectedImages.length,
+      itemBuilder: (context, index) {
+        return Stack(
+          children: [
+            Positioned.fill(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.file(_selectedImages[index], fit: BoxFit.cover),
+              ),
+            ),
+            Positioned(
+              top: 8,
+              right: 8,
+              child: InkWell(
+                onTap: () => _removeImage(index),
+                child: Container(
+                  decoration: const BoxDecoration(
+                    color: Colors.black54,
+                    shape: BoxShape.circle,
+                  ),
+                  padding: const EdgeInsets.all(4),
+                  child: const Icon(Icons.close, color: Colors.white, size: 16),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -147,30 +265,76 @@ class _QuoteComposerScreenState extends ConsumerState<QuoteComposerScreen> {
   }
 
   Widget _buildQuoteComposer() {
-    return Row(
+    final user = ref.watch(currentUserProvider);
+    final profileState = ref.watch(userProfileProvider);
+
+    // Use profile photo from API if available, otherwise fall back to user photo
+    String? userPhotoUrl;
+    profileState.when(
+      data: (profile) {
+        userPhotoUrl = profile?.profilePhotoUrl ?? _getPhotoUrl(user?.photo);
+        print('🖼️ Quote Composer - Photo URL: $userPhotoUrl');
+      },
+      loading: () {
+        userPhotoUrl = _getPhotoUrl(user?.photo);
+      },
+      error: (_, __) {
+        userPhotoUrl = _getPhotoUrl(user?.photo);
+      },
+    );
+
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        CircleAvatar(
-          radius: 20,
-          backgroundColor: Colors.grey[700],
-          child: const Icon(Icons.person, color: Colors.white, size: 24),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: TextField(
-            controller: _textController,
-            focusNode: _focusNode,
-            maxLines: null,
-            style: const TextStyle(color: Colors.white, fontSize: 18),
-            decoration: InputDecoration(
-              hintText: 'Add a comment...',
-              hintStyle: TextStyle(color: Colors.grey[600], fontSize: 18),
-              border: InputBorder.none,
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            CircleAvatar(
+              radius: 20,
+              backgroundColor: Colors.grey[700],
+              backgroundImage: userPhotoUrl != null
+                  ? NetworkImage(userPhotoUrl!)
+                  : null,
+              child: userPhotoUrl == null
+                  ? const Icon(Icons.person, color: Colors.white, size: 24)
+                  : null,
             ),
-            onChanged: (value) {
-              setState(() {}); // Rebuild to enable/disable post button
-            },
-          ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: TextField(
+                controller: _textController,
+                focusNode: _focusNode,
+                maxLines: null,
+                style: const TextStyle(color: Colors.white, fontSize: 18),
+                decoration: InputDecoration(
+                  hintText: 'Add a comment...',
+                  hintStyle: TextStyle(color: Colors.grey[600], fontSize: 18),
+                  border: InputBorder.none,
+                ),
+                onChanged: (value) {
+                  setState(() {});
+                },
+              ),
+            ),
+          ],
+        ),
+        if (_selectedImages.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          _buildSelectedImagesPreview(),
+        ],
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            IconButton(
+              onPressed: _isPosting ? null : _pickImage,
+              icon: const Icon(Icons.image_outlined, color: Colors.blue),
+            ),
+            const SizedBox(width: 4),
+            Text(
+              '${_selectedImages.length} / 4 photos',
+              style: TextStyle(color: Colors.grey[500], fontSize: 13),
+            ),
+          ],
         ),
       ],
     );
@@ -230,23 +394,11 @@ class _QuoteComposerScreenState extends ConsumerState<QuoteComposerScreen> {
           ),
           if (widget.quotedTweet.images.isNotEmpty) ...[
             const SizedBox(height: 8),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Image.network(
-                widget.quotedTweet.images.first,
-                width: double.infinity,
-                height: 100,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    height: 100,
-                    color: Colors.grey[900],
-                    child: const Center(
-                      child: Icon(Icons.broken_image, color: Colors.grey),
-                    ),
-                  );
-                },
-              ),
+            MediaGallery(
+              urls: widget.quotedTweet.images,
+              borderRadius: 8,
+              minHeight: 100,
+              maxHeight: 160,
             ),
           ],
         ],

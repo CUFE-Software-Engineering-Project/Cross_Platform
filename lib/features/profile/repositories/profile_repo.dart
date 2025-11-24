@@ -24,10 +24,15 @@ abstract class ProfileRepo {
   Future<Either<Failure, ProfileModel>> updateProfile({
     required ProfileModel newModel,
   });
+
+  // block and mute
   Future<Either<Failure, void>> blockUser(String username);
+
   Future<Either<Failure, void>> unBlockUser(String username);
   Future<Either<Failure, void>> muteUser(String username);
   Future<Either<Failure, void>> unMuteUser(String username);
+  Future<Either<Failure, List<UserModel>>> getMutedList(String userName);
+  Future<Either<Failure, List<UserModel>>> getBlockedList(String userName);
 
   Future<Either<Failure, void>> updateProfileBanner(
     String userId,
@@ -49,7 +54,7 @@ abstract class ProfileRepo {
   Future<Either<Failure, List<TweetReplyModel>>> getTweetReplies(
     String tweetId,
   );
-
+  Future<Either<Failure, void>> deleteTweet(String tweetId);
   //profile search
   Future<Either<Failure, List<SearchUserModel>>> profileCurrentSearch(
     String query,
@@ -67,6 +72,13 @@ abstract class ProfileRepo {
 
   // emain and password
   Future<Either<Failure, void>> changeEmailProfile(String newEmail);
-  Future<Either<Failure, void>> verifyChangeEmailProfile(String newEmail, String code);
-  Future<Either<Failure, void>> changePasswordProfile(String oldPassword, String newPassword, String confirmNewPassword);
+  Future<Either<Failure, void>> verifyChangeEmailProfile(
+    String newEmail,
+    String code,
+  );
+  Future<Either<Failure, void>> changePasswordProfile(
+    String oldPassword,
+    String newPassword,
+    String confirmNewPassword,
+  );
 }

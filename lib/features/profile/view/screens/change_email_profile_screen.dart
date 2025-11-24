@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lite_x/core/routes/Route_Constants.dart';
+import 'package:lite_x/features/auth/view_model/auth_state.dart';
+import 'package:lite_x/features/auth/view_model/auth_view_model.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
 import 'package:lite_x/features/profile/view_model/providers.dart';
 
@@ -53,6 +56,9 @@ class _ChangeEmailScreenProfileState
       } else {
         _emailError = null;
       }
+
+      if (value.trim() == widget.profileData.email)
+        _emailError = "the new email is the same with the old email";
     });
   }
 
@@ -93,8 +99,9 @@ class _ChangeEmailScreenProfileState
       (l) {
         _emailError = l.message;
       },
-      (r) {
+      (r) async {
         // TODO:go to verify email
+
         context.push(
           "/verifyChangeEmailProfileScreen",
           extra: [widget.profileData, newEmail],

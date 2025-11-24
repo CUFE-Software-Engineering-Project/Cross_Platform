@@ -16,6 +16,7 @@ class RouteConstants {
   static String VerificationforgotScreen = "VerificationforgotScreen";
   static String ChooseNewPasswordScreen = "ChooseNewPasswordScreen";
   static String ChangePasswordFeedback = "ChangePasswordFeedback";
+  static String changePasswordScreen = "changePasswordScreen";
   static String Interests = "Interests";
   static String FollowingFollowersScreen = "FollowingFollowersScreen";
   static String BirthDateScreen = "BirthDateScreen";
@@ -25,6 +26,8 @@ class RouteConstants {
   static String mutedaccountsscreen = "mutedaccountsscreen";
   static String privacyandsafetyscreen = "privacyandsafetyscreen";
   static String settingandprivacyscreen = "settingandprivacyscreen";
+  static String youraccountscreen = "youraccountscreen";
+  static String accountinformationscreen = "accountinformationscreen";
   //-------------------------------------------------------------------------------------------------------------------------------------//
 
   static String ConversationsScreen = "ConversationsScreen";
@@ -34,6 +37,15 @@ class RouteConstants {
   static String ProfilePhotoScreen = "ProfilePhotoScreen";
   static String ProfileCoverScreen = "ProfileCoverScreen";
   static String ProfileSearchScreen = "ProfileSearchScreen";
+
   static String ChangeEmailProfileScreen = "ChangeEmailProfileScreen";
-  static String VerifyChangeEmailProfileScreen = "VerifyChangeEmailProfileScreen";
+  static String VerifyChangeEmailProfileScreen =
+      "VerifyChangeEmailProfileScreen";
+
+  // search feature
+  static String SearchScreen = "SearchScreen";
+
+  // explore feature
+  static String ExploreScreen = "ExploreScreen";
+  static String ExploreProfileScreen = "ExploreProfileScreen";
 }
