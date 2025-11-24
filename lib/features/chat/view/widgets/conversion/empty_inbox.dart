@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:lite_x/core/routes/Route_Constants.dart';
 import 'package:lite_x/core/theme/palette.dart';
 
 class EmptyInbox extends StatelessWidget {
@@ -33,7 +35,9 @@ class EmptyInbox extends StatelessWidget {
             ),
             const SizedBox(height: 22),
             ElevatedButton(
-              onPressed: () {},
+              onPressed: () {
+                context.pushNamed(RouteConstants.SearchUserGroup);
+              },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Palette.textWhite,
                 foregroundColor: Palette.background,

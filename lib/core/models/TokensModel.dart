@@ -29,6 +29,15 @@ class TokensModel {
       refreshTokenExpiry: DateTime.now().add(const Duration(days: 30)),
     );
   }
+  //--------------------------------------------------------------------------------------//
+  factory TokensModel.fromMap_reset_password(Map<String, dynamic> map) {
+    return TokensModel(
+      accessToken: map['accesstoken'] as String,
+      refreshToken: map['refresh_token'] as String,
+      accessTokenExpiry: DateTime.now().add(const Duration(minutes: 60)),
+      refreshTokenExpiry: DateTime.now().add(const Duration(days: 30)),
+    );
+  }
   //---------------------------------------------------------------------------------------//
   factory TokensModel.fromMap_update(Map<String, dynamic> map) {
     return TokensModel(

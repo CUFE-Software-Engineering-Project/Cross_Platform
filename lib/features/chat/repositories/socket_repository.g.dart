@@ -53,4 +53,4 @@ final class SocketRepositoryProvider
   }
 }
 
-String _$socketRepositoryHash() => r'850fee9d23a9ce17a7e58f62cd7e49f3df08ae6b';
+String _$socketRepositoryHash() => r'917bc5b898d7143345f3d26b185626883debab38';

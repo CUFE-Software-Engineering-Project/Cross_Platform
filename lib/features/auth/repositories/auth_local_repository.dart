@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:hive_ce/hive.dart';
 import 'package:lite_x/core/models/TokensModel.dart';
 import 'package:lite_x/core/models/usermodel.dart';
@@ -15,7 +17,10 @@ AuthLocalRepository authLocalRepository(Ref ref) {
 class AuthLocalRepository {
   final Box<UserModel> _userBox;
   final Box _tokenBox;
-
+  //--------------------------------------------------------------//
+  final _tokenStreamController = StreamController<TokensModel?>.broadcast();
+  Stream<TokensModel?> get tokenStream => _tokenStreamController.stream;
+  //-----------------------------------------------------------------------//
   AuthLocalRepository({required Box<UserModel> userBox, required Box tokenBox})
     : _userBox = userBox,
       _tokenBox = tokenBox;
@@ -39,6 +44,7 @@ class AuthLocalRepository {
       'accessTokenExpiry': tokens.accessTokenExpiry.toIso8601String(),
       'refreshTokenExpiry': tokens.refreshTokenExpiry.toIso8601String(),
     });
+    _tokenStreamController.add(tokens);
   }
 
   TokensModel? getTokens() {
@@ -74,5 +80,6 @@ class AuthLocalRepository {
       'accessTokenExpiry',
       'refreshTokenExpiry',
     ]);
+    _tokenStreamController.add(null);
   }
 }

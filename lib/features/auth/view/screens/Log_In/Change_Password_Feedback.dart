@@ -27,7 +27,7 @@ class _ChangePasswordFeedbackState
 
   void _handleNext() {
     if (_selectedMethod.isNotEmpty) {
-      context.goNamed(RouteConstants.introscreen);
+      context.goNamed(RouteConstants.homescreen);
     }
   }
 
