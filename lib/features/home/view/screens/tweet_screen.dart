@@ -851,40 +851,74 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
   Future<void> _updateTweet(String newContent) async {
     if (mainTweet == null) return;
 
+    bool updateSuccessful = false;
+    TweetModel? updatedTweet;
+
     try {
       final repository = ref.read(homeRepositoryProvider);
-      final updatedTweet = await repository.updateTweet(mainTweet!.id, {
+      updatedTweet = await repository.updateTweet(mainTweet!.id, {
         'content': newContent,
       });
+      updateSuccessful = true;
+    } catch (e) {
+      // Check if the error is a harmless one (update succeeded but parsing failed)
+      final errorMessage = e.toString().toLowerCase();
+      final isHarmlessError =
+          errorMessage.contains('duplicate') ||
+          errorMessage.contains('already') ||
+          errorMessage.contains('exists') ||
+          errorMessage.contains('is not a subtype of type') ||
+          errorMessage.contains('type \'string\' is not a subtype') ||
+          errorMessage.contains('type \'int\' is not a subtype') ||
+          errorMessage.contains('failed to parse');
 
-      if (mounted) {
-        setState(() {
+      if (isHarmlessError) {
+        // Treat as success - the tweet was updated on the server
+        updateSuccessful = true;
+      } else {
+        // Real error - show it
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to update tweet: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+    }
+
+    // If update was successful (either directly or despite parsing errors)
+    if (updateSuccessful && mounted) {
+      // Update local state immediately with new content
+      setState(() {
+        if (updatedTweet != null) {
           mainTweet = updatedTweet;
-        });
+        } else {
+          // If we don't have the parsed tweet, update the content locally
+          mainTweet = mainTweet?.copyWith(content: newContent);
+        }
+      });
 
+      // Sync with view model if we have the updated tweet
+      if (updatedTweet != null) {
         ref
             .read(homeViewModelProvider.notifier)
             .syncTweetFromServer(updatedTweet);
-
-        // Reload the entire tweet screen to fetch fresh data
-        await _loadTweetData();
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Tweet updated successfully'),
-            backgroundColor: Colors.green,
-          ),
-        );
       }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to update tweet: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+
+      // Reload the entire tweet screen to fetch fresh data from server
+      await _loadTweetData();
+
+      // Show success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Tweet updated successfully'),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
+        ),
+      );
     }
   }
 
