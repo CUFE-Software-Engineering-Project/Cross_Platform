@@ -31,7 +31,7 @@ abstract class Shared {
 
 class Failure {
   final String message;
-  Failure(this.message);
+  const Failure(this.message);
 }
 
 class FollowingFollowersInitialTab {

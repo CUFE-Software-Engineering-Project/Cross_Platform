@@ -105,24 +105,9 @@ class AccountInformationScreen extends ConsumerWidget {
                 ),
                 InkWell(
                   onTap: () async {
-                    final res = await ref.watch(profileDataProvider(username));
-                    res.when(
-                      data: (data) {
-                        data.fold(
-                          (l) {
-                            showSmallPopUpMessage(
-                              context: context,
-                              message: "can't get user email",
-                              borderColor: Colors.red,
-                              icon: Icon(Icons.error),
-                            );
-                          },
-                          (r) {
-                            context.push("/changeEmailProfileScreen", extra: r);
-                          },
-                        );
-                      },
-                      error: (err, _) {
+                    final res = await ref.read(profileDataProvider(username).future);
+                    res.fold(
+                      (l) {
                         showSmallPopUpMessage(
                           context: context,
                           message: "can't get user email",
@@ -130,7 +115,9 @@ class AccountInformationScreen extends ConsumerWidget {
                           icon: Icon(Icons.error),
                         );
                       },
-                      loading: () {},
+                      (r) {
+                        context.push("/changeEmailProfileScreen", extra: r);
+                      },
                     );
                   },
                   child: _field(

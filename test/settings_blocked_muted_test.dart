@@ -58,6 +58,9 @@ class _FakeSettingsRepo implements SettingsRepo {
 
   @override
   Future<Either<Failure, SettingsModel>> updateSettings({required SettingsModel newModel}) async => Right(newModel);
+
+  @override
+  Future<Either<Failure, void>> unFollowUser(String username) async => const Right(());
 }
 
 void main() {

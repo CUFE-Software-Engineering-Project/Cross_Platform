@@ -7,11 +7,16 @@ import 'package:lite_x/features/settings/models/settings_model.dart';
 import 'package:lite_x/features/settings/models/muted_users_response.dart';
 import 'settings_repo.dart';
 
+typedef MediaUrlsFetcher = Future<List<String>> Function(List<String> mediaIds);
+
 /// Mock-data implementation while backend endpoints are being finalized.
 /// Keeps the same interface so swapping to real HTTP later is trivial.
 class SettingsRepoImpl implements SettingsRepo {
   final Dio _dio; // kept for future parity, not used in mock
-  SettingsRepoImpl(this._dio);
+  final MediaUrlsFetcher _mediaUrlsFetcher;
+
+  SettingsRepoImpl(this._dio, {MediaUrlsFetcher? mediaUrlsFetcher})
+      : _mediaUrlsFetcher = mediaUrlsFetcher ?? getMediaUrls;
 
   // In-memory state to simulate server behavior
   final List<UserModel> _blocked = [
@@ -74,7 +79,7 @@ class SettingsRepoImpl implements SettingsRepo {
       final List<dynamic> jsonList = res.data["users"];
       for (int i = 0; i < jsonList.length; i++) {
         final String photoId = jsonList[i]?["photo"] ?? "";
-        final photoUrl = await getMediaUrls([photoId]);
+        final photoUrl = await _mediaUrlsFetcher([photoId]);
         jsonList[i]["photo"] = photoUrl[0];
       }
       final List<UserModel> users = jsonList.map((json) {
@@ -96,7 +101,7 @@ class SettingsRepoImpl implements SettingsRepo {
       final List<dynamic> jsonList = res.data["users"];
       for (int i = 0; i < jsonList.length; i++) {
         final String photoId = jsonList[i]?["photo"] ?? "";
-        final photoUrl = await getMediaUrls([photoId]);
+        final photoUrl = await _mediaUrlsFetcher([photoId]);
         jsonList[i]["photo"] = photoUrl[0];
       }
       final List<UserModel> users = jsonList.map((json) {

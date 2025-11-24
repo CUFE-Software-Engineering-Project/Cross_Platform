@@ -72,6 +72,11 @@ class _FakeRepo implements SettingsRepo {
   }
 
   @override
+  Future<Either<Failure, void>> unFollowUser(String username) {
+    throw UnimplementedError();
+  }
+
+  @override
   Future<Either<Failure, MutedUsersResponse>> fetchBlockedAccounts({int limit = 30, String? cursor}) async {
     // Not used in this test; return empty page
     return Right(MutedUsersResponse.empty());

@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:fpdart/fpdart.dart';
 import 'package:lite_x/features/media/download_media.dart';
 import 'package:lite_x/features/profile/models/create_reply_model.dart';
 import 'package:lite_x/features/profile/models/create_tweet_model.dart';
@@ -7,7 +8,6 @@ import 'package:lite_x/features/profile/models/profile_model.dart';
 import 'package:lite_x/features/profile/models/profile_tweet_model.dart';
 import 'package:lite_x/features/profile/models/search_user_model.dart';
 import 'package:lite_x/features/profile/models/shared.dart';
-import 'package:dartz/dartz.dart';
 import 'package:lite_x/features/profile/models/tweet_reply_model.dart';
 import 'package:lite_x/features/profile/models/user_model.dart';
 import 'package:lite_x/features/profile/repositories/profile_repo.dart';
@@ -369,15 +369,16 @@ class ProfileRepoImpl implements ProfileRepo {
   }
 
   // tweets
-  Future<Either<Failure, String>> createTweet(
+  @override
+  Future<Either<Failure, void>> createTweet(
     CreateTweetModel createTweetModel,
   ) async {
     try {
-      final response = await _dio.post(
+      await _dio.post(
         "api/tweets",
         data: createTweetModel.toJson(),
       );
-      return Right((response.data["id"] ?? ""));
+      return Right(());
     } catch (e) {
       return Left(Failure("Can't create tweet"));
     }

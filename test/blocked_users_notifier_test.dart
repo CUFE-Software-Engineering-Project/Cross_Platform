@@ -43,6 +43,8 @@ class _FakeRepo implements SettingsRepo {
   @override
   Future<Either<Failure, void>> unMuteAccount(String username) => throw UnimplementedError();
   @override
+  Future<Either<Failure, void>> unFollowUser(String username) => throw UnimplementedError();
+  @override
   Future<Either<Failure, void>> followUser(String username) => throw UnimplementedError();
 }
 
