@@ -53,20 +53,26 @@ class ProfilePostsList extends ConsumerWidget {
               filteredData = data;
 
             if (filteredData.isEmpty) {
-              return ListView(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Text(
-                      "Nothing to see here -- yet.",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 35,
+              return RefreshIndicator(
+                onRefresh: () async {
+                  // ignore: unused_result
+                  ref.refresh(profilePostsProvider(profile.username));
+                },
+                child: ListView(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Text(
+                        "Nothing to see here -- yet.",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 35,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               );
             }
 
