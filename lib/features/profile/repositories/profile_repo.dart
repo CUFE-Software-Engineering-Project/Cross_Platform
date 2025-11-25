@@ -73,6 +73,11 @@ abstract class ProfileRepo {
     String tweetId,
     CreateReplyModel createreplyModel,
   );
+  Future<Either<Failure, void>> retweetProfileTweet(
+    String tweetId,
+  );
+  Future<Either<Failure, void>> deleteRetweetProfileTweet(String tweetId);
+  
 
   // emain and password
   Future<Either<Failure, void>> changeEmailProfile(String newEmail);

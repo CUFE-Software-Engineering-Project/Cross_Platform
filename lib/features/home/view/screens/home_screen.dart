@@ -13,7 +13,10 @@ import 'package:lite_x/features/home/view/screens/create_post_screen.dart';
 import 'package:lite_x/features/home/view/screens/quote_composer_screen.dart';
 import 'package:lite_x/features/home/view/widgets/profile_side_drawer.dart';
 import 'package:lite_x/features/home/view/widgets/expandable_fab.dart';
+import 'package:lite_x/features/profile/models/shared.dart';
 import 'package:lite_x/features/profile/view/screens/profile_screen.dart';
+import 'package:lite_x/features/profile/view/widgets/profile_tweets/profile_posts_list.dart';
+import 'package:lite_x/features/profile/view_model/providers.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -115,14 +118,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         ? homeState.forYouTweets
         : homeState.followingTweets;
     final feedName = currentFeed == FeedType.forYou ? "For You" : "Following";
+    final currentUserName = ref.watch(currentUserProvider)?.username ?? "";
 
+    final profileData = ref.watch(profileDataProvider(currentUserName));
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: Colors.black,
       drawer: const ProfileSideDrawer(),
       body: RefreshIndicator(
-        onRefresh: () =>
-            ref.read(homeViewModelProvider.notifier).refreshTweets(),
+        onRefresh: () async {
+          ref.read(homeViewModelProvider.notifier).refreshTweets();
+          // ignore: unused_result
+          await ref.refresh(profilePostsProvider(currentUserName));
+        },
         backgroundColor: Colors.grey[900],
         color: Colors.white,
         child: CustomScrollView(
@@ -145,11 +153,56 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               ),
             ),
 
-            _buildSliverTweetList(
-              context,
-              tweets,
-              homeState.isLoading,
-              feedName,
+            // _buildSliverTweetList(
+            //   context,
+            //   tweets,
+            //   homeState.isLoading,
+            //   feedName,
+            // ),
+            SliverFillRemaining(
+              child: profileData.when(
+                data: (res) {
+                  return res.fold(
+                    (l) {
+                      return RefreshIndicator(
+                        onRefresh: () async {
+                          // ignore: unused_result
+                          await ref.refresh(
+                            profileDataProvider(currentUserName),
+                          );
+                        },
+                        child: ListView(
+                          children: [Center(child: Text(l.message))],
+                        ),
+                      );
+                    },
+                    (data) {
+                      return ProfilePostsList(
+                        profile: data,
+                        tabType: ProfileTabType.Posts,
+                      );
+                    },
+                  );
+                },
+                error: (err, _) {
+                  return RefreshIndicator(
+                    onRefresh: () async {
+                      // ignore: unused_result
+                      await ref.refresh(profileDataProvider(currentUserName));
+                    },
+                    child: ListView(
+                      children: [
+                        Center(child: Text("Can't get profile posts")),
+                      ],
+                    ),
+                  );
+                },
+                loading: () {
+                  return ListView(
+                    children: [Center(child: CircularProgressIndicator())],
+                  );
+                },
+              ),
             ),
           ],
         ),

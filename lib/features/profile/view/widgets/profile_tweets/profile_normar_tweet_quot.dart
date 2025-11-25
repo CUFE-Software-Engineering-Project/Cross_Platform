@@ -67,7 +67,7 @@ class ProfileNormarTweetQuot extends ConsumerWidget implements ProfileTweet {
                           Container(
                             constraints: BoxConstraints(maxWidth: 120),
                             child: Text(
-                              profileModel.displayName,
+                              this.profilePostModel.userDisplayName,
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
@@ -78,7 +78,7 @@ class ProfileNormarTweetQuot extends ConsumerWidget implements ProfileTweet {
                           const SizedBox(width: 4),
                           Flexible(
                             child: Text(
-                              "@${profileModel.username}",
+                              "@${profilePostModel.userUserName}",
                               style: const TextStyle(
                                 color: Colors.grey,
                                 fontSize: 14,
@@ -128,33 +128,49 @@ class ProfileNormarTweetQuot extends ConsumerWidget implements ProfileTweet {
                     ),
                   ],
                 ),
-                profilePostModel.text.isEmpty
-                    ? const SizedBox(height: 15)
-                    : Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: ReadMoreText(
-                          profilePostModel.text,
-                          trimLines: 3,
-                          colorClickableText: Colors.grey,
-                          trimMode: TrimMode.Line,
-                          trimCollapsedText: 'Show more',
-                          trimExpandedText: ' show less',
-                          style: TextStyle(fontSize: 16),
-                        ),
-                      ),
-                if (profilePostModel.mediaIds.isNotEmpty)
-                  Container(
-                    width: 350,
-                    // height: 350,
-                    constraints: BoxConstraints(maxHeight: 400),
+                InkWell(
+                  onTap: () {
+                    context.push(
+                      "/tweetDetailsScreen/${this.profilePostModel.id}",
+                    );
+                  },
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      profilePostModel.text.isEmpty
+                          ? const SizedBox(height: 15)
+                          : Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: ReadMoreText(
+                                profilePostModel.text,
+                                trimLines: 3,
+                                colorClickableText: Colors.grey,
+                                trimMode: TrimMode.Line,
+                                trimCollapsedText: 'Show more',
+                                trimExpandedText: ' show less',
+                                style: TextStyle(fontSize: 16),
+                              ),
+                            ),
+                      if (profilePostModel.mediaIds.isNotEmpty)
+                        Container(
+                          width: 350,
+                          // height: 350,
+                          constraints: BoxConstraints(maxHeight: 400),
 
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    // child: buildPhotoSection(profilePostModel.mediaIds),
-                    child: TweetMediaGrid(mediaIds: profilePostModel.mediaIds),
-                    clipBehavior: Clip.hardEdge,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          // child: buildPhotoSection(profilePostModel.mediaIds),
+                          child: TweetMediaGrid(
+                            mediaIds: profilePostModel.mediaIds,
+                          ),
+                          clipBehavior: Clip.hardEdge,
+                        ),
+                    ],
                   ),
+                ),
+
                 // InterActionsRowOfTweet(tweet: this.profilePostModel),
               ],
             ),
@@ -497,6 +513,9 @@ void _openProfileTweetOptions(
   WidgetRef ref,
   ProfileTweetModel tweet,
 ) async {
+  final currentUser = ref.watch(currentUserProvider);
+  final currneusername = currentUser?.username ?? "";
+
   showModalBottomSheet(
     context: context,
     backgroundColor: Colors.black,
@@ -517,48 +536,50 @@ void _openProfileTweetOptions(
               context.pop();
             },
           ),
-          ProfileTweetOptin(
-            text: "Delete post",
-            icon: Icons.delete,
-            onPress: () async {
-              final delete = await ref.watch(deleteTweetProvider);
-              final res = await delete(tweet.id);
-              res.fold(
-                (l) {
-                  showSmallPopUpMessage(
-                    context: context,
-                    message: l.message,
-                    borderColor: Colors.red,
-                    icon: Icon(Icons.error, color: Colors.red),
-                  );
-                },
-                (r) {
-                  showSmallPopUpMessage(
-                    context: context,
-                    message: "Tweet deleted successfully",
-                    borderColor: Colors.blue,
-                    icon: Icon(Icons.check, color: Colors.blue),
-                  );
-                  final currentUser = ref.watch(currentUserProvider);
-                  if (currentUser != null)
-                    // ignore: unused_result
-                    ref.refresh(profilePostsProvider(currentUser.id));
-                },
-              );
-              // TODO: make delete post logic
-              context.pop();
-            },
-          ),
-          ProfileTweetOptin(
-            text: "Change who can reply",
-            icon: Icons.mode_comment_outlined,
-            onPress: () async {
-              await Future.delayed(Duration(milliseconds: 100));
+          if (currneusername == tweet.userUserName)
+            ProfileTweetOptin(
+              text: "Delete post",
+              icon: Icons.delete,
+              onPress: () async {
+                final delete = await ref.watch(deleteTweetProvider);
+                final res = await delete(tweet.id);
+                res.fold(
+                  (l) {
+                    showSmallPopUpMessage(
+                      context: context,
+                      message: l.message,
+                      borderColor: Colors.red,
+                      icon: Icon(Icons.error, color: Colors.red),
+                    );
+                  },
+                  (r) {
+                    showSmallPopUpMessage(
+                      context: context,
+                      message: "Tweet deleted successfully",
+                      borderColor: Colors.blue,
+                      icon: Icon(Icons.check, color: Colors.blue),
+                    );
+                    final currentUser = ref.watch(currentUserProvider);
+                    if (currentUser != null)
+                      // ignore: unused_result
+                      ref.refresh(profilePostsProvider(currentUser.id));
+                  },
+                );
+                // TODO: make delete post logic
+                context.pop();
+              },
+            ),
+          if (currneusername == tweet.userUserName)
+            ProfileTweetOptin(
+              text: "Change who can reply",
+              icon: Icons.mode_comment_outlined,
+              onPress: () async {
+                await Future.delayed(Duration(milliseconds: 100));
 
-              // TODO: make who can reply logic logic
-              context.pop();
-            },
-          ),
+                // TODO: make who can reply logic logic
+                context.pop();
+              },
+            ),
           ProfileTweetOptin(
             text: "Request Community Note",
             icon: Icons.public,
@@ -743,9 +764,31 @@ class TweetMediaGrid extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Expanded(child: Image.network(photos[0], fit: BoxFit.cover)),
+                Expanded(
+                  child: CachedNetworkImage(
+                    imageUrl: photos[0] + "",
+                    fit: BoxFit.cover,
+                    errorWidget: (context, url, error) => Container(
+                      color: Colors.grey,
+                      height: 148,
+                      child: Center(child: Text("can't load image")),
+                      margin: EdgeInsets.only(left: 3),
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 4),
-                Expanded(child: Image.network(photos[3], fit: BoxFit.cover)),
+                Expanded(
+                  child: CachedNetworkImage(
+                    imageUrl: photos[3] + "",
+                    fit: BoxFit.cover,
+                    errorWidget: (context, url, error) => Container(
+                      color: Colors.grey,
+                      height: 148,
+                      child: Center(child: Text("can't load image")),
+                      margin: EdgeInsets.only(left: 3),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -754,9 +797,31 @@ class TweetMediaGrid extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Expanded(child: Image.network(photos[1], fit: BoxFit.cover)),
+                Expanded(
+                  child: CachedNetworkImage(
+                    imageUrl: photos[1] + "",
+                    fit: BoxFit.cover,
+                    errorWidget: (context, url, error) => Container(
+                      color: Colors.grey,
+                      height: 148,
+                      child: Center(child: Text("can't load image")),
+                      margin: EdgeInsets.only(left: 3),
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 4),
-                Expanded(child: Image.network(photos[2], fit: BoxFit.cover)),
+                Expanded(
+                  child: CachedNetworkImage(
+                    imageUrl: photos[2] + "",
+                    fit: BoxFit.cover,
+                    errorWidget: (context, url, error) => Container(
+                      color: Colors.grey,
+                      height: 148,
+                      child: Center(child: Text("can't load image")),
+                      margin: EdgeInsets.only(left: 3),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),

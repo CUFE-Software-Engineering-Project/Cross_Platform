@@ -518,6 +518,26 @@ class ProfileRepoImpl implements ProfileRepo {
     }
   }
 
+  Future<Either<Failure, void>> retweetProfileTweet(String tweetId) async {
+    try {
+      await _dio.post("api/tweets/$tweetId/retweets");
+      return const Right(());
+    } catch (e) {
+      return Left(Failure("Can't retweet tweet, try agail..."));
+    }
+  }
+
+  Future<Either<Failure, void>> deleteRetweetProfileTweet(
+    String tweetId,
+  ) async {
+    try {
+      await _dio.delete("api/tweets/$tweetId/retweets");
+      return const Right(());
+    } catch (e) {
+      return Left(Failure("Can't delelte retweet tweet, try agail..."));
+    }
+  }
+
   Future<Either<Failure, void>> unLikeTweet(String tweetId) async {
     try {
       await _dio.delete("api/tweets/$tweetId/likes");
@@ -570,9 +590,10 @@ class ProfileRepoImpl implements ProfileRepo {
       final List<Map<String, dynamic>> rawResults =
           List<Map<String, dynamic>>.from(res.data["users"] ?? []);
       for (int i = 0; i < rawResults.length; i++) {
-        final String mediaId = rawResults[i]["profileMedia"] ?? "";
-        final mediaUrls = await getMediaUrls([mediaId]);
-        rawResults[i]["profileMedia"] = mediaUrls[0];
+        final String mediaId = rawResults[i]["profileMedia"]?["id"] ?? "";
+        // final mediaUrls = await getMediaUrls([mediaId]);
+        rawResults[i]["profileMedia"] = "";
+        rawResults[i]["profileMediaId"] = mediaId;
       }
       final List<SearchUserModel> currentResults = rawResults.map((element) {
         SearchUserModel user = SearchUserModel.fromJson(element);
@@ -580,6 +601,7 @@ class ProfileRepoImpl implements ProfileRepo {
       }).toList();
       return Right(currentResults);
     } catch (e) {
+      print(e.toString() + "-----------@@##");
       return Left(Failure("Can't get search results"));
     }
   }

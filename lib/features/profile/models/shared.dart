@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lite_x/core/providers/current_user_provider.dart';
 import 'package:lite_x/features/media/download_media.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
@@ -226,6 +227,7 @@ void showSmallPopUpMessage({
   required Color borderColor,
   required Icon icon,
 }) {
+  
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
       content: Center(
@@ -322,6 +324,7 @@ class _BuildSmallProfileImageState
     if (mounted) {
       // TODO: implement initState
       if (widget.mediaId == null && widget.userId == null) {
+        _media = unkownUserAvatar;
         if (mounted)
           setState(() {
             _loading = false;
@@ -338,8 +341,7 @@ class _BuildSmallProfileImageState
               if (mounted)
                 setState(() {
                   _loading = false;
-                  _media =
-                      "https://t4.ftcdn.net/jpg/09/64/89/19/360_F_964891988_aeRrD7Ee7IhmKQhYkCrkrfE6UHtILfPp.jpg";
+                  _media = unkownUserAvatar;
                 });
             },
             (r) {
@@ -355,6 +357,7 @@ class _BuildSmallProfileImageState
       } else if (widget.mediaId!.isEmpty) {}
       getMediaUrls([widget.mediaId!]).then((res) {
         _media = res[0];
+        if (_media.isEmpty) _media = unkownUserAvatar;
         if (mounted)
           setState(() {
             _loading = false;
@@ -390,7 +393,7 @@ class _BuildSmallProfileImageState
 }
 
 const String unkownUserAvatar =
-    "https://t4.ftcdn.net/jpg/09/64/89/19/360_F_964891988_aeRrD7Ee7IhmKQhYkCrkrfE6UHtILfPp.jpg";
+    "https://icon-library.com/images/unknown-person-icon/unknown-person-icon-4.jpg";
 
 class InterActionsRowOfTweet extends ConsumerStatefulWidget {
   const InterActionsRowOfTweet({super.key, required this.tweet});
@@ -424,6 +427,8 @@ class _InterActionsRowOfTweetState
           GestureDetector(
             onTap: () {
               //   TODO: open replying page
+              if (mounted)
+                context.push("/tweetDetailsScreen/${widget.tweet.id}");
             },
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.end,
@@ -446,8 +451,91 @@ class _InterActionsRowOfTweetState
             ),
           ),
           GestureDetector(
-            onTap: () {
+            onTap: () async {
               //   TODO: do repost action
+              if (!widget.tweet.isRepostedWithMe) {
+                final result = await showRetweetBottomSheet(
+                  context,
+                  "Retweet",
+                  "Quote",
+                );
+                if (result == RetweetOption.retweet) {
+                  final retweet = ref.watch(retweetTweetProvider);
+                  retweet(widget.tweet.id).then((res) {
+                    res.fold(
+                      (l) {
+                        showSmallPopUpMessage(
+                          context: context,
+                          message: l.message,
+                          borderColor: Colors.red,
+                          icon: Icon(Icons.error, color: Colors.red),
+                        );
+                      },
+                      (r) {
+                        if (mounted)
+                          showSmallPopUpMessage(
+                            context: context,
+                            message: "retweet done successfully",
+                            borderColor: Colors.blue,
+                            icon: Icon(Icons.check_circle, color: Colors.blue),
+                          );
+                        if (mounted)
+                          // ignore: unused_result
+                          ref.refresh(
+                            profilePostsProvider(widget.tweet.userUserName),
+                          );
+                      },
+                    );
+                  });
+                } else if (result == RetweetOption.quote) {
+                  // Handle quote
+                  if (mounted)
+                    context.push("/tweetDetailsScreen/${widget.tweet.id}");
+                } else {
+                  return;
+                }
+              } else {
+                final result = await showRetweetBottomSheet(
+                  context,
+                  "UnRetweet",
+                  "Quote",
+                );
+                if (result == RetweetOption.retweet) {
+                  final unretweet = ref.watch(deleteRetweetTweetProvider);
+                  unretweet(widget.tweet.id).then((res) {
+                    res.fold(
+                      (l) {
+                        showSmallPopUpMessage(
+                          context: context,
+                          message: l.message,
+                          borderColor: Colors.red,
+                          icon: Icon(Icons.error, color: Colors.red),
+                        );
+                      },
+                      (r) {
+                        if (mounted)
+                          showSmallPopUpMessage(
+                            context: context,
+                            message: "delete retweet done successfully",
+                            borderColor: Colors.blue,
+                            icon: Icon(Icons.check_circle, color: Colors.blue),
+                          );
+                        if (mounted)
+                          // ignore: unused_result
+                          ref.refresh(
+                            profilePostsProvider(widget.tweet.userUserName),
+                          );
+                      },
+                    );
+                  });
+                } else if (result == RetweetOption.quote) {
+                  // Handle quote
+                  if (mounted)
+                    context.push("/tweetDetailsScreen/${widget.tweet.id}");
+                } else {
+                  return;
+                }
+              }
             },
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -652,4 +740,74 @@ class _InterActionsRowOfTweetState
       ),
     );
   }
+}
+
+enum RetweetOption { retweet, quote }
+
+Future<RetweetOption?> showRetweetBottomSheet(
+  BuildContext context,
+  String text1,
+  String text2,
+) async {
+  return await showModalBottomSheet<RetweetOption>(
+    context: context,
+    backgroundColor: Colors.transparent,
+    builder: (BuildContext context) {
+      return Container(
+        decoration: const BoxDecoration(
+          color: Color.fromARGB(255, 47, 46, 46),
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle bar
+            Container(
+              margin: const EdgeInsets.only(top: 12),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Retweet option
+            ListTile(
+              leading: const Icon(Icons.repeat, color: Colors.white, size: 28),
+              title: Text(
+                text1,
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+              ),
+              onTap: () {
+                Navigator.pop(context, RetweetOption.retweet);
+              },
+            ),
+
+            // Quote option
+            ListTile(
+              leading: const Icon(
+                Icons.edit_square,
+                color: Colors.white,
+                size: 28,
+              ),
+              title: Text(
+                text2,
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+              ),
+              onTap: () {
+                Navigator.pop(context, RetweetOption.quote);
+              },
+            ),
+
+            const SizedBox(height: 20),
+          ],
+        ),
+      );
+    },
+  );
 }

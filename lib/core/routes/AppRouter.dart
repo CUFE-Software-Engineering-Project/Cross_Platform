@@ -24,6 +24,7 @@ import 'package:lite_x/features/chat/view/screens/Search_User_Group.dart';
 import 'package:lite_x/features/chat/view/screens/chat_Screen.dart';
 import 'package:lite_x/features/chat/view/screens/conversations_screen.dart';
 import 'package:lite_x/features/explore/view/explore_screen.dart';
+import 'package:lite_x/features/home/view/screens/tweet_screen.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
 import 'package:lite_x/features/profile/models/shared.dart';
 import 'package:lite_x/features/profile/view/screens/birthdate_screen.dart';
@@ -439,6 +440,16 @@ class Approuter {
         path: "/exploreProfileScreen",
         pageBuilder: (context, state) => CustomTransitionPage(
           child: ExploreProfileScreen(),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
+        name: RouteConstants.TweetDetailsScreen,
+        path: "/tweetDetailsScreen/:tweetId",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: TweetDetailScreen(
+            tweetId: state.pathParameters['tweetId'] as String,
+          ),
           transitionsBuilder: _slideRightTransitionBuilder,
         ),
       ),

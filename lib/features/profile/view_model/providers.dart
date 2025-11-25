@@ -207,6 +207,20 @@ final likeTweetProvider = Provider((ref) {
   };
 });
 
+final retweetTweetProvider = Provider((ref) {
+  final repo = ref.watch(profileRepoProvider);
+  return (String tweetId) {
+    return repo.retweetProfileTweet(tweetId);
+  };
+});
+
+final deleteRetweetTweetProvider = Provider((ref) {
+  final repo = ref.watch(profileRepoProvider);
+  return (String tweetId) {
+    return repo.deleteRetweetProfileTweet(tweetId);
+  };
+});
+
 final unlikeTweetProvider = Provider((ref) {
   final repo = ref.watch(profileRepoProvider);
   return (String tweetId) {

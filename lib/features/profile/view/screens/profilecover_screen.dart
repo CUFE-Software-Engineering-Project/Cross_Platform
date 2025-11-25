@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
@@ -114,7 +115,10 @@ class ProfileCoverScreen extends StatelessWidget {
           //     image: DecorationImage(image: image, fit: BoxFit.cover),
           //   ),
           // ),
-          Image(image: NetworkImage(profileModel.bannerUrl)),
+          CachedNetworkImage(
+            imageUrl: profileModel.bannerUrl,
+            errorWidget: (context, url, error) => SizedBox(),
+          ),
 
           if (isMe)
             OutlinedButton(

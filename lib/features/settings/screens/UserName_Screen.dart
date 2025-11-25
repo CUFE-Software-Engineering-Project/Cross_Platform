@@ -42,8 +42,8 @@ class _UsernameSettingsState extends ConsumerState<UsernameSettings> {
 
     String username = value.startsWith('@') ? value.substring(1) : value;
 
-    if (username.length < 15) {
-      return 'Username must be 15 characters or less ';
+    if (username.length < 5) {
+      return 'Username must be 5 characters or more ';
     }
 
     final RegExp usernameRegex = RegExp(r'^[a-zA-Z0-9_]+$');
@@ -64,7 +64,7 @@ class _UsernameSettingsState extends ConsumerState<UsernameSettings> {
     }
 
     setState(() {
-      _isLoading = true;
+      if (mounted) _isLoading = true;
     });
 
     String newUsername = _usernameController.text.trim();
