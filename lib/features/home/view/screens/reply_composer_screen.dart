@@ -7,6 +7,7 @@ import 'package:lite_x/core/providers/current_user_provider.dart';
 import 'package:lite_x/features/home/models/tweet_model.dart';
 import 'package:lite_x/features/home/view_model/home_view_model.dart';
 import 'package:lite_x/features/media/upload_media.dart';
+import 'package:lite_x/features/home/providers/user_profile_provider.dart';
 
 class ReplyComposerScreen extends ConsumerStatefulWidget {
   final TweetModel replyingToTweet;
@@ -118,7 +119,8 @@ class _ReplyComposerScreenState extends ConsumerState<ReplyComposerScreen> {
   }
 
   Future<void> _pickImage() async {
-    if (_selectedImages.length >= 4) {
+    final remainingSlots = 4 - _selectedImages.length;
+    if (remainingSlots <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Maximum 4 images allowed per reply.'),
@@ -127,12 +129,17 @@ class _ReplyComposerScreenState extends ConsumerState<ReplyComposerScreen> {
       );
       return;
     }
-    final picked = await pickImage();
-    if (picked?.file != null) {
-      setState(() {
-        _selectedImages.add(picked!.file!);
-      });
-    }
+
+    final pickedList = await pickImages(maxImages: remainingSlots);
+    if (pickedList.isEmpty) return;
+
+    setState(() {
+      for (final picked in pickedList) {
+        if (picked.file != null) {
+          _selectedImages.add(picked.file!);
+        }
+      }
+    });
   }
 
   void _removeImage(int index) {
@@ -206,7 +213,22 @@ class _ReplyComposerScreenState extends ConsumerState<ReplyComposerScreen> {
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(currentUserProvider);
-    final userPhotoUrl = _getPhotoUrl(user?.photo);
+    final profileState = ref.watch(userProfileProvider);
+
+    // Use profile photo from API if available, otherwise fall back to user photo
+    String? userPhotoUrl;
+    profileState.when(
+      data: (profile) {
+        userPhotoUrl = profile?.profilePhotoUrl ?? _getPhotoUrl(user?.photo);
+        print('🖼️ Reply Composer - Photo URL: $userPhotoUrl');
+      },
+      loading: () {
+        userPhotoUrl = _getPhotoUrl(user?.photo);
+      },
+      error: (_, __) {
+        userPhotoUrl = _getPhotoUrl(user?.photo);
+      },
+    );
 
     return Scaffold(
       backgroundColor: Colors.black,

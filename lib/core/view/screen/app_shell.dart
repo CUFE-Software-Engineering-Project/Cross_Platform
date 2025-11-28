@@ -2,9 +2,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
+import 'package:lite_x/features/chat/view/screens/conversations_screen.dart';
 import 'package:lite_x/features/home/view/screens/home_screen.dart';
 import 'package:lite_x/features/profile/view/screens/explore_profile_screen.dart';
-import 'package:lite_x/features/profile/view/screens/profile_search_screen.dart';
 import 'package:lite_x/features/shared/widgets/bottom_navigation.dart';
 
 // Provider for managing which tab is selected
@@ -31,7 +31,23 @@ class AppShell extends ConsumerWidget {
           ExploreProfileScreen(),
           _buildCommunitiesScreen(), // Index 2 - Communities
           _buildNotificationsScreen(), // Index 3 - Notifications
-          _buildMessagesScreen(), // Index 4 - Messages
+          ConversationsScreen(),
+          //// Index 4 - Messages
+          // ListView(
+          //   children: [
+          //     Padding(
+          //       padding: const EdgeInsets.all(24),
+          //       child: Text(
+          //         "Nothing to see here -- yet.",
+          //         style: TextStyle(
+          //           color: Colors.white,
+          //           fontWeight: FontWeight.bold,
+          //           fontSize: 35,
+          //         ),
+          //       ),
+          //     ),
+          //   ],
+          // ),
         ],
       ),
       bottomNavigationBar: AnimatedContainer(
@@ -63,15 +79,6 @@ class AppShell extends ConsumerWidget {
     return const Center(
       child: Text(
         'Notifications Screen',
-        style: TextStyle(color: Colors.white, fontSize: 24),
-      ),
-    );
-  }
-
-  Widget _buildMessagesScreen() {
-    return const Center(
-      child: Text(
-        'Messages Screen',
         style: TextStyle(color: Colors.white, fontSize: 24),
       ),
     );

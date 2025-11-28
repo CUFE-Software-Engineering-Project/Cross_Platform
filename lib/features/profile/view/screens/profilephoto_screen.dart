@@ -1,6 +1,6 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
 import 'package:lite_x/features/profile/models/shared.dart';
 import 'package:share_plus/share_plus.dart';
@@ -108,7 +108,7 @@ class ProfilephotoScreen extends StatelessWidget {
       body: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          SizedBox(),
+          SizedBox(width: double.infinity),
 
           // Container(
           //   width: double.infinity,
@@ -117,7 +117,14 @@ class ProfilephotoScreen extends StatelessWidget {
           //     image: DecorationImage(image: image, fit: BoxFit.cover),
           //   ),
           // ),
-          Image(image: NetworkImage(profileModel.avatarUrl)),
+          CachedNetworkImage(
+            imageUrl: profileModel.avatarUrl,
+            errorWidget: (context, url, error) => CachedNetworkImage(
+              imageUrl: unkownUserAvatar,
+              errorWidget: (context, url, error) =>
+                  SizedBox(width: double.infinity),
+            ),
+          ),
 
           if (isMe)
             OutlinedButton(

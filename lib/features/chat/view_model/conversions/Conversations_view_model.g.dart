@@ -16,7 +16,7 @@ final class ConversationsViewModelProvider
     extends
         $NotifierProvider<
           ConversationsViewModel,
-          AsyncValue<ConversationModel>?
+          AsyncValue<List<ConversationModel>>
         > {
   const ConversationsViewModelProvider._()
     : super(
@@ -37,10 +37,10 @@ final class ConversationsViewModelProvider
   ConversationsViewModel create() => ConversationsViewModel();
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(AsyncValue<ConversationModel>? value) {
+  Override overrideWithValue(AsyncValue<List<ConversationModel>> value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<AsyncValue<ConversationModel>?>(
+      providerOverride: $SyncValueProvider<AsyncValue<List<ConversationModel>>>(
         value,
       ),
     );
@@ -48,11 +48,11 @@ final class ConversationsViewModelProvider
 }
 
 String _$conversationsViewModelHash() =>
-    r'f38f8ce0224254568b8c9ac00d11f62babffaedd';
+    r'02617aac71dc6741834e63d07ab48be13bb9fbd1';
 
 abstract class _$ConversationsViewModel
-    extends $Notifier<AsyncValue<ConversationModel>?> {
-  AsyncValue<ConversationModel>? build();
+    extends $Notifier<AsyncValue<List<ConversationModel>>> {
+  AsyncValue<List<ConversationModel>> build();
   @$mustCallSuper
   @override
   void runBuild() {
@@ -60,17 +60,17 @@ abstract class _$ConversationsViewModel
     final ref =
         this.ref
             as $Ref<
-              AsyncValue<ConversationModel>?,
-              AsyncValue<ConversationModel>?
+              AsyncValue<List<ConversationModel>>,
+              AsyncValue<List<ConversationModel>>
             >;
     final element =
         ref.element
             as $ClassProviderElement<
               AnyNotifier<
-                AsyncValue<ConversationModel>?,
-                AsyncValue<ConversationModel>?
+                AsyncValue<List<ConversationModel>>,
+                AsyncValue<List<ConversationModel>>
               >,
-              AsyncValue<ConversationModel>?,
+              AsyncValue<List<ConversationModel>>,
               Object?,
               Object?
             >;

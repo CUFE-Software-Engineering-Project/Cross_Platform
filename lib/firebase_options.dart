@@ -64,7 +64,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '123824690535',
     projectId: 'litex-3c6f1',
     storageBucket: 'litex-3c6f1.firebasestorage.app',
-    iosClientId: '123824690535-5pta8j3mu07g0bb21n43n8q2vuulrstr.apps.googleusercontent.com',
+    iosClientId:
+        '123824690535-5pta8j3mu07g0bb21n43n8q2vuulrstr.apps.googleusercontent.com',
     iosBundleId: 'com.example.litex',
   );
 
@@ -74,7 +75,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '123824690535',
     projectId: 'litex-3c6f1',
     storageBucket: 'litex-3c6f1.firebasestorage.app',
-    iosClientId: '123824690535-5pta8j3mu07g0bb21n43n8q2vuulrstr.apps.googleusercontent.com',
+    iosClientId:
+        '123824690535-5pta8j3mu07g0bb21n43n8q2vuulrstr.apps.googleusercontent.com',
     iosBundleId: 'com.example.litex',
   );
 

@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:lite_x/features/profile/models/profile_tweet_model.dart';
 import 'package:lite_x/features/profile/models/shared.dart';
-import 'package:lite_x/features/profile/view/widgets/profile_tweets/profile_normal_tweet_widget.dart';
 import 'package:lite_x/features/profile/view_model/providers.dart';
 
 import '../../../models/profile_model.dart';
@@ -20,7 +18,8 @@ class ProfilePostsList extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final asyncPosts = ref.watch(profilePostsProvider(this.profile.username));
+    final asyncPosts = tabType == ProfileTabType.Posts? ref.watch(profilePostsProvider(this.profile.username)): tabType == ProfileTabType.Likes? ref.watch(profileLikesProvider(this.profile.username)): ref.watch(profileMediaProvider(this.profile.username));
+    ;
 
     return asyncPosts.when(
       data: (either) {
@@ -35,7 +34,7 @@ class ProfilePostsList extends ConsumerWidget {
               ),
               onRefresh: () async {
                 // ignore: unused_result
-                ref.refresh(profilePostsProvider(this.profile.username));
+                ref.refresh(profileLikesProvider(this.profile.username));
               },
             );
           },
@@ -53,20 +52,26 @@ class ProfilePostsList extends ConsumerWidget {
               filteredData = data;
 
             if (filteredData.isEmpty) {
-              return ListView(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Text(
-                      "Nothing to see here -- yet.",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 35,
+              return RefreshIndicator(
+                onRefresh: () async {
+                  // ignore: unused_result
+                  ref.refresh(profilePostsProvider(profile.username));
+                },
+                child: ListView(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Text(
+                        "Nothing to see here -- yet.",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 35,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               );
             }
 

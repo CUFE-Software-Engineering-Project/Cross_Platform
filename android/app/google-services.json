@@ -7,9 +7,9 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:123824690535:android:fc6ea2d45764d44a960bc2",
+        "mobilesdk_app_id": "1:123824690535:android:f0760abf0029e802960bc2",
         "android_client_info": {
-          "package_name": "com.example.lite_x"
+          "package_name": "com.Artemsia.lite_x"
         }
       },
       "oauth_client": [

@@ -1,11 +1,14 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/svg.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lite_x/core/providers/current_user_provider.dart';
 import 'package:lite_x/features/media/download_media.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
 import 'package:lite_x/features/profile/models/profile_tweet_model.dart';
 import 'package:lite_x/features/profile/view/widgets/profile_tweets/profile_normal_tweet_widget.dart';
+import 'package:lite_x/features/profile/view/widgets/profile_tweets/profile_quote_widget.dart';
 import 'package:lite_x/features/profile/view/widgets/profile_tweets/profile_retweet_widget.dart';
 import 'package:lite_x/features/profile/view_model/providers.dart';
 
@@ -209,7 +212,8 @@ ProfileTweet getCorrectTweetType(
   if (type == TweetType.ReTweet)
     return ProfileRetweetWidget(profileModel: pm, tweetModel: tweetModel);
 
-  // if(type == TweetType.Quote)
+  if (type == TweetType.Quote)
+    return ProfileQuoteWidget(tweetModel: tweetModel, profileModel: pm);
 
   return ProfileNormalTweetWidget(
     profileModel: pm,
@@ -223,6 +227,7 @@ void showSmallPopUpMessage({
   required Color borderColor,
   required Icon icon,
 }) {
+  
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
       content: Center(
@@ -316,40 +321,50 @@ class _BuildSmallProfileImageState
     extends ConsumerState<BuildSmallProfileImage> {
   String _media = "";
   void _getMedia() async {
-    // TODO: implement initState
-    if (widget.mediaId == null && widget.userId == null) {
-      setState(() {
-        _loading = false;
-      });
-      return;
-    } else if (widget.mediaId == null) {
-      final currentUser = ref.watch(currentUserProvider);
-      final profileData = ref.watch(
-        profileDataProvider(currentUser?.username ?? ""),
-      );
-      profileData.whenData((data) {
-        data.fold(
-          (l) {
-            setState(() {
-              _loading = false;
-            });
-          },
-          (r) {
-            _media = r.avatarUrl;
-            setState(() {
-              _loading = false;
-            });
-          },
+    if (mounted) {
+      // TODO: implement initState
+      if (widget.mediaId == null && widget.userId == null) {
+        _media = unkownUserAvatar;
+        if (mounted)
+          setState(() {
+            _loading = false;
+          });
+        return;
+      } else if (widget.mediaId == null) {
+        final currentUser = ref.watch(currentUserProvider);
+        final profileData = ref.watch(
+          profileDataProvider(currentUser?.username ?? ""),
         );
+        profileData.whenData((data) {
+          data.fold(
+            (l) {
+              if (mounted)
+                setState(() {
+                  _loading = false;
+                  _media = unkownUserAvatar;
+                });
+            },
+            (r) {
+              _media = r.avatarUrl;
+              if (mounted)
+                setState(() {
+                  _loading = false;
+                });
+            },
+          );
+        });
+        return;
+      } else if (widget.mediaId!.isEmpty) {}
+      getMediaUrls([widget.mediaId!]).then((res) {
+        _media = res[0];
+        if (_media.isEmpty) _media = unkownUserAvatar;
+        if (mounted)
+          setState(() {
+            _loading = false;
+          });
       });
+    } else
       return;
-    } else if (widget.mediaId!.isEmpty) {}
-    getMediaUrls([widget.mediaId!]).then((res) {
-      _media = res[0];
-      setState(() {
-        _loading = false;
-      });
-    });
   }
 
   bool _loading = true;
@@ -375,4 +390,424 @@ class _BuildSmallProfileImageState
       onBackgroundImageError: (exception, stackTrace) => null,
     );
   }
+}
+
+const String unkownUserAvatar =
+    "https://icon-library.com/images/unknown-person-icon/unknown-person-icon-4.jpg";
+
+class InterActionsRowOfTweet extends ConsumerStatefulWidget {
+  const InterActionsRowOfTweet({super.key, required this.tweet});
+  final ProfileTweetModel tweet;
+
+  @override
+  ConsumerState<ConsumerStatefulWidget> createState() =>
+      _InterActionsRowOfTweetState();
+}
+
+class _InterActionsRowOfTweetState
+    extends ConsumerState<InterActionsRowOfTweet> {
+  late bool isLikedByMeLocal;
+  late int likesCount;
+  late bool isSavedByMeLocal;
+  @override
+  void initState() {
+    isLikedByMeLocal = widget.tweet.isLikedByMe;
+    likesCount = widget.tweet.likes;
+    isSavedByMeLocal = widget.tweet.isSavedByMe;
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          GestureDetector(
+            onTap: () {
+              //   TODO: open replying page
+              if (mounted)
+                context.push("/tweetDetailsScreen/${widget.tweet.id}");
+            },
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                SvgPicture.asset(
+                  "assets/svg/reply.svg",
+                  width: 20,
+                  height: 20,
+                  colorFilter: const ColorFilter.mode(
+                    Colors.grey,
+                    BlendMode.srcIn,
+                  ),
+                ),
+                if (widget.tweet.replies > 0)
+                  Text(
+                    Shared.formatCount(widget.tweet.replies),
+                    style: TextStyle(color: Colors.grey, fontSize: 15),
+                  ),
+              ],
+            ),
+          ),
+          GestureDetector(
+            onTap: () async {
+              //   TODO: do repost action
+              if (!widget.tweet.isRepostedWithMe) {
+                final result = await showRetweetBottomSheet(
+                  context,
+                  "Retweet",
+                  "Quote",
+                );
+                if (result == RetweetOption.retweet) {
+                  final retweet = ref.watch(retweetTweetProvider);
+                  retweet(widget.tweet.id).then((res) {
+                    res.fold(
+                      (l) {
+                        showSmallPopUpMessage(
+                          context: context,
+                          message: l.message,
+                          borderColor: Colors.red,
+                          icon: Icon(Icons.error, color: Colors.red),
+                        );
+                      },
+                      (r) {
+                        if (mounted)
+                          showSmallPopUpMessage(
+                            context: context,
+                            message: "retweet done successfully",
+                            borderColor: Colors.blue,
+                            icon: Icon(Icons.check_circle, color: Colors.blue),
+                          );
+                        if (mounted)
+                          // ignore: unused_result
+                          ref.refresh(
+                            profilePostsProvider(widget.tweet.userUserName),
+                          );
+                      },
+                    );
+                  });
+                } else if (result == RetweetOption.quote) {
+                  // Handle quote
+                  if (mounted)
+                    context.push("/tweetDetailsScreen/${widget.tweet.id}");
+                } else {
+                  return;
+                }
+              } else {
+                final result = await showRetweetBottomSheet(
+                  context,
+                  "UnRetweet",
+                  "Quote",
+                );
+                if (result == RetweetOption.retweet) {
+                  final unretweet = ref.watch(deleteRetweetTweetProvider);
+                  unretweet(widget.tweet.id).then((res) {
+                    res.fold(
+                      (l) {
+                        showSmallPopUpMessage(
+                          context: context,
+                          message: l.message,
+                          borderColor: Colors.red,
+                          icon: Icon(Icons.error, color: Colors.red),
+                        );
+                      },
+                      (r) {
+                        if (mounted)
+                          showSmallPopUpMessage(
+                            context: context,
+                            message: "delete retweet done successfully",
+                            borderColor: Colors.blue,
+                            icon: Icon(Icons.check_circle, color: Colors.blue),
+                          );
+                        if (mounted)
+                          // ignore: unused_result
+                          ref.refresh(
+                            profilePostsProvider(widget.tweet.userUserName),
+                          );
+                      },
+                    );
+                  });
+                } else if (result == RetweetOption.quote) {
+                  // Handle quote
+                  if (mounted)
+                    context.push("/tweetDetailsScreen/${widget.tweet.id}");
+                } else {
+                  return;
+                }
+              }
+            },
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SvgPicture.asset(
+                  "assets/svg/repost.svg",
+                  width: 20,
+                  height: 20,
+                  colorFilter: ColorFilter.mode(
+                    widget.tweet.isRepostedWithMe
+                        ? Color(0XFF00B87B)
+                        : Colors.grey,
+                    BlendMode.srcIn,
+                  ),
+                ),
+                if (widget.tweet.retweets > 0)
+                  Text(
+                    Shared.formatCount(widget.tweet.retweets),
+                    style: TextStyle(
+                      color: widget.tweet.isRepostedWithMe
+                          ? Color(0XFF00B87B)
+                          : Colors.grey,
+                      fontSize: 15,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          GestureDetector(
+            onTap: () {
+              //   TODO: do like action
+              if (isLikedByMeLocal) {
+                final unlike = ref.watch(unlikeTweetProvider);
+                unlike(widget.tweet.id).then((res) {
+                  res.fold((l) {
+                    isLikedByMeLocal = true;
+                    likesCount += 1;
+                    showSmallPopUpMessage(
+                      context: context,
+                      message: l.message,
+                      borderColor: Colors.red,
+                      icon: Icon(Icons.error, color: Colors.red),
+                    );
+                    if (mounted) setState(() {});
+                  }, (r) {});
+                });
+              } else {
+                final like = ref.watch(likeTweetProvider);
+                like(widget.tweet.id).then((res) {
+                  res.fold((l) {
+                    isLikedByMeLocal = false;
+                    likesCount -= 1;
+                    showSmallPopUpMessage(
+                      context: context,
+                      message: l.message,
+                      borderColor: Colors.red,
+                      icon: Icon(Icons.error, color: Colors.red),
+                    );
+                    if (mounted) setState(() {});
+                  }, (r) {});
+                });
+              }
+              if (mounted)
+                setState(() {
+                  if (isLikedByMeLocal)
+                    likesCount -= 1;
+                  else
+                    likesCount += 1;
+                  isLikedByMeLocal = !isLikedByMeLocal;
+                });
+            },
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SvgPicture.asset(
+                  isLikedByMeLocal
+                      ? "assets/svg/like_filled.svg"
+                      : "assets/svg/like.svg",
+                  width: 20,
+                  height: 20,
+                  colorFilter: ColorFilter.mode(
+                    isLikedByMeLocal ? Color(0XFFF6187E) : Colors.grey,
+                    BlendMode.srcIn,
+                  ),
+                ),
+                if (likesCount > 0)
+                  Text(
+                    Shared.formatCount(likesCount),
+                    style: TextStyle(
+                      color: isLikedByMeLocal ? Color(0XFFF6187E) : Colors.grey,
+                      fontSize: 15,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          GestureDetector(
+            onTap: () {
+              //   TODO: do activity action
+            },
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SvgPicture.asset(
+                  "assets/svg/activity.svg",
+                  width: 20,
+                  height: 20,
+                  colorFilter: ColorFilter.mode(Colors.grey, BlendMode.srcIn),
+                ),
+                if (widget.tweet.activityNumber > 0)
+                  Text(
+                    Shared.formatCount(widget.tweet.activityNumber),
+                    style: TextStyle(color: Colors.grey, fontSize: 15),
+                  ),
+              ],
+            ),
+          ),
+          Row(
+            children: [
+              GestureDetector(
+                onTap: () {
+                  //   TODO: do like action
+                  if (isSavedByMeLocal) {
+                    final unSave = ref.watch(unSaveTweetProvider);
+                    unSave(widget.tweet.id).then((res) {
+                      res.fold(
+                        (l) {
+                          isSavedByMeLocal = true;
+                          showSmallPopUpMessage(
+                            context: context,
+                            message: l.message,
+                            borderColor: Colors.red,
+                            icon: Icon(Icons.error, color: Colors.red),
+                          );
+                          if (mounted) setState(() {});
+                        },
+                        (r) {
+                          showSmallPopUpMessage(
+                            context: context,
+                            message: "Post removed from your Bookmarks",
+                            borderColor: Colors.blue,
+                            icon: Icon(
+                              Icons.bookmark_remove,
+                              color: Colors.blue,
+                            ),
+                          );
+                        },
+                      );
+                    });
+                  } else {
+                    final save = ref.watch(saveTweetProvider);
+                    save(widget.tweet.id).then((res) {
+                      res.fold(
+                        (l) {
+                          isSavedByMeLocal = false;
+                          showSmallPopUpMessage(
+                            context: context,
+                            message: l.message,
+                            borderColor: Colors.red,
+                            icon: Icon(Icons.error, color: Colors.red),
+                          );
+                          if (mounted) setState(() {});
+                        },
+                        (r) {
+                          showSmallPopUpMessage(
+                            context: context,
+                            message: "Post added to your Bookmarks",
+                            borderColor: Colors.blue,
+                            icon: Icon(Icons.bookmark_add, color: Colors.blue),
+                          );
+                        },
+                      );
+                    });
+                  }
+                  if (mounted)
+                    setState(() {
+                      isSavedByMeLocal = !isSavedByMeLocal;
+                    });
+                },
+                child: SvgPicture.asset(
+                  isSavedByMeLocal
+                      ? "assets/svg/save_filled.svg"
+                      : "assets/svg/save.svg",
+                  width: 20,
+                  height: 20,
+                  colorFilter: ColorFilter.mode(
+                    isSavedByMeLocal ? Colors.blue : Colors.grey,
+                    BlendMode.srcIn,
+                  ),
+                ),
+              ),
+              SizedBox(width: 8),
+              GestureDetector(
+                onTap: () {
+                  //   TODO: do share action
+                },
+                child: Icon(Icons.share_outlined, color: Colors.grey, size: 20),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+enum RetweetOption { retweet, quote }
+
+Future<RetweetOption?> showRetweetBottomSheet(
+  BuildContext context,
+  String text1,
+  String text2,
+) async {
+  return await showModalBottomSheet<RetweetOption>(
+    context: context,
+    backgroundColor: Colors.transparent,
+    builder: (BuildContext context) {
+      return Container(
+        decoration: const BoxDecoration(
+          color: Color.fromARGB(255, 47, 46, 46),
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle bar
+            Container(
+              margin: const EdgeInsets.only(top: 12),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Retweet option
+            ListTile(
+              leading: const Icon(Icons.repeat, color: Colors.white, size: 28),
+              title: Text(
+                text1,
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+              ),
+              onTap: () {
+                Navigator.pop(context, RetweetOption.retweet);
+              },
+            ),
+
+            // Quote option
+            ListTile(
+              leading: const Icon(
+                Icons.edit_square,
+                color: Colors.white,
+                size: 28,
+              ),
+              title: Text(
+                text2,
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+              ),
+              onTap: () {
+                Navigator.pop(context, RetweetOption.quote);
+              },
+            ),
+
+            const SizedBox(height: 20),
+          ],
+        ),
+      );
+    },
+  );
 }

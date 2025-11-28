@@ -1,4 +1,3 @@
-import 'dart:ffi';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,7 +5,6 @@ import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
 import 'package:lite_x/features/profile/models/shared.dart';
-import 'package:lite_x/features/profile/view/screens/profilephoto_screen.dart';
 import 'package:lite_x/features/profile/view/widgets/profile/block_button.dart';
 import 'package:lite_x/features/profile/view/widgets/profile/follow_following_button.dart';
 import 'package:lite_x/features/profile/view/widgets/profile/top_icon.dart';
@@ -148,7 +146,9 @@ class _ProfileHeaderState extends ConsumerState<ProfileHeader> {
                                 radius: 40,
                                 backgroundColor: Colors.black,
                                 backgroundImage: CachedNetworkImageProvider(
-                                  widget.profileData.avatarUrl,
+                                  widget.profileData.avatarUrl.isNotEmpty
+                                      ? widget.profileData.avatarUrl
+                                      : unkownUserAvatar,
                                 ),
                                 onBackgroundImageError:
                                     (exception, stackTrace) => null,
@@ -423,7 +423,9 @@ class _ProfileHeaderState extends ConsumerState<ProfileHeader> {
                                 radius: 40,
                                 backgroundColor: Colors.black,
                                 backgroundImage: CachedNetworkImageProvider(
-                                  widget.profileData.avatarUrl,
+                                  widget.profileData.avatarUrl.isNotEmpty
+                                      ? widget.profileData.avatarUrl
+                                      : unkownUserAvatar,
                                 ),
                                 onBackgroundImageError:
                                     (exception, stackTrace) => null,

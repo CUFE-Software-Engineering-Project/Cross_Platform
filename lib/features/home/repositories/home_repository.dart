@@ -513,6 +513,12 @@ class HomeRepository {
         data: {'tweetId': tweetId, 'mediaIds': filteredIds},
       );
     } on DioException catch (e) {
+      final errorMsg = _handleError(e).toLowerCase();
+      // Suppress duplicate media errors as the media is already attached
+      if (errorMsg.contains('duplicate') || errorMsg.contains('already')) {
+        print('⚠️ Media already attached to tweet (suppressing error)');
+        return;
+      }
       throw Exception(_handleError(e));
     }
   }
@@ -771,7 +777,23 @@ class HomeRepository {
         }
       }
 
-      final tweet = await _deserializeTweet(tweetData);
+      // Try to deserialize, but if it fails due to type issues,
+      // fetch the tweet fresh from the server
+      TweetModel? tweet;
+      try {
+        tweet = await _deserializeTweet(tweetData);
+      } catch (typeError) {
+        // If deserialization fails (likely due to type conversion),
+        // fetch the updated tweet from server
+        print('⚠️ Deserialization failed, fetching fresh: $typeError');
+        final freshResponse = await _dio.get('api/tweets/$updatedTweetId');
+        final freshData =
+            freshResponse.data is Map && freshResponse.data['data'] != null
+            ? freshResponse.data['data']
+            : freshResponse.data;
+        tweet = await _deserializeTweet(freshData);
+      }
+
       if (tweet == null) {
         throw Exception('Failed to parse tweet data');
       }

@@ -23,10 +23,10 @@ class MessageModelAdapter extends TypeAdapter<MessageModel> {
       content: fields[3] as String?,
       createdAt: fields[4] as DateTime,
       status: fields[5] == null ? 'PENDING' : fields[5] as String,
-      media: (fields[6] as List?)?.cast<MediaModel>(),
-      senderUsername: fields[7] as String?,
-      senderName: fields[8] as String?,
-      senderProfilePhoto: fields[9] as String?,
+      senderUsername: fields[6] as String?,
+      senderName: fields[7] as String?,
+      senderProfileMediaKey: fields[8] as String?,
+      messageType: fields[9] as String,
     );
   }
 
@@ -47,13 +47,13 @@ class MessageModelAdapter extends TypeAdapter<MessageModel> {
       ..writeByte(5)
       ..write(obj.status)
       ..writeByte(6)
-      ..write(obj.media)
-      ..writeByte(7)
       ..write(obj.senderUsername)
-      ..writeByte(8)
+      ..writeByte(7)
       ..write(obj.senderName)
+      ..writeByte(8)
+      ..write(obj.senderProfileMediaKey)
       ..writeByte(9)
-      ..write(obj.senderProfilePhoto);
+      ..write(obj.messageType);
   }
 
   @override

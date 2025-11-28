@@ -1,10 +1,11 @@
-import 'package:cached_network_image/cached_network_image.dart';
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
 import 'package:lite_x/features/profile/models/search_user_model.dart';
-import 'package:lite_x/features/profile/models/user_model.dart';
+import 'package:lite_x/features/profile/models/shared.dart';
 import 'package:lite_x/features/profile/view_model/providers.dart';
 
 class ProfileSearchScreen extends ConsumerStatefulWidget {
@@ -16,21 +17,46 @@ class ProfileSearchScreen extends ConsumerStatefulWidget {
 }
 
 class _ProfileSearchScreenState extends ConsumerState<ProfileSearchScreen> {
-  final TextEditingController searchCtrl = TextEditingController();
-  late List<SearchUserModel> currentUsers;
+  final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
+  final ValueNotifier<String> _searchQuery = ValueNotifier<String>('');
+  final _debounceTimer = ValueNotifier<Timer?>(null);
+
   @override
   void initState() {
-    // TODO: implement initState
-    searchCtrl.addListener(() {
-      final text = searchCtrl.text;
-      updateResults(text);
-    });
-    currentUsers = [];
     super.initState();
+    _searchController.addListener(_onSearchTextChanged);
   }
 
-  void updateResults(String text) async {
-    setState(() {});
+  void _onSearchTextChanged() {
+    // Debounce search to avoid too many rebuilds
+    _debounceTimer.value?.cancel();
+    _debounceTimer.value = Timer(const Duration(milliseconds: 300), () {
+      _searchQuery.value = _searchController.text.trim();
+    });
+  }
+
+  void _clearSearch() {
+    _searchController.clear();
+    _searchQuery.value = '';
+    _searchFocusNode.requestFocus();
+  }
+
+  void _navigateBack() {
+    if (context.canPop()) {
+      context.pop();
+    } else {
+      context.goNamed(RouteConstants.homescreen);
+    }
+  }
+
+  @override
+  void dispose() {
+    _debounceTimer.value?.cancel();
+    _searchController.dispose();
+    _searchFocusNode.dispose();
+    _searchQuery.dispose();
+    super.dispose();
   }
 
   @override
@@ -39,58 +65,54 @@ class _ProfileSearchScreenState extends ConsumerState<ProfileSearchScreen> {
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
-            leading: BackButton(
-              onPressed: () {
-                if (context.canPop())
-                  context.pop();
-                else
-                  context.goNamed(RouteConstants.homescreen);
-              },
-            ),
+            leading: BackButton(onPressed: _navigateBack),
             titleSpacing: 0,
             title: TextFormField(
+              focusNode: _searchFocusNode,
               autofocus: true,
-              controller: searchCtrl,
+              controller: _searchController,
               cursorColor: Colors.blue,
-
               decoration: InputDecoration(
-                contentPadding: EdgeInsets.only(right: 20),
+                contentPadding: const EdgeInsets.only(right: 20),
                 border: InputBorder.none,
                 fillColor: Colors.transparent,
                 enabledBorder: InputBorder.none,
                 focusedBorder: InputBorder.none,
-                errorBorder: null,
-                disabledBorder: null,
-                hint: Text(
-                  "Search X",
-                  style: TextStyle(fontSize: 16, color: Colors.grey),
-                ),
+                hintText: "Search X",
+                hintStyle: const TextStyle(fontSize: 16, color: Colors.grey),
               ),
             ),
             actions: [
-              SizedBox(width: 10),
-              if (searchCtrl.text.isNotEmpty)
-                GestureDetector(
-                  onTap: () {
-                    searchCtrl.text = "";
-                    updateResults("");
-                  },
-                  child: Icon(Icons.close, color: Colors.white),
-                ),
-              if (searchCtrl.text.isNotEmpty) SizedBox(width: 20),
+              const SizedBox(width: 10),
+              ValueListenableBuilder<String>(
+                valueListenable: _searchQuery,
+                builder: (context, searchText, child) {
+                  final hasText = searchText.isNotEmpty;
+                  return AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 200),
+                    child: hasText
+                        ? IconButton(
+                            key: const ValueKey('clear-button'),
+                            icon: const Icon(Icons.close, color: Colors.white),
+                            onPressed: _clearSearch,
+                          )
+                        : const SizedBox.shrink(key: ValueKey('empty')),
+                  );
+                },
+              ),
             ],
           ),
-          SliverToBoxAdapter(
-            child: Container(
-              color: Colors.grey,
-              width: double.infinity,
-              height: 0.1,
-            ),
+          const SliverToBoxAdapter(
+            child: Divider(height: 1, color: Colors.grey),
           ),
-          SliverFillRemaining(
-            hasScrollBody: true,
-            child: CurrentProfileSearchResults(searchQuery: searchCtrl.text),
-            // child: ListView(children: [Text("data")]),
+          ValueListenableBuilder<String>(
+            valueListenable: _searchQuery,
+            builder: (context, searchQuery, child) {
+              return SliverFillRemaining(
+                hasScrollBody: true,
+                child: ProfileSearchResults(searchQuery: searchQuery),
+              );
+            },
           ),
         ],
       ),
@@ -98,101 +120,131 @@ class _ProfileSearchScreenState extends ConsumerState<ProfileSearchScreen> {
   }
 }
 
-class CurrentSearchUser extends StatelessWidget {
-  const CurrentSearchUser({super.key, required this.user});
+class SearchUserTile extends StatelessWidget {
+  const SearchUserTile({super.key, required this.user});
   final SearchUserModel user;
+
+  void _navigateToProfile(BuildContext context) {
+    context.push("/profilescreen/${user.username}");
+  }
 
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      onTap: () {
-        context.push("/profilescreen/${user.username}");
-      },
+      onTap: () => _navigateToProfile(context),
       horizontalTitleGap: 10,
       enableFeedback: true,
-      leading: CircleAvatar(
-        backgroundImage: user.profileMedia.isNotEmpty
-            ? CachedNetworkImageProvider(user.profileMedia)
-            : AssetImage("assets/images/basic_user.jpeg"),
-        radius: 22,
-        backgroundColor: Colors.grey,
-        onBackgroundImageError: (exception, stackTrace) => null,
-      ),
+      leading: BuildSmallProfileImage(mediaId: user.profileMediaId),
       title: Text(
         user.name,
-        style: TextStyle(
+        style: const TextStyle(
           color: Colors.white,
           fontWeight: FontWeight.bold,
           fontSize: 16,
         ),
+        overflow: TextOverflow.ellipsis,
+        maxLines: 1,
       ),
       subtitle: Text(
         "@${user.username}",
-        style: TextStyle(color: Colors.grey, fontSize: 14),
+        style: const TextStyle(color: Colors.grey, fontSize: 14),
+        overflow: TextOverflow.ellipsis,
+        maxLines: 1,
       ),
     );
   }
 }
 
-class CurrentSearchUsersList extends StatelessWidget {
-  const CurrentSearchUsersList({super.key, required this.users});
+class SearchUsersList extends StatelessWidget {
+  const SearchUsersList({super.key, required this.users});
   final List<SearchUserModel> users;
+
   @override
   Widget build(BuildContext context) {
     return ListView.builder(
-      padding: EdgeInsets.all(0),
-
-      itemBuilder: (context, index) {
-        return CurrentSearchUser(user: users[index]);
-      },
+      padding: EdgeInsets.zero,
       itemCount: users.length,
+      itemBuilder: (context, index) {
+        return SearchUserTile(user: users[index]);
+      },
     );
   }
 }
 
-class CurrentProfileSearchResults extends ConsumerWidget {
-  const CurrentProfileSearchResults({super.key, required this.searchQuery});
+class ProfileSearchResults extends ConsumerWidget {
+  const ProfileSearchResults({super.key, required this.searchQuery});
   final String searchQuery;
+
+  void _refreshSearch(WidgetRef ref) {
+    ref.invalidate(profileCurrentSearchProvider(searchQuery));
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    if (searchQuery.isEmpty) return CurrentSearchUsersList(users: []);
+    if (searchQuery.isEmpty) {
+      return const SearchUsersList(users: []);
+    }
+
     final asyncUsers = ref.watch(profileCurrentSearchProvider(searchQuery));
+
     return asyncUsers.when(
       data: (either) {
         return either.fold(
-          (l) {
+          (failure) {
             return RefreshIndicator(
-              onRefresh: () async {
-                // ignore: unused_result
-                ref.refresh(profileCurrentSearchProvider(searchQuery));
-              },
-              child: ListView(children: [Center(child: Text(l.message))]),
+              onRefresh: () async => _refreshSearch(ref),
+              child: CustomScrollView(
+                slivers: [
+                  SliverFillRemaining(
+                    child: Center(
+                      child: Text(failure.message, textAlign: TextAlign.center),
+                    ),
+                  ),
+                ],
+              ),
             );
           },
           (users) {
-            if (users.isEmpty)
+            if (users.isEmpty) {
               return Padding(
-                padding: EdgeInsets.all(10),
+                padding: const EdgeInsets.all(16),
                 child: GestureDetector(
                   onTap: () {
-                    // TODO: go to search result
+                    // TODO: implement search result navigation
                   },
                   child: Text(
-                    "Go to @${searchQuery}",
-                    style: TextStyle(fontSize: 16),
+                    "Search for @$searchQuery",
+                    style: const TextStyle(fontSize: 16),
                   ),
                 ),
               );
-            return CurrentSearchUsersList(users: users);
+            }
+            return SearchUsersList(users: users);
           },
         );
       },
-      error: (err, _) {
-        return ListView(children: [Center(child: Text(err.toString()))]);
+      error: (error, stackTrace) {
+        return RefreshIndicator(
+          onRefresh: () async => _refreshSearch(ref),
+          child: CustomScrollView(
+            slivers: [
+              SliverFillRemaining(
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Text(
+                      "An error occurred: ${error.toString()}",
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
       },
       loading: () {
-        return Center(child: RefreshProgressIndicator());
+        return const Center(child: CircularProgressIndicator());
       },
     );
   }
