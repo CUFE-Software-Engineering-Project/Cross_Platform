@@ -17,16 +17,7 @@ import 'package:lite_x/features/profile/repositories/profile_repo.dart';
 class ProfileRepoImpl implements ProfileRepo {
   Dio _dio;
   ProfileRepoImpl(Dio d) : _dio = d {
-    // _dio = Dio(
-    //   BaseOptions(
-    //     baseUrl:
-    //         "https://app-dbef67eb-9a2e-44fa-abff-3e8b83204d9c.cleverapps.io/",
-    //     headers: {
-    //       "Authorization":
-    //           "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VybmFtZSI6ImhhemVtZW1hbSIsImVtYWlsIjoiaGF6ZW1AenVkcGNrLmNvbSIsInJvbGUiOiJ1c2VyIiwiaWQiOiJmM2EwZDdmNC0zZDMwLTQ2NjgtOTkyZi1kN2E2ZGM0NjUyNDEiLCJleHAiOjE3NjM2NjczMjcsImlhdCI6MTc2MzY2MzcyNywidmVyc2lvbiI6MiwianRpIjoiNzkzOTI0ZDAtYzAxMi00NTk5LTk4NWYtOTgyNTdlYTIyZmRhIiwiZGV2aWQiOiJlNGY2YTRkZi03MzVkLTRlZGItYTIxZi0wZDZkMTA5Y2M1YmUifQ.PdXybFYl0DyMKIuwCeoi17awgHz72zQlBFR_W1m0IU4",
-    //     },
-    //   ),
-    // );
+    
   }
 
   @override

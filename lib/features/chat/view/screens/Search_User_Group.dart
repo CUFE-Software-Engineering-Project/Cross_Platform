@@ -46,13 +46,13 @@ class _SearchUserGroupState extends ConsumerState<SearchUserGroup> {
 
     _searchQuery = query;
     _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 500), () async {
+    _debounce = Timer(const Duration(milliseconds: 200), () async {
       if (!mounted) return;
       if (query.isNotEmpty) {
         final users = await ref
             .read(conversationsViewModelProvider.notifier)
             .searchUsers(query);
-        if (!mounted) return;
+        // if (!mounted) return;
         ref.read(searchResultsProvider.notifier).state = users;
       } else {
         ref.read(searchResultsProvider.notifier).state = [];
