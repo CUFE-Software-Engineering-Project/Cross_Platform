@@ -22,13 +22,21 @@ class UserModelAdapter extends TypeAdapter<UserModel> {
       dob: fields[2] as String,
       username: fields[3] as String,
       photo: fields[4] as String?,
+      bio: fields[5] as String?,
+      id: fields[6] as String,
+      isEmailVerified: fields[7] as bool,
+      isVerified: fields[8] as bool,
+      tfaVerified: fields[9] as bool?,
+      interests: fields[10] == null
+          ? const {}
+          : (fields[10] as Set).cast<String>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, UserModel obj) {
     writer
-      ..writeByte(5)
+      ..writeByte(11)
       ..writeByte(0)
       ..write(obj.name)
       ..writeByte(1)
@@ -38,7 +46,19 @@ class UserModelAdapter extends TypeAdapter<UserModel> {
       ..writeByte(3)
       ..write(obj.username)
       ..writeByte(4)
-      ..write(obj.photo);
+      ..write(obj.photo)
+      ..writeByte(5)
+      ..write(obj.bio)
+      ..writeByte(6)
+      ..write(obj.id)
+      ..writeByte(7)
+      ..write(obj.isEmailVerified)
+      ..writeByte(8)
+      ..write(obj.isVerified)
+      ..writeByte(9)
+      ..write(obj.tfaVerified)
+      ..writeByte(10)
+      ..write(obj.interests);
   }
 
   @override

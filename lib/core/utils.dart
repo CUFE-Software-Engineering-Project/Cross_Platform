@@ -53,11 +53,6 @@ String? nameValidator(String? value) {
   } else if (value.trim().length > 50) {
     return 'Name can\'t be longer than 50 characters';
   }
-  final pattern = r'^[a-zA-Z0-9]+$';
-
-  if (!RegExp(pattern).hasMatch(value.trim())) {
-    return 'Name can only contain letters and numbers (no spaces)';
-  }
 
   return null;
 }
@@ -69,6 +64,60 @@ String? verificationCodeValidator(String? value) {
     return 'Verification code must be exactly 6 digits';
   } else if (!RegExp(r'^[0-9]{6}$').hasMatch(value.trim())) {
     return 'Verification code must contain only digits';
+  }
+  return null;
+}
+
+String? passwordValidator(String? value) {
+  if (value == null || value.isEmpty) {
+    return 'Password is required';
+  }
+  if (value.length < 8) {
+    return 'Password must be at least 8 characters';
+  }
+  if (value.length > 256) {
+    return 'Password must be less than 256 characters';
+  }
+
+  final capitalLetters = RegExp(r'[A-Z]');
+  if (capitalLetters.allMatches(value).length < 3) {
+    return 'Password must contain at least 3 uppercase letters';
+  }
+
+  final lowercaseLetters = RegExp(r'[a-z]');
+  if (lowercaseLetters.allMatches(value).length < 3) {
+    return 'Password must contain at least 3 lowercase letters';
+  }
+
+  final symbols = RegExp(r'[!@#\$%^&*(),.?":{}|<>_\-=+;]');
+  if (symbols.allMatches(value).length < 3) {
+    return 'Password must contain at least 3 symbols';
+  }
+
+  final numbers = RegExp(r'\d');
+  if (numbers.allMatches(value).length < 3) {
+    return 'Password must contain at least 3 numbers';
+  }
+
+  return null;
+}
+
+String? loginpasswordValidator(String? value) {
+  if (value == null || value.isEmpty) {
+    return 'Password is required';
+  }
+  return null;
+}
+
+String? usernameValidator(String? value) {
+  if (value == null || value.isEmpty) {
+    return null;
+  }
+  if (value.length < 4) {
+    return 'Username must be at least 4 characters';
+  }
+  if (!RegExp(r'^[a-zA-Z0-9_]+$').hasMatch(value)) {
+    return 'Only letters, numbers and underscore are allowed';
   }
   return null;
 }

@@ -8,6 +8,7 @@ class Palette {
     0,
     1.0,
   ); // Pure black background
+  static const Color greycolor = Color.fromARGB(255, 151, 152, 153);
   static const Color cardBackground = Color.fromRGBO(
     22,
     24,
@@ -20,7 +21,8 @@ class Palette {
     39,
     1.0,
   ); // Bottom sheets / modals
-
+  static const Color chatme = const Color.fromARGB(255, 79, 174, 238);
+  static const Color chathim = const Color.fromARGB(255, 54, 59, 63);
   // Primary Colors
   static const Color primary = Color.fromRGBO(
     29,
@@ -89,12 +91,7 @@ class Palette {
 
   // Border Colors
   static const Color border = Color.fromRGBO(47, 51, 54, 1.0); // Default border
-  static const Color borderHover = Color.fromRGBO(
-    64,
-    68,
-    75,
-    1.0,
-  ); // Border on hover
+  static const Color borderHover = Color.fromARGB(255, 85, 88, 92);
   static const Color divider = Color.fromRGBO(47, 51, 54, 1.0); // Divider lines
 
   // Interaction Colors
@@ -215,4 +212,14 @@ class Palette {
     Color.fromRGBO(29, 155, 240, 1.0),
     Color.fromRGBO(26, 140, 216, 1.0),
   ]; // Primary gradient for backgrounds or buttons
+  static const Color kBrandBlue = Color(0xFF1D9BF0);
+  static const Color kBrandPurple = Color(0xFF8B5CF6);
+  static const Color container_message_color = const Color.fromARGB(
+    255,
+    28,
+    34,
+    41,
+  );
+  static const Color kDimIconwhite = Color.fromARGB(255, 184, 193, 202);
+  static const Color kBrandRed = Color(0xFFF4212E);
 }

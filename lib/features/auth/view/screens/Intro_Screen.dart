@@ -1,41 +1,35 @@
+// ignore_for_file: unused_import
+
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
 import 'package:lite_x/core/theme/palette.dart';
+import 'package:lite_x/core/view/widgets/Loader.dart';
+import 'package:lite_x/features/auth/repositories/auth_remote_repository.dart';
 import 'package:lite_x/features/auth/view/widgets/buildTermsText.dart';
 import 'package:lite_x/features/auth/view/widgets/buildXLogo.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
-class IntoScreen extends StatelessWidget {
-  const IntoScreen({super.key});
+class IntroScreen extends ConsumerWidget {
+  const IntroScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final size = MediaQuery.of(context).size;
-    final isWeb = size.width > 800;
-    final isMobile = size.width < 600;
 
     return Scaffold(
       backgroundColor: Palette.background,
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF101010), Palette.background],
-          ),
-        ),
-        child: SafeArea(
-          child: isWeb
-              ? _buildWebLayout(size, context)
-              : _buildMobileLayout(size, isMobile, context),
-        ),
+        decoration: const BoxDecoration(),
+        child: SafeArea(child: _buildMobileLayout(size, context, ref)),
       ),
     );
   }
 
-  Widget _buildMobileLayout(Size size, bool isMobile, BuildContext context) {
+  Widget _buildMobileLayout(Size size, BuildContext context, WidgetRef ref) {
     return SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -43,11 +37,11 @@ class IntoScreen extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(height: 2),
+            const SizedBox(height: 2),
             Center(child: buildXLogo(size: 50)),
-            SizedBox(height: size.height * 0.25),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 5.0),
+            SizedBox(height: size.height * 0.15),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 5.0),
               child: Text(
                 'See what\'s\nhappening in the\nworld right now.',
                 textAlign: TextAlign.start,
@@ -58,143 +52,38 @@ class IntoScreen extends StatelessWidget {
                 ),
               ),
             ),
-
             SizedBox(height: size.height * 0.15),
-            _buildAuthButtons(isWeb: false, context: context),
+            _buildAuthButtons(context, ref),
             const SizedBox(height: 25),
             buildTermsText(),
-            SizedBox(height: size.height * 0.05),
-            _buildLoginSection(),
+            const SizedBox(height: 5),
+            _buildLoginSection(context),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildWebLayout(Size size, BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          flex: 1,
-          child: Container(
-            padding: const EdgeInsets.all(40),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 300,
-                  height: 300,
-                  child: buildXLogo(size: 300),
-                ),
-                const SizedBox(height: 10),
-                const Text(
-                  'Happening now',
-                  style: TextStyle(
-                    fontSize: 40,
-                    fontWeight: FontWeight.w800,
-                    color: Palette.textWhite,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        Expanded(
-          flex: 1,
-          child: Container(
-            padding: const EdgeInsets.all(40),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Join today.',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.w800,
-                    color: Palette.textWhite,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                _buildAuthButtons(isWeb: true, context: context),
-                const SizedBox(height: 20),
-                buildTermsText(),
-                const SizedBox(height: 20),
-                _buildLoginSection(),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildAuthButtons({
-    required bool isWeb,
-    required BuildContext context,
-  }) {
+  Widget _buildAuthButtons(BuildContext context, WidgetRef ref) {
     return Column(
       children: [
-        SizedBox(
-          width: double.infinity,
-          height: 50,
-          child: ElevatedButton.icon(
-            onPressed: () {},
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Palette.textWhite,
-              foregroundColor: Colors.black,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(25),
-              ),
-            ),
-            icon: Image.asset(
-              'assets/images/google.png',
-              width: 24,
-              height: 24,
-            ),
-            label: const Text(
-              'Continue with Google',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-            ),
-          ),
+        AuthButton(
+          icon: 'assets/images/google.png',
+          label: 'Continue with Google',
+          onPressed: () async {},
         ),
-
+        const SizedBox(height: 10),
+        AuthButton(
+          icon: 'assets/images/github.png',
+          label: 'Continue with GitHub',
+          onPressed: () {},
+        ),
         const SizedBox(height: 12),
-
-        if (isWeb) ...[
-          SizedBox(
-            width: double.infinity,
-            height: 50,
-            child: ElevatedButton.icon(
-              onPressed: () {},
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Palette.textWhite,
-                foregroundColor: Colors.black,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(25),
-                ),
-              ),
-              icon: const Icon(
-                Icons.apple,
-                size: 20,
-                color: Palette.background,
-              ),
-              label: const Text(
-                'Continue with Apple',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-        ],
         Row(
           children: [
             Expanded(child: Container(height: 1, color: Colors.grey[800])),
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 10),
               child: Text(
                 'or',
                 style: TextStyle(color: Colors.grey[500], fontSize: 14),
@@ -204,43 +93,29 @@ class IntoScreen extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 12),
-        SizedBox(
-          width: double.infinity,
-          height: 50,
-          child: ElevatedButton(
-            onPressed: () {
-              context.pushNamed(RouteConstants.createaccountscreen);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white,
-              foregroundColor: Colors.black,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(25),
-              ),
-            ),
-            child: const Text(
-              'Create account',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-            ),
-          ),
+        AuthButton(
+          label: 'Create account',
+          onPressed: () {
+            context.pushNamed(RouteConstants.createaccountscreen);
+          },
         ),
       ],
     );
   }
 
-  Widget _buildLoginSection() {
+  Widget _buildLoginSection(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 5),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.start,
+      child: Wrap(
         children: [
           const Text(
             'Have an account already? ',
             style: TextStyle(color: Colors.grey, fontSize: 14),
           ),
           GestureDetector(
-            onTap: () {},
+            onTap: () {
+              context.pushNamed(RouteConstants.Loginscreen);
+            },
             child: const Text(
               'Log in',
               style: TextStyle(
@@ -251,6 +126,59 @@ class IntoScreen extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class AuthButton extends StatelessWidget {
+  final String? icon;
+  final String label;
+  final VoidCallback onPressed;
+
+  const AuthButton({
+    super.key,
+    this.icon,
+    required this.label,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final buttonStyle = ElevatedButton.styleFrom(
+      backgroundColor: Colors.white,
+      foregroundColor: Colors.black,
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+    );
+
+    return SizedBox(
+      width: double.infinity,
+      height: 50,
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: buttonStyle,
+        child: Center(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (icon != null) ...[
+                Image.asset(icon!, width: 24, height: 24),
+                const SizedBox(width: 12),
+              ],
+              Flexible(
+                child: Text(
+                  label,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
