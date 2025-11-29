@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
 import 'package:lite_x/core/theme/palette.dart';
 import 'package:lite_x/core/providers/dio_interceptor.dart';
+import 'package:lite_x/features/home/repositories/home_repository.dart';
+import 'package:lite_x/features/home/view/screens/quote_composer_screen.dart';
 
 class InteractionBar extends ConsumerStatefulWidget {
   final String tweetId;
@@ -35,6 +37,7 @@ class _InteractionBarState extends ConsumerState<InteractionBar> {
   bool _retweeted = false;
   int _likesCount = 0;
   int _retweetsCount = 0;
+  bool _handlingQuote = false;
 
   @override
   void initState() {
@@ -126,7 +129,9 @@ class _InteractionBarState extends ConsumerState<InteractionBar> {
         });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to ${wasRetweeted ? 'unretweet' : 'retweet'}'),
+            content: Text(
+              'Failed to ${wasRetweeted ? 'unretweet' : 'retweet'}',
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -141,11 +146,33 @@ class _InteractionBarState extends ConsumerState<InteractionBar> {
     );
   }
 
-  void _handleQuote() {
-    // TODO: Navigate to quote tweet screen
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Quote functionality coming soon')),
-    );
+  Future<void> _handleQuote() async {
+    if (_handlingQuote) return;
+    _handlingQuote = true;
+
+    try {
+      final repository = ref.read(homeRepositoryProvider);
+      final tweet = await repository.getTweetById(widget.tweetId);
+
+      if (!mounted) return;
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => QuoteComposerScreen(quotedTweet: tweet),
+        ),
+      );
+      widget.onUpdate?.call();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to open quote composer'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      _handlingQuote = false;
+    }
   }
 
   @override
@@ -181,7 +208,12 @@ class _InteractionBarState extends ConsumerState<InteractionBar> {
     );
   }
 
-  Widget _buildButton(IconData icon, int count, Color color, VoidCallback onTap) {
+  Widget _buildButton(
+    IconData icon,
+    int count,
+    Color color,
+    VoidCallback onTap,
+  ) {
     return GestureDetector(
       onTap: onTap,
       child: Row(

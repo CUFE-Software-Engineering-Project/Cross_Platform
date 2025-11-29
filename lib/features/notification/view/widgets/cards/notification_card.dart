@@ -7,11 +7,7 @@ class NotificationCard extends StatelessWidget {
   final AppNotification notification;
   final VoidCallback? onTap;
 
-  const NotificationCard({
-    super.key,
-    required this.notification,
-    this.onTap,
-  });
+  const NotificationCard({super.key, required this.notification, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +30,9 @@ class NotificationCard extends StatelessWidget {
                     children: [
                       CircleAvatar(
                         radius: 18.5,
-                        backgroundImage: NetworkImage(notification.user.avatarUrl),
+                        backgroundImage: NetworkImage(
+                          notification.user.avatarUrl,
+                        ),
                       ),
                       const SizedBox(width: 8),
                       Expanded(

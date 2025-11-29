@@ -5,20 +5,11 @@ class MediaInfo {
   MediaInfo({required this.url, required this.keyName});
 
   factory MediaInfo.fromJson(Map<String, dynamic> json) {
-    return MediaInfo(
-      url: json['url'],
-      keyName: json['keyName'],
-    );
+    return MediaInfo(url: json['url'], keyName: json['keyName']);
   }
 
-  MediaInfo copyWith({
-    String? url,
-    String? keyName,
-  }) {
-    return MediaInfo(
-      url: url ?? this.url,
-      keyName: keyName ?? this.keyName,
-    );
+  MediaInfo copyWith({String? url, String? keyName}) {
+    return MediaInfo(url: url ?? this.url, keyName: keyName ?? this.keyName);
   }
 
   @override
@@ -27,11 +18,13 @@ class MediaInfo {
 
 class Actor {
   final String name;
+  final String username;
   final String profileMediaId;
   final MediaInfo? media;
 
   Actor({
     required this.name,
+    required this.username,
     required this.profileMediaId,
     this.media,
   });
@@ -39,17 +32,20 @@ class Actor {
   factory Actor.fromJson(Map<String, dynamic> json) {
     return Actor(
       name: json['name'] ?? '',
+      username: json['username']?.toString() ?? '',
       profileMediaId: json['profileMediaId']?.toString() ?? '',
     );
   }
 
   Actor copyWith({
     String? name,
+    String? username,
     String? profileMediaId,
     MediaInfo? media,
   }) {
     return Actor(
       name: name ?? this.name,
+      username: username ?? this.username,
       profileMediaId: profileMediaId ?? this.profileMediaId,
       media: media ?? this.media,
     );
@@ -57,7 +53,7 @@ class Actor {
 
   @override
   String toString() =>
-      'Actor(name: $name, profileMediaId: $profileMediaId, media: $media)';
+      'Actor(name: $name, username: $username, profileMediaId: $profileMediaId, media: $media)';
 }
 
 class Notification {
@@ -120,6 +116,7 @@ class Notification {
       actor: actor ?? this.actor,
     );
   }
+
   @override
   String toString() =>
       'Notification(id: $id, title: $title, isRead: $isRead, actor: $actor)';
@@ -131,6 +128,17 @@ class NotificationItem {
   final String body;
   final bool isRead;
   final String mediaUrl;
+  final String? tweetId;
+  final String createdAt;
+  final Actor actor;
+  final String? targetUsername;
+  final String? quotedAuthor;
+  final String? quotedContent;
+  final int repliesCount;
+  final int repostsCount;
+  final int likesCount;
+  final bool isLiked;
+  final bool isRetweeted;
 
   NotificationItem({
     required this.id,
@@ -138,6 +146,17 @@ class NotificationItem {
     required this.body,
     required this.isRead,
     required this.mediaUrl,
+    this.tweetId,
+    required this.createdAt,
+    required this.actor,
+    this.targetUsername,
+    this.quotedAuthor,
+    this.quotedContent,
+    this.repliesCount = 0,
+    this.repostsCount = 0,
+    this.likesCount = 0,
+    this.isLiked = false,
+    this.isRetweeted = false,
   });
 
   NotificationItem copyWith({
@@ -146,6 +165,17 @@ class NotificationItem {
     String? body,
     bool? isRead,
     String? mediaUrl,
+    String? tweetId,
+    String? createdAt,
+    Actor? actor,
+    String? targetUsername,
+    String? quotedAuthor,
+    String? quotedContent,
+    int? repliesCount,
+    int? repostsCount,
+    int? likesCount,
+    bool? isLiked,
+    bool? isRetweeted,
   }) {
     return NotificationItem(
       id: id ?? this.id,
@@ -153,10 +183,21 @@ class NotificationItem {
       body: body ?? this.body,
       isRead: isRead ?? this.isRead,
       mediaUrl: mediaUrl ?? this.mediaUrl,
+      tweetId: tweetId ?? this.tweetId,
+      createdAt: createdAt ?? this.createdAt,
+      actor: actor ?? this.actor,
+      targetUsername: targetUsername ?? this.targetUsername,
+      quotedAuthor: quotedAuthor ?? this.quotedAuthor,
+      quotedContent: quotedContent ?? this.quotedContent,
+      repliesCount: repliesCount ?? this.repliesCount,
+      repostsCount: repostsCount ?? this.repostsCount,
+      likesCount: likesCount ?? this.likesCount,
+      isLiked: isLiked ?? this.isLiked,
+      isRetweeted: isRetweeted ?? this.isRetweeted,
     );
   }
 
   @override
   String toString() =>
-      'NotificationItem(title: $title, body: $body, isRead: $isRead, mediaUrl: $mediaUrl)';
+      'NotificationItem(title: $title, body: $body, isRead: $isRead, mediaUrl: $mediaUrl, tweetId: $tweetId, actor: $actor, targetUsername: $targetUsername, isLiked: $isLiked, isRetweeted: $isRetweeted)';
 }

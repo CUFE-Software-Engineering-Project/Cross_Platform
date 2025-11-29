@@ -19,8 +19,7 @@ class _VerifiedTabState extends State<VerifiedTab>
     super.build(context);
     return Container(
       color: Palette.background,
-      child:const VerifiedEmptyStateWidget()
-          
+      child: const VerifiedEmptyStateWidget(),
     );
   }
 
@@ -101,7 +100,13 @@ class _VerifiedNotificationCardState extends State<_VerifiedNotificationCard>
                         child: CircleAvatar(
                           radius: 24,
                           backgroundImage:
-                              NetworkImage(widget.notification.mediaUrl ?? ''),
+                              widget.notification.mediaUrl.isNotEmpty
+                              ? NetworkImage(widget.notification.mediaUrl)
+                              : null,
+                          backgroundColor: Palette.cardBackground,
+                          child: widget.notification.mediaUrl.isEmpty
+                              ? Icon(Icons.person, color: Palette.textPrimary)
+                              : null,
                         ),
                       ),
                       const SizedBox(width: 12.0),
@@ -143,7 +148,6 @@ class _VerifiedNotificationCardState extends State<_VerifiedNotificationCard>
                       ),
                     ],
                   ),
-                  
                 ],
               ),
             ),
@@ -153,4 +157,3 @@ class _VerifiedNotificationCardState extends State<_VerifiedNotificationCard>
     );
   }
 }
-

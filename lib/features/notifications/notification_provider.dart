@@ -23,6 +23,7 @@ class NotificationsController extends AsyncNotifier<List<NotificationItem>> {
   }
 }
 
-final notificationsProvider = AsyncNotifierProvider<NotificationsController, List<NotificationItem>>(
-  () => NotificationsController(),
-);
+final notificationsProvider =
+    AsyncNotifierProvider<NotificationsController, List<NotificationItem>>(
+      () => NotificationsController(),
+    );
