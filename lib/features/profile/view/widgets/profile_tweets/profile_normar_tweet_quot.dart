@@ -46,6 +46,7 @@ class ProfileNormarTweetQuot extends ConsumerWidget implements ProfileTweet {
                   },
                   child: BuildSmallProfileImage(
                     mediaId: profilePostModel.profileMediaId,
+                    radius: 20,
                   ),
                 ),
               ],

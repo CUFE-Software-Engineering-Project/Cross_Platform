@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
 import 'package:lite_x/features/profile/view/widgets/profile/profile_header.dart';
 import 'package:lite_x/features/profile/view/widgets/profile/profile_tabs.dart';
+import 'package:lite_x/features/profile/view_model/providers.dart';
 
 class ProfileScreenBody extends ConsumerStatefulWidget {
   final ProfileModel profileData;
@@ -41,31 +42,39 @@ class _ProfileScreenBodyState extends ConsumerState<ProfileScreenBody> {
 
   @override
   Widget build(BuildContext context) {
-    return CustomScrollView(
-      slivers: [
-        SliverToBoxAdapter(
-          child: ProfileHeader(
-            profileData: widget.profileData,
-            isMe: widget.isMe,
-            showData: showData,
-            showDataFunc: showDataFunc,
-          ),
-        ),
-        if (!showData)
-          SliverFillRemaining(
-            child: ShowProfileDataBlockedUser(
-              showDataFunc: showDataFunc,
+    return RefreshIndicator(
+      onRefresh: () async {
+        // ignore: unused_result
+        final c = ref.read(myUserNameProvider);
+        print(c + "8888888889999999");
+        ref.refresh(profileDataProvider(widget.profileData.username));
+      },
+      child: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(
+            child: ProfileHeader(
               profileData: widget.profileData,
-            ),
-          ),
-        if (showData)
-          SliverFillRemaining(
-            child: ProfileTabs(
               isMe: widget.isMe,
-              profileData: widget.profileData,
+              showData: showData,
+              showDataFunc: showDataFunc,
             ),
           ),
-      ],
+          if (!showData)
+            SliverFillRemaining(
+              child: ShowProfileDataBlockedUser(
+                showDataFunc: showDataFunc,
+                profileData: widget.profileData,
+              ),
+            ),
+          if (showData)
+            SliverFillRemaining(
+              child: ProfileTabs(
+                isMe: widget.isMe,
+                profileData: widget.profileData,
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
