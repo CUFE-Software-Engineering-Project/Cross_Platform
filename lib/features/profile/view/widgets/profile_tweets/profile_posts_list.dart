@@ -18,8 +18,14 @@ class ProfilePostsList extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final asyncPosts = tabType == ProfileTabType.Posts? ref.watch(profilePostsProvider(this.profile.username)): tabType == ProfileTabType.Likes? ref.watch(profileLikesProvider(this.profile.username)): ref.watch(profileMediaProvider(this.profile.username));
+    final postsProvider = tabType == ProfileTabType.Posts
+        ? profilePostsProvider(this.profile.username)
+        : tabType == ProfileTabType.Likes
+        ? profileLikesProvider(this.profile.username)
+        : profileMediaProvider(this.profile.username);
     ;
+
+    final asyncPosts = ref.watch(postsProvider);
 
     return asyncPosts.when(
       data: (either) {
@@ -34,7 +40,7 @@ class ProfilePostsList extends ConsumerWidget {
               ),
               onRefresh: () async {
                 // ignore: unused_result
-                ref.refresh(profileLikesProvider(this.profile.username));
+                ref.refresh(postsProvider);
               },
             );
           },
@@ -55,7 +61,7 @@ class ProfilePostsList extends ConsumerWidget {
               return RefreshIndicator(
                 onRefresh: () async {
                   // ignore: unused_result
-                  ref.refresh(profilePostsProvider(profile.username));
+                  ref.refresh(postsProvider);
                 },
                 child: ListView(
                   children: [
@@ -81,13 +87,10 @@ class ProfilePostsList extends ConsumerWidget {
             return RefreshIndicator(
               onRefresh: () async {
                 // ignore: unused_result
-                ref.refresh(profilePostsProvider(this.profile.username));
-                // ignore: unused_result
-                ref.refresh(profileLikesProvider(this.profile.username));
-                // ignore: unused_result
-                ref.refresh(profileDataProvider(this.profile.username));
+                ref.refresh(postsProvider);
               },
               child: ListView.separated(
+                cacheExtent: 2000,
                 itemBuilder: (context, index) {
                   return posts[index];
                 },
@@ -114,7 +117,7 @@ class ProfilePostsList extends ConsumerWidget {
           ),
           onRefresh: () async {
             // ignore: unused_result
-            ref.refresh(profilePostsProvider(this.profile.username));
+            ref.refresh(postsProvider);
           },
         );
       },

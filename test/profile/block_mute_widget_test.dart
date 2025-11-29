@@ -26,8 +26,7 @@ void main() {
     birthDate: '1990-01-01',
     location: 'Test Location',
     website: 'https://test.com',
-    avatarUrl: '',
-    bannerUrl: '',
+
     isVerified: false,
     isFollowing: false,
     isFollower: false,

@@ -9,7 +9,8 @@ import 'package:lite_x/features/profile/models/tweet_reply_model.dart';
 import 'package:lite_x/features/profile/models/user_model.dart';
 
 abstract class ProfileRepo {
-  Future<Either<Failure, ProfileModel>> getProfileData(String userName);
+  Future<Either<Failure, ProfileModel>> getProfileData(String userName,String currentUsername,
+  );
 
   Future<Either<Failure, List<UserModel>>> getFollowers(String userName);
   Future<Either<Failure, List<UserModel>>> getFollowings(String userName);

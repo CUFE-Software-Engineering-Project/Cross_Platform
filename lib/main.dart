@@ -9,6 +9,7 @@ import 'package:lite_x/core/services/deep_link_service.dart';
 import 'package:lite_x/core/theme/app_theme.dart';
 import 'package:lite_x/features/chat/models/conversationmodel.dart';
 import 'package:lite_x/features/chat/models/messagemodel.dart';
+import 'package:lite_x/features/profile/models/profile_model.dart';
 import 'package:lite_x/features/search/models/search_history_hive_model.dart';
 import 'firebase_options.dart';
 
@@ -25,6 +26,8 @@ Future<void> init() async {
   Hive.registerAdapter(UserModelAdapter());
   Hive.registerAdapter(ConversationModelAdapter());
   Hive.registerAdapter(MessageModelAdapter());
+  Hive.registerAdapter(ProfileModelAdapter());
+  await await Hive.openBox<ProfileModel>('profileDataBox');
   // await Hive.deleteBoxFromDisk('userBox');
   // await Hive.deleteBoxFromDisk('tokenBox');
   // await Hive.deleteBoxFromDisk('conversationsBox');

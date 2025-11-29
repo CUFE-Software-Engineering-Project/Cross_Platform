@@ -134,7 +134,7 @@ class SearchUserTile extends StatelessWidget {
       onTap: () => _navigateToProfile(context),
       horizontalTitleGap: 10,
       enableFeedback: true,
-      leading: BuildSmallProfileImage(mediaId: user.profileMediaId),
+      leading: BuildSmallProfileImage(mediaId: user.profileMediaId,radius: 20,),
       title: Text(
         user.name,
         style: const TextStyle(

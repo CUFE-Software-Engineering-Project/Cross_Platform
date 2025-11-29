@@ -73,6 +73,7 @@ void main() {
                   return RefreshIndicator(
                     onRefresh: () async {
                       refreshCount++;
+                      // ignore: unused_result
                       ref.refresh(profileDataProvider('testuser'));
                     },
                     child: profileData.when(

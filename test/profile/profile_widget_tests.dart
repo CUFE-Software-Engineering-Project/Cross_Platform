@@ -18,7 +18,9 @@ import 'profile_repo_extended_test.mocks.dart';
 @GenerateNiceMocks([MockSpec<ProfileRepo>()])
 void main() {
   setUpAll(() {
-    provideDummy<Either<Failure, List<SearchUserModel>>>(Left(Failure('dummy')));
+    provideDummy<Either<Failure, List<SearchUserModel>>>(
+      Left(Failure('dummy')),
+    );
   });
 
   group('ProfileSearchScreen Widget Tests', () {
@@ -28,17 +30,17 @@ void main() {
       mockRepo = MockProfileRepo();
     });
 
-    testWidgets('ProfileSearchScreen displays search bar', (WidgetTester tester) async {
-      when(mockRepo.profileCurrentSearch(any)).thenAnswer((_) async => Right([]));
+    testWidgets('ProfileSearchScreen displays search bar', (
+      WidgetTester tester,
+    ) async {
+      when(
+        mockRepo.profileCurrentSearch(any),
+      ).thenAnswer((_) async => Right([]));
 
       await tester.pumpWidget(
         ProviderScope(
-          overrides: [
-            profileRepoProvider.overrideWithValue(mockRepo),
-          ],
-          child: MaterialApp(
-            home: ProfileSearchScreen(),
-          ),
+          overrides: [profileRepoProvider.overrideWithValue(mockRepo)],
+          child: MaterialApp(home: ProfileSearchScreen()),
         ),
       );
 
@@ -48,9 +50,12 @@ void main() {
       expect(find.byType(TextField), findsOneWidget);
     });
 
-    testWidgets('ProfileSearchScreen triggers search on text input', (WidgetTester tester) async {
+    testWidgets('ProfileSearchScreen triggers search on text input', (
+      WidgetTester tester,
+    ) async {
       final mockResults = [
         SearchUserModel(
+          profileMediaId: "123",
           id: '1',
           username: 'testuser',
           name: 'Test User',
@@ -64,16 +69,14 @@ void main() {
         ),
       ];
 
-      when(mockRepo.profileCurrentSearch('test')).thenAnswer((_) async => Right(mockResults));
+      when(
+        mockRepo.profileCurrentSearch('test'),
+      ).thenAnswer((_) async => Right(mockResults));
 
       await tester.pumpWidget(
         ProviderScope(
-          overrides: [
-            profileRepoProvider.overrideWithValue(mockRepo),
-          ],
-          child: MaterialApp(
-            home: ProfileSearchScreen(),
-          ),
+          overrides: [profileRepoProvider.overrideWithValue(mockRepo)],
+          child: MaterialApp(home: ProfileSearchScreen()),
         ),
       );
 
@@ -118,12 +121,16 @@ void main() {
 
     setUp(() {
       mockRepo = MockProfileRepo();
-      when(mockRepo.getProfileData(any)).thenAnswer((_) async => Right(testProfile));
+      when(
+        mockRepo.getProfileData(any),
+      ).thenAnswer((_) async => Right(testProfile));
       when(mockRepo.getFollowers(any)).thenAnswer((_) async => Right([]));
       when(mockRepo.getFollowings(any)).thenAnswer((_) async => Right([]));
     });
 
-    testWidgets('Can navigate to followers screen from profile', (WidgetTester tester) async {
+    testWidgets('Can navigate to followers screen from profile', (
+      WidgetTester tester,
+    ) async {
       final goRouter = GoRouter(
         routes: [
           GoRoute(
@@ -137,21 +144,16 @@ void main() {
           ),
           GoRoute(
             path: '/followers',
-            builder: (context, state) => Scaffold(
-              body: Text('Followers Screen'),
-            ),
+            builder: (context, state) =>
+                Scaffold(body: Text('Followers Screen')),
           ),
         ],
       );
 
       await tester.pumpWidget(
         ProviderScope(
-          overrides: [
-            profileRepoProvider.overrideWithValue(mockRepo),
-          ],
-          child: MaterialApp.router(
-            routerConfig: goRouter,
-          ),
+          overrides: [profileRepoProvider.overrideWithValue(mockRepo)],
+          child: MaterialApp.router(routerConfig: goRouter),
         ),
       );
 

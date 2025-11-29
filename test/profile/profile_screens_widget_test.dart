@@ -4,9 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
 import 'package:lite_x/features/profile/view/screens/edit_profile_screen.dart';
 import 'package:lite_x/features/profile/view/screens/following_followers_screen.dart';
-import 'package:lite_x/features/profile/repositories/profile_repo.dart';
 import 'package:lite_x/features/profile/view_model/providers.dart';
-import 'package:mockito/mockito.dart';
 
 import 'profile_repo_extended_test.mocks.dart';
 

@@ -177,6 +177,7 @@ void main() {
           protectedAccount: false,
           type: TweetType.Tweet,
           mediaIds: [],
+          parentId: "123"
         ),
       ];
       when(mockRepo.getProfilePosts('testuser')).thenAnswer((_) async => Right(mockPosts));
@@ -212,6 +213,7 @@ void main() {
           protectedAccount: false,
           type: TweetType.Tweet,
           mediaIds: [],
+          parentId: "123"
         ),
       ];
       when(mockRepo.getProfileLikes('testuser')).thenAnswer((_) async => Right(mockLikes));

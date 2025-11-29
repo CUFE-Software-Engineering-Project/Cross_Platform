@@ -5,7 +5,6 @@ import 'package:lite_x/features/profile/models/shared.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
 import 'package:lite_x/features/profile/view_model/providers.dart';
 import 'package:mockito/mockito.dart';
-import 'package:dio/dio.dart';
 
 import 'profile_repo_extended_test.mocks.dart';
 

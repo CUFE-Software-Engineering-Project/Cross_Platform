@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lite_x/core/providers/current_user_provider.dart';
+import 'package:lite_x/features/media/view_model/providers.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
 import 'package:lite_x/features/profile/models/profile_tweet_model.dart';
 import 'package:lite_x/features/profile/models/shared.dart';
@@ -46,6 +47,7 @@ class ProfileNormalTweetWidget extends ConsumerWidget implements ProfileTweet {
                   },
                   child: BuildSmallProfileImage(
                     mediaId: profilePostModel.profileMediaId,
+                    radius: 20,
                   ),
                 ),
               ],
@@ -364,13 +366,7 @@ class TweetMediaGrid extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final mediaUrlsAsync = ref.watch(mediaUrlsProvider(mediaIds));
-
-    return mediaUrlsAsync.when(
-      loading: () => _buildMediaSkeleton(),
-      error: (error, stack) => _buildErrorWidget(),
-      data: (mediaUrls) => _buildMediaGrid(mediaUrls),
-    );
+    return _buildMediaGrid(mediaIds, ref);
   }
 
   Widget _buildMediaSkeleton() {
@@ -397,64 +393,117 @@ class TweetMediaGrid extends ConsumerWidget {
     );
   }
 
-  Widget _buildMediaGrid(List<String> photos) {
+  Widget _errorContainer(double height) {
+    return Container(
+      color: Colors.grey,
+      height: height,
+      child: Center(child: Text("can't load image")),
+    );
+  }
+
+  Widget _loadingContainer(double height, {double? value}) {
+    return Container(
+      color: Colors.grey,
+      height: 300,
+      child: Center(
+        child: CircularProgressIndicator(color: Colors.white, value: value),
+      ),
+    );
+  }
+
+  Widget _buildMediaGrid(List<String> photos, WidgetRef ref) {
     if (photos.isEmpty) return const SizedBox.shrink();
 
     if (photos.length == 1) {
-      return CachedNetworkImage(
-        imageUrl: photos[0] + "",
-        fit: BoxFit.cover,
-        errorWidget: (context, url, error) => Container(
-          color: Colors.grey,
-          height: 300,
-          child: Center(child: Text("can't load image")),
-        ),
+      final mediaUrl = ref.watch(mediaUrlProvider(photos[0]));
+      return mediaUrl.when(
+        data: (url) {
+          return CachedNetworkImage(
+            imageUrl: url,
+            fit: BoxFit.cover,
+            errorWidget: (context, url, error) => _errorContainer(300),
+            progressIndicatorBuilder: (context, url, progress) =>
+                _loadingContainer(300, value: progress.progress),
+          );
+        },
+        error: (err, _) {
+          return _errorContainer(300);
+        },
+        loading: () {
+          return _loadingContainer(300);
+        },
       );
     }
 
     if (photos.length == 2) {
+      final mediaUrl0 = ref.watch(mediaUrlProvider(photos[0]));
+      final mediaUrl1 = ref.watch(mediaUrlProvider(photos[1]));
       return Row(
         children: [
           Expanded(
-            child: CachedNetworkImage(
-              imageUrl: photos[0] + "",
-              fit: BoxFit.cover,
-              errorWidget: (context, url, error) => Container(
-                color: Colors.grey,
-                height: 150,
-                child: Center(child: Text("can't load image")),
-                margin: EdgeInsets.only(right: 3),
-              ),
+            child: mediaUrl0.when(
+              data: (url) {
+                return CachedNetworkImage(
+                  imageUrl: url,
+                  fit: BoxFit.cover,
+                  errorWidget: (context, url, error) => _errorContainer(150),
+                  progressIndicatorBuilder: (context, url, progress) =>
+                      _loadingContainer(150, value: progress.progress),
+                );
+              },
+              error: (err, _) {
+                return _errorContainer(150);
+              },
+              loading: () {
+                return _loadingContainer(150);
+              },
             ),
           ),
           Expanded(
-            child: CachedNetworkImage(
-              imageUrl: photos[1] + "",
-              fit: BoxFit.cover,
-              errorWidget: (context, url, error) => Container(
-                color: Colors.grey,
-                height: 150,
-                child: Center(child: Text("can't load image")),
-                margin: EdgeInsets.only(left: 3),
-              ),
+            child: mediaUrl1.when(
+              data: (url) {
+                return CachedNetworkImage(
+                  imageUrl: url,
+                  fit: BoxFit.cover,
+                  errorWidget: (context, url, error) => _errorContainer(150),
+                  progressIndicatorBuilder: (context, url, progress) =>
+                      _loadingContainer(150, value: progress.progress),
+                );
+              },
+              error: (err, _) {
+                return _errorContainer(150);
+              },
+              loading: () {
+                return _loadingContainer(150);
+              },
             ),
           ),
         ],
       );
     } else if (photos.length == 3) {
+      final mediaUrl0 = ref.watch(mediaUrlProvider(photos[0]));
+      final mediaUrl1 = ref.watch(mediaUrlProvider(photos[1]));
+      final mediaUrl2 = ref.watch(mediaUrlProvider(photos[2]));
       return Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Expanded(
-            child: CachedNetworkImage(
-              imageUrl: photos[0] + "",
-              fit: BoxFit.cover,
-              errorWidget: (context, url, error) => Container(
-                color: Colors.grey,
-                height: 300,
-                child: Center(child: Text("can't load image")),
-                margin: EdgeInsets.only(left: 3),
-              ),
+            child: mediaUrl0.when(
+              data: (url) {
+                return CachedNetworkImage(
+                  imageUrl: url,
+                  fit: BoxFit.cover,
+                  errorWidget: (context, url, error) => _errorContainer(300),
+                  progressIndicatorBuilder: (context, url, progress) =>
+                      _loadingContainer(300, value: progress.progress),
+                );
+              },
+              error: (err, _) {
+                return _errorContainer(300);
+              },
+              loading: () {
+                return _loadingContainer(300);
+              },
             ),
           ),
           const SizedBox(width: 4),
@@ -463,28 +512,44 @@ class TweetMediaGrid extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Expanded(
-                  child: CachedNetworkImage(
-                    imageUrl: photos[1] + "",
-                    fit: BoxFit.cover,
-                    errorWidget: (context, url, error) => Container(
-                      color: Colors.grey,
-                      height: 148,
-                      child: Center(child: Text("can't load image")),
-                      margin: EdgeInsets.only(left: 3),
-                    ),
+                  child: mediaUrl1.when(
+                    data: (url) {
+                      return CachedNetworkImage(
+                        imageUrl: url,
+                        fit: BoxFit.cover,
+                        errorWidget: (context, url, error) =>
+                            _errorContainer(148),
+                        progressIndicatorBuilder: (context, url, progress) =>
+                            _loadingContainer(148, value: progress.progress),
+                      );
+                    },
+                    error: (err, _) {
+                      return _errorContainer(148);
+                    },
+                    loading: () {
+                      return _loadingContainer(148);
+                    },
                   ),
                 ),
                 const SizedBox(height: 4),
                 Expanded(
-                  child: CachedNetworkImage(
-                    imageUrl: photos[2] + "",
-                    fit: BoxFit.cover,
-                    errorWidget: (context, url, error) => Container(
-                      color: Colors.grey,
-                      height: 148,
-                      child: Center(child: Text("can't load image")),
-                      margin: EdgeInsets.only(left: 3),
-                    ),
+                  child: mediaUrl2.when(
+                    data: (url) {
+                      return CachedNetworkImage(
+                        imageUrl: url,
+                        fit: BoxFit.cover,
+                        errorWidget: (context, url, error) =>
+                            _errorContainer(148),
+                        progressIndicatorBuilder: (context, url, progress) =>
+                            _loadingContainer(148, value: progress.progress),
+                      );
+                    },
+                    error: (err, _) {
+                      return _errorContainer(148);
+                    },
+                    loading: () {
+                      return _loadingContainer(148);
+                    },
                   ),
                 ),
               ],
@@ -493,6 +558,10 @@ class TweetMediaGrid extends ConsumerWidget {
         ],
       );
     } else if (photos.length == 4) {
+      final mediaUrl0 = ref.watch(mediaUrlProvider(photos[0]));
+      final mediaUrl1 = ref.watch(mediaUrlProvider(photos[1]));
+      final mediaUrl2 = ref.watch(mediaUrlProvider(photos[2]));
+      final mediaUrl3 = ref.watch(mediaUrlProvider(photos[3]));
       return Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -501,28 +570,44 @@ class TweetMediaGrid extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Expanded(
-                  child: CachedNetworkImage(
-                    imageUrl: photos[0] + "",
-                    fit: BoxFit.cover,
-                    errorWidget: (context, url, error) => Container(
-                      color: Colors.grey,
-                      height: 148,
-                      child: Center(child: Text("can't load image")),
-                      margin: EdgeInsets.only(left: 3),
-                    ),
+                  child: mediaUrl0.when(
+                    data: (url) {
+                      return CachedNetworkImage(
+                        imageUrl: url,
+                        fit: BoxFit.cover,
+                        errorWidget: (context, url, error) =>
+                            _errorContainer(148),
+                        progressIndicatorBuilder: (context, url, progress) =>
+                            _loadingContainer(148, value: progress.progress),
+                      );
+                    },
+                    error: (err, _) {
+                      return _errorContainer(148);
+                    },
+                    loading: () {
+                      return _loadingContainer(148);
+                    },
                   ),
                 ),
                 const SizedBox(height: 4),
                 Expanded(
-                  child: CachedNetworkImage(
-                    imageUrl: photos[3] + "",
-                    fit: BoxFit.cover,
-                    errorWidget: (context, url, error) => Container(
-                      color: Colors.grey,
-                      height: 148,
-                      child: Center(child: Text("can't load image")),
-                      margin: EdgeInsets.only(left: 3),
-                    ),
+                  child: mediaUrl3.when(
+                    data: (url) {
+                      return CachedNetworkImage(
+                        imageUrl: url,
+                        fit: BoxFit.cover,
+                        errorWidget: (context, url, error) =>
+                            _errorContainer(148),
+                        progressIndicatorBuilder: (context, url, progress) =>
+                            _loadingContainer(148, value: progress.progress),
+                      );
+                    },
+                    error: (err, _) {
+                      return _errorContainer(148);
+                    },
+                    loading: () {
+                      return _loadingContainer(148);
+                    },
                   ),
                 ),
               ],
@@ -534,28 +619,44 @@ class TweetMediaGrid extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Expanded(
-                  child: CachedNetworkImage(
-                    imageUrl: photos[1] + "",
-                    fit: BoxFit.cover,
-                    errorWidget: (context, url, error) => Container(
-                      color: Colors.grey,
-                      height: 148,
-                      child: Center(child: Text("can't load image")),
-                      margin: EdgeInsets.only(left: 3),
-                    ),
+                  child: mediaUrl1.when(
+                    data: (url) {
+                      return CachedNetworkImage(
+                        imageUrl: url,
+                        fit: BoxFit.cover,
+                        errorWidget: (context, url, error) =>
+                            _errorContainer(148),
+                        progressIndicatorBuilder: (context, url, progress) =>
+                            _loadingContainer(148, value: progress.progress),
+                      );
+                    },
+                    error: (err, _) {
+                      return _errorContainer(148);
+                    },
+                    loading: () {
+                      return _loadingContainer(148);
+                    },
                   ),
                 ),
                 const SizedBox(height: 4),
                 Expanded(
-                  child: CachedNetworkImage(
-                    imageUrl: photos[2] + "",
-                    fit: BoxFit.cover,
-                    errorWidget: (context, url, error) => Container(
-                      color: Colors.grey,
-                      height: 148,
-                      child: Center(child: Text("can't load image")),
-                      margin: EdgeInsets.only(left: 3),
-                    ),
+                  child: mediaUrl2.when(
+                    data: (url) {
+                      return CachedNetworkImage(
+                        imageUrl: url,
+                        fit: BoxFit.cover,
+                        errorWidget: (context, url, error) =>
+                            _errorContainer(148),
+                        progressIndicatorBuilder: (context, url, progress) =>
+                            _loadingContainer(148, value: progress.progress),
+                      );
+                    },
+                    error: (err, _) {
+                      return _errorContainer(148);
+                    },
+                    loading: () {
+                      return _loadingContainer(148);
+                    },
                   ),
                 ),
               ],

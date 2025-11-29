@@ -23,7 +23,8 @@ final profileDataProvider =
       username,
     ) {
       final repo = ref.watch(profileRepoProvider);
-      return repo.getProfileData(username);
+      final currUsername = ref.watch(myUserNameProvider);
+      return repo.getProfileData(username, currUsername);
     });
 
 final updateProfileBannerProvider = Provider((ref) {
@@ -289,11 +290,6 @@ final changePasswordProfileProvider = Provider((ref) {
   };
 });
 
-final myUserNameProvider = Provider<String>((ref) {
-  final Myusername = ref.watch(currentUserProvider.select((e) => e!.username));
-  return Myusername;
-});
-
 // final myUserNameProvider = Provider<String>((ref) {
 //   // final user = ref.watch(currentUserProvider.select((e) => e!.username));
 //   return "hazememam";
@@ -305,4 +301,11 @@ final mediaUrlsProvider = FutureProvider.family<List<String>, List<String>>((
 ) async {
   // Replace this with your actual function that fetches media URLs
   return await getMediaUrls(mediaIds);
+});
+
+final myUserNameProvider = Provider<String>((ref) {
+  final Myusername = ref.watch(
+    currentUserProvider.select((e) => e?.username ?? ""),
+  );
+  return Myusername;
 });

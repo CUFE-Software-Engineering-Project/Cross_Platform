@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:dartz/dartz.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -6,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
 import 'package:lite_x/features/profile/models/shared.dart';
 import 'package:lite_x/features/profile/view/screens/edit_profile_screen.dart';
-import 'package:lite_x/features/profile/repositories/profile_repo.dart';
 import 'package:lite_x/features/profile/view_model/providers.dart';
 import 'package:mockito/mockito.dart';
 

@@ -9,7 +9,6 @@ import 'package:lite_x/features/profile/models/user_model.dart';
 import 'package:lite_x/features/profile/view/screens/edit_profile_screen.dart';
 import 'package:lite_x/features/profile/view/screens/profile_search_screen.dart';
 import 'package:lite_x/features/profile/view/screens/following_followers_screen.dart';
-import 'package:lite_x/features/profile/repositories/profile_repo.dart';
 import 'package:lite_x/features/profile/view_model/providers.dart';
 import 'package:mockito/mockito.dart';
 
@@ -48,6 +47,7 @@ void main() {
   );
 
   final testSearchUser = SearchUserModel(
+    profileMediaId: "123",
     id: '123',
     username: 'testuser',
     name: 'Test User',
@@ -72,8 +72,9 @@ void main() {
 
   group('Profile Navigation Flow Tests', () {
     testWidgets('search screen to profile screen navigation', (tester) async {
-      when(mockRepo.profileCurrentSearch('testuser'))
-          .thenAnswer((_) async => Right([testSearchUser]));
+      when(
+        mockRepo.profileCurrentSearch('testuser'),
+      ).thenAnswer((_) async => Right([testSearchUser]));
 
       final router = GoRouter(
         routes: [
@@ -96,12 +97,8 @@ void main() {
 
       await tester.pumpWidget(
         ProviderScope(
-          overrides: [
-            profileRepoProvider.overrideWithValue(mockRepo),
-          ],
-          child: MaterialApp.router(
-            routerConfig: router,
-          ),
+          overrides: [profileRepoProvider.overrideWithValue(mockRepo)],
+          child: MaterialApp.router(routerConfig: router),
         ),
       );
 
@@ -144,21 +141,16 @@ void main() {
           ),
           GoRoute(
             path: '/edit-profile',
-            builder: (context, state) => EditProfileScreen(
-              profileData: testProfile,
-            ),
+            builder: (context, state) =>
+                EditProfileScreen(profileData: testProfile),
           ),
         ],
       );
 
       await tester.pumpWidget(
         ProviderScope(
-          overrides: [
-            profileRepoProvider.overrideWithValue(mockRepo),
-          ],
-          child: MaterialApp.router(
-            routerConfig: router,
-          ),
+          overrides: [profileRepoProvider.overrideWithValue(mockRepo)],
+          child: MaterialApp.router(routerConfig: router),
         ),
       );
 
@@ -175,15 +167,19 @@ void main() {
     });
 
     testWidgets('profile to followers/following navigation', (tester) async {
-      when(mockRepo.getFollowers('testuser'))
-          .thenAnswer((_) async => Right([testUserModel]));
-      when(mockRepo.getFollowings('testuser'))
-          .thenAnswer((_) async => Right([testUserModel]));
+      when(
+        mockRepo.getFollowers('testuser'),
+      ).thenAnswer((_) async => Right([testUserModel]));
+      when(
+        mockRepo.getFollowings('testuser'),
+      ).thenAnswer((_) async => Right([testUserModel]));
       // Mock additional tab providers to prevent errors
-      when(mockRepo.getVerifiedFollowers('testuser'))
-          .thenAnswer((_) async => Right([testUserModel]));
-      when(mockRepo.getFollowersYouKnow('testuser'))
-          .thenAnswer((_) async => Right([testUserModel]));
+      when(
+        mockRepo.getVerifiedFollowers('testuser'),
+      ).thenAnswer((_) async => Right([testUserModel]));
+      when(
+        mockRepo.getFollowersYouKnow('testuser'),
+      ).thenAnswer((_) async => Right([testUserModel]));
 
       final router = GoRouter(
         routes: [
@@ -232,12 +228,8 @@ void main() {
 
       await tester.pumpWidget(
         ProviderScope(
-          overrides: [
-            profileRepoProvider.overrideWithValue(mockRepo),
-          ],
-          child: MaterialApp.router(
-            routerConfig: router,
-          ),
+          overrides: [profileRepoProvider.overrideWithValue(mockRepo)],
+          child: MaterialApp.router(routerConfig: router),
         ),
       );
 
@@ -252,7 +244,7 @@ void main() {
       // Navigate to following (don't test back navigation in this complex widget)
       router.go('/');
       await tester.pumpAndSettle();
-      
+
       await tester.tap(find.text('View Following'));
       await tester.pumpAndSettle();
 
@@ -261,7 +253,9 @@ void main() {
   });
 
   group('Back Navigation Tests', () {
-    testWidgets('back button from edit profile returns to profile', (tester) async {
+    testWidgets('back button from edit profile returns to profile', (
+      tester,
+    ) async {
       bool returnedToProfile = false;
 
       final router = GoRouter(
@@ -283,21 +277,16 @@ void main() {
           ),
           GoRoute(
             path: '/edit-profile',
-            builder: (context, state) => EditProfileScreen(
-              profileData: testProfile,
-            ),
+            builder: (context, state) =>
+                EditProfileScreen(profileData: testProfile),
           ),
         ],
       );
 
       await tester.pumpWidget(
         ProviderScope(
-          overrides: [
-            profileRepoProvider.overrideWithValue(mockRepo),
-          ],
-          child: MaterialApp.router(
-            routerConfig: router,
-          ),
+          overrides: [profileRepoProvider.overrideWithValue(mockRepo)],
+          child: MaterialApp.router(routerConfig: router),
         ),
       );
 
@@ -317,8 +306,9 @@ void main() {
     });
 
     testWidgets('back button from search screen', (tester) async {
-      when(mockRepo.profileCurrentSearch(''))
-          .thenAnswer((_) async => Right([]));
+      when(
+        mockRepo.profileCurrentSearch(''),
+      ).thenAnswer((_) async => Right([]));
 
       bool canPopCalled = false;
 
@@ -348,12 +338,8 @@ void main() {
 
       await tester.pumpWidget(
         ProviderScope(
-          overrides: [
-            profileRepoProvider.overrideWithValue(mockRepo),
-          ],
-          child: MaterialApp.router(
-            routerConfig: router,
-          ),
+          overrides: [profileRepoProvider.overrideWithValue(mockRepo)],
+          child: MaterialApp.router(routerConfig: router),
         ),
       );
 
@@ -376,17 +362,17 @@ void main() {
 
   group('Deep Linking Navigation Tests', () {
     testWidgets('navigate directly to profile with username', (tester) async {
-      when(mockRepo.getProfileData('testuser'))
-          .thenAnswer((_) async => Right(testProfile));
+      when(
+        mockRepo.getProfileData('testuser'),
+      ).thenAnswer((_) async => Right(testProfile));
 
       final router = GoRouter(
         initialLocation: '/profile/testuser',
         routes: [
           GoRoute(
             path: '/',
-            builder: (context, state) => Scaffold(
-              appBar: AppBar(title: Text('Home')),
-            ),
+            builder: (context, state) =>
+                Scaffold(appBar: AppBar(title: Text('Home'))),
           ),
           GoRoute(
             path: '/profile/:username',
@@ -403,12 +389,8 @@ void main() {
 
       await tester.pumpWidget(
         ProviderScope(
-          overrides: [
-            profileRepoProvider.overrideWithValue(mockRepo),
-          ],
-          child: MaterialApp.router(
-            routerConfig: router,
-          ),
+          overrides: [profileRepoProvider.overrideWithValue(mockRepo)],
+          child: MaterialApp.router(routerConfig: router),
         ),
       );
 
@@ -420,24 +402,27 @@ void main() {
     });
 
     testWidgets('navigate to followers with initial tab index', (tester) async {
-      when(mockRepo.getFollowers('testuser'))
-          .thenAnswer((_) async => Right([testUserModel]));
-      when(mockRepo.getFollowings('testuser'))
-          .thenAnswer((_) async => Right([testUserModel]));
+      when(
+        mockRepo.getFollowers('testuser'),
+      ).thenAnswer((_) async => Right([testUserModel]));
+      when(
+        mockRepo.getFollowings('testuser'),
+      ).thenAnswer((_) async => Right([testUserModel]));
       // Mock additional tab providers to prevent errors
-      when(mockRepo.getVerifiedFollowers('testuser'))
-          .thenAnswer((_) async => Right([testUserModel]));
-      when(mockRepo.getFollowersYouKnow('testuser'))
-          .thenAnswer((_) async => Right([testUserModel]));
+      when(
+        mockRepo.getVerifiedFollowers('testuser'),
+      ).thenAnswer((_) async => Right([testUserModel]));
+      when(
+        mockRepo.getFollowersYouKnow('testuser'),
+      ).thenAnswer((_) async => Right([testUserModel]));
 
       final router = GoRouter(
         initialLocation: '/followers?tab=1',
         routes: [
           GoRoute(
             path: '/',
-            builder: (context, state) => Scaffold(
-              appBar: AppBar(title: Text('Home')),
-            ),
+            builder: (context, state) =>
+                Scaffold(appBar: AppBar(title: Text('Home'))),
           ),
           GoRoute(
             path: '/followers',
@@ -456,16 +441,13 @@ void main() {
 
       await tester.pumpWidget(
         ProviderScope(
-          overrides: [
-            profileRepoProvider.overrideWithValue(mockRepo),
-          ],
-          child: MaterialApp.router(
-            routerConfig: router,
-          ),
+          overrides: [profileRepoProvider.overrideWithValue(mockRepo)],
+          child: MaterialApp.router(routerConfig: router),
         ),
       );
 
-      await tester.pump();  // Just one pump, not pumpAndSettle to avoid tab loading issues
+      await tester
+          .pump(); // Just one pump, not pumpAndSettle to avoid tab loading issues
 
       // Verify correct screen is loaded
       expect(find.byType(FollowingFollowersScreen), findsOneWidget);
@@ -473,7 +455,9 @@ void main() {
   });
 
   group('Navigation State Preservation Tests', () {
-    testWidgets('edit profile preserves form state on interruption', (tester) async {
+    testWidgets('edit profile preserves form state on interruption', (
+      tester,
+    ) async {
       final router = GoRouter(
         routes: [
           GoRoute(
@@ -492,21 +476,16 @@ void main() {
           ),
           GoRoute(
             path: '/edit-profile',
-            builder: (context, state) => EditProfileScreen(
-              profileData: testProfile,
-            ),
+            builder: (context, state) =>
+                EditProfileScreen(profileData: testProfile),
           ),
         ],
       );
 
       await tester.pumpWidget(
         ProviderScope(
-          overrides: [
-            profileRepoProvider.overrideWithValue(mockRepo),
-          ],
-          child: MaterialApp.router(
-            routerConfig: router,
-          ),
+          overrides: [profileRepoProvider.overrideWithValue(mockRepo)],
+          child: MaterialApp.router(routerConfig: router),
         ),
       );
 
@@ -518,7 +497,7 @@ void main() {
 
       // Find the TextFormField with label 'Name'
       final nameField = find.widgetWithText(TextFormField, 'Test User').first;
-      
+
       await tester.enterText(nameField, 'Modified Name');
       await tester.pumpAndSettle();
 

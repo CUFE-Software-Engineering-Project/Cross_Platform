@@ -1,4 +1,6 @@
 import 'package:dio/dio.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lite_x/core/providers/current_user_provider.dart';
 import 'package:lite_x/features/media/download_media.dart';
 import 'package:lite_x/features/profile/models/create_reply_model.dart';
 import 'package:lite_x/features/profile/models/create_tweet_model.dart';
@@ -10,47 +12,70 @@ import 'package:dartz/dartz.dart';
 import 'package:lite_x/features/profile/models/tweet_reply_model.dart';
 import 'package:lite_x/features/profile/models/user_model.dart';
 import 'package:lite_x/features/profile/repositories/profile_repo.dart';
-
-// String baseUrl =
-//     "https://app-fd6adf10-3923-46c1-83f7-08c318e4c982.cleverapps.io";
+import 'package:lite_x/features/profile/repositories/profile_storage_service.dart';
+import 'package:lite_x/features/profile/view_model/providers.dart';
 
 class ProfileRepoImpl implements ProfileRepo {
   Dio _dio;
-  ProfileRepoImpl(Dio d) : _dio = d {
-    
-  }
+  ProfileRepoImpl(Dio d) : _dio = d {}
 
   @override
-  Future<Either<Failure, ProfileModel>> getProfileData(String userName) async {
+  Future<Either<Failure, ProfileModel>> getProfileData(
+    String userName,
+    String currentUsername,
+  ) async {
     final Response res;
+    final ProfileStorageService storageService = ProfileStorageService();
+    await storageService.init();
     try {
       res = await _dio.get("api/users/$userName");
       final Map<String, dynamic> json = res.data;
-      final String profilePhotoId = json["profileMediaId"] ?? "";
-      final String profileBannerId = json["coverMediaId"] ?? "";
-
-      List<String> urls = await getMediaUrls([profilePhotoId, profileBannerId]);
-
-      print(urls[0]);
-      print(urls[1]);
-      final String profilePhotoUrl = urls[0];
-      final String profileBannerUrl = urls[1];
-
-      json["profileMedia"] = profilePhotoUrl;
-      json["coverMedia"] = profileBannerUrl;
-      json["avatarId"] = profilePhotoId;
 
       final profileData = ProfileModel.fromJson(json);
+
+      if (userName == currentUsername)
+        storageService.storeProfileData(profileData).then((onValue) {
+          storageService.close();
+        });
+      else {
+        storageService.close();
+      }
+
       return Right(profileData);
     } on DioException catch (e) {
-      if (e.type == DioExceptionType.connectionTimeout ||
-          e.type == DioExceptionType.receiveTimeout ||
-          e.type == DioExceptionType.sendTimeout) {
-        return Left(Failure('connection timeout, please try agin...'));
-      }
-      return Left(Failure('Failed to load profile data, try agian later...'));
-    } catch (e) {
       print(e.toString());
+      if (userName == currentUsername) {
+        final localData = await storageService.getProfileData(currentUsername);
+        storageService.close();
+        if (localData == null) {
+          return Left(
+            Failure('Failed to load profile data, try agian later...'),
+          );
+        } else {
+          return Right(localData);
+        }
+      } else {
+        storageService.close();
+        if (e.type == DioExceptionType.connectionTimeout ||
+            e.type == DioExceptionType.receiveTimeout ||
+            e.type == DioExceptionType.sendTimeout) {
+          return Left(Failure('connection timeout, please try agin...'));
+        }
+        return Left(Failure('Failed to load profile data, try agian later...'));
+      }
+    } catch (e) {
+      if (userName == currentUsername) {
+        final localData = await storageService.getProfileData(currentUsername);
+        storageService.close();
+        if (localData == null)
+          return Left(
+            Failure('Failed to load profile data, try agian later...'),
+          );
+        else {
+          return Right(localData);
+        }
+      }
+      storageService.close();
       return Left(Failure('Failed to load profile data'));
     }
   }

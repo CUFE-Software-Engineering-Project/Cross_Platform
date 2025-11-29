@@ -422,6 +422,32 @@ class MockProfileRepo extends _i1.Mock implements _i3.ProfileRepo {
 
   @override
   _i4.Future<_i2.Either<_i5.Failure, List<_i8.ProfileTweetModel>>>
+  getMediaPosts(String? username) =>
+      (super.noSuchMethod(
+            Invocation.method(#getMediaPosts, [username]),
+            returnValue:
+                _i4.Future<
+                  _i2.Either<_i5.Failure, List<_i8.ProfileTweetModel>>
+                >.value(
+                  _FakeEither_0<_i5.Failure, List<_i8.ProfileTweetModel>>(
+                    this,
+                    Invocation.method(#getMediaPosts, [username]),
+                  ),
+                ),
+            returnValueForMissingStub:
+                _i4.Future<
+                  _i2.Either<_i5.Failure, List<_i8.ProfileTweetModel>>
+                >.value(
+                  _FakeEither_0<_i5.Failure, List<_i8.ProfileTweetModel>>(
+                    this,
+                    Invocation.method(#getMediaPosts, [username]),
+                  ),
+                ),
+          )
+          as _i4.Future<_i2.Either<_i5.Failure, List<_i8.ProfileTweetModel>>>);
+
+  @override
+  _i4.Future<_i2.Either<_i5.Failure, List<_i8.ProfileTweetModel>>>
   getProfileLikes(String? username) =>
       (super.noSuchMethod(
             Invocation.method(#getProfileLikes, [username]),
@@ -445,6 +471,33 @@ class MockProfileRepo extends _i1.Mock implements _i3.ProfileRepo {
                 ),
           )
           as _i4.Future<_i2.Either<_i5.Failure, List<_i8.ProfileTweetModel>>>);
+
+  @override
+  _i4.Future<_i2.Either<_i5.Failure, _i8.ProfileTweetModel>> getProfileTweet(
+    String? tweetId,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#getProfileTweet, [tweetId]),
+            returnValue:
+                _i4.Future<
+                  _i2.Either<_i5.Failure, _i8.ProfileTweetModel>
+                >.value(
+                  _FakeEither_0<_i5.Failure, _i8.ProfileTweetModel>(
+                    this,
+                    Invocation.method(#getProfileTweet, [tweetId]),
+                  ),
+                ),
+            returnValueForMissingStub:
+                _i4.Future<
+                  _i2.Either<_i5.Failure, _i8.ProfileTweetModel>
+                >.value(
+                  _FakeEither_0<_i5.Failure, _i8.ProfileTweetModel>(
+                    this,
+                    Invocation.method(#getProfileTweet, [tweetId]),
+                  ),
+                ),
+          )
+          as _i4.Future<_i2.Either<_i5.Failure, _i8.ProfileTweetModel>>);
 
   @override
   _i4.Future<_i2.Either<_i5.Failure, void>> createTweet(
@@ -641,6 +694,50 @@ class MockProfileRepo extends _i1.Mock implements _i3.ProfileRepo {
                       tweetId,
                       createreplyModel,
                     ]),
+                  ),
+                ),
+          )
+          as _i4.Future<_i2.Either<_i5.Failure, void>>);
+
+  @override
+  _i4.Future<_i2.Either<_i5.Failure, void>> retweetProfileTweet(
+    String? tweetId,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#retweetProfileTweet, [tweetId]),
+            returnValue: _i4.Future<_i2.Either<_i5.Failure, void>>.value(
+              _FakeEither_0<_i5.Failure, void>(
+                this,
+                Invocation.method(#retweetProfileTweet, [tweetId]),
+              ),
+            ),
+            returnValueForMissingStub:
+                _i4.Future<_i2.Either<_i5.Failure, void>>.value(
+                  _FakeEither_0<_i5.Failure, void>(
+                    this,
+                    Invocation.method(#retweetProfileTweet, [tweetId]),
+                  ),
+                ),
+          )
+          as _i4.Future<_i2.Either<_i5.Failure, void>>);
+
+  @override
+  _i4.Future<_i2.Either<_i5.Failure, void>> deleteRetweetProfileTweet(
+    String? tweetId,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#deleteRetweetProfileTweet, [tweetId]),
+            returnValue: _i4.Future<_i2.Either<_i5.Failure, void>>.value(
+              _FakeEither_0<_i5.Failure, void>(
+                this,
+                Invocation.method(#deleteRetweetProfileTweet, [tweetId]),
+              ),
+            ),
+            returnValueForMissingStub:
+                _i4.Future<_i2.Either<_i5.Failure, void>>.value(
+                  _FakeEither_0<_i5.Failure, void>(
+                    this,
+                    Invocation.method(#deleteRetweetProfileTweet, [tweetId]),
                   ),
                 ),
           )

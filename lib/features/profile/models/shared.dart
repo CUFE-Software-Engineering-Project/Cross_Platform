@@ -1,3 +1,5 @@
+import 'dart:ffi';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -5,6 +7,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lite_x/core/providers/current_user_provider.dart';
 import 'package:lite_x/features/media/download_media.dart';
+import 'package:lite_x/features/media/view_model/providers.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
 import 'package:lite_x/features/profile/models/profile_tweet_model.dart';
 import 'package:lite_x/features/profile/view/widgets/profile_tweets/profile_normal_tweet_widget.dart';
@@ -227,7 +230,6 @@ void showSmallPopUpMessage({
   required Color borderColor,
   required Icon icon,
 }) {
-  
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
       content: Center(
@@ -308,9 +310,15 @@ String getTimeAgo(String backendTime) {
 enum ProfileTabType { Posts, Media, Likes, Replies, Highlights, Articles }
 
 class BuildSmallProfileImage extends ConsumerStatefulWidget {
-  BuildSmallProfileImage({super.key, this.mediaId, this.userId});
+  BuildSmallProfileImage({
+    required this.radius,
+    super.key,
+    this.mediaId,
+    this.userId,
+  });
   String? mediaId;
   String? userId;
+  double radius;
 
   @override
   ConsumerState<ConsumerStatefulWidget> createState() =>
@@ -319,76 +327,71 @@ class BuildSmallProfileImage extends ConsumerStatefulWidget {
 
 class _BuildSmallProfileImageState
     extends ConsumerState<BuildSmallProfileImage> {
-  String _media = "";
-  void _getMedia() async {
-    if (mounted) {
-      // TODO: implement initState
-      if (widget.mediaId == null && widget.userId == null) {
-        _media = unkownUserAvatar;
-        if (mounted)
-          setState(() {
-            _loading = false;
-          });
-        return;
-      } else if (widget.mediaId == null) {
-        final currentUser = ref.watch(currentUserProvider);
-        final profileData = ref.watch(
-          profileDataProvider(currentUser?.username ?? ""),
-        );
-        profileData.whenData((data) {
-          data.fold(
-            (l) {
-              if (mounted)
-                setState(() {
-                  _loading = false;
-                  _media = unkownUserAvatar;
-                });
-            },
-            (r) {
-              _media = r.avatarUrl;
-              if (mounted)
-                setState(() {
-                  _loading = false;
-                });
-            },
-          );
-        });
-        return;
-      } else if (widget.mediaId!.isEmpty) {}
-      getMediaUrls([widget.mediaId!]).then((res) {
-        _media = res[0];
-        if (_media.isEmpty) _media = unkownUserAvatar;
-        if (mounted)
-          setState(() {
-            _loading = false;
-          });
-      });
-    } else
-      return;
-  }
-
-  bool _loading = true;
-
   @override
   Widget build(BuildContext context) {
-    if (_loading == true) {
-      _getMedia();
+    if (widget.mediaId != null) {
+      final mediaUrl = ref.watch(mediaUrlProvider(widget.mediaId!));
       return CircleAvatar(
         backgroundColor: Colors.grey,
-        radius: 20,
-        child: Padding(
-          padding: const EdgeInsets.all(10.0),
-          child: CircularProgressIndicator(color: Colors.white),
+        radius: widget.radius,
+        backgroundImage: mediaUrl.when(
+          data: (res) {
+            return CachedNetworkImageProvider(
+              res.isNotEmpty ? res : unkownUserAvatar,
+            );
+          },
+          error: (err, _) {
+            return CachedNetworkImageProvider(unkownUserAvatar);
+          },
+          loading: () {
+            return CachedNetworkImageProvider(unkownUserAvatar);
+          },
         ),
       );
+    } else if (widget.userId != null) {
+      final profileData = ref.watch(profileDataProvider(widget.userId!));
+      return CircleAvatar(
+        backgroundColor: Colors.grey,
+        radius: widget.radius,
+        onBackgroundImageError: (exception, stackTrace) => null,
+        backgroundImage: profileData.when(
+          data: (res) {
+            return res.fold(
+              (l) {
+                return CachedNetworkImageProvider(unkownUserAvatar);
+              },
+              (data) {
+                final mediaUrl = ref.watch(mediaUrlProvider(data.avatarId));
+                return mediaUrl.when(
+                  data: (d) {
+                    return CachedNetworkImageProvider(
+                      d.isNotEmpty ? d : unkownUserAvatar,
+                    );
+                  },
+                  error: (err, _) {
+                    return CachedNetworkImageProvider(unkownUserAvatar);
+                  },
+                  loading: () {
+                    return CachedNetworkImageProvider(unkownUserAvatar);
+                  },
+                );
+              },
+            );
+          },
+          error: (err, _) {
+            return CachedNetworkImageProvider(unkownUserAvatar);
+          },
+          loading: () {
+            return CachedNetworkImageProvider(unkownUserAvatar);
+          },
+        ),
+      );
+    } else {
+      return CachedNetworkImage(
+        imageUrl: unkownUserAvatar,
+        errorWidget: (context, url, error) => SizedBox(),
+      );
     }
-
-    return CircleAvatar(
-      backgroundImage: CachedNetworkImageProvider(_media),
-      backgroundColor: Colors.grey,
-      radius: 20,
-      onBackgroundImageError: (exception, stackTrace) => null,
-    );
   }
 }
 
@@ -810,4 +813,85 @@ Future<RetweetOption?> showRetweetBottomSheet(
       );
     },
   );
+}
+
+class BuildProfileBanner extends ConsumerStatefulWidget {
+  const BuildProfileBanner({super.key, required this.bannerId});
+  final String bannerId;
+
+  @override
+  ConsumerState<ConsumerStatefulWidget> createState() =>
+      _BuildProfileBannerState();
+}
+
+class _BuildProfileBannerState extends ConsumerState<BuildProfileBanner> {
+  @override
+  @override
+  Widget build(BuildContext context) {
+    final mediaUrl = ref.watch(mediaUrlProvider(widget.bannerId));
+    return Container(
+      height: 165,
+      decoration: BoxDecoration(
+        color: Colors.blue,
+        image: widget.bannerId.isEmpty
+            ? null
+            : DecorationImage(
+                image: CachedNetworkImageProvider(
+                  mediaUrl.when(
+                    data: (res) {
+                      return res.isNotEmpty ? res : "";
+                    },
+                    error: (err, _) {
+                      return "";
+                    },
+                    loading: () {
+                      return "";
+                    },
+                  ),
+                ),
+                fit: BoxFit.cover,
+                onError: (exception, stackTrace) => null,
+              ),
+      ),
+    );
+  }
+}
+
+class BuildProfileImage extends ConsumerStatefulWidget {
+  const BuildProfileImage({super.key, required this.avatarId});
+  final String avatarId;
+
+  @override
+  ConsumerState<ConsumerStatefulWidget> createState() =>
+      _BuildProfileImageState();
+}
+
+class _BuildProfileImageState extends ConsumerState<BuildProfileImage> {
+  @override
+  @override
+  Widget build(BuildContext context) {
+    final mediaUrl = ref.watch(mediaUrlProvider(widget.avatarId));
+    return CircleAvatar(
+      radius: 45,
+      backgroundColor: Colors.black,
+      child: CircleAvatar(
+        radius: 40,
+        backgroundColor: Colors.black,
+        backgroundImage: CachedNetworkImageProvider(
+          mediaUrl.when(
+            data: (res) {
+              return res.isNotEmpty ? res : unkownUserAvatar;
+            },
+            error: (err, _) {
+              return unkownUserAvatar;
+            },
+            loading: () {
+              return unkownUserAvatar;
+            },
+          ),
+        ),
+        onBackgroundImageError: (exception, stackTrace) => null,
+      ),
+    );
+  }
 }
