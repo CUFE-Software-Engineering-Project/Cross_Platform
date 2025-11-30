@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lite_x/core/providers/current_user_provider.dart';
 import 'package:lite_x/core/theme/Palette.dart';
 import 'package:lite_x/features/chat/models/messagemodel.dart';
+import 'package:lite_x/features/chat/providers/activeChatIdProvider.dart';
 
 import 'package:lite_x/features/chat/view/widgets/chat/MessageAppBar.dart';
 import 'package:lite_x/features/chat/view/widgets/chat/MessageBubble.dart';
@@ -57,6 +58,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       _setupChatSubscription();
 
       ref.read(chatViewModelProvider.notifier).loadChat(widget.chatId);
+      ref.read(activeChatProvider.notifier).state = widget.chatId;
       ref
           .read(conversationsViewModelProvider.notifier)
           .markChatAsRead(widget.chatId);
@@ -93,6 +95,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
   @override
   void dispose() {
+    ref.read(activeChatProvider.notifier).state = null;
+
     _isExiting = true;
 
     _chatSub?.close();

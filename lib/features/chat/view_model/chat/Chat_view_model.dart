@@ -4,6 +4,7 @@ import 'package:lite_x/features/chat/models/messagemodel.dart';
 import 'package:lite_x/features/chat/repositories/chat_local_repository.dart';
 import 'package:lite_x/features/chat/repositories/chat_remote_repository.dart';
 import 'package:lite_x/features/chat/repositories/socket_repository.dart';
+import 'package:lite_x/features/chat/view_model/conversions/Conversations_view_model.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 part 'Chat_view_model.g.dart';
 
@@ -261,7 +262,13 @@ class ChatViewModel extends _$ChatViewModel {
       final updated = [...state.messages, localMessage];
       state = state.copyWith(messages: updated);
     }
-
+    ref
+        .read(conversationsViewModelProvider.notifier)
+        .updateConversationAfterSending(
+          chatId: localMessage.chatId,
+          content: localMessage.content ?? '',
+          messageType: localMessage.messageType,
+        );
     _socketRepository.sendMessage(localMessage.toApiRequest());
   }
 

@@ -407,7 +407,7 @@ class _ReplyComposerScreenState extends ConsumerState<ReplyComposerScreen> {
           radius: 20,
           backgroundColor: Colors.grey[800],
           backgroundImage: userPhotoUrl != null
-              ? NetworkImage(userPhotoUrl!)
+              ? NetworkImage(userPhotoUrl)
               : null,
           child: userPhotoUrl == null
               ? Icon(Icons.person, color: Colors.grey[600], size: 24)

@@ -19,7 +19,6 @@ void main() async {
 
 Future<void> init() async {
   WidgetsFlutterBinding.ensureInitialized();
-
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
@@ -29,20 +28,16 @@ Future<void> init() async {
       rethrow;
     }
   }
-
   DeepLinkService.init();
-
   await Hive.initFlutter();
   Hive.registerAdapter(UserModelAdapter());
   Hive.registerAdapter(ConversationModelAdapter());
   Hive.registerAdapter(MessageModelAdapter());
-
   await Hive.openBox<UserModel>('userBox');
   await Hive.openBox('tokenBox');
   await Hive.openBox<ConversationModel>('conversationsBox');
   await Hive.openBox<MessageModel>('messagesBox');
   await dotenv.load(fileName: ".env");
-
   await Hive.openBox<SearchHistoryHiveModel>('search_history');
 }
 

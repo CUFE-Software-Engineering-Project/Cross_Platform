@@ -87,9 +87,9 @@ class _MessageInputBarState extends ConsumerState<MessageInputBar>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 8),
       decoration: BoxDecoration(
-        color: Colors.black,
+        color: Palette.container_message_color,
         borderRadius: BorderRadius.circular(26),
       ),
       child: _buildIdleView(theme),
@@ -117,7 +117,7 @@ class _MessageInputBarState extends ConsumerState<MessageInputBar>
               enabledBorder: InputBorder.none,
               disabledBorder: InputBorder.none,
 
-              contentPadding: EdgeInsets.symmetric(horizontal: 2, vertical: 8),
+              contentPadding: EdgeInsets.symmetric(horizontal: 2, vertical: 4),
             ),
             style: const TextStyle(color: Color(0xFFFFFFFF), fontSize: 16),
           ),
@@ -127,14 +127,10 @@ class _MessageInputBarState extends ConsumerState<MessageInputBar>
           builder: (context, value, child) {
             final hastext = value.text.trim().isNotEmpty;
             return IconButton(
-              icon: Icon(
-                hastext ? Icons.send : Icons.graphic_eq,
-                color: hastext ? Palette.kBrandBlue : Palette.kBrandPurple,
-                size: 24,
-              ),
+              icon: Icon(Icons.send, color: Palette.kBrandBlue, size: 24),
               onPressed: hastext ? _handleSend : null,
               tooltip: hastext ? 'Send message' : null,
-              constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+              constraints: const BoxConstraints(minWidth: 35, minHeight: 35),
             );
           },
         ),
