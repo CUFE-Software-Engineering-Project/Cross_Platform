@@ -50,6 +50,7 @@ class MessageModel extends HiveObject {
 
   Map<String, dynamic> toApiRequest({List<String>? recipientIds}) {
     return {
+      "createdAt": createdAt.toIso8601String(),
       "chatId": chatId,
       "data": {"content": content},
       if (recipientIds != null) "recipientId": recipientIds,
@@ -83,7 +84,6 @@ class MessageModel extends HiveObject {
     String? senderName,
     String? senderProfileMediaKey,
     String? messageType,
-    String? localId,
   }) {
     return MessageModel(
       id: id ?? this.id,

@@ -32,7 +32,7 @@ class AppShell extends ConsumerWidget {
           ExploreProfileScreen(),
           _buildCommunitiesScreen(), // Index 2 - Communities
           _buildNotificationsScreen(), // Index 3 - Notifications
-          ConversationsScreen(), // Index 4 - Messages
+          ConversationsScreen(),
         ],
       ),
       bottomNavigationBar: AnimatedContainer(
@@ -46,16 +46,6 @@ class AppShell extends ConsumerWidget {
           opacity: isBottomNavVisible ? 1.0 : 0.0,
           child: OverflowBox(maxHeight: 60, child: const XBottomNavigation()),
         ),
-      ),
-    );
-  }
-
-  // Placeholder screens - you'll create these later
-  Widget _buildSearchScreen() {
-    return const Center(
-      child: Text(
-        'Search Screen',
-        style: TextStyle(color: Colors.white, fontSize: 24),
       ),
     );
   }

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -19,6 +20,7 @@ class SearchUserGroup extends ConsumerStatefulWidget {
 class _SearchUserGroupState extends ConsumerState<SearchUserGroup> {
   late final TextEditingController _searchController;
   Timer? _debounce;
+  CancelToken? _cancelToken;
 
   String _searchQuery = '';
   bool _isGrouping = false;
@@ -35,18 +37,23 @@ class _SearchUserGroupState extends ConsumerState<SearchUserGroup> {
   @override
   void dispose() {
     _debounce?.cancel();
+    _cancelToken?.cancel();
     _searchController.dispose();
     super.dispose();
   }
 
   void _onSearchChanged() {
-    final query = _searchController.text;
-
-    if (query == _searchQuery) return;
+    final rawQuery = _searchController.text;
+    final query = rawQuery.trim();
+    if (query == _searchQuery && rawQuery.isNotEmpty) return;
 
     _searchQuery = query;
     _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 300), () async {
+    if (_cancelToken != null && !_cancelToken!.isCancelled) {
+      _cancelToken!.cancel();
+    }
+
+    _debounce = Timer(const Duration(milliseconds: 600), () async {
       if (!mounted) return;
       if (query.isNotEmpty) {
         final users = await ref
@@ -89,33 +96,6 @@ class _SearchUserGroupState extends ConsumerState<SearchUserGroup> {
     }
   }
 
-  void _createGroup() async {
-    if (_selectedUsers.isEmpty) return;
-    final result = await ref
-        .read(conversationsViewModelProvider.notifier)
-        .createChat(
-          isDMChat: false,
-          recipientIds: _selectedUsers.map((u) => u.id).toList(),
-        );
-    result.fold(
-      (failure) => ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(failure.message))),
-      (chatModel) {
-        context.pushNamed(
-          RouteConstants.ChatScreen,
-          pathParameters: {'chatId': chatModel.id},
-          extra: {
-            'title': chatModel.groupName ?? "Group A",
-            'subtitle': "${_selectedUsers.length + 1} members",
-            'avatarUrl': chatModel.groupPhotoKey,
-            'isGroup': true,
-          },
-        );
-      },
-    );
-  }
-
   bool isValidHttpUrl(String? url) {
     if (url == null) return false;
     final uri = Uri.tryParse(url);
@@ -135,21 +115,7 @@ class _SearchUserGroupState extends ConsumerState<SearchUserGroup> {
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => context.pop(),
         ),
-        actions: _isGrouping && _selectedUsers.isNotEmpty
-            ? [
-                TextButton(
-                  onPressed: _createGroup,
-                  child: Text(
-                    "Create",
-                    style: TextStyle(
-                      color: Palette.textWhite,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ]
-            : null,
+        actions: null,
       ),
       body: Column(
         children: [
@@ -232,26 +198,7 @@ class _SearchUserGroupState extends ConsumerState<SearchUserGroup> {
             ),
           ),
           const Divider(color: Color(0xFF38444D), height: 0.2),
-          if (!_isGrouping)
-            ListTile(
-              leading: const Icon(
-                Icons.groups_outlined,
-                color: Palette.primary,
-              ),
-              title: Text(
-                'Create a group',
-                style: TextStyle(
-                  color: Palette.primary,
-                  fontSize: 17,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              onTap: () {
-                setState(() {
-                  _isGrouping = true;
-                });
-              },
-            ),
+
           Expanded(
             child: users.isEmpty
                 ? Center(

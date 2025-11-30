@@ -220,6 +220,10 @@ class AuthViewModel extends _$AuthViewModel {
       ]);
       ref.read(currentUserProvider.notifier).adduser(user);
       state = AuthState.authenticated('Login successful');
+      if (!Platform.environment.containsKey('FLUTTER_TEST')) {
+        _registerFcmToken();
+        _listenForFcmTokenRefresh();
+      }
     });
   }
 
@@ -491,6 +495,8 @@ class AuthViewModel extends _$AuthViewModel {
 
         ref.read(currentUserProvider.notifier).adduser(user);
         state = AuthState.authenticated('Social login successful');
+        _registerFcmToken();
+        _listenForFcmTokenRefresh();
       },
     );
   }

@@ -17,39 +17,6 @@ ChatRemoteRepository chatRemoteRepository(Ref ref) {
 class ChatRemoteRepository {
   final Dio _dio;
   ChatRemoteRepository({required Dio dio}) : _dio = dio;
-  //--------------------------------------------------search users to choose to chat with him or them according to group or not ----------------------------------------//
-  Future<Either<AppFailure, List<UserSearchModel>>> searchUsers(
-    String query,
-  ) async {
-    try {
-      final response = await _dio.get(
-        "api/users/search",
-        queryParameters: {"query": query},
-      );
-
-      final data = response.data as Map<String, dynamic>;
-
-      final List<dynamic> list = data["users"] ?? [];
-
-      final users = list
-          .map((e) => UserSearchModel.fromMap(e as Map<String, dynamic>))
-          .toList();
-
-      return Right(users);
-    } on DioException catch (e) {
-      print("DIO RESPONSE DATA: ${e.response?.data}");
-      final errorMessage =
-          e.response?.data["message"] ??
-          e.response?.data["error"] ??
-          "Failed to search users";
-
-      return Left(AppFailure(message: errorMessage));
-    } catch (e) {
-      print("GENERAL ERROR: ${e.toString()}");
-      return Left(AppFailure(message: e.toString()));
-    }
-  }
-
   //----------------------------------------------------------------create chat ---------------------------------------------------------------------//
   Future<Either<AppFailure, ConversationModel>> create_chat({
     required List<String> recipientIds,
@@ -137,42 +104,6 @@ class ChatRemoteRepository {
     }
   }
 
-  //---------------------------------------------------------------update group info -------------------------------------------------------------------------------------//
-  Future<Either<AppFailure, ConversationModel>> updateGroupInfo({
-    required String chatId,
-    required String currentUserId,
-    String? groupName,
-    String? groupDescription,
-    String? groupPhotoKey,
-  }) async {
-    try {
-      final response = await _dio.put(
-        "api/dm/chat/$chatId/group",
-        data: {
-          if (groupName != null) "name": groupName,
-          if (groupDescription != null) "description": groupDescription,
-          if (groupPhotoKey != null) "photo": groupPhotoKey,
-        },
-      );
-
-      final data = response.data as Map<String, dynamic>;
-      final updatedConversation = ConversationModel.fromApiResponse(
-        data,
-        currentUserId,
-      );
-
-      return Right(updatedConversation);
-    } on DioException catch (e) {
-      final errorMessage =
-          e.response?.data["message"] ??
-          e.response?.data["error"] ??
-          "Failed to update group info";
-      return Left(AppFailure(message: errorMessage));
-    } catch (e) {
-      return Left(AppFailure(message: e.toString()));
-    }
-  }
-
   //-----------------------------------------------------------get messages of the conversation-------------------------------------------------------------------------//
   Future<Either<AppFailure, List<MessageModel>>> getMessagesChat(
     String chatId, {
@@ -224,6 +155,39 @@ class ChatRemoteRepository {
           "Failed to get unseen count";
       return Left(AppFailure(message: errorMessage));
     } catch (e) {
+      return Left(AppFailure(message: e.toString()));
+    }
+  }
+
+  //--------------------------------------------------search users to choose to chat with him or them  ----------------------------------------//
+  Future<Either<AppFailure, List<UserSearchModel>>> searchUsers(
+    String query,
+  ) async {
+    try {
+      final response = await _dio.get(
+        "api/users/search",
+        queryParameters: {"query": query},
+      );
+
+      final data = response.data as Map<String, dynamic>;
+
+      final List<dynamic> list = data["users"] ?? [];
+
+      final users = list
+          .map((e) => UserSearchModel.fromMap(e as Map<String, dynamic>))
+          .toList();
+
+      return Right(users);
+    } on DioException catch (e) {
+      print("DIO RESPONSE DATA: ${e.response?.data}");
+      final errorMessage =
+          e.response?.data["message"] ??
+          e.response?.data["error"] ??
+          "Failed to search users";
+
+      return Left(AppFailure(message: errorMessage));
+    } catch (e) {
+      print("GENERAL ERROR: ${e.toString()}");
       return Left(AppFailure(message: e.toString()));
     }
   }

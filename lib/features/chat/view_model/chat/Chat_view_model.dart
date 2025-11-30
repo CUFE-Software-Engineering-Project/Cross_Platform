@@ -59,6 +59,7 @@ class ChatViewModel extends _$ChatViewModel {
 
   void _setupSocketListeners() {
     print("Setting up Socket Listeners in ViewModel...");
+
     _socketRepository.onNewMessage((data) {
       print("ViewModel Received Message Event");
       if (_activeChatId == null) return;

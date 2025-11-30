@@ -1,12 +1,8 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:lite_x/core/providers/current_user_provider.dart';
-import 'package:lite_x/core/routes/Route_Constants.dart';
 import 'package:lite_x/core/theme/Palette.dart';
-import 'package:lite_x/features/chat/view/widgets/conversion/SearchField.dart';
 
 class ConversationAppBar extends ConsumerWidget implements PreferredSizeWidget {
   const ConversationAppBar({super.key});
@@ -48,14 +44,7 @@ class ConversationAppBar extends ConsumerWidget implements PreferredSizeWidget {
                 ),
               ),
             ),
-            Expanded(
-              child: SearchField(
-                hintText: 'Search Direct Messages',
-                onTap: () {
-                  context.pushNamed(RouteConstants.SearchDirectMessages);
-                },
-              ),
-            ),
+            Spacer(),
             IconButton(
               icon: const Icon(
                 Icons.settings_outlined,

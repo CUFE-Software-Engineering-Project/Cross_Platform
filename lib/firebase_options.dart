@@ -41,52 +41,50 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyC6-I0IOtAmC9jnyIxf9WruRMUuc_VJqFo',
-    appId: '1:123824690535:web:5c24b3d2f16411d1960bc2',
-    messagingSenderId: '123824690535',
-    projectId: 'litex-3c6f1',
-    authDomain: 'litex-3c6f1.firebaseapp.com',
-    storageBucket: 'litex-3c6f1.firebasestorage.app',
-    measurementId: 'G-V5P21GBW6S',
+    apiKey: 'AIzaSyD5HN4nEV7xxsqLPufVptBwf2j-oXYVYCs',
+    appId: '1:112144721859:web:cd55e199eb8ef04e813f76',
+    messagingSenderId: '112144721859',
+    projectId: 'psychic-fin-474008-h8',
+    authDomain: 'psychic-fin-474008-h8.firebaseapp.com',
+    storageBucket: 'psychic-fin-474008-h8.firebasestorage.app',
+    measurementId: 'G-6XVXJKTZLW',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyDYiU34-5-Rr2nP_SHphvLSIiOyr4RuC8I',
-    appId: '1:123824690535:android:fc6ea2d45764d44a960bc2',
-    messagingSenderId: '123824690535',
-    projectId: 'litex-3c6f1',
-    storageBucket: 'litex-3c6f1.firebasestorage.app',
+    apiKey: 'AIzaSyAPqcctNBpWkQ-BKvYsHUEjvc_iwPBwsZ0',
+    appId: '1:112144721859:android:227c69fccfe2ec4c813f76',
+    messagingSenderId: '112144721859',
+    projectId: 'psychic-fin-474008-h8',
+    storageBucket: 'psychic-fin-474008-h8.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyANjGmgYBumwUsVg_BIBYsD0SN_BdEZfFg',
-    appId: '1:123824690535:ios:7d4e4fe266a006fe960bc2',
-    messagingSenderId: '123824690535',
-    projectId: 'litex-3c6f1',
-    storageBucket: 'litex-3c6f1.firebasestorage.app',
-    iosClientId:
-        '123824690535-5pta8j3mu07g0bb21n43n8q2vuulrstr.apps.googleusercontent.com',
+    apiKey: 'AIzaSyDwLkRHFcciSTzy8dGANfbWzmUQ4kEKhCM',
+    appId: '1:112144721859:ios:990931c2c90bbd22813f76',
+    messagingSenderId: '112144721859',
+    projectId: 'psychic-fin-474008-h8',
+    storageBucket: 'psychic-fin-474008-h8.firebasestorage.app',
+    iosClientId: '112144721859-1i3tqk7isj7tf6733s8eje2fnj357k80.apps.googleusercontent.com',
     iosBundleId: 'com.example.litex',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyANjGmgYBumwUsVg_BIBYsD0SN_BdEZfFg',
-    appId: '1:123824690535:ios:7d4e4fe266a006fe960bc2',
-    messagingSenderId: '123824690535',
-    projectId: 'litex-3c6f1',
-    storageBucket: 'litex-3c6f1.firebasestorage.app',
-    iosClientId:
-        '123824690535-5pta8j3mu07g0bb21n43n8q2vuulrstr.apps.googleusercontent.com',
+    apiKey: 'AIzaSyDwLkRHFcciSTzy8dGANfbWzmUQ4kEKhCM',
+    appId: '1:112144721859:ios:990931c2c90bbd22813f76',
+    messagingSenderId: '112144721859',
+    projectId: 'psychic-fin-474008-h8',
+    storageBucket: 'psychic-fin-474008-h8.firebasestorage.app',
+    iosClientId: '112144721859-1i3tqk7isj7tf6733s8eje2fnj357k80.apps.googleusercontent.com',
     iosBundleId: 'com.example.litex',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyC6-I0IOtAmC9jnyIxf9WruRMUuc_VJqFo',
-    appId: '1:123824690535:web:70728cc3cfda8de2960bc2',
-    messagingSenderId: '123824690535',
-    projectId: 'litex-3c6f1',
-    authDomain: 'litex-3c6f1.firebaseapp.com',
-    storageBucket: 'litex-3c6f1.firebasestorage.app',
-    measurementId: 'G-ML4Y8SWB2Y',
+    apiKey: 'AIzaSyD5HN4nEV7xxsqLPufVptBwf2j-oXYVYCs',
+    appId: '1:112144721859:web:01d0e76c4bc65596813f76',
+    messagingSenderId: '112144721859',
+    projectId: 'psychic-fin-474008-h8',
+    authDomain: 'psychic-fin-474008-h8.firebaseapp.com',
+    storageBucket: 'psychic-fin-474008-h8.firebasestorage.app',
+    measurementId: 'G-7R40WH2L4T',
   );
 }

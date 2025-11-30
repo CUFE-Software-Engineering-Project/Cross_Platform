@@ -20,7 +20,6 @@ import 'package:lite_x/features/auth/view/screens/Create_Account/UserName_Screen
     hide UsernameScreen;
 import 'package:lite_x/features/auth/view/screens/Create_Account/Verification_Screen.dart';
 import 'package:lite_x/features/auth/view/screens/Log_In/VerificationForgot_Screen.dart';
-import 'package:lite_x/features/chat/view/screens/Search_Direct_messages.dart';
 import 'package:lite_x/features/chat/view/screens/Search_User_Group.dart';
 import 'package:lite_x/features/chat/view/screens/chat_Screen.dart';
 import 'package:lite_x/features/chat/view/screens/conversations_screen.dart';
@@ -279,14 +278,6 @@ class Approuter {
         ),
       ),
 
-      GoRoute(
-        name: RouteConstants.SearchDirectMessages,
-        path: "/SearchDirectMessages",
-        pageBuilder: (context, state) => CustomTransitionPage(
-          child: const SearchDirectMessages(),
-          transitionsBuilder: _slideRightTransitionBuilder,
-        ),
-      ),
       GoRoute(
         name: RouteConstants.Interests,
         path: "/Interests",

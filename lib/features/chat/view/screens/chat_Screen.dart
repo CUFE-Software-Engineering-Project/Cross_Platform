@@ -250,9 +250,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               child: MessageInputBar(
                 onSendMessage: _handleSendMessage,
-                onSendAudio: null,
-                onSendImage: null,
-                onSendGif: null,
                 onTypingChanged: (isTyping) {
                   ref.read(chatViewModelProvider.notifier).sendTyping(isTyping);
                 },

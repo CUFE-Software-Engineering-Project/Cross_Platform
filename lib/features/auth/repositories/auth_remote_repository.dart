@@ -32,10 +32,9 @@ class AuthRemoteRepository {
     try {
       final baseUrl = dotenv.env["API_URL"]!;
       final authUrl = "${baseUrl}oauth2/authorize/github";
-      final fullUrl = "$authUrl?redirect_uri=${baseUrl}login/success";
 
       final opened = await launchUrl(
-        Uri.parse(fullUrl),
+        Uri.parse(authUrl),
         mode: LaunchMode.externalApplication,
       );
 
@@ -50,7 +49,7 @@ class AuthRemoteRepository {
       }
 
       final token = uri.queryParameters["token"];
-      final refresh = uri.queryParameters["refresh"];
+      final refresh = uri.queryParameters["refresh-token"];
       final userRaw = uri.queryParameters["user"];
 
       if (token == null || refresh == null || userRaw == null) {
@@ -59,7 +58,9 @@ class AuthRemoteRepository {
 
       final decodedUser = Uri.decodeComponent(userRaw);
       final user = UserModel.fromJson(decodedUser);
-
+      print("USER FROM GITHUB LOGIN: $user");
+      print("token FROM GITHUB LOGIN: $token");
+      print("refresh FROM GITHUB LOGIN: $refresh");
       final tokens = TokensModel(
         accessToken: token,
         refreshToken: refresh,
@@ -339,7 +340,7 @@ class AuthRemoteRepository {
 
       final user = UserModel.fromMap(response.data['user']);
       final tokens = TokensModel.fromMap_login(response.data);
-      // print(tokens);
+      // print("asermohamed${tokens.accessToken}");
       return right((user, tokens));
     } on DioException catch (e) {
       return left(AppFailure(message: 'Login failed'));
