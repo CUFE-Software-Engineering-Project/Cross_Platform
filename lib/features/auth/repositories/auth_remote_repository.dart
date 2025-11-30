@@ -1,4 +1,3 @@
-// ignore_for_file: unused_catch_clause
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
@@ -58,9 +57,7 @@ class AuthRemoteRepository {
 
       final decodedUser = Uri.decodeComponent(userRaw);
       final user = UserModel.fromJson(decodedUser);
-      print("USER FROM GITHUB LOGIN: $user");
-      print("token FROM GITHUB LOGIN: $token");
-      print("refresh FROM GITHUB LOGIN: $refresh");
+
       final tokens = TokensModel(
         accessToken: token,
         refreshToken: refresh,
@@ -135,7 +132,7 @@ class AuthRemoteRepository {
         data: {'name': name, 'email': email, 'dateOfBirth': dateOfBirth},
       );
       return right(response.data['message'] ?? 'Verification email sent');
-    } on DioException catch (e) {
+    } on DioException {
       return left(AppFailure(message: 'Signup failed'));
     } catch (e) {
       return left(AppFailure(message: e.toString()));
@@ -155,7 +152,7 @@ class AuthRemoteRepository {
 
       final message = response.data['message'] ?? 'Verified successfully';
       return right(message);
-    } on DioException catch (e) {
+    } on DioException {
       return left(AppFailure(message: 'Email verification failed'));
     } catch (e) {
       return left(AppFailure(message: e.toString()));
@@ -176,7 +173,7 @@ class AuthRemoteRepository {
       final user = UserModel.fromMap(response.data['user']);
       final tokens = TokensModel.fromMap(response.data['tokens']);
       return right((user, tokens));
-    } on DioException catch (e) {
+    } on DioException {
       return left(AppFailure(message: 'Signup failed'));
     } catch (e) {
       return left(AppFailure(message: e.toString()));
@@ -236,7 +233,7 @@ class AuthRemoteRepository {
       print("MEDIA ID AFTER UPLOAD: $mediaId");
 
       return right({'mediaId': mediaId, 'keyName': newMediaKey});
-    } on DioException catch (e) {
+    } on DioException {
       return left(AppFailure(message: 'Upload failed'));
     } catch (e) {
       return left(AppFailure(message: e.toString()));
@@ -284,14 +281,12 @@ class AuthRemoteRepository {
       final updatedUser = currentUser.copyWith(username: newUsername);
       final newtokens = TokensModel.fromMap_update(response.data['tokens']);
       return right((updatedUser, newtokens));
-    } on DioException catch (e) {
+    } on DioException {
       return left(AppFailure(message: 'Failed to update username'));
     } catch (e) {
       return left(AppFailure(message: e.toString()));
     }
   }
-
-  //---------------------------------------------------------google sign up--------------------------------------------------------------------------//
 
   //-------------------------------------------------FCM Token Registration-----------------------------------------------------------------------------------------//
   Future<Either<AppFailure, String>> registerFcmToken({
@@ -342,7 +337,7 @@ class AuthRemoteRepository {
       final tokens = TokensModel.fromMap_login(response.data);
       // print("asermohamed${tokens.accessToken}");
       return right((user, tokens));
-    } on DioException catch (e) {
+    } on DioException {
       return left(AppFailure(message: 'Login failed'));
     } catch (e) {
       return left(AppFailure(message: "Wrong Password"));
@@ -356,7 +351,7 @@ class AuthRemoteRepository {
         data: {'email': email},
       );
       return right(response.data['exists'] ?? false);
-    } on DioException catch (e) {
+    } on DioException {
       return left(AppFailure(message: 'Email check failed'));
     } catch (e) {
       return left(AppFailure(message: e.toString()));
@@ -374,7 +369,7 @@ class AuthRemoteRepository {
       );
       final message = response.data['message'] ?? 'Reset code sent';
       return right(message);
-    } on DioException catch (e) {
+    } on DioException {
       return left(AppFailure(message: 'Forget password failed'));
     } catch (e) {
       return left(AppFailure(message: e.toString()));
@@ -392,7 +387,7 @@ class AuthRemoteRepository {
       );
       final message = response.data['message'] ?? 'Reset code verified';
       return right(message);
-    } on DioException catch (e) {
+    } on DioException {
       return left(AppFailure(message: 'Verify reset code failed'));
     } catch (e) {
       return left(AppFailure(message: e.toString()));
@@ -411,7 +406,7 @@ class AuthRemoteRepository {
       final user = UserModel.fromMap(response.data['user']);
       final tokens = TokensModel.fromMap_reset_password(response.data);
       return right((user, tokens));
-    } on DioException catch (e) {
+    } on DioException {
       return left(AppFailure(message: 'Reset password failed'));
     } catch (e) {
       return left(AppFailure(message: e.toString()));
@@ -438,7 +433,7 @@ class AuthRemoteRepository {
       final message =
           response.data['message'] ?? 'Password updated successfully';
       return right(message);
-    } on DioException catch (e) {
+    } on DioException {
       return left(AppFailure(message: 'update password failed'));
     } catch (e) {
       return left(AppFailure(message: e.toString()));
@@ -456,7 +451,7 @@ class AuthRemoteRepository {
       );
       final message = response.data['message'] ?? 'Email updated successfully';
       return right(message);
-    } on DioException catch (e) {
+    } on DioException {
       return left(AppFailure(message: 'update email failed'));
     } catch (e) {
       return left(AppFailure(message: e.toString()));
@@ -475,7 +470,7 @@ class AuthRemoteRepository {
 
       final message = response.data['message'] ?? 'updated email successfully';
       return right(message);
-    } on DioException catch (e) {
+    } on DioException {
       return left(AppFailure(message: 'Email update failed'));
     } catch (e) {
       return left(AppFailure(message: e.toString()));

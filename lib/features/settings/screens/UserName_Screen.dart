@@ -8,14 +8,15 @@ import 'package:lite_x/core/theme/palette.dart';
 import 'package:lite_x/features/auth/view_model/auth_state.dart';
 import 'package:lite_x/features/auth/view_model/auth_view_model.dart';
 
-class UsernameScreen extends ConsumerStatefulWidget {
-  const UsernameScreen({super.key});
+class UsernameSettings extends ConsumerStatefulWidget {
+  const UsernameSettings({super.key});
 
   @override
-  ConsumerState<ConsumerStatefulWidget> createState() => _UsernameScreenState();
+  ConsumerState<ConsumerStatefulWidget> createState() =>
+      _UsernameSettingsState();
 }
 
-class _UsernameScreenState extends ConsumerState<UsernameScreen> {
+class _UsernameSettingsState extends ConsumerState<UsernameSettings> {
   late String currentUserName;
   final TextEditingController _usernameController = TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
@@ -41,8 +42,8 @@ class _UsernameScreenState extends ConsumerState<UsernameScreen> {
 
     String username = value.startsWith('@') ? value.substring(1) : value;
 
-    if (username.length < 15) {
-      return 'Username must be 15 characters or less ';
+    if (username.length < 5) {
+      return 'Username must be 5 characters or more ';
     }
 
     final RegExp usernameRegex = RegExp(r'^[a-zA-Z0-9_]+$');
@@ -63,7 +64,7 @@ class _UsernameScreenState extends ConsumerState<UsernameScreen> {
     }
 
     setState(() {
-      _isLoading = true;
+      if (mounted) _isLoading = true;
     });
 
     String newUsername = _usernameController.text.trim();

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lite_x/core/view/screen/app_shell.dart';
 import 'package:lite_x/features/auth/view/screens/Create_Account/Interests.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
+import 'package:lite_x/features/auth/view/screens/Create_Account/UserName_Screen.dart';
 import 'package:lite_x/features/auth/view/screens/Intro_Screen.dart';
 import 'package:lite_x/core/view/screen/Splash_Screen.dart';
 import 'package:lite_x/features/auth/view/screens/Create_Account/CreateAccount_Screen.dart';
@@ -16,14 +17,13 @@ import 'package:lite_x/features/auth/view/screens/Log_In/LoginPasswordScreen.dar
 import 'package:lite_x/features/auth/view/screens/Log_In/Login_Screen.dart';
 import 'package:lite_x/features/auth/view/screens/Create_Account/Password_Screen.dart';
 import 'package:lite_x/features/auth/view/screens/Create_Account/Upload_Profile_Photo_Screen.dart';
-import 'package:lite_x/features/auth/view/screens/Create_Account/UserName_Screen.dart'
-    hide UsernameScreen;
 import 'package:lite_x/features/auth/view/screens/Create_Account/Verification_Screen.dart';
 import 'package:lite_x/features/auth/view/screens/Log_In/VerificationForgot_Screen.dart';
 import 'package:lite_x/features/chat/view/screens/Search_User_Group.dart';
 import 'package:lite_x/features/chat/view/screens/chat_Screen.dart';
 import 'package:lite_x/features/chat/view/screens/conversations_screen.dart';
 import 'package:lite_x/features/explore/view/explore_screen.dart';
+import 'package:lite_x/features/home/view/screens/tweet_screen.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
 import 'package:lite_x/features/profile/models/shared.dart';
 import 'package:lite_x/features/profile/view/screens/birthdate_screen.dart';
@@ -219,7 +219,7 @@ class Approuter {
         name: RouteConstants.usernamesettings,
         path: "/usernamesettings",
         pageBuilder: (context, state) => CustomTransitionPage(
-          child: const UsernameScreen(),
+          child: const UsernameSettings(),
           transitionsBuilder: _slideRightTransitionBuilder,
         ),
       ),
@@ -431,6 +431,16 @@ class Approuter {
         path: "/exploreProfileScreen",
         pageBuilder: (context, state) => CustomTransitionPage(
           child: ExploreProfileScreen(),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
+        name: RouteConstants.TweetDetailsScreen,
+        path: "/tweetDetailsScreen/:tweetId",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: TweetDetailScreen(
+            tweetId: state.pathParameters['tweetId'] as String,
+          ),
           transitionsBuilder: _slideRightTransitionBuilder,
         ),
       ),
