@@ -26,25 +26,25 @@ class ProfileRepoImpl implements ProfileRepo {
   ) async {
     final Response res;
     final ProfileStorageService storageService = ProfileStorageService();
-    await storageService.init();
+
     try {
       res = await _dio.get("api/users/$userName");
       final Map<String, dynamic> json = res.data;
 
       final profileData = ProfileModel.fromJson(json);
 
-      if (userName == currentUsername)
+      if (userName == currentUsername) {
+        await storageService.init();
         storageService.storeProfileData(profileData).then((onValue) {
           storageService.close();
         });
-      else {
-        storageService.close();
       }
 
       return Right(profileData);
     } on DioException catch (e) {
       print(e.toString());
       if (userName == currentUsername) {
+        await storageService.init();
         final localData = await storageService.getProfileData(currentUsername);
         storageService.close();
         if (localData == null) {
@@ -55,7 +55,6 @@ class ProfileRepoImpl implements ProfileRepo {
           return Right(localData);
         }
       } else {
-        storageService.close();
         if (e.type == DioExceptionType.connectionTimeout ||
             e.type == DioExceptionType.receiveTimeout ||
             e.type == DioExceptionType.sendTimeout) {
@@ -65,6 +64,7 @@ class ProfileRepoImpl implements ProfileRepo {
       }
     } catch (e) {
       if (userName == currentUsername) {
+        await storageService.init();
         final localData = await storageService.getProfileData(currentUsername);
         storageService.close();
         if (localData == null)
@@ -75,7 +75,6 @@ class ProfileRepoImpl implements ProfileRepo {
           return Right(localData);
         }
       }
-      storageService.close();
       return Left(Failure('Failed to load profile data'));
     }
   }
