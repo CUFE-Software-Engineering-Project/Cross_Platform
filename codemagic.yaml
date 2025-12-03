@@ -10,8 +10,8 @@ workflows:
         BUNDLE_ID: "com.example.litex" # Update with your bundle ID
       xcode: latest
       cocoapods: default
-      flutter: stable  # ADD THIS LINE - Specify Flutter version
-    
+      flutter: stable # ADD THIS LINE - Specify Flutter version
+
     # MOVE triggering section to correct position
     triggering:
       events:
@@ -19,23 +19,23 @@ workflows:
       branch_patterns:
         - pattern: main
           include: true
-    
+
     scripts:
       - name: Set up keychain
         script: |
           keychain initialize
-      
+
       - name: Add code signing certificates
         script: |
           keychain add-certificates  # ADD THIS - CRITICAL!
-      
+
       - name: Fix iOS deployment target
         script: |
           cd ios
-          
+
           # Backup original Podfile
           cp Podfile Podfile.backup
-          
+
           # Update Podfile with platform 15.0
           if grep -q "^platform :ios" Podfile; then
             sed -i '' 's/^platform :ios.*/platform :ios, "15.0"/' Podfile
@@ -45,22 +45,22 @@ workflows:
             cat Podfile >> Podfile.temp
             mv Podfile.temp Podfile
           fi
-          
+
           # Also update any commented platform lines
           sed -i '' 's/# platform :ios.*/platform :ios, "15.0"/' Podfile
-          
+
           # Update Xcode project deployment target
           sed -i '' 's/IPHONEOS_DEPLOYMENT_TARGET = 13.0;/IPHONEOS_DEPLOYMENT_TARGET = 15.0;/g' Runner.xcodeproj/project.pbxproj
           sed -i '' 's/IPHONEOS_DEPLOYMENT_TARGET = 14.0;/IPHONEOS_DEPLOYMENT_TARGET = 15.0;/g' Runner.xcodeproj/project.pbxproj
           sed -i '' 's/"IPHONEOS_DEPLOYMENT_TARGET" = "13.0"/"IPHONEOS_DEPLOYMENT_TARGET" = "15.0"/g' Runner.xcodeproj/project.pbxproj
-      
+
       - name: Fix Info.plist
         script: |
           cd ios/Runner
           # Backup and convert to proper XML format
           cp Info.plist Info.plist.backup
           plutil -convert xml1 Info.plist || true
-      
+
       - name: Clean and install pods
         script: |
           cd ios
@@ -69,50 +69,50 @@ workflows:
           rm -rf Pods Podfile.lock DerivedData
           pod repo update
           pod install --repo-update --verbose
-      
+
       - name: Flutter setup
         script: |
           flutter clean
           flutter pub upgrade  # Use upgrade instead of get to fix outdated packages
           flutter pub get
-      
+
       - name: Build iOS
         script: |
           # FIXED: Corrected --no-codesign spelling
-          flutter build ios --release --dart-define=ENV=production --no-codesign
-      
+          flutter build ipa --release
+
       - name: Apply code signing
         script: |
           cd ios
           xcode-project use-profiles
-      
+
       - name: Generate IPA
         script: |
           cd ios
           # Ensure IPA directory exists
           mkdir -p ../build/ios/ipa
-          
+
           # Generate IPA with explicit output path
           xcode-project build-ipa \
             --workspace "$XCODE_WORKSPACE" \
             --scheme "$XCODE_SCHEME" \
             --output "../build/ios/ipa"
-          
+
           # Verify IPA was created
           echo "=== IPA Generation Result ==="
           ls -la ../build/ios/ipa/ || echo "No IPA directory"
           find ../build/ios -name "*.ipa" 2>/dev/null || echo "No IPA files found"
-      
+
       - name: Verify build artifacts
         script: |
           echo "=== Build Artifacts ==="
           find build -name "*.ipa" -o -name "*.app" 2>/dev/null | head -20
-    
+
     artifacts:
       - build/ios/ipa/*.ipa
       - build/ios/ipa/*.plist
       - /tmp/xcodebuild_logs/*.log
-    
+
     publishing:
       email:
         recipients:
