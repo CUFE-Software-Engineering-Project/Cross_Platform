@@ -41,6 +41,7 @@ class ConversationsViewModel extends _$ConversationsViewModel {
   void _listenToNewMessages() {
     _socketRepository.onNewMessage((data) {
       try {
+        print("New message received: $data");
         final newMsg = MessageModel.fromApiResponse(data);
 
         final currentConversations = state.maybeWhen(
@@ -50,11 +51,10 @@ class ConversationsViewModel extends _$ConversationsViewModel {
 
         final idx = currentConversations.indexWhere(
           (chat) => chat.id == newMsg.chatId,
-        ); // check if conversation already exist or not
+        );
         final openChatId = ref.read(activeChatProvider);
         final bool isChatOpen = openChatId == newMsg.chatId;
         if (idx != -1) {
-          // conversation exists
           final chat = currentConversations[idx];
           final bool isMe = newMsg.userId == _currentUser?.id;
           final int newCount;
@@ -75,7 +75,6 @@ class ConversationsViewModel extends _$ConversationsViewModel {
 
           currentConversations[idx] = updatedChat;
         } else {
-          //handle dm only
           final bool isMe = newMsg.userId == _currentUser?.id;
           final int initialUnseenCount = (isMe || isChatOpen) ? 0 : 1;
           final created = ConversationModel(
@@ -165,7 +164,6 @@ class ConversationsViewModel extends _$ConversationsViewModel {
         lastMessageType: messageType,
         lastMessageTime: DateTime.now(),
         lastMessageSenderId: _currentUser!.id,
-        unseenCount: 0,
       );
 
       final updatedList = List<ConversationModel>.from(currentList);

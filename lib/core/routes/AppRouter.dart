@@ -357,6 +357,8 @@ class Approuter {
               subtitle: extraData['subtitle'],
               profileImage: extraData['avatarUrl'],
               isGroup: extraData['isGroup'] ?? false,
+              recipientFollowersCount:
+                  extraData['recipientFollowersCount'] ?? 0,
             ),
             transitionsBuilder: _slideRightTransitionBuilder,
           );

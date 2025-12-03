@@ -35,7 +35,7 @@ class ChatRemoteRepository {
         data,
         Current_UserId,
       );
-
+      print(conversation.id);
       return Right(conversation);
     } on DioException catch (e) {
       final errorMessage =
@@ -48,8 +48,8 @@ class ChatRemoteRepository {
     }
   }
 
-  //----------------------------------------------------get inital messages from getchatinfo without timestemp-------------------------------//
-  Future<Either<AppFailure, List<MessageModel>>> getInitialChatMessages(
+  //----------------------------------------------------get last 50 messages from getchatinfo without timestemp-------------------------------//
+  Future<Either<AppFailure, List<MessageModel>>> getlastChatMessages(
     String chatId,
   ) async {
     try {
@@ -105,15 +105,16 @@ class ChatRemoteRepository {
   }
 
   //-----------------------------------------------------------get messages of the conversation-------------------------------------------------------------------------//
-  Future<Either<AppFailure, List<MessageModel>>> getMessagesChat(
-    String chatId, {
+  Future<Either<AppFailure, List<MessageModel>>> getOlderMessagesChat({
+    required String chatId,
     required DateTime lastMessageTimestamp,
   }) async {
     try {
       final response = await _dio.get(
         "api/dm/chat/$chatId/messages",
         queryParameters: {
-          "lastMessageTimestamp": lastMessageTimestamp.toIso8601String(),
+          "lastMessageTimestamp": lastMessageTimestamp.toIso8601String() + "Z",
+          "chatId": chatId,
         },
       );
 
@@ -131,28 +132,6 @@ class ChatRemoteRepository {
           e.response?.data["message"] ??
           e.response?.data["error"] ??
           "Failed to get messages";
-      return Left(AppFailure(message: errorMessage));
-    } catch (e) {
-      return Left(AppFailure(message: e.toString()));
-    }
-  }
-
-  //----------------------------------------------------------------------get unseen count of one chat------------------------------------------------------------------------//
-  Future<Either<AppFailure, int>> getUnseenCountOfChat(String chatId) async {
-    try {
-      final response = await _dio.get(
-        "api/dm/chat/$chatId/unseen-messages-count",
-      );
-
-      final data = response.data as Map<String, dynamic>;
-      final unseenCount = data["unseenMessagesCount"] as int? ?? 0;
-
-      return Right(unseenCount);
-    } on DioException catch (e) {
-      final errorMessage =
-          e.response?.data["message"] ??
-          e.response?.data["error"] ??
-          "Failed to get unseen count";
       return Left(AppFailure(message: errorMessage));
     } catch (e) {
       return Left(AppFailure(message: e.toString()));
@@ -192,26 +171,6 @@ class ChatRemoteRepository {
     }
   }
 
-  //-----------------------------------------------------------------get unseen count of all messages of all chats --------------------------------------------------------------------------//
-  Future<Either<AppFailure, int>> getUnseenCountAllChats() async {
-    try {
-      final response = await _dio.get("api/dm/chat/all-unseen-messages-count");
-
-      final data = response.data as Map<String, dynamic>;
-      final totalUnseenCount = data["totalUnseenMessages"] as int? ?? 0;
-
-      return Right(totalUnseenCount);
-    } on DioException catch (e) {
-      final errorMessage =
-          e.response?.data["message"] ??
-          e.response?.data["error"] ??
-          "Failed to get all unseen count";
-      return Left(AppFailure(message: errorMessage));
-    } catch (e) {
-      return Left(AppFailure(message: e.toString()));
-    }
-  }
-
   //--------------------------------------------------------------get chat info --------------------------------------------------------------------------//
   Future<Either<AppFailure, ConversationModel>> getChatInfo(
     String chatId,
@@ -239,19 +198,42 @@ class ChatRemoteRepository {
   }
 
   //------------------------------------------------------------------delete chat from conversions---------------------------------------------------------------------------//
-  Future<Either<AppFailure, bool>> deleteChat(String chatId) async {
+  Future<Either<AppFailure, String>> deleteChat(String chatId) async {
     try {
       final response = await _dio.delete("api/dm/chat/$chatId");
 
-      final data = response.data as Map<String, dynamic>;
-      final success = data["success"] as bool? ?? true;
+      if (response.statusCode == 200) {
+        final data = response.data as Map<String, dynamic>;
+        return Right(data["message"] ?? "Chat deleted successfully");
+      }
 
-      return Right(success);
+      return Left(AppFailure(message: "Unexpected error"));
     } on DioException catch (e) {
       final errorMessage =
           e.response?.data["message"] ??
           e.response?.data["error"] ??
           "Failed to delete chat";
+
+      return Left(AppFailure(message: errorMessage));
+    } catch (e) {
+      return Left(AppFailure(message: e.toString()));
+    }
+  }
+
+  //-----------------------------------------------------------------get unseen count of all messages of all chats --------------------------------------------------------------------------//
+  Future<Either<AppFailure, int>> getUnseenCountAllChats() async {
+    try {
+      final response = await _dio.get("api/dm/chat/all-unseen-messages-count");
+
+      final data = response.data as Map<String, dynamic>;
+      final totalUnseenCount = data["totalUnseenMessages"] as int? ?? 0;
+
+      return Right(totalUnseenCount);
+    } on DioException catch (e) {
+      final errorMessage =
+          e.response?.data["message"] ??
+          e.response?.data["error"] ??
+          "Failed to get all unseen count";
       return Left(AppFailure(message: errorMessage));
     } catch (e) {
       return Left(AppFailure(message: e.toString()));

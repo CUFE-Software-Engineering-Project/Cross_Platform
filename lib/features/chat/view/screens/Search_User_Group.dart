@@ -90,6 +90,7 @@ class _SearchUserGroupState extends ConsumerState<SearchUserGroup> {
             'subtitle': "${user.username}",
             'avatarUrl': user.profileMedia,
             'isGroup': false,
+            'recipientFollowersCount': user.followers,
           },
         );
       });

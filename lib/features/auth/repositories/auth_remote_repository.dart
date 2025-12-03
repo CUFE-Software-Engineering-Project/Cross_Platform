@@ -335,7 +335,8 @@ class AuthRemoteRepository {
 
       final user = UserModel.fromMap(response.data['user']);
       final tokens = TokensModel.fromMap_login(response.data);
-      // print("asermohamed${tokens.accessToken}");
+      print("asermohamed${user.id}");
+      print("asermohamed${tokens.accessToken}");
       return right((user, tokens));
     } on DioException {
       return left(AppFailure(message: 'Login failed'));

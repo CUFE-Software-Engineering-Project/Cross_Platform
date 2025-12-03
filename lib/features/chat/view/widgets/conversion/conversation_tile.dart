@@ -14,6 +14,7 @@ class ConversationTile extends StatelessWidget {
   final bool isUnread;
   final int unseenCount;
   final bool isDMChat;
+  final int recipientFollowersCount;
 
   const ConversationTile({
     super.key,
@@ -27,6 +28,7 @@ class ConversationTile extends StatelessWidget {
     this.isUnread = false,
     this.unseenCount = 0,
     this.isDMChat = true,
+    this.recipientFollowersCount = 0,
   });
 
   @override
@@ -41,6 +43,7 @@ class ConversationTile extends StatelessWidget {
             'avatarUrl': avatarUrl,
             'subtitle': username,
             'isGroup': isDMChat,
+            'recipientFollowersCount': recipientFollowersCount,
           },
         );
       },

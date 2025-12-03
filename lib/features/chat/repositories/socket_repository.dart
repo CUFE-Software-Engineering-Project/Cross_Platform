@@ -1,10 +1,4 @@
-// ignore_for_file: unused_import, unused_field
-
-import 'package:dio/dio.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:lite_x/core/constants/server_constants.dart';
-import 'package:lite_x/core/models/TokensModel.dart';
-import 'package:lite_x/core/providers/dio_interceptor.dart';
 import 'package:lite_x/features/auth/repositories/auth_local_repository.dart';
 import 'package:lite_x/features/chat/providers/tokenStream.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -116,7 +110,7 @@ class SocketRepository {
   void onNewMessage(Function(dynamic data) callback) {
     _socket?.on("new-message", (data) {
       callback(data);
-    }); // receiver
+    });
   }
 
   // Mark chat opened (make all messages READ)
@@ -132,6 +126,10 @@ class SocketRepository {
   void onMessageAdded(Function(dynamic data) callback) {
     _socket?.on("message-added", (data) => callback(data));
   } //for sender
+
+  void leaveChat(String chatId) {
+    _socket?.emit("leave-chat", {"chatId": chatId});
+  } // when user leaves the chat screen used for unseen count
 
   void disposeListeners() {
     _socket?.off('new-message');
