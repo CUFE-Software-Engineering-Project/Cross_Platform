@@ -17,7 +17,7 @@ Future<List<String>> upload_media(List<File> files) async {
     final fileType = _getMediaType(file.path);
 
     // request upload
-    
+
     final requestUpload = container.read(requestUploadProvider);
     final requestUploadResponse = await requestUpload(fileName, fileType);
     RequestUploadModel requestUploadModel = RequestUploadModel(
@@ -85,6 +85,18 @@ const Map<String, String> _mediaTypes = {
   'png': 'image/png',
   'gif': 'image/gif',
   'webp': 'image/webp',
+
+  'mp4': 'video/mp4',
+  'mov': 'video/quicktime',
+  'avi': 'video/x-msvideo',
+  'webm': 'video/webm',
+  'mkv': 'video/x-matroska',
+  'flv': 'video/x-flv',
+  'wmv': 'video/x-ms-wmv',
+  'mpeg': 'video/mpeg',
+  'mpg': 'video/mpeg',
+  '3gp': 'video/3gpp',
+  'm4v': 'video/x-m4v',
 };
 String _getMediaType(String filePath) {
   final extension = filePath.split('.').last.toLowerCase();
