@@ -361,7 +361,7 @@ class _ReplyComposerScreenState extends ConsumerState<ReplyComposerScreen> {
                   const SizedBox(width: 4),
                   Flexible(
                     child: Text(
-                      widget.replyingToTweet.authorUsername,
+                      '@${widget.replyingToTweet.authorUsername}',
                       style: TextStyle(color: Colors.grey[500], fontSize: 15),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -386,7 +386,7 @@ class _ReplyComposerScreenState extends ConsumerState<ReplyComposerScreen> {
                   children: [
                     const TextSpan(text: 'Replying to '),
                     TextSpan(
-                      text: widget.replyingToTweet.authorUsername,
+                      text: '@${widget.replyingToTweet.authorUsername}',
                       style: const TextStyle(color: Color(0xFF1D9BF0)),
                     ),
                   ],

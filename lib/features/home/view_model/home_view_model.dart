@@ -21,7 +21,7 @@ class HomeViewModel extends Notifier<HomeState> {
       forYouTweets: [],
       followingTweets: [],
       isLoading: true,
-      currentFeed: FeedType.following,
+      currentFeed: FeedType.forYou, // Default to For You feed
     );
   }
 
