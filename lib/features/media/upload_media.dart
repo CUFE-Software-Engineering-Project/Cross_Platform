@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lite_x/features/media/models/confirm_upload_model.dart';
 import 'package:lite_x/features/media/models/request_upload_model.dart';
+import 'package:lite_x/features/media/models/shared.dart';
 import 'package:lite_x/features/media/view_model/providers.dart';
 
 Future<List<String>> upload_media(List<File> files) async {
@@ -14,7 +15,7 @@ Future<List<String>> upload_media(List<File> files) async {
     final file = limitedFiles[i];
     bool fail = false;
     final fileName = file.path.split(Platform.pathSeparator).last;
-    final fileType = _getMediaType(file.path);
+    final fileType = getMediaType(file.path);
 
     // request upload
 
@@ -79,26 +80,3 @@ Future<List<String>> upload_media(List<File> files) async {
   return ids;
 }
 
-const Map<String, String> _mediaTypes = {
-  'jpg': 'image/jpeg',
-  'jpeg': 'image/jpeg',
-  'png': 'image/png',
-  'gif': 'image/gif',
-  'webp': 'image/webp',
-
-  'mp4': 'video/mp4',
-  'mov': 'video/quicktime',
-  'avi': 'video/x-msvideo',
-  'webm': 'video/webm',
-  'mkv': 'video/x-matroska',
-  'flv': 'video/x-flv',
-  'wmv': 'video/x-ms-wmv',
-  'mpeg': 'video/mpeg',
-  'mpg': 'video/mpeg',
-  '3gp': 'video/3gpp',
-  'm4v': 'video/x-m4v',
-};
-String _getMediaType(String filePath) {
-  final extension = filePath.split('.').last.toLowerCase();
-  return _mediaTypes[extension] ?? 'image/jpeg';
-}
