@@ -27,6 +27,7 @@ class _HomeTabBarState extends ConsumerState<HomeTabBar>
     );
 
     final initialFeed = ref.read(homeViewModelProvider).currentFeed;
+    // For You is at position 0 (left), Following is at position 1 (right)
     _animationController.value = initialFeed == FeedType.following ? 1.0 : 0.0;
   }
 

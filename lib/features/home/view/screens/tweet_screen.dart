@@ -2,6 +2,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 import 'package:lite_x/core/providers/current_user_provider.dart';
 import 'package:lite_x/features/home/models/tweet_model.dart';
@@ -12,6 +13,7 @@ import 'package:lite_x/features/home/view/screens/quote_composer_screen.dart';
 import 'package:lite_x/features/home/view/widgets/media_gallery.dart';
 import 'package:lite_x/features/home/view/widgets/tweet_summary_dialog.dart';
 import 'package:lite_x/features/profile/view/screens/profile_screen.dart';
+import 'package:lite_x/features/profile/view_model/providers.dart';
 import 'package:lite_x/features/home/view_model/home_view_model.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
@@ -30,6 +32,8 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
   bool isLoading = true;
   String? currentUserId;
   int? _viewCount;
+  bool isFollowing = false;
+  bool isFollowLoading = false;
 
   @override
   void initState() {
@@ -56,6 +60,76 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
   String _normalizeUsername(String username) {
     if (username.isEmpty) return username;
     return username.startsWith('@') ? username.substring(1) : username;
+  }
+
+  Future<void> _toggleFollow() async {
+    if (mainTweet == null || isFollowLoading) return;
+
+    setState(() {
+      isFollowLoading = true;
+    });
+
+    try {
+      final username = mainTweet!.authorUsername;
+
+      if (isFollowing) {
+        final unfollowFunc = ref.read(unFollowControllerProvider);
+        final result = await unfollowFunc(username);
+        result.fold(
+          (failure) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Failed to unfollow: ${failure.message}'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          },
+          (_) {
+            if (mounted) {
+              setState(() {
+                isFollowing = false;
+              });
+            }
+          },
+        );
+      } else {
+        final followFunc = ref.read(followControllerProvider);
+        final result = await followFunc(username);
+        result.fold(
+          (failure) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Failed to follow: ${failure.message}'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          },
+          (_) {
+            if (mounted) {
+              setState(() {
+                isFollowing = true;
+              });
+            }
+          },
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          isFollowLoading = false;
+        });
+      }
+    }
   }
 
   Future<void> _loadTweetData() async {
@@ -304,11 +378,48 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
   Future<void> _showSummaryDialog() async {
     if (mainTweet == null) return;
 
+    // Show loading dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.black,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: const Color(0xFF1DA1F2).withOpacity(0.3),
+              width: 1,
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1DA1F2)),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Generating AI insights...',
+                style: TextStyle(color: Colors.grey[400], fontSize: 14),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
     try {
       final repository = ref.read(homeRepositoryProvider);
       final summary = await repository.getTweetSummary(mainTweet!.id);
 
       if (mounted) {
+        // Close loading dialog
+        Navigator.of(context).pop();
+
+        // Show summary dialog
         showDialog(
           context: context,
           builder: (context) => TweetSummaryDialog(summary: summary),
@@ -316,6 +427,9 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
       }
     } catch (e) {
       if (mounted) {
+        // Close loading dialog
+        Navigator.of(context).pop();
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to load summary: $e'),
@@ -760,19 +874,40 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
         ],
       );
     } else {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: const Text(
-          'Follow',
-          style: TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.bold,
-            fontSize: 15,
+      return GestureDetector(
+        onTap: isFollowLoading ? null : _toggleFollow,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          decoration: BoxDecoration(
+            color: isFollowing ? Colors.transparent : Colors.white,
+            border: isFollowing
+                ? Border.all(color: Colors.grey[700]!, width: 1)
+                : null,
+            borderRadius: BorderRadius.circular(20),
           ),
+          child: isFollowLoading
+              ? const SizedBox(
+                  width: 60,
+                  height: 20,
+                  child: Center(
+                    child: SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.grey),
+                      ),
+                    ),
+                  ),
+                )
+              : Text(
+                  isFollowing ? 'Following' : 'Follow',
+                  style: TextStyle(
+                    color: isFollowing ? Colors.white : Colors.black,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                  ),
+                ),
         ),
       );
     }
@@ -1057,13 +1192,13 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
           textDirection: _textDirectionFor(mainTweet!.content),
         ),
 
-        if (mainTweet!.quotedTweet != null) ...[
-          const SizedBox(height: 16),
-          _buildQuotedTweet(mainTweet!.quotedTweet!),
-        ],
         if (mainTweet!.images.isNotEmpty) ...[
           const SizedBox(height: 16),
           MediaGallery(urls: mainTweet!.images, borderRadius: 16),
+        ],
+        if (mainTweet!.quotedTweet != null) ...[
+          const SizedBox(height: 16),
+          _buildQuotedTweet(mainTweet!.quotedTweet!),
         ],
       ],
     );
@@ -1258,8 +1393,8 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
             color: mainTweet!.isLiked ? Colors.pink : Colors.grey[600]!,
             onTap: _toggleLike,
           ),
-          _buildIconButton(
-            icon: Icons.auto_awesome,
+          _buildSvgIconButton(
+            svgPath: 'assets/svg/grok.svg',
             color: const Color(0xFF1DA1F2),
             onTap: _showSummaryDialog,
           ),
@@ -1291,6 +1426,26 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
       child: Padding(
         padding: const EdgeInsets.all(8),
         child: Icon(icon, color: color, size: 20),
+      ),
+    );
+  }
+
+  Widget _buildSvgIconButton({
+    required String svgPath,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Padding(
+        padding: const EdgeInsets.all(8),
+        child: SvgPicture.asset(
+          svgPath,
+          width: 20,
+          height: 20,
+          colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+        ),
       ),
     );
   }
@@ -1392,14 +1547,21 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
                   ),
                 ),
                 const SizedBox(width: 4),
-                Text(
-                  '@${reply.authorUsername}',
-                  style: TextStyle(color: Colors.grey[600], fontSize: 15),
+                Flexible(
+                  child: Text(
+                    '@${reply.authorUsername}',
+                    style: TextStyle(color: Colors.grey[600], fontSize: 15),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
                 const SizedBox(width: 4),
-                Text(
-                  '· ${timeago.format(reply.createdAt, locale: 'en_short')}',
-                  style: TextStyle(color: Colors.grey[600], fontSize: 15),
+                Flexible(
+                  fit: FlexFit.loose,
+                  child: Text(
+                    '· ${timeago.format(reply.createdAt, locale: 'en_short')}',
+                    style: TextStyle(color: Colors.grey[600], fontSize: 15),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ],
             ),
@@ -1441,11 +1603,14 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
           'Replying to ',
           style: TextStyle(color: Colors.grey[600], fontSize: 15),
         ),
-        GestureDetector(
-          onTap: () => _openProfileFromUsername(mainTweet!.authorUsername),
-          child: Text(
-            mainTweet!.authorUsername,
-            style: const TextStyle(color: Colors.blue, fontSize: 15),
+        Flexible(
+          child: GestureDetector(
+            onTap: () => _openProfileFromUsername(mainTweet!.authorUsername),
+            child: Text(
+              '@${mainTweet!.authorUsername}',
+              style: const TextStyle(color: Colors.blue, fontSize: 15),
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
         ),
       ],
