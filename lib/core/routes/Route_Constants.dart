@@ -51,5 +51,8 @@ class RouteConstants {
   static String ExploreScreen = "ExploreScreen";
   static String ExploreProfileScreen = "ExploreProfileScreen";
 
+  // trends feature
+  static String TrendsScreen = "TrendsScreen";
+
   static String TweetDetailsScreen = "TweetDetailsScreen";
 }
