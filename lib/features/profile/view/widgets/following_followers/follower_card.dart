@@ -53,23 +53,27 @@ class _FollowerCardState extends ConsumerState<FollowerCard> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    CircleAvatar(
-                      radius: 24,
-                      backgroundColor: Colors.grey[300],
-                      backgroundImage: null,
-                      child: widget.user.image.isEmpty
-                          ? Icon(Icons.person, size: 24, color: Colors.grey)
-                          : ClipOval(
-                              child: Image.network(
-                                widget.user.image,
-                                fit: BoxFit.cover,
-                                height: 48,
-                                width: 48,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return SizedBox();
-                                },
-                              ),
-                            ),
+                    // CircleAvatar(
+                    //   radius: 24,
+                    //   backgroundColor: Colors.grey[300],
+                    //   backgroundImage: null,
+                    //   child: widget.user.image.isEmpty
+                    //       ? Icon(Icons.person, size: 24, color: Colors.grey)
+                    //       : ClipOval(
+                    //           child: Image.network(
+                    //             widget.user.image,
+                    //             fit: BoxFit.cover,
+                    //             height: 48,
+                    //             width: 48,
+                    //             errorBuilder: (context, error, stackTrace) {
+                    //               return SizedBox();
+                    //             },
+                    //           ),
+                    //         ),
+                    // ),
+                    BuildSmallProfileImage(
+                      radius: 30,
+                      mediaId: widget.user.image,
                     ),
 
                     const SizedBox(width: 12),
