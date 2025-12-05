@@ -72,7 +72,7 @@ class _FollowerCardState extends ConsumerState<FollowerCard> {
                     //         ),
                     // ),
                     BuildSmallProfileImage(
-                      radius: 30,
+                      radius: 25,
                       mediaId: widget.user.image,
                     ),
 

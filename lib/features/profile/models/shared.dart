@@ -314,10 +314,10 @@ class BuildSmallProfileImage extends ConsumerStatefulWidget {
     required this.radius,
     super.key,
     this.mediaId,
-    this.userId,
+    this.username,
   });
   String? mediaId;
-  String? userId;
+  String? username;
   double radius;
 
   @override
@@ -348,8 +348,8 @@ class _BuildSmallProfileImageState
           },
         ),
       );
-    } else if (widget.userId != null) {
-      final profileData = ref.watch(profileDataProvider(widget.userId!));
+    } else if (widget.username != null) {
+      final profileData = ref.watch(profileDataProvider(widget.username!));
       return CircleAvatar(
         backgroundColor: Colors.grey,
         radius: widget.radius,

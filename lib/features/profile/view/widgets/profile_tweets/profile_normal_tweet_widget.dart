@@ -10,6 +10,9 @@ import 'package:lite_x/features/profile/models/profile_tweet_model.dart';
 import 'package:lite_x/features/profile/models/shared.dart';
 import 'package:lite_x/features/profile/view_model/providers.dart';
 import 'package:readmore/readmore.dart';
+import 'package:flutter/gestures.dart';
+import 'package:video_player/video_player.dart';
+import 'package:visibility_detector/visibility_detector.dart';
 
 class ProfileNormalTweetWidget extends ConsumerWidget implements ProfileTweet {
   const ProfileNormalTweetWidget({
@@ -140,30 +143,23 @@ class ProfileNormalTweetWidget extends ConsumerWidget implements ProfileTweet {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      SizedBox(width: double.infinity),
                       profilePostModel.text.isEmpty
                           ? const SizedBox(height: 15)
                           : Padding(
                               padding: const EdgeInsets.only(bottom: 8),
-                              child: ReadMoreText(
-                                profilePostModel.text,
-                                trimLines: 3,
-                                colorClickableText: Colors.grey,
-                                trimMode: TrimMode.Line,
-                                trimCollapsedText: 'Show more',
-                                trimExpandedText: ' show less',
-                                style: TextStyle(fontSize: 16),
+                              child: ExpandableLinkedText(
+                                text: profilePostModel.text,
                               ),
                             ),
                       if (profilePostModel.mediaIds.isNotEmpty)
                         Container(
                           width: 350,
-                          // height: 350,
                           constraints: BoxConstraints(maxHeight: 400),
 
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          // child: buildPhotoSection(profilePostModel.mediaIds),
                           child: TweetMediaGrid(
                             mediaIds: profilePostModel.mediaIds,
                           ),
@@ -182,70 +178,176 @@ class ProfileNormalTweetWidget extends ConsumerWidget implements ProfileTweet {
   }
 }
 
-// Widget buildPhotoSection(List<dynamic> photos) {
-//   // if (photos.isEmpty) return const SizedBox.shrink();
+class ExpandableLinkedText extends StatefulWidget {
+  const ExpandableLinkedText({
+    super.key,
+    required this.text,
+    this.trimLines = 3,
+  });
 
-//   // if (photos.length == 1) {
-//   //   return Image.network(photos[0], fit: BoxFit.cover);
-//   // }
+  final String text;
+  final int trimLines;
 
-//   // if (photos.length == 2) {
-//   //   return Row(
-//   //     // crossAxisAlignment: CrossAxisAlignment.end,
-//   //     children: [
-//   //       Expanded(child: Image.network(photos[0], fit: BoxFit.fill)),
-//   //       Expanded(child: Image.network(photos[1], fit: BoxFit.fill)),
-//   //     ],
-//   //   );
-//   // } else if (photos.length == 3) {
-//   //   return Row(
-//   //     crossAxisAlignment: CrossAxisAlignment.stretch,
-//   //     children: [
-//   //       Expanded(child: Image.network(photos[0], fit: BoxFit.cover)),
-//   //       const SizedBox(width: 4),
-//   //       Expanded(
-//   //         child: Column(
-//   //           crossAxisAlignment: CrossAxisAlignment.stretch,
-//   //           children: [
-//   //             Expanded(child: Image.network(photos[1], fit: BoxFit.cover)),
-//   //             const SizedBox(height: 4),
-//   //             Expanded(child: Image.network(photos[2], fit: BoxFit.cover)),
-//   //           ],
-//   //         ),
-//   //       ),
-//   //     ],
-//   //   );
-//   // } else if (photos.length == 4) {
-//   //   return Row(
-//   //     crossAxisAlignment: CrossAxisAlignment.stretch,
-//   //     children: [
-//   //       Expanded(
-//   //         child: Column(
-//   //           crossAxisAlignment: CrossAxisAlignment.stretch,
-//   //           children: [
-//   //             Expanded(child: Image.network(photos[0], fit: BoxFit.cover)),
-//   //             const SizedBox(height: 4),
-//   //             Expanded(child: Image.network(photos[3], fit: BoxFit.cover)),
-//   //           ],
-//   //         ),
-//   //       ),
-//   //       const SizedBox(width: 4),
-//   //       Expanded(
-//   //         child: Column(
-//   //           crossAxisAlignment: CrossAxisAlignment.stretch,
-//   //           children: [
-//   //             Expanded(child: Image.network(photos[1], fit: BoxFit.cover)),
-//   //             const SizedBox(height: 4),
-//   //             Expanded(child: Image.network(photos[2], fit: BoxFit.cover)),
-//   //           ],
-//   //         ),
-//   //       ),
-//   //     ],
-//   //   );
-//   // }
+  @override
+  State<ExpandableLinkedText> createState() => _ExpandableLinkedTextState();
+}
 
-//   return const SizedBox.shrink();
-// }
+class _ExpandableLinkedTextState extends State<ExpandableLinkedText> {
+  bool _expanded = false;
+  String? _trimmed;
+  bool _isTrimmed = false;
+
+  final _showMoreRecognizer = TapGestureRecognizer();
+  final _showLessRecognizer = TapGestureRecognizer();
+
+  @override
+  void dispose() {
+    _showMoreRecognizer.dispose();
+    _showLessRecognizer.dispose();
+    super.dispose();
+  }
+
+  TextSpan _buildSpans(String displayText) {
+    final regex = RegExp(r'(@[A-Za-z0-9_]+|#[A-Za-z0-9_]+)');
+    final matches = regex.allMatches(displayText);
+
+    final List<TextSpan> spans = [];
+    int currentIndex = 0;
+
+    for (final m in matches) {
+      if (m.start > currentIndex) {
+        spans.add(
+          TextSpan(
+            text: displayText.substring(currentIndex, m.start),
+            style: TextStyle(fontSize: 16, color: Colors.white),
+          ),
+        );
+      }
+
+      final token = m.group(0)!;
+      spans.add(
+        TextSpan(
+          text: token,
+          style: TextStyle(color: Colors.blue, fontSize: 16),
+          recognizer: TapGestureRecognizer()
+            ..onTap = () {
+              if (token.contains("@")) {
+                try {
+                  context.push("/profilescreen/${token.substring(1)}");
+                } catch (e) {}
+              } else if (token.contains("#")) {
+                // TODO: goto hashtag screen
+              }
+            },
+        ),
+      );
+
+      currentIndex = m.end;
+    }
+
+    if (currentIndex < displayText.length) {
+      spans.add(
+        TextSpan(
+          text: displayText.substring(currentIndex),
+          style: TextStyle(fontSize: 16, color: Colors.white),
+        ),
+      );
+    }
+
+    return TextSpan(children: spans);
+  }
+
+  // Binary search to find the largest substring that fits within trimLines
+  String _computeTrimmed(
+    String fullText,
+    TextStyle style,
+    double maxWidth,
+    int maxLines,
+  ) {
+    final tp = TextPainter(textDirection: TextDirection.ltr);
+
+    int low = 0;
+    int high = fullText.length;
+    String fitted = fullText;
+
+    while (low <= high) {
+      final mid = ((low + high) / 2).floor();
+      final candidate = fullText.substring(0, mid).trim();
+      tp.text = TextSpan(text: candidate + '... Show more', style: style);
+      tp.maxLines = maxLines;
+      tp.layout(maxWidth: maxWidth);
+      if (tp.didExceedMaxLines) {
+        high = mid - 1;
+      } else {
+        fitted = candidate;
+        low = mid + 1;
+      }
+    }
+
+    return fitted;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final baseStyle = TextStyle(fontSize: 16, color: Colors.white);
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (!_expanded && _trimmed == null) {
+          final trimmed = _computeTrimmed(
+            widget.text,
+            baseStyle,
+            constraints.maxWidth,
+            widget.trimLines,
+          );
+          _trimmed = trimmed;
+          _isTrimmed = trimmed.length < widget.text.length;
+        }
+
+        if (!_isTrimmed) {
+          return RichText(text: _buildSpans(widget.text));
+        }
+
+        if (_expanded) {
+          final full = _buildSpans(widget.text);
+          final spans = <TextSpan>[
+            full,
+            TextSpan(text: ' ', style: baseStyle),
+            TextSpan(
+              text: 'show less',
+              style: TextStyle(color: Colors.grey, fontSize: 16),
+              recognizer: _showLessRecognizer
+                ..onTap = () {
+                  setState(() {
+                    _expanded = false;
+                  });
+                },
+            ),
+          ];
+          return RichText(text: TextSpan(children: spans));
+        } else {
+          final display = _trimmed ?? widget.text;
+          final mainSpan = _buildSpans(display);
+          final spans = <TextSpan>[
+            mainSpan,
+            TextSpan(text: '... ', style: baseStyle),
+            TextSpan(
+              text: 'Show more',
+              style: TextStyle(color: Colors.grey, fontSize: 16),
+              recognizer: _showMoreRecognizer
+                ..onTap = () {
+                  setState(() {
+                    _expanded = true;
+                  });
+                },
+            ),
+          ];
+          return RichText(text: TextSpan(children: spans));
+        }
+      },
+    );
+  }
+}
 
 void _openProfileTweetOptions(
   BuildContext context,
@@ -271,7 +373,6 @@ void _openProfileTweetOptions(
             icon: Icons.push_pin_outlined,
             onPress: () async {
               await Future.delayed(Duration(milliseconds: 100));
-              // TODO: make pin logic
               context.pop();
             },
           ),
@@ -299,11 +400,9 @@ void _openProfileTweetOptions(
                       icon: Icon(Icons.check, color: Colors.blue),
                     );
                     if (currentUser != null)
-                      // ignore: unused_result
                       ref.refresh(profilePostsProvider(currentUser.username));
                   },
                 );
-                // TODO: make delete post logic
                 context.pop();
               },
             ),
@@ -313,8 +412,6 @@ void _openProfileTweetOptions(
               icon: Icons.mode_comment_outlined,
               onPress: () async {
                 await Future.delayed(Duration(milliseconds: 100));
-
-                // TODO: make who can reply logic logic
                 context.pop();
               },
             ),
@@ -323,8 +420,6 @@ void _openProfileTweetOptions(
             icon: Icons.public,
             onPress: () async {
               await Future.delayed(Duration(milliseconds: 100));
-
-              // TODO: make who can reply logic logic
               context.pop();
             },
           ),
@@ -360,13 +455,26 @@ class ProfileTweetOptin extends StatelessWidget {
   }
 }
 
-class TweetMediaGrid extends ConsumerWidget {
+class TweetMediaGrid extends ConsumerStatefulWidget {
   const TweetMediaGrid({super.key, required this.mediaIds});
   final List<String> mediaIds;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return _buildMediaGrid(mediaIds, ref);
+  ConsumerState<TweetMediaGrid> createState() => _TweetMediaGridState();
+}
+
+class _TweetMediaGridState extends ConsumerState<TweetMediaGrid> {
+  String? _currentPlayingVideoUrl;
+
+  void _onVideoPlay(String videoUrl) {
+    setState(() {
+      _currentPlayingVideoUrl = videoUrl;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _buildMediaGrid(widget.mediaIds, ref);
   }
 
   Widget _buildMediaSkeleton() {
@@ -395,19 +503,85 @@ class TweetMediaGrid extends ConsumerWidget {
 
   Widget _errorContainer(double height) {
     return Container(
-      color: Colors.grey,
       height: height,
-      child: Center(child: Text("can't load image")),
+      color: Colors.grey[800],
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.broken_image, color: Colors.grey, size: 32),
+            SizedBox(height: 8),
+            Text('Couldn\'t load image', style: TextStyle(color: Colors.grey)),
+          ],
+        ),
+      ),
     );
   }
 
   Widget _loadingContainer(double height, {double? value}) {
     return Container(
-      color: Colors.grey,
-      height: 300,
-      child: Center(
-        child: CircularProgressIndicator(color: Colors.white, value: value),
-      ),
+      height: height,
+      color: Colors.grey[900],
+      child: Center(child: CircularProgressIndicator(value: value)),
+    );
+  }
+
+  bool _isVideo(String url) {
+    final uri = Uri.tryParse(url);
+    if (uri == null) return false;
+
+    final path = uri.path.toLowerCase();
+    final videoExtensions = [
+      '.mp4',
+      '.mov',
+      '.avi',
+      '.webm',
+      '.mkv',
+      '.flv',
+      '.wmv',
+      '.mpeg',
+      '.mpg',
+      '.3gp',
+      '.m4v',
+    ];
+
+    print(uri.path + "\n//////////*******************");
+
+    return videoExtensions.any((ext) => path.endsWith(ext));
+  }
+
+  Widget _buildMediaItem(String mediaId, WidgetRef ref, double height) {
+    final mediaUrl = ref.watch(mediaUrlProvider(mediaId));
+
+    return mediaUrl.when(
+      data: (url) {
+        if (url == null || url.isEmpty) {
+          return _errorContainer(height);
+        }
+        if (_isVideo(url)) {
+          return VideoPlayerWidget(
+            videoUrl: url,
+            height: height,
+            isPlaying: _currentPlayingVideoUrl == url,
+            onPlay: () => _onVideoPlay(url),
+          );
+        }
+        return CachedNetworkImage(
+          imageUrl: url,
+          height: height,
+          fit: BoxFit.cover,
+          placeholder: (context, url) => _loadingContainer(height),
+          errorWidget: (context, url, error) {
+            debugPrint('Image load error for $mediaId: $error');
+            return _errorContainer(height);
+          },
+        );
+      },
+      loading: () => _loadingContainer(height),
+      error: (error, stack) {
+        debugPrint('Media URL fetch error for $mediaId: $error');
+        return _errorContainer(height);
+      },
     );
   }
 
@@ -415,153 +589,35 @@ class TweetMediaGrid extends ConsumerWidget {
     if (photos.isEmpty) return const SizedBox.shrink();
 
     if (photos.length == 1) {
-      final mediaUrl = ref.watch(mediaUrlProvider(photos[0]));
-      return mediaUrl.when(
-        data: (url) {
-          return CachedNetworkImage(
-            imageUrl: url,
-            fit: BoxFit.cover,
-            errorWidget: (context, url, error) => _errorContainer(300),
-            progressIndicatorBuilder: (context, url, progress) =>
-                _loadingContainer(300, value: progress.progress),
-          );
-        },
-        error: (err, _) {
-          return _errorContainer(300);
-        },
-        loading: () {
-          return _loadingContainer(300);
-        },
-      );
+      return _buildMediaItem(photos[0], ref, 300);
     }
 
     if (photos.length == 2) {
-      final mediaUrl0 = ref.watch(mediaUrlProvider(photos[0]));
-      final mediaUrl1 = ref.watch(mediaUrlProvider(photos[1]));
       return Row(
         children: [
-          Expanded(
-            child: mediaUrl0.when(
-              data: (url) {
-                return CachedNetworkImage(
-                  imageUrl: url,
-                  fit: BoxFit.cover,
-                  errorWidget: (context, url, error) => _errorContainer(150),
-                  progressIndicatorBuilder: (context, url, progress) =>
-                      _loadingContainer(150, value: progress.progress),
-                );
-              },
-              error: (err, _) {
-                return _errorContainer(150);
-              },
-              loading: () {
-                return _loadingContainer(150);
-              },
-            ),
-          ),
-          Expanded(
-            child: mediaUrl1.when(
-              data: (url) {
-                return CachedNetworkImage(
-                  imageUrl: url,
-                  fit: BoxFit.cover,
-                  errorWidget: (context, url, error) => _errorContainer(150),
-                  progressIndicatorBuilder: (context, url, progress) =>
-                      _loadingContainer(150, value: progress.progress),
-                );
-              },
-              error: (err, _) {
-                return _errorContainer(150);
-              },
-              loading: () {
-                return _loadingContainer(150);
-              },
-            ),
-          ),
+          Expanded(child: _buildMediaItem(photos[0], ref, 150)),
+          Expanded(child: _buildMediaItem(photos[1], ref, 150)),
         ],
       );
     } else if (photos.length == 3) {
-      final mediaUrl0 = ref.watch(mediaUrlProvider(photos[0]));
-      final mediaUrl1 = ref.watch(mediaUrlProvider(photos[1]));
-      final mediaUrl2 = ref.watch(mediaUrlProvider(photos[2]));
       return Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(
-            child: mediaUrl0.when(
-              data: (url) {
-                return CachedNetworkImage(
-                  imageUrl: url,
-                  fit: BoxFit.cover,
-                  errorWidget: (context, url, error) => _errorContainer(300),
-                  progressIndicatorBuilder: (context, url, progress) =>
-                      _loadingContainer(300, value: progress.progress),
-                );
-              },
-              error: (err, _) {
-                return _errorContainer(300);
-              },
-              loading: () {
-                return _loadingContainer(300);
-              },
-            ),
-          ),
+          Expanded(child: _buildMediaItem(photos[0], ref, 300)),
           const SizedBox(width: 4),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Expanded(
-                  child: mediaUrl1.when(
-                    data: (url) {
-                      return CachedNetworkImage(
-                        imageUrl: url,
-                        fit: BoxFit.cover,
-                        errorWidget: (context, url, error) =>
-                            _errorContainer(148),
-                        progressIndicatorBuilder: (context, url, progress) =>
-                            _loadingContainer(148, value: progress.progress),
-                      );
-                    },
-                    error: (err, _) {
-                      return _errorContainer(148);
-                    },
-                    loading: () {
-                      return _loadingContainer(148);
-                    },
-                  ),
-                ),
+                Expanded(child: _buildMediaItem(photos[1], ref, 148)),
                 const SizedBox(height: 4),
-                Expanded(
-                  child: mediaUrl2.when(
-                    data: (url) {
-                      return CachedNetworkImage(
-                        imageUrl: url,
-                        fit: BoxFit.cover,
-                        errorWidget: (context, url, error) =>
-                            _errorContainer(148),
-                        progressIndicatorBuilder: (context, url, progress) =>
-                            _loadingContainer(148, value: progress.progress),
-                      );
-                    },
-                    error: (err, _) {
-                      return _errorContainer(148);
-                    },
-                    loading: () {
-                      return _loadingContainer(148);
-                    },
-                  ),
-                ),
+                Expanded(child: _buildMediaItem(photos[2], ref, 148)),
               ],
             ),
           ),
         ],
       );
     } else if (photos.length == 4) {
-      final mediaUrl0 = ref.watch(mediaUrlProvider(photos[0]));
-      final mediaUrl1 = ref.watch(mediaUrlProvider(photos[1]));
-      final mediaUrl2 = ref.watch(mediaUrlProvider(photos[2]));
-      final mediaUrl3 = ref.watch(mediaUrlProvider(photos[3]));
       return Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -569,47 +625,9 @@ class TweetMediaGrid extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Expanded(
-                  child: mediaUrl0.when(
-                    data: (url) {
-                      return CachedNetworkImage(
-                        imageUrl: url,
-                        fit: BoxFit.cover,
-                        errorWidget: (context, url, error) =>
-                            _errorContainer(148),
-                        progressIndicatorBuilder: (context, url, progress) =>
-                            _loadingContainer(148, value: progress.progress),
-                      );
-                    },
-                    error: (err, _) {
-                      return _errorContainer(148);
-                    },
-                    loading: () {
-                      return _loadingContainer(148);
-                    },
-                  ),
-                ),
+                Expanded(child: _buildMediaItem(photos[0], ref, 148)),
                 const SizedBox(height: 4),
-                Expanded(
-                  child: mediaUrl3.when(
-                    data: (url) {
-                      return CachedNetworkImage(
-                        imageUrl: url,
-                        fit: BoxFit.cover,
-                        errorWidget: (context, url, error) =>
-                            _errorContainer(148),
-                        progressIndicatorBuilder: (context, url, progress) =>
-                            _loadingContainer(148, value: progress.progress),
-                      );
-                    },
-                    error: (err, _) {
-                      return _errorContainer(148);
-                    },
-                    loading: () {
-                      return _loadingContainer(148);
-                    },
-                  ),
-                ),
+                Expanded(child: _buildMediaItem(photos[3], ref, 148)),
               ],
             ),
           ),
@@ -618,47 +636,9 @@ class TweetMediaGrid extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Expanded(
-                  child: mediaUrl1.when(
-                    data: (url) {
-                      return CachedNetworkImage(
-                        imageUrl: url,
-                        fit: BoxFit.cover,
-                        errorWidget: (context, url, error) =>
-                            _errorContainer(148),
-                        progressIndicatorBuilder: (context, url, progress) =>
-                            _loadingContainer(148, value: progress.progress),
-                      );
-                    },
-                    error: (err, _) {
-                      return _errorContainer(148);
-                    },
-                    loading: () {
-                      return _loadingContainer(148);
-                    },
-                  ),
-                ),
+                Expanded(child: _buildMediaItem(photos[1], ref, 148)),
                 const SizedBox(height: 4),
-                Expanded(
-                  child: mediaUrl2.when(
-                    data: (url) {
-                      return CachedNetworkImage(
-                        imageUrl: url,
-                        fit: BoxFit.cover,
-                        errorWidget: (context, url, error) =>
-                            _errorContainer(148),
-                        progressIndicatorBuilder: (context, url, progress) =>
-                            _loadingContainer(148, value: progress.progress),
-                      );
-                    },
-                    error: (err, _) {
-                      return _errorContainer(148);
-                    },
-                    loading: () {
-                      return _loadingContainer(148);
-                    },
-                  ),
-                ),
+                Expanded(child: _buildMediaItem(photos[2], ref, 148)),
               ],
             ),
           ),
@@ -667,5 +647,172 @@ class TweetMediaGrid extends ConsumerWidget {
     }
 
     return const SizedBox.shrink();
+  }
+}
+
+class VideoPlayerWidget extends StatefulWidget {
+  const VideoPlayerWidget({
+    super.key,
+    required this.videoUrl,
+    required this.height,
+    this.isPlaying = true,
+    this.onPlay,
+  });
+
+  final String videoUrl;
+  final double height;
+  final bool isPlaying;
+  final VoidCallback? onPlay;
+
+  @override
+  State<VideoPlayerWidget> createState() => _VideoPlayerWidgetState();
+}
+
+class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
+  late VideoPlayerController _controller;
+  bool _isInitialized = false;
+  bool _hasError = false;
+  bool _isMuted = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeVideo();
+  }
+
+  Future<void> _initializeVideo() async {
+    try {
+      _controller = VideoPlayerController.networkUrl(
+        Uri.parse(widget.videoUrl),
+      );
+      await _controller.initialize();
+      _controller.setLooping(true);
+      _controller.setVolume(0.0); // Start muted
+      _controller.play();
+
+      if (mounted) {
+        setState(() {
+          _isInitialized = true;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _hasError = true;
+        });
+      }
+    }
+  }
+
+  void _toggleMute() {
+    if (!mounted) return;
+    setState(() {
+      _isMuted = !_isMuted;
+      try {
+        _controller.setVolume(_isMuted ? 0.0 : 1.0);
+      } catch (e) {
+        debugPrint('Error toggling mute: $e');
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    try {
+      if (_controller != null) {
+        _controller.dispose();
+      }
+    } catch (e) {
+      debugPrint('Error disposing video controller: $e');
+    }
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_hasError) {
+      return Container(
+        color: Colors.grey[800],
+        height: widget.height,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.broken_image, color: Colors.grey, size: 32),
+              SizedBox(height: 8),
+              Text(
+                'Couldn\'t load video',
+                style: TextStyle(color: Colors.grey),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (!_isInitialized) {
+      return Container(
+        color: Colors.grey[900],
+        height: widget.height,
+        child: Center(child: CircularProgressIndicator(color: Colors.white)),
+      );
+    }
+
+    return VisibilityDetector(
+      key: Key('video_${widget.videoUrl}'),
+      onVisibilityChanged: (VisibilityInfo info) {
+        if (!mounted) return;
+        try {
+          // Only auto-play/pause if this is the current playing video
+          if (info.visibleFraction > 0.5) {
+            // More than 50% visible - notify parent and play
+            widget.onPlay?.call();
+            if (!_controller.value.isPlaying) {
+              _controller.play();
+            }
+          } else {
+            // Less than 50% visible - pause
+            if (_controller.value.isPlaying) {
+              _controller.pause();
+            }
+          }
+        } catch (e) {
+          debugPrint('Error in visibility detection: $e');
+        }
+      },
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Inline video player
+          SizedBox(
+            height: widget.height,
+            child: AspectRatio(
+              aspectRatio: _controller.value.aspectRatio,
+              child: VideoPlayer(_controller),
+            ),
+          ),
+          // Mute toggle icon (bottom-left corner)
+          Positioned(
+            bottom: 8,
+            left: 8,
+            child: GestureDetector(
+              onTap: _toggleMute,
+              child: Container(
+                padding: EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.6),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Icon(
+                  _isMuted ? Icons.volume_off : Icons.volume_up,
+                  color: Colors.white,
+                  size: 15,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

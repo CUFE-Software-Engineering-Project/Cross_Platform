@@ -10,15 +10,13 @@ Future<List<String>> upload_media(List<File> files) async {
   final container = ProviderContainer();
   final limitedFiles = files.take(4).toList();
 
-  final List<String> ids = [];
-  for (int i = 0; i < limitedFiles.length; i++) {
-    final file = limitedFiles[i];
+  // Process all files in parallel
+  final uploadFutures = limitedFiles.map((file) async {
     bool fail = false;
     final fileName = file.path.split(Platform.pathSeparator).last;
     final fileType = getMediaType(file.path);
 
     // request upload
-
     final requestUpload = container.read(requestUploadProvider);
     final requestUploadResponse = await requestUpload(fileName, fileType);
     RequestUploadModel requestUploadModel = RequestUploadModel(
@@ -34,8 +32,7 @@ Future<List<String>> upload_media(List<File> files) async {
       },
     );
     if (fail) {
-      ids.add("");
-      continue;
+      return "";
     }
 
     // upload
@@ -45,11 +42,10 @@ Future<List<String>> upload_media(List<File> files) async {
       fail = true;
     }, (res) {});
     if (fail) {
-      ids.add("");
-      continue;
+      return "";
     }
 
-    //confirm upload
+    // confirm upload
     final confirmUpload = container.read(confirmUploadProvider);
     final confirmUploadResponse = await confirmUpload(
       requestUploadModel.keyName,
@@ -70,13 +66,14 @@ Future<List<String>> upload_media(List<File> files) async {
       },
     );
     if (fail) {
-      ids.add("");
-      continue;
+      return "";
     }
-    ids.add(confirmUploadModel.id);
-  }
+    return confirmUploadModel.id;
+  }).toList();
+
+  // Wait for all uploads to complete
+  final ids = await Future.wait(uploadFutures);
 
   container.dispose();
   return ids;
 }
-
