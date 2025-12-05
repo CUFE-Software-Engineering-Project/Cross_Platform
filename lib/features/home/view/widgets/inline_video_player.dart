@@ -7,12 +7,14 @@ class InlineVideoPlayer extends StatefulWidget {
   final String videoUrl;
   final double? height;
   final bool autoPlay;
+  final VoidCallback? onTap;
 
   const InlineVideoPlayer({
     super.key,
     required this.videoUrl,
     this.height,
     this.autoPlay = true,
+    this.onTap,
   });
 
   @override
@@ -24,6 +26,7 @@ class _InlineVideoPlayerState extends State<InlineVideoPlayer> {
   bool _isInitialized = false;
   bool _hasError = false;
   bool _isVisible = false;
+  bool _isMuted = true;
 
   @override
   void initState() {
@@ -48,6 +51,7 @@ class _InlineVideoPlayerState extends State<InlineVideoPlayer> {
       );
 
       _controller.setLooping(true);
+      _controller.setVolume(0.0); // Start muted
 
       await _controller.initialize();
 
@@ -78,17 +82,19 @@ class _InlineVideoPlayerState extends State<InlineVideoPlayer> {
   }
 
   void _onVisibilityChanged(VisibilityInfo info) {
-    if (!_isInitialized) return;
+    if (!_isInitialized || !mounted) return;
 
     final isVisible =
         info.visibleFraction > 0.5; // Play when more than 50% visible
 
     if (isVisible != _isVisible) {
-      setState(() {
-        _isVisible = isVisible;
-      });
+      if (mounted) {
+        setState(() {
+          _isVisible = isVisible;
+        });
+      }
 
-      if (widget.autoPlay) {
+      if (widget.autoPlay && mounted) {
         if (isVisible) {
           _controller.play();
         } else {
@@ -135,13 +141,18 @@ class _InlineVideoPlayerState extends State<InlineVideoPlayer> {
       onVisibilityChanged: _onVisibilityChanged,
       child: GestureDetector(
         onTap: () {
-          setState(() {
-            if (_controller.value.isPlaying) {
-              _controller.pause();
-            } else {
-              _controller.play();
-            }
-          });
+          if (widget.onTap != null) {
+            widget.onTap!();
+          } else {
+            if (!mounted) return;
+            setState(() {
+              if (_controller.value.isPlaying) {
+                _controller.pause();
+              } else {
+                _controller.play();
+              }
+            });
+          }
         },
         child: Container(
           height: widget.height,
@@ -199,6 +210,32 @@ class _InlineVideoPlayerState extends State<InlineVideoPlayer> {
                         ),
                       ),
                     ],
+                  ),
+                ),
+              ),
+              // Volume control button
+              Positioned(
+                bottom: 8,
+                right: 8,
+                child: GestureDetector(
+                  onTap: () {
+                    if (!mounted) return;
+                    setState(() {
+                      _isMuted = !_isMuted;
+                      _controller.setVolume(_isMuted ? 0.0 : 1.0);
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.black87,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      _isMuted ? Icons.volume_off : Icons.volume_up,
+                      color: Colors.white,
+                      size: 16,
+                    ),
                   ),
                 ),
               ),

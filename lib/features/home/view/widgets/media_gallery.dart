@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'image_viewer_screen.dart';
+import 'media_viewer_screen.dart';
 import 'inline_video_player.dart';
 
 /// Renders up to four images/videos in a Twitter-style grid while falling back to a
@@ -134,7 +134,19 @@ class MediaGallery extends StatelessWidget {
 
     // For videos, show inline auto-playing player
     if (isVideo) {
-      return InlineVideoPlayer(videoUrl: url, autoPlay: true);
+      return InlineVideoPlayer(
+        videoUrl: url,
+        autoPlay: true,
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) =>
+                  MediaViewerScreen(mediaUrls: allImages, initialIndex: index),
+            ),
+          );
+        },
+      );
     }
 
     // For images, show with tap to open viewer
@@ -144,7 +156,7 @@ class MediaGallery extends StatelessWidget {
           context,
           MaterialPageRoute(
             builder: (context) =>
-                ImageViewerScreen(imageUrls: allImages, initialIndex: index),
+                MediaViewerScreen(mediaUrls: allImages, initialIndex: index),
           ),
         );
       },
