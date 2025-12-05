@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'image_viewer_screen.dart';
+import 'inline_video_player.dart';
 
-/// Renders up to four images in a Twitter-style grid while falling back to a
+/// Renders up to four images/videos in a Twitter-style grid while falling back to a
 /// placeholder when URLs are still being resolved.
 class MediaGallery extends StatelessWidget {
   final List<String> urls;
@@ -22,15 +23,27 @@ class MediaGallery extends StatelessWidget {
     final media = urls.where((url) => url.isNotEmpty).take(4).toList();
     if (media.isEmpty) return const SizedBox.shrink();
 
+    // Convert media keys to full URLs
+    final fullUrls = media.map(_getFullMediaUrl).toList();
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(borderRadius),
       child: Container(
         width: double.infinity,
         constraints: BoxConstraints(minHeight: minHeight, maxHeight: maxHeight),
         color: Colors.grey[900],
-        child: _buildLayout(context, media),
+        child: _buildLayout(context, fullUrls),
       ),
     );
+  }
+
+  String _getFullMediaUrl(String mediaKey) {
+    // If it's already a full URL, return it
+    if (mediaKey.startsWith('http://') || mediaKey.startsWith('https://')) {
+      return mediaKey;
+    }
+    // Otherwise, construct the full URL
+    return 'https://litex.siematworld.online/media/$mediaKey';
   }
 
   Widget _buildLayout(BuildContext context, List<String> images) {
@@ -117,6 +130,14 @@ class MediaGallery extends StatelessWidget {
       return _buildPendingMediaPlaceholder();
     }
 
+    final isVideo = _isVideoUrl(url);
+
+    // For videos, show inline auto-playing player
+    if (isVideo) {
+      return InlineVideoPlayer(videoUrl: url, autoPlay: true);
+    }
+
+    // For images, show with tap to open viewer
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -150,6 +171,28 @@ class MediaGallery extends StatelessWidget {
         },
       ),
     );
+  }
+
+  bool _isVideoUrl(String url) {
+    final uri = Uri.tryParse(url);
+    if (uri == null) return false;
+
+    final path = uri.path.toLowerCase();
+    final videoExtensions = [
+      '.mp4',
+      '.mov',
+      '.avi',
+      '.webm',
+      '.mkv',
+      '.flv',
+      '.wmv',
+      '.mpeg',
+      '.mpg',
+      '.3gp',
+      '.m4v',
+    ];
+
+    return videoExtensions.any((ext) => path.endsWith(ext));
   }
 
   Widget _buildPendingMediaPlaceholder() {
