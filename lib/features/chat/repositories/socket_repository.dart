@@ -1,4 +1,5 @@
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:lite_x/core/providers/unseenChatsCountProvider.dart';
 import 'package:lite_x/features/auth/repositories/auth_local_repository.dart';
 import 'package:lite_x/features/chat/providers/tokenStream.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -19,6 +20,9 @@ class SocketRepository {
   final _typingController = StreamController<Map<String, dynamic>>.broadcast();
   final _messagesReadController =
       StreamController<Map<String, dynamic>>.broadcast();
+  final _unseenChatsController =
+      StreamController<Map<String, dynamic>>.broadcast();
+  //-------------------------------------------------------------------------------//
   Stream<Map<String, dynamic>> get messagesReadStream =>
       _messagesReadController.stream;
   Stream<Map<String, dynamic>> get newMessageStream =>
@@ -26,6 +30,8 @@ class SocketRepository {
   Stream<Map<String, dynamic>> get messageAddedStream =>
       _messageAddedController.stream;
   Stream<Map<String, dynamic>> get typingStream => _typingController.stream;
+  Stream<Map<String, dynamic>> get unseenChatsStream =>
+      _unseenChatsController.stream;
 
   final Ref ref;
   io.Socket? _socket;
@@ -33,6 +39,7 @@ class SocketRepository {
   SocketRepository({required this.ref}) {
     _initSocket();
     _listenTokenChanges();
+    _listenToUnseenChats();
   }
   void _listenTokenChanges() {
     ref.listen(tokenStreamProvider, (previous, next) {
@@ -65,6 +72,13 @@ class SocketRepository {
     _setupListeners();
 
     _socket?.connect();
+  }
+
+  void _listenToUnseenChats() {
+    unseenChatsStream.listen((data) {
+      int count = data['count'] ?? 0;
+      ref.read(unseenChatsCountProvider.notifier).state = count;
+    });
   }
 
   void _updateSocketToken(String newToken) {
@@ -118,7 +132,18 @@ class SocketRepository {
         _typingController.add(Map<String, dynamic>.from(data));
       }
     });
+    _socket?.on('unseen-chats-count', (data) {
+      print("Unseen chats count: $data\n");
+      if (data != null && !_unseenChatsController.isClosed) {
+        _unseenChatsController.add(Map<String, dynamic>.from(data));
+      }
+    }); // New listener for unseen chats count
   }
+
+  void sendOpenMessageTab() {
+    print("sending open-message-tab");
+    _socket?.emit('open-message-tab');
+  } // to be zero when user opens chat tab
 
   void sendTyping(String chatId, bool isTyping) {
     _socket?.emit('typing', {'chatId': chatId, 'isTyping': isTyping});
@@ -154,17 +179,6 @@ class SocketRepository {
     _socket?.on("message-added", (data) => callback(data));
   } //for sender
 
-  void leaveChat(String chatId) {
-    _socket?.emit("leave-chat", {"chatId": chatId});
-  } // when user leaves the chat screen used for unseen count
-
-  void disposeListeners() {
-    //  _socket?.off('new-message');
-    // _socket?.off('user-typing');
-    // _socket?.off('messages-read');
-    //  _socket?.off('message-added');
-  }
-
   void dispose() {
     _socket?.disconnect();
     _socket?.dispose();
@@ -172,5 +186,6 @@ class SocketRepository {
     _messageAddedController.close();
     _typingController.close();
     _messagesReadController.close();
+    _unseenChatsController.close();
   }
 }

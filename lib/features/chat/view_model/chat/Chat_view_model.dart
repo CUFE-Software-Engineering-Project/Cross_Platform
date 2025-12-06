@@ -198,7 +198,7 @@ class ChatViewModel extends _$ChatViewModel {
     if (_activeChatId == null || _myUserId == null) return;
 
     final tempId = 'temp_${const Uuid().v4()}';
-    final now = DateTime.now();
+    final timestamp = DateTime.now();
 
     final localMessage = MessageModel(
       id: tempId,
@@ -206,7 +206,7 @@ class ChatViewModel extends _$ChatViewModel {
       userId: _myUserId!,
       content: content,
       messageType: messageType,
-      createdAt: now,
+      createdAt: timestamp,
       status: 'SENDING',
     );
 
@@ -222,6 +222,7 @@ class ChatViewModel extends _$ChatViewModel {
           chatId: _activeChatId!,
           content: content,
           messageType: messageType,
+          timestamp: timestamp,
         );
 
     _socketRepository.sendMessage(localMessage.toApiRequest());

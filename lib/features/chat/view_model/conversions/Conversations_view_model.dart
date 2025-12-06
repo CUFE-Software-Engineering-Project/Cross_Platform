@@ -48,6 +48,7 @@ class ConversationsViewModel extends _$ConversationsViewModel {
         print("new count $serverUnseenCount");
 
         final newMsg = MessageModel.fromApiResponse(data);
+
         final activeChatId = ref.read(activeChatProvider);
         final bool isChatOpen = (activeChatId == newMsg.chatId);
         final bool isMe = newMsg.userId == _currentUser?.id;
@@ -60,6 +61,7 @@ class ConversationsViewModel extends _$ConversationsViewModel {
         final idx = currentConversations.indexWhere(
           (chat) => chat.id == newMsg.chatId,
         );
+
         if (idx != -1) {
           final chat = currentConversations[idx];
           int finalUnseenCount;
@@ -136,18 +138,14 @@ class ConversationsViewModel extends _$ConversationsViewModel {
                     return bTime.compareTo(aTime);
                   });
 
-                  state = AsyncValue.data(refreshed);
+                  state = AsyncValue.data([...refreshed]);
                 });
               });
         }
+        _sortConversations(currentConversations);
 
-        currentConversations.sort((a, b) {
-          final aTime = a.lastMessageTime ?? a.updatedAt;
-          final bTime = b.lastMessageTime ?? b.updatedAt;
-          return bTime.compareTo(aTime);
-        });
+        state = AsyncValue.data([...currentConversations]);
 
-        state = AsyncValue.data(currentConversations);
         _chatLocalRepository.upsertConversations(currentConversations);
       } catch (e) {
         print("Error handling new-message socket: $e");
@@ -159,6 +157,7 @@ class ConversationsViewModel extends _$ConversationsViewModel {
     required String chatId,
     required String content,
     required String messageType,
+    required DateTime timestamp,
   }) {
     if (_currentUser == null) return;
     final currentList = state.value ?? [];
@@ -170,22 +169,24 @@ class ConversationsViewModel extends _$ConversationsViewModel {
       final updatedChat = chat.copyWith(
         lastMessageContent: content,
         lastMessageType: messageType,
-        lastMessageTime: DateTime.now(),
+        lastMessageTime: timestamp,
         lastMessageSenderId: _currentUser!.id,
       );
 
       final updatedList = List<ConversationModel>.from(currentList);
       updatedList[index] = updatedChat;
-
-      updatedList.sort((a, b) {
-        final aTime = a.lastMessageTime ?? a.updatedAt;
-        final bTime = b.lastMessageTime ?? b.updatedAt;
-        return bTime.compareTo(aTime);
-      });
-
-      state = AsyncValue.data(updatedList);
+      _sortConversations(updatedList);
+      state = AsyncValue.data([...updatedList]);
       _chatLocalRepository.upsertConversations([updatedChat]);
     }
+  }
+
+  void _sortConversations(List<ConversationModel> list) {
+    list.sort((a, b) {
+      final aTime = a.lastMessageTime ?? a.updatedAt;
+      final bTime = b.lastMessageTime ?? b.updatedAt;
+      return bTime.compareTo(aTime);
+    });
   }
 
   void markChatAsRead(String chatId) {
@@ -196,8 +197,8 @@ class ConversationsViewModel extends _$ConversationsViewModel {
         }
         return chat;
       }).toList();
+      state = AsyncValue.data([...updatedList]);
 
-      state = AsyncValue.data(updatedList);
       final chat = updatedList.firstWhere((c) => c.id == chatId);
       _chatLocalRepository.upsertConversations([chat]);
     });
@@ -238,7 +239,7 @@ class ConversationsViewModel extends _$ConversationsViewModel {
           return bTime.compareTo(aTime);
         });
 
-        state = AsyncValue.data(updatedList);
+        state = AsyncValue.data([...updatedList]);
 
         return Right(serverChat);
       });
@@ -268,7 +269,7 @@ class ConversationsViewModel extends _$ConversationsViewModel {
           .read(chatLocalRepositoryProvider)
           .getAllConversations();
       if (state.value == null || state.value!.isEmpty) {
-        state = AsyncValue.data(cachedConversations);
+        state = AsyncValue.data([...cachedConversations]);
       }
 
       final result = await _chatRemoteRepository.getuserchats(_currentUser!.id);
@@ -278,11 +279,6 @@ class ConversationsViewModel extends _$ConversationsViewModel {
           print("Error loading conversations: ${failure.message}");
         },
         (serverConversations) async {
-          serverConversations.sort(
-            (a, b) => (b.lastMessageTime ?? b.updatedAt).compareTo(
-              a.lastMessageTime ?? a.updatedAt,
-            ),
-          );
           final serverIds = serverConversations.map((c) => c.id).toSet();
           final localConversations = _chatLocalRepository.getAllConversations();
 
@@ -292,7 +288,8 @@ class ConversationsViewModel extends _$ConversationsViewModel {
             }
           }
           await _chatLocalRepository.upsertConversations(serverConversations);
-          state = AsyncValue.data(serverConversations);
+          _sortConversations(serverConversations);
+          state = AsyncValue.data([...serverConversations]);
         },
       );
     } catch (e, st) {
@@ -307,7 +304,7 @@ class ConversationsViewModel extends _$ConversationsViewModel {
     }
 
     final result = await _chatRemoteRepository.deleteChat(chatId);
-
+    print("Delete chat result: $result");
     return result.fold(
       (failure) {
         return Left(failure);
@@ -317,7 +314,7 @@ class ConversationsViewModel extends _$ConversationsViewModel {
         final currentList = state.value ?? [];
         final updatedList = List<ConversationModel>.from(currentList)
           ..removeWhere((chat) => chat.id == chatId);
-        state = AsyncValue.data(updatedList);
+        state = AsyncValue.data([...updatedList]);
         return Right(successMessage);
       },
     );

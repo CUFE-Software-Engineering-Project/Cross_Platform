@@ -52,20 +52,21 @@ class _ConversationsListState extends ConsumerState<ConversationsList> {
               ),
             ),
             onPressed: () async {
+              final messenger = ScaffoldMessenger.of(context);
               Navigator.pop(ctx);
               final result = await ref
                   .read(conversationsViewModelProvider.notifier)
                   .deleteChat(chatId);
               if (mounted) {
                 result.fold(
-                  (failure) => ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(SnackBar(content: Text(failure.message))),
-                  (success) => ScaffoldMessenger.of(context).showSnackBar(
+                  (failure) => messenger.showSnackBar(
+                    SnackBar(content: Text(failure.message)),
+                  ),
+                  (success) => messenger.showSnackBar(
                     SnackBar(
                       content: Text(
                         success,
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
                         ),
@@ -91,17 +92,18 @@ class _ConversationsListState extends ConsumerState<ConversationsList> {
     );
   }
 
-  void _showOptionsMenu(BuildContext context, String chatId) {
+  void _showOptionsMenu(BuildContext parentContext, String chatId) {
     showDialog(
-      context: context,
-      builder: (context) => SimpleDialog(
+      context: parentContext,
+      builder: (dialogContext) => SimpleDialog(
         backgroundColor: Palette.textSecondary,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
         contentPadding: const EdgeInsets.symmetric(vertical: 12),
         children: [
           _buildMenuOption("Delete conversation", () {
-            Navigator.pop(context);
-            _showDeleteConfirmation(context, chatId);
+            Navigator.pop(dialogContext);
+
+            _showDeleteConfirmation(parentContext, chatId);
           }),
         ],
       ),
@@ -157,12 +159,13 @@ class _ConversationsListState extends ConsumerState<ConversationsList> {
 
         return RefreshIndicator(
           onRefresh: () async {
-            await ref
+            return ref
                 .read(conversationsViewModelProvider.notifier)
                 .loadConversations();
           },
           child: ListView.builder(
             controller: _scrollController,
+            physics: const AlwaysScrollableScrollPhysics(),
             itemCount: conversations.length,
             itemBuilder: (context, index) {
               final conversation = conversations[index];

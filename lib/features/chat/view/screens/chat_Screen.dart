@@ -62,7 +62,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
   @override
   void dispose() {
-    //  ref.read(activeChatProvider.notifier).setActive(null);
     _chatSub?.close();
     _chatSub = null;
     _scrollController.removeListener(_onScroll);

@@ -44,14 +44,6 @@ class ConversationAppBar extends ConsumerWidget implements PreferredSizeWidget {
                 ),
               ),
             ),
-            Spacer(),
-            IconButton(
-              icon: const Icon(
-                Icons.settings_outlined,
-                color: Color.fromARGB(174, 255, 255, 255),
-              ),
-              onPressed: () {},
-            ),
           ],
         ),
       ),
