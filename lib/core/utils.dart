@@ -80,23 +80,23 @@ String? passwordValidator(String? value) {
   }
 
   final capitalLetters = RegExp(r'[A-Z]');
-  if (capitalLetters.allMatches(value).length < 3) {
-    return 'Password must contain at least 3 uppercase letters';
+  if (capitalLetters.allMatches(value).length < 1) {
+    return 'Password must contain at least 1 uppercase letter';
   }
 
   final lowercaseLetters = RegExp(r'[a-z]');
-  if (lowercaseLetters.allMatches(value).length < 3) {
-    return 'Password must contain at least 3 lowercase letters';
+  if (lowercaseLetters.allMatches(value).length < 1) {
+    return 'Password must contain at least 1 lowercase letter';
   }
 
   final symbols = RegExp(r'[!@#\$%^&*(),.?":{}|<>_\-=+;]');
-  if (symbols.allMatches(value).length < 3) {
-    return 'Password must contain at least 3 symbols';
+  if (symbols.allMatches(value).length < 1) {
+    return 'Password must contain at least 1 symbol';
   }
 
   final numbers = RegExp(r'\d');
-  if (numbers.allMatches(value).length < 3) {
-    return 'Password must contain at least 3 numbers';
+  if (numbers.allMatches(value).length < 1) {
+    return 'Password must contain at least 1 number';
   }
 
   return null;

@@ -101,7 +101,7 @@ class _UsernameScreenState extends ConsumerState<UsernameScreen> {
             backgroundColor: Palette.textPrimary,
           ),
         );
-        ref.read(authViewModelProvider.notifier).resetState();
+        // ref.read(authViewModelProvider.notifier).resetState();
       }
     });
 

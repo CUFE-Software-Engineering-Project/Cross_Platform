@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:fpdart/fpdart.dart';
 import 'package:lite_x/core/classes/AppFailure.dart';
 import 'package:lite_x/core/models/usermodel.dart';
@@ -19,7 +20,7 @@ class ConversationsViewModel extends _$ConversationsViewModel {
   late final SocketRepository _socketRepository;
   UserModel? _currentUser;
   bool _listening = false;
-
+  StreamSubscription? _messageSub;
   @override
   AsyncValue<List<ConversationModel>> build() {
     _chatRemoteRepository = ref.watch(chatRemoteRepositoryProvider);
@@ -31,7 +32,7 @@ class ConversationsViewModel extends _$ConversationsViewModel {
       _listening = true;
 
       ref.onDispose(() {
-        _socketRepository.disposeListeners();
+        _messageSub?.cancel();
         _listening = false;
       });
     }
@@ -39,10 +40,17 @@ class ConversationsViewModel extends _$ConversationsViewModel {
   }
 
   void _listenToNewMessages() {
-    _socketRepository.onNewMessage((data) {
+    _messageSub = _socketRepository.newMessageStream.listen((data) {
       try {
         print("New message received: $data");
+
+        final serverUnseenCount = data["unseenMessagesCount"] as int? ?? 0;
+        print("new count $serverUnseenCount");
+
         final newMsg = MessageModel.fromApiResponse(data);
+        final activeChatId = ref.read(activeChatProvider);
+        final bool isChatOpen = (activeChatId == newMsg.chatId);
+        final bool isMe = newMsg.userId == _currentUser?.id;
 
         final currentConversations = state.maybeWhen(
           data: (list) => List<ConversationModel>.from(list),
@@ -52,31 +60,35 @@ class ConversationsViewModel extends _$ConversationsViewModel {
         final idx = currentConversations.indexWhere(
           (chat) => chat.id == newMsg.chatId,
         );
-        final openChatId = ref.read(activeChatProvider);
-        final bool isChatOpen = openChatId == newMsg.chatId;
         if (idx != -1) {
           final chat = currentConversations[idx];
-          final bool isMe = newMsg.userId == _currentUser?.id;
-          final int newCount;
+          int finalUnseenCount;
           if (isMe) {
-            newCount = chat.unseenCount;
+            finalUnseenCount = chat.unseenCount;
           } else if (isChatOpen) {
-            newCount = 0;
+            finalUnseenCount = 0;
+            _socketRepository.openChat(newMsg.chatId);
           } else {
-            newCount = chat.unseenCount + 1;
+            if (serverUnseenCount > 0) {
+              finalUnseenCount = serverUnseenCount;
+            } else {
+              finalUnseenCount = chat.unseenCount + 1;
+            }
           }
+
           final updatedChat = chat.copyWith(
             lastMessageContent: newMsg.content,
             lastMessageType: newMsg.messageType,
             lastMessageTime: newMsg.createdAt,
-            unseenCount: newCount,
+            unseenCount: finalUnseenCount,
             lastMessageSenderId: newMsg.userId,
           );
 
           currentConversations[idx] = updatedChat;
         } else {
-          final bool isMe = newMsg.userId == _currentUser?.id;
-          final int initialUnseenCount = (isMe || isChatOpen) ? 0 : 1;
+          int initialCount = (isMe || isChatOpen)
+              ? 0
+              : (serverUnseenCount > 0 ? serverUnseenCount : 1);
           final created = ConversationModel(
             id: newMsg.chatId,
             isDMChat: true,
@@ -93,7 +105,7 @@ class ConversationsViewModel extends _$ConversationsViewModel {
             lastMessageContent: newMsg.content,
             lastMessageType: newMsg.messageType,
             lastMessageTime: newMsg.createdAt,
-            unseenCount: initialUnseenCount,
+            unseenCount: initialCount,
             lastMessageSenderId: newMsg.userId,
           );
 
@@ -102,11 +114,8 @@ class ConversationsViewModel extends _$ConversationsViewModel {
               .getChatInfo(newMsg.chatId, _currentUser!.id)
               .then((result) {
                 result.fold((l) => null, (serverChat) async {
-                  final bool isMe = newMsg.userId == _currentUser!.id;
-                  final int newCount = isMe ? 0 : 1;
-
                   final mergedChat = serverChat.copyWith(
-                    unseenCount: newCount,
+                    unseenCount: initialCount,
                     lastMessageContent: newMsg.content,
                     lastMessageType: newMsg.messageType,
                     lastMessageTime: newMsg.createdAt,
@@ -152,7 +161,6 @@ class ConversationsViewModel extends _$ConversationsViewModel {
     required String messageType,
   }) {
     if (_currentUser == null) return;
-
     final currentList = state.value ?? [];
     final index = currentList.indexWhere((c) => c.id == chatId);
 
@@ -259,28 +267,59 @@ class ConversationsViewModel extends _$ConversationsViewModel {
       final cachedConversations = ref
           .read(chatLocalRepositoryProvider)
           .getAllConversations();
-
-      state = AsyncValue.data(cachedConversations);
+      if (state.value == null || state.value!.isEmpty) {
+        state = AsyncValue.data(cachedConversations);
+      }
 
       final result = await _chatRemoteRepository.getuserchats(_currentUser!.id);
 
-      final conversations = result.fold((failure) {
-        print("Error loading conversations: ${failure.message}");
-        return cachedConversations;
-      }, (convs) => convs);
-      conversations.sort(
-        (a, b) => (b.lastMessageTime ?? b.updatedAt).compareTo(
-          a.lastMessageTime ?? a.updatedAt,
-        ),
-      );
-      await ref
-          .read(chatLocalRepositoryProvider)
-          .upsertConversations(conversations);
+      result.fold(
+        (failure) {
+          print("Error loading conversations: ${failure.message}");
+        },
+        (serverConversations) async {
+          serverConversations.sort(
+            (a, b) => (b.lastMessageTime ?? b.updatedAt).compareTo(
+              a.lastMessageTime ?? a.updatedAt,
+            ),
+          );
+          final serverIds = serverConversations.map((c) => c.id).toSet();
+          final localConversations = _chatLocalRepository.getAllConversations();
 
-      state = AsyncValue.data(conversations);
+          for (var localConv in localConversations) {
+            if (!serverIds.contains(localConv.id)) {
+              await _chatLocalRepository.deleteConversation(localConv.id);
+            }
+          }
+          await _chatLocalRepository.upsertConversations(serverConversations);
+          state = AsyncValue.data(serverConversations);
+        },
+      );
     } catch (e, st) {
       print("Conversation Load Failed: $e");
       state = AsyncValue.error(e, st);
     }
+  }
+
+  Future<Either<AppFailure, String>> deleteChat(String chatId) async {
+    if (_currentUser == null) {
+      return Left(AppFailure(message: "No current user found"));
+    }
+
+    final result = await _chatRemoteRepository.deleteChat(chatId);
+
+    return result.fold(
+      (failure) {
+        return Left(failure);
+      },
+      (successMessage) async {
+        await _chatLocalRepository.deleteConversation(chatId);
+        final currentList = state.value ?? [];
+        final updatedList = List<ConversationModel>.from(currentList)
+          ..removeWhere((chat) => chat.id == chatId);
+        state = AsyncValue.data(updatedList);
+        return Right(successMessage);
+      },
+    );
   }
 }

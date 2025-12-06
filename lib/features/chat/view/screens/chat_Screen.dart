@@ -18,7 +18,6 @@ class ChatScreen extends ConsumerStatefulWidget {
   final String? profileImage;
   final bool isGroup;
   final int? recipientFollowersCount;
-
   const ChatScreen({
     super.key,
     required this.chatId,
@@ -37,20 +36,15 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   late String _currentUserId;
   bool _isExiting = false;
   bool _showScrollToBottomButton = false;
-
   final ScrollController _scrollController = ScrollController();
-
   bool _isLoadingMore = false;
-
-  late ChatViewModel notifier;
   ProviderSubscription<ChatState>? _chatSub;
 
   @override
   void initState() {
     super.initState();
     _currentUserId = ref.read(currentUserProvider)!.id;
-    notifier = ref.read(chatViewModelProvider.notifier);
-
+    _scrollController.addListener(_onScroll);
     _scrollController.addListener(_onScroll);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -59,13 +53,22 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       _setupChatSubscription();
 
       ref.read(chatViewModelProvider.notifier).loadChat(widget.chatId);
-
-      ref.read(activeChatProvider.notifier).state = widget.chatId;
-
+      ref.read(activeChatProvider.notifier).setActive(widget.chatId);
       ref
           .read(conversationsViewModelProvider.notifier)
           .markChatAsRead(widget.chatId);
     });
+  }
+
+  @override
+  void dispose() {
+    //  ref.read(activeChatProvider.notifier).setActive(null);
+    _chatSub?.close();
+    _chatSub = null;
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+
+    super.dispose();
   }
 
   void _setupChatSubscription() {
@@ -144,31 +147,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     setState(() {
       _isLoadingMore = false;
     });
-  }
-
-  @override
-  void dispose() {
-    ref.read(activeChatProvider.notifier).state = null;
-
-    _isExiting = true;
-
-    _chatSub?.close();
-    _chatSub = null;
-
-    _scrollController.removeListener(_onScroll);
-    _scrollController.dispose();
-
-    try {
-      final savedNotifier = notifier;
-      Future.microtask(() {
-        savedNotifier.sendTyping(false);
-        savedNotifier.exitChat();
-      });
-    } catch (e) {
-      debugPrint("Error during dispose: $e");
-    }
-
-    super.dispose();
   }
 
   void _scrollToBottom({bool animate = true}) {

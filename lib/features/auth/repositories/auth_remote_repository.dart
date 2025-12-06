@@ -288,6 +288,26 @@ class AuthRemoteRepository {
     }
   }
 
+  //---------------------------------------------------------setbirthdate-------------------------------------------------------------------------//
+  Future<Either<AppFailure, String>> setbirthdate({
+    required String day,
+    required String month,
+    required String year,
+  }) async {
+    try {
+      final response = await _dio.post(
+        'api/auth/set-birthdate',
+        data: {'day': day, 'month': month, 'year': year},
+      );
+      final message = response.data['message'] as String;
+      return right(message);
+    } on DioException {
+      return left(AppFailure(message: 'Failed to set birthdate'));
+    } catch (e) {
+      return left(AppFailure(message: e.toString()));
+    }
+  }
+
   //-------------------------------------------------FCM Token Registration-----------------------------------------------------------------------------------------//
   Future<Either<AppFailure, String>> registerFcmToken({
     required String fcmToken,

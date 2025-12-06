@@ -15,7 +15,7 @@ class ConversationTile extends StatelessWidget {
   final int unseenCount;
   final bool isDMChat;
   final int recipientFollowersCount;
-
+  final VoidCallback? onLongPress;
   const ConversationTile({
     super.key,
     required this.name,
@@ -29,6 +29,7 @@ class ConversationTile extends StatelessWidget {
     this.unseenCount = 0,
     this.isDMChat = true,
     this.recipientFollowersCount = 0,
+    this.onLongPress,
   });
 
   @override
@@ -47,6 +48,7 @@ class ConversationTile extends StatelessWidget {
           },
         );
       },
+      onLongPress: onLongPress,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: const BoxDecoration(

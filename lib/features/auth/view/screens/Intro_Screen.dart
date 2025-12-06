@@ -46,13 +46,7 @@ class IntroScreen extends ConsumerWidget {
       final authViewModel = ref.read(authViewModelProvider.notifier);
 
       if (next.type == AuthStateType.authenticated) {
-        final currentUser = ref.read(currentUserProvider);
-        final bool hasInterests = currentUser?.interests.isNotEmpty ?? false;
-        if (hasInterests) {
-          context.goNamed(RouteConstants.homescreen);
-        } else {
-          context.goNamed(RouteConstants.Interests);
-        }
+        context.goNamed(RouteConstants.setbirthdate);
       } else if (next.type == AuthStateType.error) {
         _showErrorToast(
           context,

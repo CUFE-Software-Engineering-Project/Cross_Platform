@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:lite_x/core/models/usermodel.dart';
 import 'package:lite_x/core/providers/current_user_provider.dart';
 import 'package:lite_x/features/chat/models/messagemodel.dart';
@@ -7,7 +8,6 @@ import 'package:lite_x/features/chat/repositories/socket_repository.dart';
 import 'package:lite_x/features/chat/view_model/conversions/Conversations_view_model.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:uuid/uuid.dart';
-
 part 'Chat_view_model.g.dart';
 
 class ChatState {
@@ -42,7 +42,7 @@ class ChatState {
   }
 }
 
-@Riverpod(keepAlive: true)
+@riverpod
 class ChatViewModel extends _$ChatViewModel {
   late ChatRemoteRepository _chatRemoteRepository;
   late ChatLocalRepository _chatLocalRepository;
@@ -50,10 +50,13 @@ class ChatViewModel extends _$ChatViewModel {
   UserModel? _currentUser;
   String? _activeChatId;
   String? _myUserId;
-
+  bool _isDisposed = false; //
   final List<MessageModel> _historyBuffer = [];
   final Set<String> _loadedMessageIds = {};
-
+  StreamSubscription? _msgSub;
+  StreamSubscription? _ackSub;
+  StreamSubscription? _typingSub;
+  StreamSubscription? _readSub;
   @override
   ChatState build() {
     _chatRemoteRepository = ref.watch(chatRemoteRepositoryProvider);
@@ -64,29 +67,37 @@ class ChatViewModel extends _$ChatViewModel {
     _setupSocketListeners();
 
     ref.onDispose(() {
-      _socketRepository.disposeListeners();
+      print("Disposing ChatViewModel and cancelling subscriptions");
+      _isDisposed = true;
+      _msgSub?.cancel();
+      _ackSub?.cancel();
+      _typingSub?.cancel();
+      _readSub?.cancel();
     });
-
     return ChatState(isLoading: false);
   }
 
   bool isActiveChat(String chatId) => _activeChatId == chatId;
 
   void _setupSocketListeners() {
-    _socketRepository.onNewMessage((data) {
-      print("New message received: $data");
+    _msgSub = _socketRepository.newMessageStream.listen((data) {
+      if (_isDisposed) return;
+      print("New message received in ChatVM: $data");
       _handleIncomingMessage(data);
     });
 
-    _socketRepository.onMessageAdded((data) {
+    _ackSub = _socketRepository.messageAddedStream.listen((data) {
+      if (_isDisposed) return;
       _handleMessageAck(data);
     });
 
-    _socketRepository.onMessagesRead((data) {
+    _readSub = _socketRepository.messagesReadStream.listen((data) {
+      if (_isDisposed) return;
       _handleMessagesRead(data);
     });
 
-    _socketRepository.onTyping((data) {
+    _typingSub = _socketRepository.typingStream.listen((data) {
+      if (_isDisposed) return;
       _handleTypingEvent(data);
     });
   }
@@ -121,9 +132,11 @@ class ChatViewModel extends _$ChatViewModel {
 
     await result.fold(
       (failure) async {
+        if (_isDisposed) return; //
         state = state.copyWith(isLoading: false);
       },
       (serverMessages) async {
+        if (_isDisposed) return; //
         await _chatLocalRepository.saveInitialMessages(serverMessages);
         await _reconcilePendingMessages(chatId, serverMessages);
 
@@ -137,6 +150,7 @@ class ChatViewModel extends _$ChatViewModel {
         }
 
         final sortedUpdated = _sortMessages(updatedCache);
+        if (_isDisposed) return; //
         state = state.copyWith(messages: sortedUpdated, isLoading: false);
         _socketRepository.openChat(chatId);
       },
@@ -180,7 +194,6 @@ class ChatViewModel extends _$ChatViewModel {
   Future<void> sendMessage({
     required String content,
     String messageType = 'text',
-    String? mediaUrl,
   }) async {
     if (_activeChatId == null || _myUserId == null) return;
 
@@ -255,11 +268,13 @@ class ChatViewModel extends _$ChatViewModel {
 
     await _chatLocalRepository.saveMessage(finalMsg);
 
+    print("is in chat ${isActiveChat}");
     if (isActiveChat) {
       final updatedMessages = [...state.messages, finalMsg];
+      if (_isDisposed || _activeChatId != msg.chatId) return; //
       state = state.copyWith(messages: updatedMessages);
       _loadedMessageIds.add(msg.id);
-      _socketRepository.openChat(_activeChatId!);
+      _socketRepository.openChat(_activeChatId!); // to decrease unseen count
     }
   }
 
@@ -306,9 +321,11 @@ class ChatViewModel extends _$ChatViewModel {
 
     await result.fold(
       (failure) async {
+        if (_isDisposed) return; //
         state = state.copyWith(isLoadingHistory: false);
       },
       (olderMessages) async {
+        if (_isDisposed) return; //
         if (olderMessages.isEmpty) {
           state = state.copyWith(
             isLoadingHistory: false,
@@ -348,13 +365,11 @@ class ChatViewModel extends _$ChatViewModel {
     state = state.copyWith(isRecipientTyping: isTyping);
   }
 
-  void exitChat() {
-    if (_activeChatId != null) {
-      _socketRepository.leaveChat(_activeChatId!);
-    } // will be handled in backend
-    _activeChatId = null;
-    _historyBuffer.clear();
-    _loadedMessageIds.clear();
-    state = ChatState(isRecipientTyping: false, messages: [], isLoading: false);
-  }
+  // void exitChat() {
+  //   if (_activeChatId == null) return;
+  //   _activeChatId = null;
+  //   _historyBuffer.clear();
+  //   _loadedMessageIds.clear();
+  //   state = ChatState(isRecipientTyping: false, messages: [], isLoading: false);
+  // }
 }

@@ -19,6 +19,7 @@ import 'package:lite_x/features/auth/view/screens/Create_Account/Password_Screen
 import 'package:lite_x/features/auth/view/screens/Create_Account/Upload_Profile_Photo_Screen.dart';
 import 'package:lite_x/features/auth/view/screens/Create_Account/Verification_Screen.dart';
 import 'package:lite_x/features/auth/view/screens/Log_In/VerificationForgot_Screen.dart';
+import 'package:lite_x/features/auth/view/screens/Oauth/SetBirthdate.dart';
 import 'package:lite_x/features/chat/view/screens/Search_User_Group.dart';
 import 'package:lite_x/features/chat/view/screens/chat_Screen.dart';
 import 'package:lite_x/features/chat/view/screens/conversations_screen.dart';
@@ -180,6 +181,14 @@ class Approuter {
         path: "/LoginPasswordScreen",
         pageBuilder: (context, state) => CustomTransitionPage(
           child: const LoginPasswordScreen(),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
+        name: RouteConstants.setbirthdate,
+        path: "/setbirthdate",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: const Setbirthdate(),
           transitionsBuilder: _slideRightTransitionBuilder,
         ),
       ),

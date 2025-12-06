@@ -3,6 +3,7 @@ import 'package:lite_x/features/auth/repositories/auth_local_repository.dart';
 import 'package:lite_x/features/chat/providers/tokenStream.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
+import 'dart:async';
 part 'socket_repository.g.dart';
 
 @Riverpod(keepAlive: true)
@@ -11,6 +12,21 @@ SocketRepository socketRepository(Ref ref) {
 }
 
 class SocketRepository {
+  final _newMessageController =
+      StreamController<Map<String, dynamic>>.broadcast();
+  final _messageAddedController =
+      StreamController<Map<String, dynamic>>.broadcast();
+  final _typingController = StreamController<Map<String, dynamic>>.broadcast();
+  final _messagesReadController =
+      StreamController<Map<String, dynamic>>.broadcast();
+  Stream<Map<String, dynamic>> get messagesReadStream =>
+      _messagesReadController.stream;
+  Stream<Map<String, dynamic>> get newMessageStream =>
+      _newMessageController.stream;
+  Stream<Map<String, dynamic>> get messageAddedStream =>
+      _messageAddedController.stream;
+  Stream<Map<String, dynamic>> get typingStream => _typingController.stream;
+
   final Ref ref;
   io.Socket? _socket;
   final baseUrl = dotenv.env["API_URL"]!;
@@ -63,33 +79,44 @@ class SocketRepository {
 
   void _setupListeners() {
     _socket?.onConnect((_) {
-      print("SOCKET CONNECTED: ${_socket?.id}");
+      print("SOCKET CONNECTED: ${_socket?.id}\n");
     });
 
     _socket?.onConnectError((data) {
-      print("Socket connect error: $data");
+      print("Socket connect error: $data\n");
     });
 
     _socket?.onDisconnect((_) {
-      print("Socket disconnected");
+      print("Socket disconnected\n");
     });
 
     _socket?.on('authenticated', (data) {
-      print("Authenticated: $data");
+      print("Authenticated: $data\n");
     });
 
     _socket?.on('auth-error', (data) {
-      print(" Auth error: $data");
+      print(" Auth error: $data\n");
     });
 
     _socket?.on('new-message', (data) {
-      print(" New message: $data");
+      if (data != null && !_newMessageController.isClosed) {
+        _newMessageController.add(Map<String, dynamic>.from(data));
+      }
     });
     _socket?.on("messages-read", (data) {
-      print("Messages read event: $data");
+      if (data != null && !_messagesReadController.isClosed) {
+        _messagesReadController.add(Map<String, dynamic>.from(data));
+      }
     });
-    _socket?.on("message-added", (data) {
-      print("Message added event: $data");
+    _socket?.on('message-added', (data) {
+      if (data != null && !_messageAddedController.isClosed) {
+        _messageAddedController.add(Map<String, dynamic>.from(data));
+      }
+    });
+    _socket?.on('user-typing', (data) {
+      if (data != null && !_typingController.isClosed) {
+        _typingController.add(Map<String, dynamic>.from(data));
+      }
     });
   }
 
@@ -132,14 +159,18 @@ class SocketRepository {
   } // when user leaves the chat screen used for unseen count
 
   void disposeListeners() {
-    _socket?.off('new-message');
-    _socket?.off('user-typing');
-    _socket?.off('messages-read');
-    _socket?.off('message-added');
+    //  _socket?.off('new-message');
+    // _socket?.off('user-typing');
+    // _socket?.off('messages-read');
+    //  _socket?.off('message-added');
   }
 
   void dispose() {
     _socket?.disconnect();
     _socket?.dispose();
+    _newMessageController.close();
+    _messageAddedController.close();
+    _typingController.close();
+    _messagesReadController.close();
   }
 }

@@ -60,7 +60,7 @@ class ChatRemoteRepository {
       final List<dynamic> messagesList = data['messages'] ?? [];
 
       final messages = messagesList
-          .map((msg) => MessageModel.fromApiResponse(msg))
+          .map((msg) => MessageModel.fromLoadMessages(msg))
           .toList();
 
       return Right(messages);
@@ -122,7 +122,7 @@ class ChatRemoteRepository {
 
       final messages = messagesList
           .map(
-            (msg) => MessageModel.fromApiResponse(msg as Map<String, dynamic>),
+            (msg) => MessageModel.fromLoadMessages(msg as Map<String, dynamic>),
           )
           .toList();
 

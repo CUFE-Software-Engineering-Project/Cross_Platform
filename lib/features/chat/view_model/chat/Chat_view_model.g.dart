@@ -20,7 +20,7 @@ final class ChatViewModelProvider
         argument: null,
         retry: null,
         name: r'chatViewModelProvider',
-        isAutoDispose: false,
+        isAutoDispose: true,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -41,7 +41,7 @@ final class ChatViewModelProvider
   }
 }
 
-String _$chatViewModelHash() => r'99961fd224f15c454600f531ebf8235255c288ec';
+String _$chatViewModelHash() => r'3f7dee895982627c5116ddc9b909ac29a8e3332f';
 
 abstract class _$ChatViewModel extends $Notifier<ChatState> {
   ChatState build();

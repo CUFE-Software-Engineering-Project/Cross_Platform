@@ -2,7 +2,6 @@ import 'package:hive_ce/hive.dart';
 import 'package:lite_x/features/chat/models/conversationmodel.dart';
 import 'package:lite_x/features/chat/models/messagemodel.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-
 part 'chat_local_repository.g.dart';
 
 @Riverpod(keepAlive: true)
@@ -122,5 +121,9 @@ class ChatLocalRepository {
 
   Future<void> deleteMessage(String messageId) async {
     await _messagesBox.delete(messageId);
+  }
+
+  Future<void> deleteConversation(String conversationId) async {
+    await _conversationsBox.delete(conversationId);
   }
 }
