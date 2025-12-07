@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lite_x/core/theme/palette.dart';
+import 'package:lite_x/features/notifications/notification_fcm_service.dart';
 import 'tabs/all_notifications.dart';
 import 'tabs/verified_notifications.dart';
 import 'tabs/mentions_notifications.dart';
@@ -24,6 +25,14 @@ class _NotificationTabsState extends ConsumerState<NotificationTabs>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+
+    final fcmService = NotificationFcmService();
+    fcmService.notificationsRefreshCallback = () {
+      ref.read(notificationViewModelProvider.notifier).refresh();
+    };
+    fcmService.mentionsRefreshCallback = () {
+      ref.read(mentionsViewModelProvider.notifier).refresh();
+    };
     _tabController.addListener(() {
       if (selectedIndex != _tabController.index) {
         setState(() {
@@ -47,6 +56,9 @@ class _NotificationTabsState extends ConsumerState<NotificationTabs>
 
   @override
   void dispose() {
+    final fcmService = NotificationFcmService();
+    fcmService.notificationsRefreshCallback = null;
+    fcmService.mentionsRefreshCallback = null;
     _tabController.dispose();
     super.dispose();
   }

@@ -28,9 +28,7 @@ class AuthInterceptor extends Interceptor {
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
-    print('AuthInterceptor: onRequest -> ${options.method} ${options.path}');
     if (_shouldSkipAuth(options.path)) {
-      print('AuthInterceptor: Skipping auth for path: ${options.path}');
       return handler.next(options);
     }
 
@@ -38,7 +36,6 @@ class AuthInterceptor extends Interceptor {
     final tokens = authLocalRepository.getTokens();
     if (tokens == null) {
       print("AuthInterceptor: No tokens found");
-      print('AuthInterceptor: Outgoing headers (no auth): ${options.headers}');
       return handler.next(options);
     }
     if (tokens.isAccessTokenExpired) {
@@ -68,9 +65,9 @@ class AuthInterceptor extends Interceptor {
       }
       final updatedTokens = authLocalRepository.getTokens();
       if (updatedTokens != null && !updatedTokens.isAccessTokenExpired) {
-        options.headers['Authorization'] = 'Bearer ${updatedTokens.accessToken}';
-        print("AuthInterceptor: Using refreshed token - header set");
-        print('AuthInterceptor: Outgoing headers: ${options.headers}');
+        options.headers['Authorization'] =
+            'Bearer ${updatedTokens.accessToken}';
+        print("AuthInterceptor: Using refreshed token");
       } else {
         print("AuthInterceptor: No valid tokens after refresh");
         await _handlelogout();
@@ -84,8 +81,6 @@ class AuthInterceptor extends Interceptor {
       }
     } else {
       options.headers['Authorization'] = 'Bearer ${tokens.accessToken}';
-      print("AuthInterceptor: Added Authorization header from stored tokens");
-      print('AuthInterceptor: Outgoing headers: ${options.headers}');
     }
 
     return handler.next(options);

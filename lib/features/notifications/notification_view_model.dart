@@ -47,4 +47,35 @@ class NotificationViewModel extends _$NotificationViewModel {
       state = AsyncData(updated);
     }
   }
+
+  void updateTweetInteractions(
+    String tweetId, {
+    int? likesCount,
+    int? repostsCount,
+    bool? isLiked,
+    bool? isRetweeted,
+    bool? isBookmarked,
+  }) {
+    if (!ref.mounted) return;
+
+    final current = state.value;
+    if (current == null) return;
+
+    final updated = current.map((n) {
+      if (n.tweetId == tweetId) {
+        return n.copyWith(
+          likesCount: likesCount ?? n.likesCount,
+          repostsCount: repostsCount ?? n.repostsCount,
+          isLiked: isLiked ?? n.isLiked,
+          isRetweeted: isRetweeted ?? n.isRetweeted,
+          isBookmarked: isBookmarked ?? n.isBookmarked,
+        );
+      }
+      return n;
+    }).toList();
+
+    if (ref.mounted) {
+      state = AsyncData(updated);
+    }
+  }
 }

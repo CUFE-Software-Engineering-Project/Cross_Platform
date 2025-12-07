@@ -30,9 +30,8 @@ final uploadProvider = Provider((ref) {
   };
 });
 
-final getMedialUrlProvider = Provider((ref) {
+final mediaUrlProvider = FutureProvider.family<String, String>((ref, id) async {
   final repo = ref.watch(mediaRepoProvider);
-  return (String id) {
-    return repo.getMediaUrl(id);
-  };
+  final res = await repo.getMediaUrl(id);
+  return res.fold((failure) => "", (url) => url);
 });

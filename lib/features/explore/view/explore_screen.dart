@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lite_x/core/theme/palette.dart';
+import 'package:lite_x/features/home/view/widgets/profile_side_drawer.dart';
 import '../view_model/explore_view_model.dart';
 import '../view_model/explore_state.dart';
 import '../widgets/explore_nav_bar.dart';
@@ -46,19 +47,26 @@ class _ForYouItem {
 }
 
 class ExploreScreen extends ConsumerWidget {
-  const ExploreScreen({super.key});
+  ExploreScreen({super.key});
+
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(exploreViewModelProvider);
     final viewModel = ref.read(exploreViewModelProvider.notifier);
-
     return Scaffold(
+      key: _scaffoldKey,
       backgroundColor: Palette.background,
+      drawer: const ProfileSideDrawer(),
       body: Column(
         children: [
           // Top Navigation Bar - Sticky
-          const ExploreNavBar(),
+          ExploreNavBar(
+            onAvatarTap: () {
+              _scaffoldKey.currentState?.openDrawer();
+            },
+          ),
           // Category Tabs - Sticky
           CategoryTabs(
             selectedCategory: state.selectedCategory,

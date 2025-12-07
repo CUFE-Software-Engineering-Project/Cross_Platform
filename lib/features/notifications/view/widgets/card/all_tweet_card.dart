@@ -7,6 +7,7 @@ import 'package:lite_x/features/home/view/screens/quote_composer_screen.dart';
 import 'package:lite_x/features/home/view/screens/tweet_screen.dart';
 
 import '../../../notification_model.dart';
+import '../../../notification_view_model.dart';
 
 class AllTweetCardWidget extends ConsumerStatefulWidget {
   final NotificationItem notification;
@@ -24,14 +25,17 @@ class _AllTweetCardWidgetState extends ConsumerState<AllTweetCardWidget> {
   late int _repostsCount;
   bool _processingLike = false;
   bool _processingRetweet = false;
+  late bool _bookmarked;
+  bool _processingBookmark = false;
   bool _handlingQuote = false;
 
   NotificationItem get notification => widget.notification;
 
-  bool get _isSystemAlert => notification.title == 'ALERT';
-  bool get _isRepost => notification.title == 'REPOST';
+  bool get _isSystemAlert => notification.title == 'LOGIN';
+  bool get _isRetweet =>
+      notification.title == 'RETWEET' || notification.title == 'REPOST';
   bool get _isLike => notification.title == 'LIKE';
-  bool get _isUnlike => notification.title == 'UNLIKE';
+  bool get _isFollow => notification.title == 'FOLLOW';
   bool get _hasTweetLink => _tweetId != null;
 
   TextStyle get _nameStyle => const TextStyle(
@@ -83,6 +87,7 @@ class _AllTweetCardWidgetState extends ConsumerState<AllTweetCardWidget> {
     _retweeted = notification.isRetweeted;
     _likesCount = notification.likesCount;
     _repostsCount = notification.repostsCount;
+    _bookmarked = notification.isBookmarked;
   }
 
   void _showSnack(String message) {
@@ -124,12 +129,22 @@ class _AllTweetCardWidgetState extends ConsumerState<AllTweetCardWidget> {
           : (previousCount - 1 < 0 ? 0 : previousCount - 1);
     });
 
+    final vm = ref.read(notificationViewModelProvider.notifier);
+    final currentTweetId = tweetId;
+    if (currentTweetId != null) {
+      vm.updateTweetInteractions(
+        currentTweetId,
+        likesCount: _likesCount,
+        isLiked: _liked,
+      );
+    }
+
     try {
       final dio = ref.read(dioProvider);
       if (previousLiked) {
-        await dio.delete('/api/tweets/$tweetId/likes');
+        await dio.delete('api/tweets/$tweetId/likes');
       } else {
-        await dio.post('/api/tweets/$tweetId/likes');
+        await dio.post('api/tweets/$tweetId/likes');
       }
     } catch (_) {
       if (mounted) {
@@ -137,6 +152,14 @@ class _AllTweetCardWidgetState extends ConsumerState<AllTweetCardWidget> {
           _liked = previousLiked;
           _likesCount = previousCount;
         });
+        final currentTweetId = tweetId;
+        if (currentTweetId != null) {
+          ref.read(notificationViewModelProvider.notifier).updateTweetInteractions(
+                currentTweetId,
+                likesCount: previousCount,
+                isLiked: previousLiked,
+              );
+        }
       }
       _showSnack('Unable to ${previousLiked ? 'unlike' : 'like'} right now.');
     } finally {
@@ -164,12 +187,22 @@ class _AllTweetCardWidgetState extends ConsumerState<AllTweetCardWidget> {
           : (previousCount - 1 < 0 ? 0 : previousCount - 1);
     });
 
+    final vm = ref.read(notificationViewModelProvider.notifier);
+    final currentTweetId = tweetId;
+    if (currentTweetId != null) {
+      vm.updateTweetInteractions(
+        currentTweetId,
+        repostsCount: _repostsCount,
+        isRetweeted: _retweeted,
+      );
+    }
+
     try {
       final dio = ref.read(dioProvider);
       if (previousState) {
-        await dio.delete('/api/tweets/$tweetId/retweets');
+        await dio.delete('api/tweets/$tweetId/retweets');
       } else {
-        await dio.post('/api/tweets/$tweetId/retweets');
+        await dio.post('api/tweets/$tweetId/retweets');
       }
     } catch (_) {
       if (mounted) {
@@ -177,10 +210,63 @@ class _AllTweetCardWidgetState extends ConsumerState<AllTweetCardWidget> {
           _retweeted = previousState;
           _repostsCount = previousCount;
         });
+        final currentTweetId = tweetId;
+        if (currentTweetId != null) {
+          ref.read(notificationViewModelProvider.notifier).updateTweetInteractions(
+                currentTweetId,
+                repostsCount: previousCount,
+                isRetweeted: previousState,
+              );
+        }
       }
       _showSnack('Unable to ${previousState ? 'undo' : 'send'} repost.');
     } finally {
       _processingRetweet = false;
+    }
+  }
+
+  Future<void> _toggleBookmark() async {
+    if (_processingBookmark) return;
+    final tweetId = _tweetId;
+    if (tweetId == null) {
+      _showSnack('Tweet is no longer available.');
+      return;
+    }
+
+    _processingBookmark = true;
+    final previousBookmarked = _bookmarked;
+    final newState = !previousBookmarked;
+
+    setState(() {
+      _bookmarked = newState;
+    });
+
+    try {
+      final dio = ref.read(dioProvider);
+      if (previousBookmarked) {
+        await dio.delete('api/tweets/$tweetId/bookmark');
+      } else {
+        await dio.post('api/tweets/$tweetId/bookmark');
+      }
+
+      final vm = ref.read(notificationViewModelProvider.notifier);
+      vm.updateTweetInteractions(
+        tweetId,
+        isBookmarked: _bookmarked,
+      );
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _bookmarked = previousBookmarked;
+        });
+        ref.read(notificationViewModelProvider.notifier).updateTweetInteractions(
+              tweetId,
+              isBookmarked: previousBookmarked,
+            );
+      }
+      _showSnack('Unable to update bookmark right now.');
+    } finally {
+      _processingBookmark = false;
     }
   }
 
@@ -209,6 +295,64 @@ class _AllTweetCardWidgetState extends ConsumerState<AllTweetCardWidget> {
     }
   }
 
+  void _showRetweetMenu() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1E1E1E),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext modalContext) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 12),
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[600],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 20),
+              ListTile(
+                leading: Icon(
+                  Icons.repeat,
+                  color: _retweeted ? Colors.green : Colors.grey[300],
+                ),
+                title: Text(
+                  _retweeted ? 'Undo Repost' : 'Repost',
+                  style: TextStyle(
+                    color: _retweeted ? Colors.green : Colors.grey[300],
+                    fontSize: 16,
+                  ),
+                ),
+                onTap: () {
+                  Navigator.pop(modalContext);
+                  _toggleRetweet();
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.edit_outlined, color: Colors.grey[300]),
+                title: const Text(
+                  'Quote',
+                  style: TextStyle(color: Colors.grey, fontSize: 16),
+                ),
+                onTap: () {
+                  Navigator.pop(modalContext);
+                  _openQuoteComposer();
+                },
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   Widget _cardShell({
     required Widget child,
     EdgeInsetsGeometry? padding,
@@ -217,9 +361,9 @@ class _AllTweetCardWidgetState extends ConsumerState<AllTweetCardWidget> {
     final content = Container(
       margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
       padding: padding ?? const EdgeInsets.symmetric(vertical: 12.0),
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         border: Border(
-          bottom: BorderSide(color: Palette.textTertiary.withOpacity(0.1)),
+          bottom: BorderSide(color: Colors.white, width: 0.5),
         ),
       ),
       child: child,
@@ -243,9 +387,8 @@ class _AllTweetCardWidgetState extends ConsumerState<AllTweetCardWidget> {
       decoration: BoxDecoration(
         color: Colors.black,
         shape: BoxShape.circle,
-        border: Border.all(color: color, width: 1),
       ),
-      child: Icon(icon, color: color, size: 20),
+      child: Icon(icon, color: color, size: 30),
     );
   }
 
@@ -253,11 +396,6 @@ class _AllTweetCardWidgetState extends ConsumerState<AllTweetCardWidget> {
     return Container(
       width: 36,
       height: 36,
-      decoration: BoxDecoration(
-        color: Colors.black,
-        shape: BoxShape.circle,
-        border: Border.all(color: Palette.textSecondary),
-      ),
       alignment: Alignment.center,
       child: const Text(
         'X',
@@ -265,7 +403,7 @@ class _AllTweetCardWidgetState extends ConsumerState<AllTweetCardWidget> {
           fontFamily: 'SF Pro Display',
           fontWeight: FontWeight.w700,
           color: Palette.textPrimary,
-          fontSize: 18,
+          fontSize: 24,
         ),
       ),
     );
@@ -325,15 +463,18 @@ class _AllTweetCardWidgetState extends ConsumerState<AllTweetCardWidget> {
     );
 
     switch (notification.title) {
+      case 'RETWEET':
       case 'REPOST':
         final reposts = _repostsCount.clamp(1, 99).toInt();
-        return 'reposted $reposts of your posts';
+        return 'retweeted $reposts of your posts';
       case 'LIKE':
         return 'liked your post';
-      case 'UNLIKE':
-        return 'removed their like from your post';
       case 'FOLLOW':
         return 'followed you';
+      case 'REPLY':
+        return 'replied to your post';
+      case 'QUOTE':
+        return 'quoted your post';
       default:
         return 'Replying to $target';
     }
@@ -390,17 +531,20 @@ class _AllTweetCardWidgetState extends ConsumerState<AllTweetCardWidget> {
             icon: Icons.repeat,
             count: _repostsCount,
             color: _retweeted ? Palette.retweet : Palette.textTertiary,
-            onTap: _toggleRetweet,
+            onTap: _showRetweetMenu,
           ),
           _metricButton(
-            icon: Icons.favorite_border,
+            icon: Icons.favorite,
             count: _likesCount,
             color: _liked ? Palette.like : Palette.textTertiary,
             onTap: _toggleLike,
           ),
           _metricButton(
-            icon: Icons.bar_chart_outlined,
-            onTap: _openTweetDetail,
+            icon:
+                _bookmarked ? Icons.bookmark : Icons.bookmark_border,
+            color:
+                _bookmarked ? Palette.primary : Palette.textTertiary,
+            onTap: _toggleBookmark,
           ),
           _metricButton(
             icon: Icons.ios_share_outlined,
@@ -447,7 +591,12 @@ class _AllTweetCardWidgetState extends ConsumerState<AllTweetCardWidget> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(child: Text(notification.body, style: _bodyStyle)),
+                    Expanded(
+                      child: Text(
+                        notification.body,
+                        style: _bodyStyle,
+                      ),
+                    ),
                     const SizedBox(width: 12),
                     _buildTimestampText(),
                   ],
@@ -462,6 +611,15 @@ class _AllTweetCardWidgetState extends ConsumerState<AllTweetCardWidget> {
 
   Widget _buildActivityCard({required IconData icon, required Color color}) {
     final description = _getActionText();
+
+    // Prefer tweet content as snapshot; fall back to notification body
+    final String snapshotText;
+    if (notification.tweet != null &&
+        notification.tweet!.content.isNotEmpty) {
+      snapshotText = notification.tweet!.content;
+    } else {
+      snapshotText = notification.body;
+    }
 
     return _cardShell(
       onTap: _hasTweetLink ? _openTweetDetail : null,
@@ -483,7 +641,10 @@ class _AllTweetCardWidgetState extends ConsumerState<AllTweetCardWidget> {
                           text: '${notification.actor.name} ',
                           style: _nameStyle,
                           children: [
-                            TextSpan(text: description, style: _secondaryStyle),
+                            TextSpan(
+                              text: description,
+                              style: _secondaryStyle,
+                            ),
                           ],
                         ),
                       ),
@@ -492,9 +653,12 @@ class _AllTweetCardWidgetState extends ConsumerState<AllTweetCardWidget> {
                     _buildTimestampText(),
                   ],
                 ),
-                if (notification.body.isNotEmpty) ...[
+                if (snapshotText.isNotEmpty) ...[
                   const SizedBox(height: 6),
-                  Text(notification.body, style: _bodyStyle),
+                  Text(
+                    snapshotText,
+                    style: _secondaryStyle,
+                  ),
                 ],
               ],
             ),
@@ -505,6 +669,13 @@ class _AllTweetCardWidgetState extends ConsumerState<AllTweetCardWidget> {
   }
 
   Widget _buildConversationCard() {
+    final String bodyText;
+    if (notification.tweet != null && notification.tweet!.content.isNotEmpty) {
+      bodyText = notification.tweet!.content;
+    } else {
+      bodyText = notification.body;
+    }
+
     return _cardShell(
       onTap: _hasTweetLink ? _openTweetDetail : null,
       child: Row(
@@ -544,11 +715,6 @@ class _AllTweetCardWidgetState extends ConsumerState<AllTweetCardWidget> {
                       ),
                     ),
                     const Spacer(),
-                    const Icon(
-                      Icons.more_horiz,
-                      color: Palette.textTertiary,
-                      size: 18,
-                    ),
                   ],
                 ),
                 const SizedBox(height: 2),
@@ -560,9 +726,9 @@ class _AllTweetCardWidgetState extends ConsumerState<AllTweetCardWidget> {
                     fontSize: 13,
                   ),
                 ),
-                if (notification.body.isNotEmpty) ...[
+                if (bodyText.isNotEmpty) ...[
                   const SizedBox(height: 8),
-                  Text(notification.body, style: _bodyStyle),
+                  Text(bodyText, style: _bodyStyle),
                 ],
                 if (_hasQuotedTweet()) _buildQuotedTweet(),
                 if (_hasMetrics) _buildMetricsRow(),
@@ -579,15 +745,15 @@ class _AllTweetCardWidgetState extends ConsumerState<AllTweetCardWidget> {
     if (_isSystemAlert) {
       return _buildAlertCard();
     }
-    if (_isRepost) {
+    if (_isRetweet) {
       return _buildActivityCard(icon: Icons.repeat, color: Palette.retweet);
     }
     if (_isLike) {
       return _buildActivityCard(icon: Icons.favorite, color: Palette.like);
     }
-    if (_isUnlike) {
+    if (_isFollow) {
       return _buildActivityCard(
-        icon: Icons.favorite_border,
+        icon: Icons.person,
         color: Palette.textSecondary,
       );
     }

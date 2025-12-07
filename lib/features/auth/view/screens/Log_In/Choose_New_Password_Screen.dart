@@ -131,7 +131,7 @@ class _ChooseNewPasswordScreenState
 
       if (next.type == AuthStateType.success) {
         context.goNamed(RouteConstants.ChangePasswordFeedback);
-        authViewModel.resetState();
+        authViewModel.setAuthenticated();
       } else if (next.type == AuthStateType.error) {
         _showToast(next.message ?? 'Failed to change password');
         authViewModel.resetState();

@@ -30,13 +30,14 @@ class UserModelAdapter extends TypeAdapter<UserModel> {
       interests: fields[10] == null
           ? const {}
           : (fields[10] as Set).cast<String>(),
+      localProfilePhotoPath: fields[11] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, UserModel obj) {
     writer
-      ..writeByte(11)
+      ..writeByte(12)
       ..writeByte(0)
       ..write(obj.name)
       ..writeByte(1)
@@ -58,7 +59,9 @@ class UserModelAdapter extends TypeAdapter<UserModel> {
       ..writeByte(9)
       ..write(obj.tfaVerified)
       ..writeByte(10)
-      ..write(obj.interests);
+      ..write(obj.interests)
+      ..writeByte(11)
+      ..write(obj.localProfilePhotoPath);
   }
 
   @override

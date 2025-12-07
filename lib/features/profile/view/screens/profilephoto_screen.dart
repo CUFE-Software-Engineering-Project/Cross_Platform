@@ -1,12 +1,14 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hive_ce_flutter/hive_flutter.dart';
+import 'package:lite_x/features/media/view_model/providers.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
 import 'package:lite_x/features/profile/models/shared.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class ProfilephotoScreen extends StatelessWidget {
+class ProfilephotoScreen extends ConsumerWidget {
   ProfilephotoScreen({super.key, required this.profilePhotoScreenArgs}) {
     isMe = profilePhotoScreenArgs.isMe;
     profileModel = profilePhotoScreenArgs.profileModel;
@@ -15,137 +17,166 @@ class ProfilephotoScreen extends StatelessWidget {
   late final bool isMe;
   final ProfilePhotoScreenArgs profilePhotoScreenArgs;
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        leading: BackButton(
-          onPressed: () {
-            if (context.canPop()) context.pop();
-          },
-        ),
-        actions: [
-          PopupMenuButton<String>(
-            icon: Icon(Icons.more_vert, color: Colors.white),
-            color: Color(0xFF212121),
-            onSelected: (value) async {
-              switch (value) {
-                case 'Share image link':
-                  // Handle share
-                  final url = profileModel.avatarUrl;
-                  final uri = Uri.parse(
-                    url.startsWith('http') ? url : 'https://$url',
-                  );
-
-                  Share.share(uri.toString());
-                  break;
-                case 'Open in browser':
-                  final url = profileModel.avatarUrl;
-                  final uri = Uri.parse(
-                    url.startsWith('http') ? url : 'https://$url',
-                  );
-
-                  if (await canLaunchUrl(uri)) {
-                    await launchUrl(uri, mode: LaunchMode.inAppBrowserView);
-                  } else {
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Could not open website')),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final mediaUrl = ref.watch(mediaUrlProvider(profileModel.avatarId));
+    return mediaUrl.when(
+      data: (data) {
+        return Scaffold(
+          appBar: AppBar(
+            leading: BackButton(
+              onPressed: () {
+                if (context.canPop()) context.pop();
+              },
+            ),
+            actions: [
+              PopupMenuButton<String>(
+                icon: Icon(Icons.more_vert, color: Colors.white),
+                color: Color(0xFF212121),
+                onSelected: (value) async {
+                  switch (value) {
+                    case 'Share image link':
+                      // Handle share
+                      final String url = data.isNotEmpty?data:"";
+                      final uri = Uri.parse(
+                        url.startsWith('http') ? url : 'https://$url',
                       );
-                    }
+
+                      Share.share(uri.toString());
+                      break;
+                    case 'Open in browser':
+                      final url =  data.isNotEmpty ? data : "";
+                      final uri = Uri.parse(
+                        url.startsWith('http') ? url : 'https://$url',
+                      );
+
+                      if (await canLaunchUrl(uri)) {
+                        await launchUrl(uri, mode: LaunchMode.inAppBrowserView);
+                      } else {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Could not open website')),
+                          );
+                        }
+                      }
+                      break;
+                    case 'Save':
+                      // Handle block
+                      break;
                   }
-                  break;
-                case 'Save':
-                  // Handle block
-                  break;
-              }
-            },
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                value: 'Share image link',
-                child: Row(
-                  children: [
-                    SizedBox(width: 12),
-                    Text(
-                      'Share image link',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w500,
-                      ),
+                },
+                itemBuilder: (context) => [
+                  PopupMenuItem(
+                    value: 'Share image link',
+                    child: Row(
+                      children: [
+                        SizedBox(width: 12),
+                        Text(
+                          'Share image link',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
-              PopupMenuItem(
-                value: 'Open in browser',
-                child: Row(
-                  children: [
-                    SizedBox(width: 12),
-                    Text(
-                      'Open in browser',
-                      style: TextStyle(color: Colors.white, fontSize: 18),
+                  ),
+                  PopupMenuItem(
+                    value: 'Open in browser',
+                    child: Row(
+                      children: [
+                        SizedBox(width: 12),
+                        Text(
+                          'Open in browser',
+                          style: TextStyle(color: Colors.white, fontSize: 18),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
-              PopupMenuItem(
-                value: 'Save',
-                child: Row(
-                  children: [
-                    SizedBox(width: 12),
-                    Text(
-                      'Save',
-                      style: TextStyle(color: Colors.white, fontSize: 18),
+                  ),
+                  PopupMenuItem(
+                    value: 'Save',
+                    child: Row(
+                      children: [
+                        SizedBox(width: 12),
+                        Text(
+                          'Save',
+                          style: TextStyle(color: Colors.white, fontSize: 18),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
+              SizedBox(width: 12),
             ],
           ),
-          SizedBox(width: 12),
-        ],
-      ),
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          SizedBox(),
+          body: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              SizedBox(width: double.infinity),
 
-          // Container(
-          //   width: double.infinity,
-          //   // height: 300,
-          //   decoration: BoxDecoration(
-          //     image: DecorationImage(image: image, fit: BoxFit.cover),
-          //   ),
-          // ),
-          Image(image: NetworkImage(profileModel.avatarUrl)),
+              CachedNetworkImage(
+                imageUrl:  data.isNotEmpty ? data : "",
+                errorWidget: (context, url, error) => CachedNetworkImage(
+                  imageUrl: unkownUserAvatar,
+                  errorWidget: (context, url, error) =>
+                      SizedBox(width: double.infinity),
+                ),
+              ),
 
-          if (isMe)
-            OutlinedButton(
+              if (isMe)
+                OutlinedButton(
+                  onPressed: () {
+                    context.pushReplacement(
+                      "/editProfile",
+                      extra: this.profileModel,
+                    );
+                  },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    side: const BorderSide(color: Color(0xFFADADAD), width: 1),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 0,
+                    ),
+                  ),
+                  child: Text(
+                    'Edit',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900),
+                  ),
+                ),
+              if (!isMe) SizedBox(),
+            ],
+          ),
+        );
+      },
+      error: (err, _) {
+        return Scaffold(
+          appBar: AppBar(
+            leading: BackButton(
               onPressed: () {
-                context.pushReplacement(
-                  "/editProfile",
-                  extra: this.profileModel,
-                );
+                if (context.canPop()) context.pop();
               },
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.white,
-                side: const BorderSide(color: Color(0xFFADADAD), width: 1),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 0,
-                ),
-              ),
-              child: Text(
-                'Edit',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900),
-              ),
             ),
-          if (!isMe) SizedBox(),
-        ],
-      ),
+          ),
+          body: Center(child: Text("can't load profile image...")),
+        );
+      },
+      loading: () {
+        return Scaffold(
+          appBar: AppBar(
+            leading: BackButton(
+              onPressed: () {
+                if (context.canPop()) context.pop();
+              },
+            ),
+          ),
+          body: Center(child: CircularProgressIndicator(color: Colors.white)),
+        );
+      },
     );
   }
 }

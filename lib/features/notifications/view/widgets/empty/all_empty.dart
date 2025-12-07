@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:lite_x/core/theme/palette.dart';
 
 class AllEmptyStateWidget extends StatelessWidget {
@@ -20,7 +19,7 @@ class AllEmptyStateWidget extends StatelessWidget {
             children: [
               Text(
                 "Nothing to see here — yet",
-                style: GoogleFonts.libreFranklin(
+                style: TextStyle(
                   fontSize: 31,
                   fontWeight: FontWeight.w800,
                   color: Palette.textPrimary,
@@ -29,7 +28,7 @@ class AllEmptyStateWidget extends StatelessWidget {
               const SizedBox(height: 6),
               Text(
                 "From likes to reposts and a whole lot more, this is where all the action happens.",
-                style: GoogleFonts.libreFranklin(
+                style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w400,
                   color: Palette.textSecondary,

@@ -5,7 +5,6 @@ import 'package:lite_x/core/providers/current_user_provider.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
 import 'package:lite_x/core/theme/palette.dart';
 import 'package:lite_x/features/auth/view_model/auth_view_model.dart';
-import 'package:lite_x/features/profile/models/profile_model.dart';
 import 'package:lite_x/features/profile/models/shared.dart';
 import 'package:lite_x/features/profile/view_model/providers.dart';
 import 'package:lite_x/features/settings/view/widgets/settings_responsive_scaffold.dart';
@@ -62,6 +61,7 @@ class AccountInformationScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final authViewModel = ref.watch(authViewModelProvider.notifier);
     final user = ref.watch(currentUserProvider);
     final username = user?.username ?? '';
     final email = user?.email ?? '';
@@ -72,27 +72,32 @@ class AccountInformationScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (username.isNotEmpty) ...[
-              Text(
-                '@$username',
-                style: const TextStyle(
-                  color: Palette.textSecondary,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(height: 12),
-            ],
+            // if (username.isNotEmpty) ...[
+            //   Text(
+            //     '@$username',
+            //     style: const TextStyle(
+            //       color: Palette.textSecondary,
+            //       fontSize: 18,
+            //       fontWeight: FontWeight.w500,
+            //     ),
+            //   ),
+            //   const SizedBox(height: 12),
+            // ],
             _section(
               title: '',
               children: [
-                _field(
-                  'Username',
-                  Text(
-                    username.isEmpty ? '-' : '@$username',
-                    style: const TextStyle(
-                      color: Palette.textSecondary,
-                      fontSize: 16,
+                InkWell(
+                  onTap: () {
+                    context.pushNamed(RouteConstants.usernamesettings);
+                  },
+                  child: _field(
+                    'Username',
+                    Text(
+                      username.isEmpty ? '-' : '@$username',
+                      style: const TextStyle(
+                        color: Palette.textSecondary,
+                        fontSize: 16,
+                      ),
                     ),
                   ),
                 ),

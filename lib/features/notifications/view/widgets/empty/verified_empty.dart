@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:lite_x/core/theme/palette.dart';
 
 class VerifiedEmptyStateWidget extends StatelessWidget {
@@ -31,7 +30,7 @@ class VerifiedEmptyStateWidget extends StatelessWidget {
 
               Text(
                 "Nothing to see here — yet",
-                style: GoogleFonts.libreFranklin(
+                style: TextStyle(
                   fontSize: 31,
                   fontWeight: FontWeight.w800,
                   color: Palette.textPrimary,
@@ -41,7 +40,7 @@ class VerifiedEmptyStateWidget extends StatelessWidget {
 
               Text(
                 "Likes, mentions, reposts, and a whole lot more — when it comes from a verified account, you'll find it here.",
-                style: GoogleFonts.libreFranklin(
+                style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w400,
                   color: Palette.textSecondary,

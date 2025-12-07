@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:lite_x/core/theme/palette.dart';
 
 class MentionsEmptyStateWidget extends StatelessWidget {
@@ -20,7 +19,7 @@ class MentionsEmptyStateWidget extends StatelessWidget {
             children: [
               Text(
                 "Nothing to see here — yet",
-                style: GoogleFonts.libreFranklin(
+                style: TextStyle(
                   fontSize: 31,
                   fontWeight: FontWeight.w800,
                   color: Palette.textPrimary,
@@ -29,7 +28,7 @@ class MentionsEmptyStateWidget extends StatelessWidget {
               const SizedBox(height: 6),
               Text(
                 "When someone mentions you, you'll find it here.",
-                style: GoogleFonts.libreFranklin(
+                style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w400,
                   color: Palette.textSecondary,

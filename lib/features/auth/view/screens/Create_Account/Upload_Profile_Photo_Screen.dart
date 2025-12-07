@@ -81,12 +81,12 @@ class _UploadProfilePhotoScreenState
     }
   }
 
-  void _handleNext() {
+  Future<void> _handleNext() async {
     if (selectedImage != null) {
-      context.goNamed(RouteConstants.UserNameScreen);
-      // ref
-      //     .read(authViewModelProvider.notifier)
-      //     .uploadProfilePhoto(selectedImage!);
+      // Upload the profile photo
+      await ref
+          .read(authViewModelProvider.notifier)
+          .uploadProfilePhoto(selectedImage!);
     }
   }
 
@@ -100,12 +100,14 @@ class _UploadProfilePhotoScreenState
     ref.listen(authViewModelProvider, (previous, next) {
       if (next.type == AuthStateType.success) {
         context.goNamed(RouteConstants.UserNameScreen);
-        ref.read(authViewModelProvider.notifier).setAuthenticated();
       } else if (next.type == AuthStateType.error) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(next.message ?? 'An error occurred'),
-            backgroundColor: Palette.error,
+            content: Text(
+              next.message ?? 'An error occurred',
+              style: TextStyle(color: Palette.background),
+            ),
+            backgroundColor: Palette.iconsActive,
           ),
         );
       }
@@ -113,6 +115,7 @@ class _UploadProfilePhotoScreenState
 
     final authState = ref.watch(authViewModelProvider);
     final isLoading = authState.isLoading;
+
     return Scaffold(
       backgroundColor: Palette.background,
       appBar: AppBar(
@@ -170,8 +173,8 @@ class _UploadProfilePhotoScreenState
             ),
             if (isLoading)
               Container(
-                color: Colors.black,
-                child: const Center(child: Loader()),
+                color: Colors.black.withOpacity(0.5),
+                child: const Loader(),
               ),
           ],
         ),
