@@ -893,3 +893,29 @@ class _BuildProfileImageState extends ConsumerState<BuildProfileImage> {
     );
   }
 }
+
+List<ProfileTweetModel> convertJsonListToTweetList(List<dynamic> jsonList) {
+  List<ProfileTweetModel> tweets = [];
+  for (int i = 0; i < jsonList.length; i++) {
+    final Map<String, dynamic> json = jsonList[i] as Map<String, dynamic>;
+    if (json["tweetType"]?.toLowerCase() == "reply") continue;
+    
+    final String profilePhotoId = json["user"]?["profileMedia"]?["id"] ?? "";
+
+    final List<dynamic> tweetMediaIdsDynamic = json["tweetMedia"] ?? [];
+    final List<String> tweetMediaIds = tweetMediaIdsDynamic
+        .map((media) => media["media"]?["id"] as String)
+        .toList();
+
+    // get timeAgo
+    final String createTime = json["createdAt"] ?? "";
+    final String timeAgo = getTimeAgo(createTime);
+
+    json["profileMediaId"] = profilePhotoId;
+    json["mediaIds"] = tweetMediaIds;
+    json["timeAgo"] = timeAgo;
+
+    tweets.add(ProfileTweetModel.fromJson(json));
+  }
+  return tweets;
+}
