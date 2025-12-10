@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
+import 'package:lite_x/features/profile/models/profile_tweet_model.dart';
 import 'package:lite_x/features/profile/view/widgets/profile_tweets/profile_likes_tap.dart';
 import 'package:lite_x/features/profile/view/widgets/profile_tweets/profile_media_tap.dart';
+import 'package:lite_x/features/profile/view/widgets/profile_tweets/profile_normal_tweet_widget.dart';
 import 'package:lite_x/features/profile/view/widgets/profile_tweets/profile_posts_tab.dart';
+import 'package:lite_x/features/profile/view_model/providers.dart';
 
 class ProfileTabs extends ConsumerWidget {
   const ProfileTabs({super.key, required this.isMe, required this.profileData});

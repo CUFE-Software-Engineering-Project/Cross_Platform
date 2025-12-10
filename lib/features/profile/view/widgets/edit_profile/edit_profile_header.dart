@@ -1,17 +1,15 @@
 import 'dart:io';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:lite_x/features/media/view_model/providers.dart';
+import 'package:lite_x/features/media/download_media.dart';
+import 'package:lite_x/features/media/upload_media.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
-import 'package:lite_x/features/profile/models/shared.dart';
 import 'package:lite_x/features/profile/view/widgets/edit_profile/controller/edit_profile_controller.dart';
-import 'package:provider/provider.dart';
 
-class EditProfileHeader extends ConsumerWidget {
+class EditProfileHeader extends StatelessWidget {
   final EditProfileController controller;
   final ProfileModel profileData;
   final File? profileImageFile;
@@ -63,51 +61,18 @@ class EditProfileHeader extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final bannerUrl = ref.watch(mediaUrlProvider(profileData.bannerId));
-    final avatarUrl = ref.watch(mediaUrlProvider(profileData.avatarId));
+  Widget build(BuildContext context) {
     DecorationImage? bannerImg = bannerImageFile != null
         ? DecorationImage(image: FileImage(bannerImageFile!))
-        : profileData.bannerId.isNotEmpty
-        ? bannerUrl.when(
-            data: (data) {
-              return DecorationImage(
-                image: CachedNetworkImageProvider(data),
-                onError: (exception, stackTrace) => null,
-              );
-            },
-            error: (err, _) {
-              return DecorationImage(
-                image: CachedNetworkImageProvider(""),
-                onError: (exception, stackTrace) => null,
-              );
-            },
-            loading: () {
-              return DecorationImage(
-                image: CachedNetworkImageProvider(""),
-                onError: (exception, stackTrace) => null,
-              );
-            },
-          )
+        : profileData.bannerUrl.isNotEmpty
+        ? DecorationImage(image: NetworkImage(profileData.bannerUrl))
         : null;
 
     ImageProvider? profileImg = profileImageFile != null
         ? FileImage(profileImageFile!)
-        : profileData.avatarId.isNotEmpty
-        ? avatarUrl.when(
-            data: (data) {
-              return data.isNotEmpty
-                  ? CachedNetworkImageProvider(data)
-                  : CachedNetworkImageProvider(unkownUserAvatar);
-            },
-            error: (err, _) {
-              return CachedNetworkImageProvider(unkownUserAvatar);
-            },
-            loading: () {
-              return CachedNetworkImageProvider(unkownUserAvatar);
-            },
-          )
-        : CachedNetworkImageProvider(unkownUserAvatar);
+        : profileData.avatarUrl.isNotEmpty
+        ? NetworkImage(profileData.avatarUrl)
+        : null;
 
     return SliverToBoxAdapter(
       child: Column(
@@ -170,8 +135,6 @@ class EditProfileHeader extends ConsumerWidget {
                           radius: 40,
                           backgroundColor: Colors.black,
                           backgroundImage: profileImg,
-                          onBackgroundImageError: (exception, stackTrace) =>
-                              null,
                         ),
                       ),
                       CircleAvatar(

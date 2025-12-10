@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
-import 'package:lite_x/features/media/models/shared.dart';
 import 'package:lite_x/features/profile/models/shared.dart';
 import 'package:lite_x/features/media/models/confirm_upload_model.dart';
 import 'package:lite_x/features/media/models/request_upload_model.dart';
@@ -10,7 +9,18 @@ import 'package:lite_x/features/media/repository/media_repo.dart';
 
 class MediaRepoImpL implements MediaRepo {
   Dio _dio;
-  MediaRepoImpL(Dio d) : _dio = d {}
+  MediaRepoImpL(Dio d) : _dio = d {
+    // _dio = Dio(
+    //   BaseOptions(
+    //     baseUrl:
+    //         "https://app-dbef67eb-9a2e-44fa-abff-3e8b83204d9c.cleverapps.io/",
+    //     headers: {
+    //       "Authorization":
+    //           "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VybmFtZSI6ImhhemVtZW1hbSIsImVtYWlsIjoicGFqYWQ4NTY0OUBmZXJtaXJvLmNvbSIsInJvbGUiOiJ1c2VyIiwiaWQiOiJmM2EwZDdmNC0zZDMwLTQ2NjgtOTkyZi1kN2E2ZGM0NjUyNDEiLCJleHAiOjE3NjM1OTgzNDUsImlhdCI6MTc2MzU5NDc0NSwidmVyc2lvbiI6MCwianRpIjoiNjk3ZDJkYjMtY2U1Mi00NDk5LWE5YjItZGQxNDg3YmEzZTcwIiwiZGV2aWQiOiJlNGY2YTRkZi03MzVkLTRlZGItYTIxZi0wZDZkMTA5Y2M1YmUifQ.KmgxTcKVvUmH-xHhlNCgYDUgj92ooDiu1WerL9nUvqk",
+    //     },
+    //   ),
+    // );
+  }
 
   Future<Either<Failure, RequestUploadModel>> requestUpload(
     String fileName,
@@ -50,7 +60,7 @@ class MediaRepoImpL implements MediaRepo {
         data: Stream.fromIterable([fileBytes]),
         options: Options(
           headers: {
-            'Content-Type': getMediaType(mediaFile.path),
+            'Content-Type': _getMediaType(mediaFile.path),
             'Content-Length': fileBytes.length,
           },
         ),
@@ -74,6 +84,18 @@ class MediaRepoImpL implements MediaRepo {
       return Left(Failure("can't download media"));
     }
   }
+}
+
+const Map<String, String> _mediaTypes = {
+  'jpg': 'image/jpg',
+  'jpeg': 'image/jpeg',
+  'png': 'image/png',
+  'gif': 'image/gif',
+  'webp': 'image/webp',
+};
+String _getMediaType(String filePath) {
+  final extension = filePath.split('.').last.toLowerCase();
+  return _mediaTypes[extension] ?? 'image/jpeg';
 }
 
 //   Future<Either<AppFailure, Map<String, dynamic>>> uploadProfilePhoto({

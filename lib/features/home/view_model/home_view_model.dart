@@ -21,7 +21,7 @@ class HomeViewModel extends Notifier<HomeState> {
       forYouTweets: [],
       followingTweets: [],
       isLoading: true,
-      currentFeed: FeedType.forYou, // Default to For You feed
+      currentFeed: FeedType.following,
     );
   }
 
@@ -56,26 +56,17 @@ class HomeViewModel extends Notifier<HomeState> {
   Future<void> switchFeed(FeedType feedType) async {
     if (state.currentFeed == feedType) return;
 
+    // Update current feed immediately to show the correct cached tweets
+    state = state.copyWith(currentFeed: feedType);
+
     final cachedTweets = feedType == FeedType.forYou
         ? state.forYouTweets
         : state.followingTweets;
 
     if (cachedTweets.isNotEmpty) {
       // Use cached tweets without reloading
-      state = state.copyWith(
-        currentFeed: feedType,
-        tweets: cachedTweets,
-        isLoading: false,
-      );
+      state = state.copyWith(tweets: cachedTweets);
     } else {
-      // Show loading indicator and clear tweets while fetching
-      state = state.copyWith(
-        currentFeed: feedType,
-        tweets: [],
-        isLoading: true,
-        error: null,
-      );
-
       // Load fresh tweets if cache is empty
       await loadTweets(feedType: feedType);
     }

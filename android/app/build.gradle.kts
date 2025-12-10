@@ -25,8 +25,7 @@ android {
         applicationId = "com.Artemsia.lite_x"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        // Set minSdk to 24 for better ExoPlayer/Media3 video codec support
-        minSdk = 24
+        minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName

@@ -1,60 +1,36 @@
-import 'package:hive_ce/hive.dart';
 import 'package:lite_x/features/profile/models/shared.dart';
 
-part 'profile_model.g.dart';
-
-@HiveType(typeId: 15)
 class ProfileModel {
-  @HiveField(0)
   final String id;
-  @HiveField(1)
   final String username;
-  @HiveField(2)
   final String displayName;
-  @HiveField(3)
   final String bio;
-  @HiveField(4)
+  final String avatarUrl;
+  final String bannerUrl;
   final int followersCount;
-  @HiveField(5)
   final int followingCount;
-  @HiveField(6)
   final int tweetsCount;
-  @HiveField(7)
   final bool isVerified;
-  @HiveField(8)
   final String joinedDate;
-  @HiveField(9)
   final String website;
-  @HiveField(10)
   final String location;
-  @HiveField(11)
   final int postCount;
-  @HiveField(12)
   final String birthDate;
-  @HiveField(13)
   final bool isFollowing;
-  @HiveField(14)
   final bool isFollower;
-  @HiveField(15)
   final bool protectedAccount;
-  @HiveField(16)
   final bool isBlockedByMe;
-  @HiveField(17)
   final bool isMutedByMe;
-  @HiveField(18)
   final String email;
-  @HiveField(19)
   final String avatarId;
-  @HiveField(20)
-  final String bannerId;
 
   const ProfileModel({
     required this.id,
     required this.username,
     required this.displayName,
     required this.bio,
-    // required this.avatarUrl,
-    // required this.bannerUrl,
+    required this.avatarUrl,
+    required this.bannerUrl,
     required this.followersCount,
     required this.followingCount,
     required this.tweetsCount,
@@ -71,7 +47,6 @@ class ProfileModel {
     required this.isMutedByMe,
     required this.email,
     required this.avatarId,
-    required this.bannerId,
   });
 
   factory ProfileModel.fromJson(Map<String, dynamic> json) {
@@ -97,8 +72,8 @@ class ProfileModel {
       username: json['username'] ?? '',
       displayName: json['name'] ?? '',
       bio: json['bio'] ?? '',
-      // avatarUrl: json['f'] ?? '',
-      // bannerUrl: json['f'] ?? '',
+      avatarUrl: json['profileMedia'] ?? '',
+      bannerUrl: json['coverMedia'] ?? '',
       followersCount: json['_count'] != null
           ? json['_count']['followers'] ?? 0
           : 0,
@@ -118,8 +93,7 @@ class ProfileModel {
       isBlockedByMe: json['blocked'] ?? false,
       isMutedByMe: json['muted'] ?? false,
       email: json["email"] ?? "",
-      avatarId: json["profileMediaId"] ?? "",
-      bannerId: json["coverMediaId"] ?? "",
+      avatarId: json["avatarId"] ?? "",
     );
   }
 
@@ -150,8 +124,8 @@ class ProfileModel {
       'username': username,
       'name': displayName,
       'bio': bio,
-      // 'profilePhoto': avatarUrl,
-      // 'cover': bannerUrl,
+      'profilePhoto': avatarUrl,
+      'cover': bannerUrl,
       'verified': isVerified,
       'website': website,
       'address': location,
@@ -164,6 +138,8 @@ class ProfileModel {
     String? username,
     String? displayName,
     String? bio,
+    String? avatarUrl,
+    String? bannerUrl,
     int? followersCount,
     int? followingCount,
     int? tweetsCount,
@@ -180,13 +156,14 @@ class ProfileModel {
     bool? isMutedByMe,
     String? email,
     String? avatarId,
-    String? bannerId,
   }) {
     return ProfileModel(
       id: id ?? this.id,
       username: username ?? this.username,
       displayName: displayName ?? this.displayName,
       bio: bio ?? this.bio,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+      bannerUrl: bannerUrl ?? this.bannerUrl,
       followersCount: followersCount ?? this.followersCount,
       followingCount: followingCount ?? this.followingCount,
       tweetsCount: tweetsCount ?? this.tweetsCount,
@@ -203,7 +180,6 @@ class ProfileModel {
       isMutedByMe: isMutedByMe ?? this.isMutedByMe,
       email: email ?? this.email,
       avatarId: avatarId ?? this.avatarId,
-      bannerId: bannerId ?? this.bannerId,
     );
   }
 }
