@@ -216,6 +216,7 @@ class AccountInformationScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 12),
                 InkWell(
+                  key: const Key('Log_out_AccountInformation_Screen'),
                   onTap: () async {
                     final authViewModel = ref.read(
                       authViewModelProvider.notifier,

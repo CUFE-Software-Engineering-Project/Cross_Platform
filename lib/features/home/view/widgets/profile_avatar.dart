@@ -26,6 +26,7 @@ class ProfileAvatar extends ConsumerWidget {
     final profileState = ref.watch(userProfileProvider);
 
     return GestureDetector(
+      key:const Key('ProfileAvatar_HomeAppBar'),
       onTap: () => _openDrawer(),
       child: Container(
         width: 32,

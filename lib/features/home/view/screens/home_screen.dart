@@ -208,6 +208,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         ),
       ),
       floatingActionButton: ExpandableFab(
+        key:const Key('plusButton_home_screen'),
         mainIcon: Icons.add,
         mainIconColor: Colors.white,
         mainBackgroundColor: const Color(0xFF1DA1F2),

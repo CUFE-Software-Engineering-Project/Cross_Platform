@@ -16,16 +16,29 @@ class YourAccountScreen extends ConsumerWidget {
     return username == null || username.isEmpty ? '' : '@$username';
   }
 
-  Widget _tile({required Widget leading, required String title, required String subtitle, VoidCallback? onTap}) => ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        leading: SizedBox(width: 44, height: 44, child: Center(child: leading)),
-        title: Text(
-          title,
-          style: const TextStyle(color: Palette.textWhite, fontWeight: FontWeight.w600),
-        ),
-        subtitle: Text(subtitle, style: const TextStyle(color: Palette.textSecondary, fontSize: 13)),
-        onTap: onTap,
-      );
+  Widget _tile({
+    required Widget leading,
+    required String title,
+    required String subtitle,
+    VoidCallback? onTap,
+    Key? key, // <-- add key here
+  }) => ListTile(
+    key: key, // <-- assign key to the ListTile
+    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    leading: SizedBox(width: 44, height: 44, child: Center(child: leading)),
+    title: Text(
+      title,
+      style: const TextStyle(
+        color: Palette.textWhite,
+        fontWeight: FontWeight.w600,
+      ),
+    ),
+    subtitle: Text(
+      subtitle,
+      style: const TextStyle(color: Palette.textSecondary, fontSize: 13),
+    ),
+    onTap: onTap,
+  );
 
   Widget _body(BuildContext context, String subtitle) {
     return SingleChildScrollView(
@@ -53,6 +66,7 @@ class YourAccountScreen extends ConsumerWidget {
               title: 'Account information',
               subtitle: 'See your account information like your phone number and email address.',
               onTap: () => GoRouter.of(context).pushNamed(RouteConstants.accountinformationscreen),
+              key:const Key('AccountInformation_YourAccount_Screen')
             ),
             _tile(
               leading: Icon(LucideIcons.lock, color: Palette.textWhite, size: 22),

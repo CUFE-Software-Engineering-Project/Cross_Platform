@@ -181,6 +181,7 @@ class IntroScreen extends ConsumerWidget {
             style: TextStyle(color: Colors.grey, fontSize: 14),
           ),
           GestureDetector(
+            key: const Key('loginButton'),
             onTap: () {
               context.pushNamed(RouteConstants.Loginscreen);
             },

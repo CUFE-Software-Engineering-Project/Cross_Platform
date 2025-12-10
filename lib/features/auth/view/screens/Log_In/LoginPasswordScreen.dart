@@ -162,6 +162,7 @@ class _LoginPasswordScreenState extends ConsumerState<LoginPasswordScreen> {
                               ),
                               const SizedBox(height: 38),
                               CustomTextField(
+                                key:const Key('passwordTextField_LoginPasswordScreen'),
                                 controller: _passwordController,
                                 focusNode: _passFocus,
                                 labelText: 'Password',
@@ -218,6 +219,7 @@ class _LoginPasswordScreenState extends ConsumerState<LoginPasswordScreen> {
               return SizedBox(
                 width: 80,
                 child: ElevatedButton(
+                  key:const Key('LoginButton_LoginPasswordScreen'),
                   onPressed: (isValid && !isLoading) ? _handleLogin : null,
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(

@@ -142,6 +142,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               ),
                               const SizedBox(height: 20),
                               CustomTextField(
+                                key:const Key('emailTextField_Login_Screen'),
                                 controller: _identifiercontroller,
                                 labelText: 'Phone, email address, or username',
                                 keyboardType: TextInputType.emailAddress,
@@ -197,6 +198,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               return SizedBox(
                 width: 80,
                 child: ElevatedButton(
+                  key:const Key('NextButton_Login_Screen'),
                   onPressed: isValid ? _handleNext : null,
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(

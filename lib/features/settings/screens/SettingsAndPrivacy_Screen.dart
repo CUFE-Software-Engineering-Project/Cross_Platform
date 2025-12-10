@@ -53,32 +53,33 @@ class _BuildWebLayout extends StatelessWidget {
 
 class _SettingsList extends StatelessWidget {
   const _SettingsList();
-
-  Widget _tile(
-    Widget leadingWidget,
-    String title,
-    String subtitle, {
-    VoidCallback? onTap,
-  }) => ListTile(
-    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-    leading: SizedBox(
-      width: 44,
-      height: 44,
-      child: Center(child: leadingWidget),
+Widget _tile(
+  Widget leadingWidget,
+  String title,
+  String subtitle, {
+  VoidCallback? onTap,
+  Key? key,  // <-- add this
+}) => ListTile(
+  key: key,  // <-- assign it to the ListTile
+  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+  leading: SizedBox(
+    width: 44,
+    height: 44,
+    child: Center(child: leadingWidget),
+  ),
+  title: Text(
+    title,
+    style: const TextStyle(
+      color: Palette.textWhite,
+      fontWeight: FontWeight.w600,
     ),
-    title: Text(
-      title,
-      style: const TextStyle(
-        color: Palette.textWhite,
-        fontWeight: FontWeight.w600,
-      ),
-    ),
-    subtitle: Text(
-      subtitle,
-      style: const TextStyle(color: Palette.textSecondary, fontSize: 13),
-    ),
-    onTap: onTap ?? () {},
-  );
+  ),
+  subtitle: Text(
+    subtitle,
+    style: const TextStyle(color: Palette.textSecondary, fontSize: 13),
+  ),
+  onTap: onTap ?? () {},
+);
 
   @override
   Widget build(BuildContext context) {
@@ -92,6 +93,7 @@ class _SettingsList extends StatelessWidget {
             'Your account',
             'See information about your account, download an archive of your data, or learn about your account deactivation options.',
             onTap: () => GoRouter.of(context).pushNamed(RouteConstants.youraccountscreen),
+            key:const Key('YourAccount_SettingsAndPrivacy_Screen')
           ),
           _tile(
             Icon(LucideIcons.lock, color: Palette.textWhite, size: 22),
