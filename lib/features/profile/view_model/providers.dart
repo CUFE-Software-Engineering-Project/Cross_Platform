@@ -316,7 +316,7 @@ final myUserNameProvider = Provider<String>((ref) {
 // trends
 
 final forYouTrendsProvider =
-    FutureProvider<Future<Either<Failure, ForYouResponseModel>>>((ref) async {
+    FutureProvider<Either<Failure, ForYouResponseModel>>((ref) async {
       final repo = ref.watch(profileRepoProvider);
       return repo.getForYouTrends();
     });

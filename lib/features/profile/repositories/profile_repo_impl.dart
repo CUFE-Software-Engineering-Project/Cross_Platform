@@ -605,15 +605,20 @@ class ProfileRepoImpl implements ProfileRepo {
       final jsonCategories = json["categories"];
       final people = json["whoToFollow"];
 
-      final List<UserModel> peoplemodels = people.map((p) {
-        p["photo"] = p["profileMedia"];
-        p["isFollowing"] = p["isFollowed"];
-        return UserModel.fromJson(p);
-      }).toList();
+      final List<UserModel> peoplemodels = people
+          .map((p) {
+            p["photo"] = p["profileMedia"]?["id"];
+            p["isFollowing"] = p["isFollowed"];
+            print(p.toString());
+            return UserModel.fromJson(p as Map<String, dynamic>);
+          })
+          .toList()
+          .cast<UserModel>();
 
       final List<TrendCategory> categories = jsonCategories
           .map((c) => TrendCategory.fromJson(c))
-          .toList();
+          .toList()
+          .cast<TrendCategory>();
 
       return Right(
         ForYouResponseModel(
@@ -621,14 +626,10 @@ class ProfileRepoImpl implements ProfileRepo {
           suggestedUsers: peoplemodels,
         ),
       );
-    } on DioException catch (_) {
-      return (Left(
-        Failure("cannot get trends at this time, try again later..."),
-      ));
+    } on DioException catch (e) {
+      return (Left(Failure(e.toString())));
     } catch (e) {
-      return (Left(
-        Failure("cannot get trends at this time, try again later..."),
-      ));
+      return (Left(Failure(e.toString())));
     }
   }
 

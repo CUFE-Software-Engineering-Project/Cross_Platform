@@ -16,10 +16,14 @@ class TrendCategory {
 
   factory TrendCategory.fromJson(Map<String, dynamic> json) {
     final viralTweets = convertJsonListToTweetList(json["viralTweets"] ?? []);
+    
     final trendsJson = json["trends"] ?? [];
-    final trends = trendsJson.map((t) => TrendModel.fromJson(t)).toList();
+    final trends = trendsJson
+        .map((t) => TrendModel.fromJson(t))
+        .toList()
+        .cast<TrendModel>();
     return TrendCategory(
-      categoryName: json['categoryName'] ?? "",
+      categoryName: json['category'] ?? "",
       viralTweets: viralTweets,
       trends: trends,
     );

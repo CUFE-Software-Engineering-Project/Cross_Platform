@@ -897,9 +897,10 @@ class _BuildProfileImageState extends ConsumerState<BuildProfileImage> {
 List<ProfileTweetModel> convertJsonListToTweetList(List<dynamic> jsonList) {
   List<ProfileTweetModel> tweets = [];
   for (int i = 0; i < jsonList.length; i++) {
+    print(jsonList[i]);
     final Map<String, dynamic> json = jsonList[i] as Map<String, dynamic>;
     if (json["tweetType"]?.toLowerCase() == "reply") continue;
-    
+
     final String profilePhotoId = json["user"]?["profileMedia"]?["id"] ?? "";
 
     final List<dynamic> tweetMediaIdsDynamic = json["tweetMedia"] ?? [];
