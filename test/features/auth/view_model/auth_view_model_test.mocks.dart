@@ -191,22 +191,6 @@ class MockAuthRemoteRepository extends _i1.Mock
           as _i3.Future<_i4.Either<_i5.AppFailure, _i10.File>>);
 
   @override
-  _i3.Future<_i4.Either<_i5.AppFailure, void>> updateProfilePhoto(
-    String? userId,
-    String? mediaId,
-  ) =>
-      (super.noSuchMethod(
-            Invocation.method(#updateProfilePhoto, [userId, mediaId]),
-            returnValue: _i3.Future<_i4.Either<_i5.AppFailure, void>>.value(
-              _i8.dummyValue<_i4.Either<_i5.AppFailure, void>>(
-                this,
-                Invocation.method(#updateProfilePhoto, [userId, mediaId]),
-              ),
-            ),
-          )
-          as _i3.Future<_i4.Either<_i5.AppFailure, void>>);
-
-  @override
   _i3.Future<_i4.Either<_i5.AppFailure, (_i6.UserModel, _i7.TokensModel)>>
   updateUsername({
     required _i6.UserModel? currentUser,
@@ -314,24 +298,6 @@ class MockAuthRemoteRepository extends _i1.Mock
             ),
           )
           as _i3.Future<_i4.Either<_i5.AppFailure, bool>>);
-
-  @override
-  _i3.Future<_i4.Either<_i5.AppFailure, List<String>>> suggest_usernames({
-    required String? username,
-  }) =>
-      (super.noSuchMethod(
-            Invocation.method(#suggest_usernames, [], {#username: username}),
-            returnValue:
-                _i3.Future<_i4.Either<_i5.AppFailure, List<String>>>.value(
-                  _i8.dummyValue<_i4.Either<_i5.AppFailure, List<String>>>(
-                    this,
-                    Invocation.method(#suggest_usernames, [], {
-                      #username: username,
-                    }),
-                  ),
-                ),
-          )
-          as _i3.Future<_i4.Either<_i5.AppFailure, List<String>>>);
 
   @override
   _i3.Future<_i4.Either<_i5.AppFailure, String>> forget_password({

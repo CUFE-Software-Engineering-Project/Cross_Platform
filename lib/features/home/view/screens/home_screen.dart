@@ -111,9 +111,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     super.build(context);
     final homeState = ref.watch(homeViewModelProvider);
     final currentFeed = homeState.currentFeed;
-    final tweets = currentFeed == FeedType.forYou
-        ? homeState.forYouTweets
-        : homeState.followingTweets;
+    final tweets =
+        homeState.tweets; // Use the tweets field that switches correctly
     final feedName = currentFeed == FeedType.forYou ? "For You" : "Following";
 
     return Scaffold(
@@ -121,8 +120,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       backgroundColor: Colors.black,
       drawer: const ProfileSideDrawer(),
       body: RefreshIndicator(
-        onRefresh: () =>
-            ref.read(homeViewModelProvider.notifier).refreshTweets(),
+        onRefresh: () async {
+          await ref.read(homeViewModelProvider.notifier).refreshTweets();
+        },
         backgroundColor: Colors.grey[900],
         color: Colors.white,
         child: CustomScrollView(
@@ -144,7 +144,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 collapseMode: CollapseMode.pin,
               ),
             ),
-
             _buildSliverTweetList(
               context,
               tweets,
@@ -204,6 +203,48 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     bool isLoading,
     String feedType,
   ) {
+    // Show error if present
+    final homeState = ref.watch(homeViewModelProvider);
+    if (homeState.error != null && tweets.isEmpty) {
+      return SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.only(top: 50.0),
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.error_outline, size: 64, color: Colors.red[400]),
+                const SizedBox(height: 16),
+                Text(
+                  'Error loading tweets',
+                  style: TextStyle(color: Colors.grey[400], fontSize: 18),
+                ),
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 32.0),
+                  child: Text(
+                    homeState.error!,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.grey[500], fontSize: 14),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () {
+                    ref.read(homeViewModelProvider.notifier).refreshTweets();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF1DA1F2),
+                  ),
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     if (isLoading && tweets.isEmpty) {
       return const SliverToBoxAdapter(
         child: Padding(

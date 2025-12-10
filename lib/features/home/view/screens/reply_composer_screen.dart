@@ -9,6 +9,45 @@ import 'package:lite_x/features/home/view_model/home_view_model.dart';
 import 'package:lite_x/features/media/upload_media.dart';
 import 'package:lite_x/features/home/providers/user_profile_provider.dart';
 
+enum PostPrivacy {
+  everyone,
+  following,
+  mentioned;
+
+  String get label {
+    switch (this) {
+      case PostPrivacy.everyone:
+        return 'Everyone can reply';
+      case PostPrivacy.following:
+        return 'People you follow';
+      case PostPrivacy.mentioned:
+        return 'Only mentioned users';
+    }
+  }
+
+  IconData get icon {
+    switch (this) {
+      case PostPrivacy.everyone:
+        return Icons.public;
+      case PostPrivacy.following:
+        return Icons.people;
+      case PostPrivacy.mentioned:
+        return Icons.alternate_email;
+    }
+  }
+
+  String get apiValue {
+    switch (this) {
+      case PostPrivacy.everyone:
+        return 'EVERYONE';
+      case PostPrivacy.following:
+        return 'FOLLOWINGS';
+      case PostPrivacy.mentioned:
+        return 'MENTIONED';
+    }
+  }
+}
+
 class ReplyComposerScreen extends ConsumerStatefulWidget {
   final TweetModel replyingToTweet;
 
@@ -23,7 +62,8 @@ class _ReplyComposerScreenState extends ConsumerState<ReplyComposerScreen> {
   final TextEditingController _textController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
   bool _isPosting = false;
-  final List<File> _selectedImages = [];
+  final List<File> _selectedMedia = [];
+  PostPrivacy _selectedPrivacy = PostPrivacy.everyone;
 
   String? _getPhotoUrl(String? photo) {
     if (photo == null || photo.isEmpty) return null;
@@ -62,13 +102,13 @@ class _ReplyComposerScreenState extends ConsumerState<ReplyComposerScreen> {
           .createPost(
             content: _textController.text.trim(),
             replyToId: widget.replyingToTweet.id,
-            replyControl: "EVERYONE",
+            replyControl: _selectedPrivacy.apiValue,
             mediaIds: mediaIds,
           );
 
       if (mounted) {
         setState(() {
-          _selectedImages.clear();
+          _selectedMedia.clear();
           _textController.clear();
         });
         ScaffoldMessenger.of(context).showSnackBar(
@@ -98,14 +138,14 @@ class _ReplyComposerScreenState extends ConsumerState<ReplyComposerScreen> {
   }
 
   Future<List<String>> _uploadSelectedImages() async {
-    if (_selectedImages.isEmpty) return [];
-    final uploadedIds = await upload_media(_selectedImages);
+    if (_selectedMedia.isEmpty) return [];
+    final uploadedIds = await upload_media(_selectedMedia);
     final mediaIds = uploadedIds.where((id) => id.isNotEmpty).toList();
 
-    if (mediaIds.length != _selectedImages.length && mounted) {
+    if (mediaIds.length != _selectedMedia.length && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Some images failed to upload. Try again.'),
+          content: Text('Some media files failed to upload. Try again.'),
           behavior: SnackBarBehavior.floating,
           backgroundColor: Colors.orange,
         ),
@@ -113,17 +153,61 @@ class _ReplyComposerScreenState extends ConsumerState<ReplyComposerScreen> {
     }
 
     if (mediaIds.isEmpty) {
-      throw Exception('Unable to upload selected images.');
+      throw Exception('Unable to upload selected media.');
     }
     return mediaIds;
   }
 
+  void _showMediaPicker() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1E1E1E),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 12),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[600],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
+            ListTile(
+              leading: const Icon(Icons.image, color: Color(0xFF1D9BF0)),
+              title: const Text('Photo', style: TextStyle(color: Colors.white)),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImage();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.videocam, color: Color(0xFF1D9BF0)),
+              title: const Text('Video', style: TextStyle(color: Colors.white)),
+              onTap: () {
+                Navigator.pop(context);
+                _pickVideo();
+              },
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _pickImage() async {
-    final remainingSlots = 4 - _selectedImages.length;
+    final remainingSlots = 4 - _selectedMedia.length;
     if (remainingSlots <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Maximum 4 images allowed per reply.'),
+          content: Text('Maximum 4 media files allowed per reply.'),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -136,28 +220,149 @@ class _ReplyComposerScreenState extends ConsumerState<ReplyComposerScreen> {
     setState(() {
       for (final picked in pickedList) {
         if (picked.file != null) {
-          _selectedImages.add(picked.file!);
+          _selectedMedia.add(picked.file!);
         }
       }
     });
   }
 
-  void _removeImage(int index) {
-    if (index < 0 || index >= _selectedImages.length) return;
+  Future<void> _pickVideo() async {
+    final remainingSlots = 4 - _selectedMedia.length;
+    if (remainingSlots <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Maximum 4 media files allowed per reply.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    final picked = await pickVideo();
+    if (picked == null || picked.file == null) return;
+
     setState(() {
-      _selectedImages.removeAt(index);
+      _selectedMedia.add(picked.file!);
     });
   }
 
+  void _removeMedia(int index) {
+    if (index < 0 || index >= _selectedMedia.length) return;
+    setState(() {
+      _selectedMedia.removeAt(index);
+    });
+  }
+
+  bool _isVideoFile(File file) {
+    final extension = file.path.split('.').last.toLowerCase();
+    return [
+      'mp4',
+      'mov',
+      'avi',
+      'webm',
+      'mkv',
+      'flv',
+      'wmv',
+      'mpeg',
+      'mpg',
+      '3gp',
+      'm4v',
+    ].contains(extension);
+  }
+
+  void _showPrivacyOptions() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1E1E1E),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 12),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[600],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.0),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Who can reply?',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.0),
+              child: Text(
+                'Choose who can reply to this post.',
+                style: TextStyle(color: Colors.grey, fontSize: 14),
+              ),
+            ),
+            const SizedBox(height: 16),
+            ...PostPrivacy.values.map((privacy) {
+              return ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: privacy == _selectedPrivacy
+                        ? Colors.blue.withOpacity(0.2)
+                        : Colors.grey[800],
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    privacy.icon,
+                    color: privacy == _selectedPrivacy
+                        ? Colors.blue
+                        : Colors.grey,
+                    size: 20,
+                  ),
+                ),
+                title: Text(
+                  privacy.label,
+                  style: const TextStyle(color: Colors.white, fontSize: 16),
+                ),
+                trailing: privacy == _selectedPrivacy
+                    ? const Icon(Icons.check_circle, color: Colors.blue)
+                    : null,
+                onTap: () {
+                  setState(() {
+                    _selectedPrivacy = privacy;
+                  });
+                  Navigator.pop(context);
+                },
+              );
+            }).toList(),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildSelectedImagesPreview() {
-    if (_selectedImages.isEmpty) return const SizedBox.shrink();
-    final crossAxisCount = _selectedImages.length == 1 ? 1 : 2;
+    if (_selectedMedia.isEmpty) return const SizedBox.shrink();
+    final crossAxisCount = _selectedMedia.length == 1 ? 1 : 2;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '${_selectedImages.length} / 4 photos',
+          '${_selectedMedia.length} / 4 media files',
           style: TextStyle(color: Colors.grey[500], fontSize: 13),
         ),
         const SizedBox(height: 8),
@@ -168,26 +373,66 @@ class _ReplyComposerScreenState extends ConsumerState<ReplyComposerScreen> {
             crossAxisCount: crossAxisCount,
             crossAxisSpacing: 8,
             mainAxisSpacing: 8,
-            childAspectRatio: _selectedImages.length == 1 ? 16 / 9 : 1.0,
+            childAspectRatio: _selectedMedia.length == 1 ? 16 / 9 : 1.0,
           ),
-          itemCount: _selectedImages.length,
+          itemCount: _selectedMedia.length,
           itemBuilder: (context, index) {
+            final file = _selectedMedia[index];
+            final isVideo = _isVideoFile(file);
             return Stack(
               children: [
                 Positioned.fill(
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(12),
-                    child: Image.file(
-                      _selectedImages[index],
-                      fit: BoxFit.cover,
-                    ),
+                    child: isVideo
+                        ? Container(
+                            color: Colors.grey[900],
+                            child: const Center(
+                              child: Icon(
+                                Icons.play_circle_outline,
+                                color: Colors.white,
+                                size: 48,
+                              ),
+                            ),
+                          )
+                        : Image.file(file, fit: BoxFit.cover),
                   ),
                 ),
+                if (isVideo)
+                  Positioned(
+                    bottom: 8,
+                    left: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.black87,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.videocam, color: Colors.white, size: 12),
+                          SizedBox(width: 4),
+                          Text(
+                            'Video',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 Positioned(
                   top: 8,
                   right: 8,
                   child: InkWell(
-                    onTap: () => _removeImage(index),
+                    onTap: () => _removeMedia(index),
                     child: Container(
                       decoration: const BoxDecoration(
                         color: Colors.black54,
@@ -246,13 +491,40 @@ class _ReplyComposerScreenState extends ConsumerState<ReplyComposerScreen> {
                     _buildReplyingToTweet(),
                     const SizedBox(height: 8),
                     _buildReplyComposer(userPhotoUrl),
-                    if (_selectedImages.isNotEmpty) ...[
+                    if (_selectedMedia.isNotEmpty) ...[
                       const SizedBox(height: 12),
                       Padding(
                         padding: const EdgeInsets.only(left: 52),
                         child: _buildSelectedImagesPreview(),
                       ),
                     ],
+                    const SizedBox(height: 12),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 52),
+                      child: InkWell(
+                        onTap: _showPrivacyOptions,
+                        borderRadius: BorderRadius.circular(20),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              _selectedPrivacy.icon,
+                              color: const Color(0xFF1D9BF0),
+                              size: 16,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              _selectedPrivacy.label,
+                              style: const TextStyle(
+                                color: Color(0xFF1D9BF0),
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -361,7 +633,7 @@ class _ReplyComposerScreenState extends ConsumerState<ReplyComposerScreen> {
                   const SizedBox(width: 4),
                   Flexible(
                     child: Text(
-                      widget.replyingToTweet.authorUsername,
+                      '@${widget.replyingToTweet.authorUsername}',
                       style: TextStyle(color: Colors.grey[500], fontSize: 15),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -386,7 +658,7 @@ class _ReplyComposerScreenState extends ConsumerState<ReplyComposerScreen> {
                   children: [
                     const TextSpan(text: 'Replying to '),
                     TextSpan(
-                      text: widget.replyingToTweet.authorUsername,
+                      text: '@${widget.replyingToTweet.authorUsername}',
                       style: const TextStyle(color: Color(0xFF1D9BF0)),
                     ),
                   ],
@@ -454,10 +726,10 @@ class _ReplyComposerScreenState extends ConsumerState<ReplyComposerScreen> {
             children: [
               IconButton(
                 icon: const Icon(
-                  Icons.image_outlined,
+                  Icons.perm_media_outlined,
                   color: Color(0xFF1D9BF0),
                 ),
-                onPressed: _isPosting ? null : _pickImage,
+                onPressed: _isPosting ? null : _showMediaPicker,
                 iconSize: 20,
                 padding: const EdgeInsets.all(8),
                 constraints: const BoxConstraints(),

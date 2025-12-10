@@ -72,8 +72,8 @@ String? passwordValidator(String? value) {
   if (value == null || value.isEmpty) {
     return 'Password is required';
   }
-  if (value.length < 9) {
-    return 'Password must be at least 9 characters';
+  if (value.length < 8) {
+    return 'Password must be at least 8 characters';
   }
   if (value.length > 256) {
     return 'Password must be less than 256 characters';

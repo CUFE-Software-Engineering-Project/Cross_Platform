@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lite_x/features/media/models/confirm_upload_model.dart';
 import 'package:lite_x/features/media/models/request_upload_model.dart';
+import 'package:lite_x/features/media/models/shared.dart';
 import 'package:lite_x/features/media/view_model/providers.dart';
 
 Future<List<String>> upload_media(List<File> files) async {
@@ -13,7 +14,7 @@ Future<List<String>> upload_media(List<File> files) async {
   final uploadFutures = limitedFiles.map((file) async {
     bool fail = false;
     final fileName = file.path.split(Platform.pathSeparator).last;
-    final fileType = _getMediaType(file.path);
+    final fileType = getMediaType(file.path);
 
     // request upload
     final requestUpload = container.read(requestUploadProvider);

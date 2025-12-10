@@ -24,6 +24,7 @@ import 'package:lite_x/features/chat/view/screens/Search_User_Group.dart';
 import 'package:lite_x/features/chat/view/screens/chat_Screen.dart';
 import 'package:lite_x/features/chat/view/screens/conversations_screen.dart';
 import 'package:lite_x/features/explore/view/explore_screen.dart';
+import 'package:lite_x/features/trends/view/screens/trends_screen.dart';
 import 'package:lite_x/features/home/view/screens/tweet_screen.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
 import 'package:lite_x/features/profile/models/shared.dart';
@@ -371,6 +372,14 @@ class Approuter {
         path: "/exploreScreen",
         pageBuilder: (context, state) => CustomTransitionPage(
           child: ExploreScreen(),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
+        name: RouteConstants.TrendsScreen,
+        path: "/trends",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: const TrendsScreen(),
           transitionsBuilder: _slideRightTransitionBuilder,
         ),
       ),

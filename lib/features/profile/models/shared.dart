@@ -1,12 +1,15 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/svg.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lite_x/core/providers/current_user_provider.dart';
 import 'package:lite_x/features/media/download_media.dart';
 import 'package:lite_x/features/media/view_model/providers.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
 import 'package:lite_x/features/profile/models/profile_tweet_model.dart';
-import 'package:lite_x/features/profile/view/widgets/profile_tweets/profile_normal_tweet_widget.dart' hide Padding;
+import 'package:lite_x/features/profile/view/widgets/profile_tweets/profile_normal_tweet_widget.dart';
+import 'package:lite_x/features/profile/view/widgets/profile_tweets/profile_quote_widget.dart';
 import 'package:lite_x/features/profile/view/widgets/profile_tweets/profile_retweet_widget.dart';
 import 'package:lite_x/features/profile/view_model/providers.dart';
 
@@ -210,7 +213,8 @@ ProfileTweet getCorrectTweetType(
   if (type == TweetType.ReTweet)
     return ProfileRetweetWidget(profileModel: pm, tweetModel: tweetModel);
 
-  // if(type == TweetType.Quote)
+  if (type == TweetType.Quote)
+    return ProfileQuoteWidget(tweetModel: tweetModel, profileModel: pm);
 
   return ProfileNormalTweetWidget(
     profileModel: pm,
@@ -321,56 +325,25 @@ class BuildSmallProfileImage extends ConsumerStatefulWidget {
 
 class _BuildSmallProfileImageState
     extends ConsumerState<BuildSmallProfileImage> {
-  String _media = "";
-  void _getMedia() async {
-    // TODO: implement initState
-    if (widget.mediaId == null && widget.userId == null) {
-      setState(() {
-        _loading = false;
-      });
-      return;
-    } else if (widget.mediaId == null) {
-      final currentUser = ref.watch(currentUserProvider);
-      final profileData = ref.watch(
-        profileDataProvider(currentUser?.username ?? ""),
-      );
-      profileData.whenData((data) {
-        data.fold(
-          (l) {
-            setState(() {
-              _loading = false;
-            });
-          },
-          (r) {
-            _media = r.avatarUrl;
-            setState(() {
-              _loading = false;
-            });
-          },
-        );
-      });
-      return;
-    } else if (widget.mediaId!.isEmpty) {}
-    getMediaUrls([widget.mediaId!]).then((res) {
-      _media = res[0];
-      setState(() {
-        _loading = false;
-      });
-    });
-  }
-
-  bool _loading = true;
-
   @override
   Widget build(BuildContext context) {
-    if (_loading == true) {
-      _getMedia();
+    if (widget.mediaId != null) {
+      final mediaUrl = ref.watch(mediaUrlProvider(widget.mediaId!));
       return CircleAvatar(
         backgroundColor: Colors.grey,
-        radius: 20,
-        child: Padding(
-          padding: const EdgeInsets.all(10.0),
-          child: CircularProgressIndicator(color: Colors.white),
+        radius: widget.radius,
+        backgroundImage: mediaUrl.when(
+          data: (res) {
+            return CachedNetworkImageProvider(
+              res.isNotEmpty ? res : unkownUserAvatar,
+            );
+          },
+          error: (err, _) {
+            return CachedNetworkImageProvider(unkownUserAvatar);
+          },
+          loading: () {
+            return CachedNetworkImageProvider(unkownUserAvatar);
+          },
         ),
       );
     } else if (widget.username != null) {
@@ -926,10 +899,26 @@ class _BuildProfileImageState extends ConsumerState<BuildProfileImage> {
   Widget build(BuildContext context) {
     final mediaUrl = ref.watch(mediaUrlProvider(widget.avatarId));
     return CircleAvatar(
-      backgroundImage: CachedNetworkImageProvider(_media),
-      backgroundColor: Colors.grey,
-      radius: 20,
-      onBackgroundImageError: (exception, stackTrace) => null,
+      radius: 45,
+      backgroundColor: Colors.black,
+      child: CircleAvatar(
+        radius: 40,
+        backgroundColor: Colors.black,
+        backgroundImage: CachedNetworkImageProvider(
+          mediaUrl.when(
+            data: (res) {
+              return res.isNotEmpty ? res : unkownUserAvatar;
+            },
+            error: (err, _) {
+              return unkownUserAvatar;
+            },
+            loading: () {
+              return unkownUserAvatar;
+            },
+          ),
+        ),
+        onBackgroundImageError: (exception, stackTrace) => null,
+      ),
     );
   }
 }
