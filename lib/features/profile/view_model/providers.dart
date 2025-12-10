@@ -15,6 +15,7 @@ import 'package:lite_x/features/profile/repositories/profile_repo.dart';
 import 'package:lite_x/features/profile/repositories/profile_repo_impl.dart';
 import 'package:lite_x/features/trends/models/for_you_response_model.dart';
 import 'package:lite_x/features/trends/models/trend_category.dart';
+import 'package:lite_x/features/trends/models/trend_model.dart';
 
 final profileRepoProvider = Provider<ProfileRepo>((ref) {
   return ProfileRepoImpl(ref.watch(dioProvider));
@@ -329,3 +330,10 @@ final trendCategoryProvider =
       final repo = ref.watch(profileRepoProvider);
       return repo.getTrenCategory(catName);
     });
+
+final profileTrendsProvider = FutureProvider<Either<Failure, List<TrendModel>>>(
+  (ref) async {
+    final repo = ref.watch(profileRepoProvider);
+    return repo.getAvailableTrends();
+  },
+);

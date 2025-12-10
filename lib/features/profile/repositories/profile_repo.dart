@@ -9,6 +9,7 @@ import 'package:lite_x/features/profile/models/tweet_reply_model.dart';
 import 'package:lite_x/features/profile/models/user_model.dart';
 import 'package:lite_x/features/trends/models/for_you_response_model.dart';
 import 'package:lite_x/features/trends/models/trend_category.dart';
+import 'package:lite_x/features/trends/models/trend_model.dart';
 
 abstract class ProfileRepo {
   Future<Either<Failure, ProfileModel>> getProfileData(
@@ -95,4 +96,5 @@ abstract class ProfileRepo {
 
   Future<Either<Failure, ForYouResponseModel>> getForYouTrends();
   Future<Either<Failure, TrendCategory>> getTrenCategory(String catName);
+  Future<Either<Failure, List<TrendModel>>> getAvailableTrends();
 }

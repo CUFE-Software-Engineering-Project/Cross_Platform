@@ -22,6 +22,7 @@ class ForYouProfileTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncData = ref.watch(forYouTrendsProvider);
+    final asyncTrends = ref.watch(profileTrendsProvider);
     return asyncData.when(
       data: (res) {
         return res.fold(
@@ -45,17 +46,33 @@ class ForYouProfileTab extends ConsumerWidget {
             );
           },
           (data) {
-            return ListView(
-              children: [
-                _buildWhoToFollowSection(data.suggestedUsers),
-                ListView.builder(
-                  shrinkWrap: true,
-                  physics: NeverScrollableScrollPhysics(),
-                  itemBuilder: (context, index) =>
-                      _buildCategorySection(data.categories[index], pm),
-                  itemCount: data.categories.length,
-                ),
-              ],
+            return RefreshIndicator(
+              onRefresh: () async {
+                // ignore: unused_result
+                ref.invalidate(forYouTrendsProvider);
+                // Optionally wait for the new data
+                await ref.read(forYouTrendsProvider.future);
+              },
+              child: ListView(
+                children: [
+                  asyncTrends.when(
+                    data: (res) => res.fold(
+                      (l) => Text(l.message),
+                      (r) => _buildTredsSection(r),
+                    ),
+                    error: (err, _) => SizedBox.shrink(),
+                    loading: () => SizedBox.shrink(),
+                  ),
+                  _buildWhoToFollowSection(data.suggestedUsers),
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: NeverScrollableScrollPhysics(),
+                    itemBuilder: (context, index) =>
+                        _buildCategorySection(data.categories[index], pm),
+                    itemCount: data.categories.length,
+                  ),
+                ],
+              ),
             );
           },
         );
@@ -89,16 +106,21 @@ class ForYouProfileTab extends ConsumerWidget {
     );
   }
 
-  // Widget buildTredsSection(List<TrendModel> trends, String) {
-  //   return ListView.separated(
-  //     physics: NeverScrollableScrollPhysics(),
-  //     shrinkWrap: true,
-  //     itemBuilder: (context, index) {
-  //       return TrendTile(trend: trends[index], trendCategory: trendCategory, showRank: showRank)
-  //     },
-
-  //   );
-  // }
+  Widget _buildTredsSection(List<TrendModel> trends) {
+    return ListView.builder(
+      padding: EdgetInsets,
+      physics: NeverScrollableScrollPhysics(),
+      shrinkWrap: true,
+      itemBuilder: (context, index) {
+        return TrendTile(
+          trend: trends[index],
+          trendCategory: "ُEgypt",
+          showRank: false,
+        );
+      },
+      itemCount: trends.length <= 6 ? trends.length : 6,
+    );
+  }
 
   Widget _buildWhoToFollowSection(List<UserModel> users) {
     return Column(

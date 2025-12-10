@@ -17,6 +17,7 @@ import 'package:lite_x/features/profile/repositories/profile_storage_service.dar
 import 'package:lite_x/features/profile/view_model/providers.dart';
 import 'package:lite_x/features/trends/models/for_you_response_model.dart';
 import 'package:lite_x/features/trends/models/trend_category.dart';
+import 'package:lite_x/features/trends/models/trend_model.dart';
 
 class ProfileRepoImpl implements ProfileRepo {
   Dio _dio;
@@ -626,10 +627,14 @@ class ProfileRepoImpl implements ProfileRepo {
           suggestedUsers: peoplemodels,
         ),
       );
-    } on DioException catch (e) {
-      return (Left(Failure(e.toString())));
+    } on DioException catch (_) {
+      return (Left(
+        Failure("cannot get trends at this time, try again later..."),
+      ));
     } catch (e) {
-      return (Left(Failure(e.toString())));
+      return (Left(
+        Failure("cannot get trends at this time, try again later..."),
+      ));
     }
   }
 
@@ -650,6 +655,26 @@ class ProfileRepoImpl implements ProfileRepo {
       return (Left(
         Failure("cannot get trends at this time, try again later..."),
       ));
+    }
+  }
+
+  Future<Either<Failure, List<TrendModel>>> getAvailableTrends() async {
+    try {
+      final response = await _dio.get("api/hashtags/trends");
+
+      final jsonList = response.data["trends"];
+      if (jsonList != null) {
+        final List<TrendModel> trends = jsonList
+            .map((t) => TrendModel.fromJson(t))
+            .toList()
+            .cast<TrendModel>();
+        return Right(trends);
+      }
+      return Right([]);
+    } on DioException catch (e) {
+      return (Left(Failure(e.toString())));
+    } catch (e) {
+      return (Left(Failure(e.toString())));
     }
   }
 }

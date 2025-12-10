@@ -480,6 +480,9 @@ class _InterActionsRowOfTweetState
                             borderColor: Colors.blue,
                             icon: Icon(Icons.check_circle, color: Colors.blue),
                           );
+                        final currUser = ref.watch(currentUserProvider);
+                        if (currUser != null)
+                          ref.refresh(profilePostsProvider(currUser.username));
                         if (mounted)
                           // ignore: unused_result
                           ref.refresh(
@@ -521,6 +524,10 @@ class _InterActionsRowOfTweetState
                             borderColor: Colors.blue,
                             icon: Icon(Icons.check_circle, color: Colors.blue),
                           );
+                        final currUser = ref.watch(currentUserProvider);
+                        if (currUser != null)
+                          // ignore: unused_result
+                          ref.refresh(profilePostsProvider(currUser.username));
                         if (mounted)
                           // ignore: unused_result
                           ref.refresh(
@@ -571,32 +578,54 @@ class _InterActionsRowOfTweetState
               if (isLikedByMeLocal) {
                 final unlike = ref.watch(unlikeTweetProvider);
                 unlike(widget.tweet.id).then((res) {
-                  res.fold((l) {
-                    isLikedByMeLocal = true;
-                    likesCount += 1;
-                    showSmallPopUpMessage(
-                      context: context,
-                      message: l.message,
-                      borderColor: Colors.red,
-                      icon: Icon(Icons.error, color: Colors.red),
-                    );
-                    if (mounted) setState(() {});
-                  }, (r) {});
+                  res.fold(
+                    (l) {
+                      isLikedByMeLocal = true;
+                      likesCount += 1;
+                      showSmallPopUpMessage(
+                        context: context,
+                        message: l.message,
+                        borderColor: Colors.red,
+                        icon: Icon(Icons.error, color: Colors.red),
+                      );
+                      if (mounted) setState(() {});
+                    },
+                    (r) {
+                      ref.refresh(
+                        profilePostsProvider(widget.tweet.userUserName),
+                      );
+                      final currUser = ref.watch(currentUserProvider);
+                      if (currUser != null)
+                        ref.refresh(profilePostsProvider(currUser.username));
+                    },
+                  );
                 });
               } else {
                 final like = ref.watch(likeTweetProvider);
                 like(widget.tweet.id).then((res) {
-                  res.fold((l) {
-                    isLikedByMeLocal = false;
-                    likesCount -= 1;
-                    showSmallPopUpMessage(
-                      context: context,
-                      message: l.message,
-                      borderColor: Colors.red,
-                      icon: Icon(Icons.error, color: Colors.red),
-                    );
-                    if (mounted) setState(() {});
-                  }, (r) {});
+                  res.fold(
+                    (l) {
+                      isLikedByMeLocal = false;
+                      likesCount -= 1;
+                      showSmallPopUpMessage(
+                        context: context,
+                        message: l.message,
+                        borderColor: Colors.red,
+                        icon: Icon(Icons.error, color: Colors.red),
+                      );
+                      if (mounted) setState(() {});
+                    },
+                    (r) {
+                      if (mounted) {
+                        ref.refresh(
+                          profilePostsProvider(widget.tweet.userUserName),
+                        );
+                        final currUser = ref.watch(currentUserProvider);
+                        if (currUser != null)
+                          ref.refresh(profilePostsProvider(currUser.username));
+                      }
+                    },
+                  );
                 });
               }
               if (mounted)
