@@ -14,7 +14,8 @@ class ConversationTile extends StatelessWidget {
   final bool isUnread;
   final int unseenCount;
   final bool isDMChat;
-
+  final int recipientFollowersCount;
+  final VoidCallback? onLongPress;
   const ConversationTile({
     super.key,
     required this.name,
@@ -27,6 +28,8 @@ class ConversationTile extends StatelessWidget {
     this.isUnread = false,
     this.unseenCount = 0,
     this.isDMChat = true,
+    this.recipientFollowersCount = 0,
+    this.onLongPress,
   });
 
   @override
@@ -41,9 +44,11 @@ class ConversationTile extends StatelessWidget {
             'avatarUrl': avatarUrl,
             'subtitle': username,
             'isGroup': isDMChat,
+            'recipientFollowersCount': recipientFollowersCount,
           },
         );
       },
+      onLongPress: onLongPress,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: const BoxDecoration(
@@ -134,21 +139,21 @@ class ConversationTile extends StatelessWidget {
                         const SizedBox(width: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 2,
+                            horizontal: 4,
+                            vertical: 4,
                           ),
                           decoration: BoxDecoration(
                             color: Palette.primary,
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(20),
                           ),
-                          child: Text(
-                            unseenCount > 99 ? '99+' : unseenCount.toString(),
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
+                          // child: Text(
+                          //   unseenCount > 99 ? '99+' : unseenCount.toString(),
+                          //   style: const TextStyle(
+                          //     fontSize: 12,
+                          //     fontWeight: FontWeight.bold,
+                          //     color: Colors.white,
+                          //   ),
+                          // ),
                         ),
                       ],
                     ],

@@ -30,7 +30,7 @@ class ProfilePostsList extends ConsumerWidget {
     return asyncPosts.when(
       data: (either) {
         return either.fold(
-          (l) {
+          (l) {   
             return RefreshIndicator(
               child: ListView(
                 children: [

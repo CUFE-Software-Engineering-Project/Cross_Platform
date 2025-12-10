@@ -13,10 +13,7 @@ import 'package:lite_x/features/home/view/screens/create_post_screen.dart';
 import 'package:lite_x/features/home/view/screens/quote_composer_screen.dart';
 import 'package:lite_x/features/home/view/widgets/profile_side_drawer.dart';
 import 'package:lite_x/features/home/view/widgets/expandable_fab.dart';
-import 'package:lite_x/features/profile/models/shared.dart';
 import 'package:lite_x/features/profile/view/screens/profile_screen.dart';
-import 'package:lite_x/features/profile/view/widgets/profile_tweets/profile_posts_list.dart';
-import 'package:lite_x/features/profile/view_model/providers.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -114,22 +111,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     super.build(context);
     final homeState = ref.watch(homeViewModelProvider);
     final currentFeed = homeState.currentFeed;
-    final tweets = currentFeed == FeedType.forYou
-        ? homeState.forYouTweets
-        : homeState.followingTweets;
+    final tweets =
+        homeState.tweets; // Use the tweets field that switches correctly
     final feedName = currentFeed == FeedType.forYou ? "For You" : "Following";
-    final currentUserName = ref.watch(currentUserProvider)?.username ?? "";
 
-    final profileData = ref.watch(profileDataProvider(currentUserName));
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: Colors.black,
       drawer: const ProfileSideDrawer(),
       body: RefreshIndicator(
         onRefresh: () async {
-          ref.read(homeViewModelProvider.notifier).refreshTweets();
-          // ignore: unused_result
-          await ref.refresh(profilePostsProvider(currentUserName));
+          await ref.read(homeViewModelProvider.notifier).refreshTweets();
         },
         backgroundColor: Colors.grey[900],
         color: Colors.white,
@@ -152,57 +144,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 collapseMode: CollapseMode.pin,
               ),
             ),
-
-            // _buildSliverTweetList(
-            //   context,
-            //   tweets,
-            //   homeState.isLoading,
-            //   feedName,
-            // ),
-            SliverFillRemaining(
-              child: profileData.when(
-                data: (res) {
-                  return res.fold(
-                    (l) {
-                      return RefreshIndicator(
-                        onRefresh: () async {
-                          // ignore: unused_result
-                          await ref.refresh(
-                            profileDataProvider(currentUserName),
-                          );
-                        },
-                        child: ListView(
-                          children: [Center(child: Text(l.message))],
-                        ),
-                      );
-                    },
-                    (data) {
-                      return ProfilePostsList(
-                        profile: data,
-                        tabType: ProfileTabType.Posts,
-                      );
-                    },
-                  );
-                },
-                error: (err, _) {
-                  return RefreshIndicator(
-                    onRefresh: () async {
-                      // ignore: unused_result
-                      await ref.refresh(profileDataProvider(currentUserName));
-                    },
-                    child: ListView(
-                      children: [
-                        Center(child: Text("Can't get profile posts")),
-                      ],
-                    ),
-                  );
-                },
-                loading: () {
-                  return ListView(
-                    children: [Center(child: CircularProgressIndicator())],
-                  );
-                },
-              ),
+            _buildSliverTweetList(
+              context,
+              tweets,
+              homeState.isLoading,
+              feedName,
             ),
           ],
         ),
@@ -258,6 +204,48 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     bool isLoading,
     String feedType,
   ) {
+    // Show error if present
+    final homeState = ref.watch(homeViewModelProvider);
+    if (homeState.error != null && tweets.isEmpty) {
+      return SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.only(top: 50.0),
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.error_outline, size: 64, color: Colors.red[400]),
+                const SizedBox(height: 16),
+                Text(
+                  'Error loading tweets',
+                  style: TextStyle(color: Colors.grey[400], fontSize: 18),
+                ),
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 32.0),
+                  child: Text(
+                    homeState.error!,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.grey[500], fontSize: 14),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () {
+                    ref.read(homeViewModelProvider.notifier).refreshTweets();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF1DA1F2),
+                  ),
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     if (isLoading && tweets.isEmpty) {
       return const SliverToBoxAdapter(
         child: Padding(

@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lite_x/core/providers/current_user_provider.dart';
+import 'package:lite_x/features/profile/models/profile_model.dart';
+import 'package:lite_x/features/profile/view_model/providers.dart';
+import 'package:lite_x/features/trends/view/widgets/for_you_profile_tab.dart';
 
 class Exploreprofilescreenbody extends ConsumerStatefulWidget {
   const Exploreprofilescreenbody({super.key});
@@ -13,277 +17,117 @@ class _ExploreprofilescreenbodyState
     extends ConsumerState<Exploreprofilescreenbody> {
   @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 5,
-      child: Scaffold(
-        appBar: TabBar(
-          indicatorColor: Color(0xFF1DA1F2),
-          indicatorSize: TabBarIndicatorSize.label,
-          isScrollable: true,
-          tabAlignment: TabAlignment.start,
-          dividerHeight: 0.25,
-          labelColor: Colors.white,
-          unselectedLabelStyle: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-          ),
-          labelStyle: TextStyle(fontWeight: FontWeight.bold),
-          unselectedLabelColor: Colors.grey,
-          tabs: [
-            Tab(text: 'For You'),
-            Tab(text: 'Trending'),
-            Tab(text: 'News'),
-            Tab(text: 'Sports'),
-            Tab(text: 'Entertainment'),
-          ],
-        ),
-        body: TabBarView(
+    final currUser = ref.watch(currentUserProvider);
+    final asyncPm = ref.watch(profileDataProvider(currUser?.username ?? ""));
+    return asyncPm.when(
+      data: (res) {
+        return res.fold(
+          (l) {
+            return ListView(
+              padding: EdgeInsets.only(top: 50),
+              shrinkWrap: true,
+              physics: NeverScrollableScrollPhysics(),
+              children: [
+                Center(child: Text(l.message)),
+                Center(
+                  child: IconButton(
+                    onPressed: () async {
+                      // ignore: unused_result
+                      ref.refresh(
+                        profileDataProvider(currUser?.username ?? ""),
+                      );
+                    },
+                    icon: Icon(Icons.refresh),
+                  ),
+                ),
+              ],
+            );
+          },
+          (pm) {
+            return DefaultTabController(
+              length: 5,
+              child: Scaffold(
+                appBar: TabBar(
+                  indicatorColor: Color(0xFF1DA1F2),
+                  indicatorSize: TabBarIndicatorSize.label,
+                  isScrollable: true,
+                  tabAlignment: TabAlignment.start,
+                  dividerHeight: 0.25,
+                  labelColor: Colors.white,
+                  unselectedLabelStyle: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                  labelStyle: TextStyle(fontWeight: FontWeight.bold),
+                  unselectedLabelColor: Colors.grey,
+                  tabs: [
+                    Tab(text: 'For You'),
+                    Tab(text: 'Trending'),
+                    Tab(text: 'News'),
+                    Tab(text: 'Sports'),
+                    Tab(text: 'Entertainment'),
+                  ],
+                ),
+                body: TabBarView(
+                  children: [
+                    _BuildForYouTab(pm),
+                    _BuildTrendingTab(pm),
+                    _BuildNewsTab(pm),
+                    _BuildSportsTab(pm),
+                    _BuildEntertainmentTab(pm),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+      error: (err, _) {
+        return ListView(
+          padding: EdgeInsets.only(top: 50),
+          shrinkWrap: true,
+          physics: NeverScrollableScrollPhysics(),
           children: [
-            _BuildForYouTab(),
-            _BuildTrendingTab(),
-            _BuildNewsTab(),
-            _BuildSportsTab(),
-            _BuildEntertainmentTab(),
+            Center(child: Text("cannot get trends at this time...")),
+            Center(
+              child: IconButton(
+                onPressed: () async {
+                  // ignore: unused_result
+                  ref.refresh(profileDataProvider(currUser?.username ?? ""));
+                },
+                icon: Icon(Icons.refresh),
+              ),
+            ),
           ],
-        ),
-      ),
+        );
+      },
+      loading: () {
+        return SingleChildScrollView(
+          child: Center(child: CircularProgressIndicator()),
+        );
+      },
     );
   }
 }
 
-Widget _BuildForYouTab() {
-  return ForYouProfileTab();
+Widget _BuildForYouTab(ProfileModel pm) {
+  return ForYouProfileTab(pm: pm);
 }
 
-Widget _BuildTrendingTab() {
+Widget _BuildTrendingTab(ProfileModel pm) {
   return TrendingProfileTab();
 }
 
-Widget _BuildNewsTab() {
+Widget _BuildNewsTab(ProfileModel pm) {
   return NewsProfileTab();
 }
 
-Widget _BuildSportsTab() {
+Widget _BuildSportsTab(ProfileModel pm) {
   return SportsProfileTab();
 }
 
-Widget _BuildEntertainmentTab() {
+Widget _BuildEntertainmentTab(ProfileModel pm) {
   return EntertainmentProfileTab();
-}
-
-class ForYouProfileTab extends StatelessWidget {
-  const ForYouProfileTab({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.all(0),
-      children: [
-        // Today's News Header
-        const Padding(
-          padding: EdgeInsets.all(16.0),
-          child: Text(
-            "Today's News",
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-        ),
-
-        // News Card 1
-        _buildNewsCard(
-          title: "Ronaldo's Stunning Bicycle Kick Powers Al Nassr to 4-1 Win",
-          timeAgo: "12 hours ago",
-          category: "Sports",
-          postsCount: "66K posts",
-          avatars: 2,
-        ),
-
-        const Divider(height: 1, color: Color(0xFF2F3336)),
-
-        // News Card 2
-        _buildNewsCard(
-          title: "Artistic Quranic Verses Shared in Gentle Daily Reminders",
-          timeAgo: "3 hours ago",
-          category: "Other",
-          postsCount: "2K posts",
-          avatars: 1,
-        ),
-
-        const Divider(height: 1, color: Color(0xFF2F3336)),
-
-        // News Card 3
-        _buildNewsCard(
-          title: "Eze's Historic Hat-Trick Powers Arsenal to 4-1 Derby Rout",
-          timeAgo: "Trending now",
-          category: "Sports",
-          postsCount: "3.8K posts",
-          avatars: 3,
-          isTrending: true,
-        ),
-
-        const Divider(height: 1, color: Color(0xFF2F3336)),
-
-        // Trending in Egypt
-        _buildTrendingSection(
-          title: "Trending in Egypt",
-          topic: "#صناعات",
-          postsCount: null,
-        ),
-
-        const Divider(height: 1, color: Color(0xFF2F3336)),
-
-        // Sports Trending
-        _buildTrendingSection(
-          title: "Sports · Trending",
-          topic: "بيرنلي",
-          postsCount: "9,953 posts",
-        ),
-
-        const Divider(height: 1, color: Color(0xFF2F3336)),
-
-        // Business Trending
-        _buildTrendingSection(
-          title: "Trending in Business & finance",
-          topic: "Substack",
-          postsCount: "32.5K posts",
-        ),
-
-        const Divider(height: 1, color: Color(0xFF2F3336)),
-
-        // Technology Trending
-        _buildTrendingSection(
-          title: "Trending in Technology",
-          topic: "OpenAI",
-          postsCount: "125K posts",
-        ),
-
-        const SizedBox(height: 80),
-      ],
-    );
-  }
-
-  Widget _buildNewsCard({
-    required String title,
-    required String timeAgo,
-    required String category,
-    required String postsCount,
-    required int avatars,
-    bool isTrending = false,
-  }) {
-    return Container(
-      color: Colors.black,
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Title
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-              height: 1.3,
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // Bottom row with avatars and info
-          Row(
-            children: [
-              // Avatar Stack
-              SizedBox(
-                width: avatars * 20.0 + 10,
-                height: 24,
-                child: Stack(
-                  children: List.generate(
-                    avatars,
-                    (index) => Positioned(
-                      left: index * 20.0,
-                      child: Container(
-                        width: 24,
-                        height: 24,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.grey[800],
-                          border: Border.all(color: Colors.black, width: 1.5),
-                        ),
-                        child: Center(
-                          child: Icon(
-                            Icons.person,
-                            size: 14,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-
-              // Time and category info
-              Expanded(
-                child: Text(
-                  isTrending
-                      ? "$timeAgo · $category · $postsCount"
-                      : "$timeAgo · $category · $postsCount",
-                  style: TextStyle(fontSize: 13, color: Colors.grey[600]),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTrendingSection({
-    required String title,
-    required String topic,
-    String? postsCount,
-  }) {
-    return Container(
-      color: Colors.black,
-      padding: const EdgeInsets.all(16.0),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(fontSize: 13, color: Colors.grey[600]),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  topic,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                if (postsCount != null) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    postsCount,
-                    style: TextStyle(fontSize: 13, color: Colors.grey[600]),
-                  ),
-                ],
-              ],
-            ),
-          ),
-          Icon(Icons.more_horiz, color: Colors.grey[600], size: 20),
-        ],
-      ),
-    );
-  }
 }
 
 class TrendingProfileTab extends StatelessWidget {

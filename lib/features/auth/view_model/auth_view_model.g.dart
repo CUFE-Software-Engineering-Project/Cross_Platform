@@ -41,7 +41,7 @@ final class AuthViewModelProvider
   }
 }
 
-String _$authViewModelHash() => r'73a355ed6a76f0c11f190556b7e016a5df57704f';
+String _$authViewModelHash() => r'8803fa622ac8d66784a46d9529d74f4f9577043e';
 
 abstract class _$AuthViewModel extends $Notifier<AuthState> {
   AuthState build();

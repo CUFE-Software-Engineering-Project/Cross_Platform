@@ -61,7 +61,8 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
   final TextEditingController _textController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
   bool _isPosting = false;
-  final List<File> _selectedImages = [];
+  final List<File> _selectedMedia =
+      []; // Changed from _selectedImages to support both images and videos
   PostPrivacy _selectedPrivacy = PostPrivacy.everyone;
 
   @override
@@ -91,14 +92,14 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
 
     try {
       List<String> mediaIds = [];
-      if (_selectedImages.isNotEmpty) {
-        final uploadedIds = await upload_media(_selectedImages);
+      if (_selectedMedia.isNotEmpty) {
+        final uploadedIds = await upload_media(_selectedMedia);
         mediaIds = uploadedIds.where((id) => id.isNotEmpty).toList();
 
-        if (mediaIds.length != _selectedImages.length && mounted) {
+        if (mediaIds.length != _selectedMedia.length && mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Some images failed to upload. Try again.'),
+              content: Text('Some media files failed to upload. Try again.'),
               behavior: SnackBarBehavior.floating,
               backgroundColor: Colors.orange,
             ),
@@ -106,7 +107,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
         }
 
         if (mediaIds.isEmpty) {
-          throw Exception('Unable to upload selected images.');
+          throw Exception('Unable to upload selected media.');
         }
       }
 
@@ -122,7 +123,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
       if (mounted) {
         setState(() {
           _textController.clear();
-          _selectedImages.clear();
+          _selectedMedia.clear();
         });
         Navigator.pop(context, true);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -157,11 +158,11 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
   }
 
   Future<void> _pickImage() async {
-    final remainingSlots = 4 - _selectedImages.length;
+    final remainingSlots = 4 - _selectedMedia.length;
     if (remainingSlots <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Maximum 4 images allowed per post.'),
+          content: Text('Maximum 4 media files allowed per post.'),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -174,29 +175,110 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
     setState(() {
       for (final picked in pickedList) {
         if (picked.file != null) {
-          _selectedImages.add(picked.file!);
+          _selectedMedia.add(picked.file!);
         }
       }
     });
   }
 
-  void _removeImage(int index) {
-    if (index < 0 || index >= _selectedImages.length) return;
+  Future<void> _pickVideo() async {
+    final remainingSlots = 4 - _selectedMedia.length;
+    if (remainingSlots <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Maximum 4 media files allowed per post.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    final picked = await pickVideo();
+    if (picked == null || picked.file == null) return;
+
     setState(() {
-      _selectedImages.removeAt(index);
+      _selectedMedia.add(picked.file!);
     });
   }
 
-  Widget _buildSelectedImagesPreview() {
-    if (_selectedImages.isEmpty) return const SizedBox.shrink();
-    final crossAxisCount = _selectedImages.length == 1 ? 1 : 2;
-    final double aspectRatio = _selectedImages.length == 1 ? 16 / 9 : 1;
+  void _showMediaPicker() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1E1E1E),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 12),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[600],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
+            ListTile(
+              leading: const Icon(Icons.image, color: Color(0xFF1D9BF0)),
+              title: const Text('Photo', style: TextStyle(color: Colors.white)),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImage();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.videocam, color: Color(0xFF1D9BF0)),
+              title: const Text('Video', style: TextStyle(color: Colors.white)),
+              onTap: () {
+                Navigator.pop(context);
+                _pickVideo();
+              },
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _removeMedia(int index) {
+    if (index < 0 || index >= _selectedMedia.length) return;
+    setState(() {
+      _selectedMedia.removeAt(index);
+    });
+  }
+
+  bool _isVideoFile(File file) {
+    final extension = file.path.split('.').last.toLowerCase();
+    return [
+      'mp4',
+      'mov',
+      'avi',
+      'webm',
+      'mkv',
+      'flv',
+      'wmv',
+      'mpeg',
+      'mpg',
+      '3gp',
+      'm4v',
+    ].contains(extension);
+  }
+
+  Widget _buildSelectedMediaPreview() {
+    if (_selectedMedia.isEmpty) return const SizedBox.shrink();
+    final crossAxisCount = _selectedMedia.length == 1 ? 1 : 2;
+    final double aspectRatio = _selectedMedia.length == 1 ? 16 / 9 : 1;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '${_selectedImages.length} / 4 photos',
+          '${_selectedMedia.length} / 4 media files',
           style: TextStyle(color: Colors.grey[500], fontSize: 13),
         ),
         const SizedBox(height: 8),
@@ -209,22 +291,65 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
             mainAxisSpacing: 8,
             childAspectRatio: aspectRatio,
           ),
-          itemCount: _selectedImages.length,
+          itemCount: _selectedMedia.length,
           itemBuilder: (context, index) {
-            final file = _selectedImages[index];
+            final file = _selectedMedia[index];
+            final isVideo = _isVideoFile(file);
+
             return Stack(
               children: [
                 Positioned.fill(
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(12),
-                    child: Image.file(file, fit: BoxFit.cover),
+                    child: isVideo
+                        ? Container(
+                            color: Colors.grey[900],
+                            child: const Center(
+                              child: Icon(
+                                Icons.play_circle_outline,
+                                color: Colors.white,
+                                size: 64,
+                              ),
+                            ),
+                          )
+                        : Image.file(file, fit: BoxFit.cover),
                   ),
                 ),
+                if (isVideo)
+                  Positioned(
+                    bottom: 8,
+                    left: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.black87,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.videocam, color: Colors.white, size: 12),
+                          SizedBox(width: 4),
+                          Text(
+                            'Video',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 Positioned(
                   top: 8,
                   right: 8,
                   child: InkWell(
-                    onTap: () => _removeImage(index),
+                    onTap: () => _removeMedia(index),
                     child: Container(
                       decoration: const BoxDecoration(
                         color: Colors.black54,
@@ -485,11 +610,11 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                         ),
                       ],
                     ),
-                    if (_selectedImages.isNotEmpty) ...[
+                    if (_selectedMedia.isNotEmpty) ...[
                       const SizedBox(height: 12),
                       Padding(
                         padding: const EdgeInsets.only(left: 52),
-                        child: _buildSelectedImagesPreview(),
+                        child: _buildSelectedMediaPreview(),
                       ),
                     ],
                     const SizedBox(height: 12),
@@ -539,10 +664,10 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                   children: [
                     IconButton(
                       icon: const Icon(
-                        Icons.image_outlined,
+                        Icons.perm_media_outlined,
                         color: Color(0xFF1D9BF0),
                       ),
-                      onPressed: _isPosting ? null : _pickImage,
+                      onPressed: _isPosting ? null : _showMediaPicker,
                       iconSize: 20,
                       padding: const EdgeInsets.all(8),
                       constraints: const BoxConstraints(),

@@ -4,6 +4,7 @@ import 'package:lite_x/core/providers/current_user_provider.dart';
 import 'package:lite_x/features/media/download_media.dart';
 import 'package:lite_x/features/profile/models/create_reply_model.dart';
 import 'package:lite_x/features/profile/models/create_tweet_model.dart';
+import 'package:lite_x/features/profile/models/follower_model.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
 import 'package:lite_x/features/profile/models/profile_tweet_model.dart';
 import 'package:lite_x/features/profile/models/search_user_model.dart';
@@ -14,6 +15,8 @@ import 'package:lite_x/features/profile/models/user_model.dart';
 import 'package:lite_x/features/profile/repositories/profile_repo.dart';
 import 'package:lite_x/features/profile/repositories/profile_storage_service.dart';
 import 'package:lite_x/features/profile/view_model/providers.dart';
+import 'package:lite_x/features/trends/models/for_you_response_model.dart';
+import 'package:lite_x/features/trends/models/trend_category.dart';
 
 class ProfileRepoImpl implements ProfileRepo {
   Dio _dio;
@@ -113,46 +116,15 @@ class ProfileRepoImpl implements ProfileRepo {
     String username,
   ) async {
     try {
-      // print("Start api ---------------------**");
       final res = await _dio.get("api/tweets/users/$username");
-      // print("end api ---------------------**");
+
       final List<dynamic> jsonList = res.data["data"] ?? [];
 
-      List<ProfileTweetModel> tweets = [];
-      for (int i = 0; i < jsonList.length; i++) {
-        final Map<String, dynamic> json = jsonList[i] as Map<String, dynamic>;
-        if (json["tweetType"]?.toLowerCase() == "reply") continue;
-        // get profile photo url and tweet medial urls
-        final String profilePhotoId =
-            json["user"]?["profileMedia"]?["id"] ?? "";
+      final tweets = convertJsonListToTweetList(jsonList);
 
-        final List<dynamic> tweetMediaIdsDynamic = json["tweetMedia"] ?? [];
-        final List<String> tweetMediaIds = tweetMediaIdsDynamic
-            .map((media) => media["mediaId"] as String)
-            .toList();
-
-        // final List<String> userPhotoUrl = await getMediaUrls([profilePhotoId]);
-
-        // final String profilePhotoUrl = userPhotoUrl[0];
-
-        // get timeAgo
-        final String createTime = json["createdAt"] ?? "";
-        final String timeAgo = getTimeAgo(createTime);
-
-        json["profileMediaId"] = profilePhotoId;
-        json["mediaIds"] = tweetMediaIds;
-        json["timeAgo"] = timeAgo;
-
-        tweets.add(ProfileTweetModel.fromJson(json));
-        // print(
-        //   "id$i" +
-        //       "${json['profileMediaId']}--------------------*****--------------",
-        // );
-      }
-      // print("end repo posts ----------------**");
       return Right(tweets);
     } catch (e) {
-      print(e.toString() + "--------------+++++++++++++++++");
+      // print(e.toString() + "--------------+++++++++++++++++");
       return Left(Failure('Failed to load profile posts'));
     }
   }
@@ -171,7 +143,7 @@ class ProfileRepoImpl implements ProfileRepo {
 
       final List<dynamic> tweetMediaIdsDynamic = json["tweetMedia"] ?? [];
       final List<String> tweetMediaIds = tweetMediaIdsDynamic
-          .map((media) => media["mediaId"] as String)
+          .map((media) => media["media"]?["id"] as String)
           .toList();
 
       // final List<String> userPhotoUrl = await getMediaUrls([profilePhotoId]);
@@ -209,37 +181,7 @@ class ProfileRepoImpl implements ProfileRepo {
       // print("end api ---------------------**");
       final List<dynamic> jsonList = res.data["data"] ?? [];
 
-      List<ProfileTweetModel> tweets = [];
-      for (int i = 0; i < jsonList.length; i++) {
-        final Map<String, dynamic> json = jsonList[i] as Map<String, dynamic>;
-        if (json["tweetType"]?.toLowerCase() == "reply") continue;
-        // get profile photo url and tweet medial urls
-        final String profilePhotoId =
-            json["user"]?["profileMedia"]?["id"] ?? "";
-
-        final List<dynamic> tweetMediaIdsDynamic = json["tweetMedia"] ?? [];
-        final List<String> tweetMediaIds = tweetMediaIdsDynamic
-            .map((media) => media["mediaId"] as String)
-            .toList();
-
-        // final List<String> userPhotoUrl = await getMediaUrls([profilePhotoId]);
-
-        // final String profilePhotoUrl = userPhotoUrl[0];
-
-        // get timeAgo
-        final String createTime = json["createdAt"] ?? "";
-        final String timeAgo = getTimeAgo(createTime);
-
-        json["profileMediaId"] = profilePhotoId;
-        json["mediaIds"] = tweetMediaIds;
-        json["timeAgo"] = timeAgo;
-
-        tweets.add(ProfileTweetModel.fromJson(json));
-        // print(
-        //   "id$i" +
-        //       "${json['profileMediaId']}--------------------*****--------------",
-        // );
-      }
+      final tweets = convertJsonListToTweetList(jsonList);
       // print("end repo posts ----------------**");
       return Right(tweets);
     } catch (e) {
@@ -255,42 +197,12 @@ class ProfileRepoImpl implements ProfileRepo {
     try {
       try {
         // print("Start api ---------------------**");
-        final res = await _dio.get("api/tweets/users/$username");
+        final res = await _dio.get("api/tweets/likedtweets");
         // print("end api ---------------------**");
         final List<dynamic> jsonList = res.data["data"] ?? [];
 
-        List<ProfileTweetModel> tweets = [];
-        for (int i = 0; i < jsonList.length; i++) {
-          final Map<String, dynamic> json = jsonList[i] as Map<String, dynamic>;
-          if (json["tweetType"]?.toLowerCase() == "reply") continue;
-          // get profile photo url and tweet medial urls
-          final String profilePhotoId =
-              json["user"]?["profileMedia"]?["id"] ?? "";
+        final tweets = convertJsonListToTweetList(jsonList);
 
-          final List<dynamic> tweetMediaIdsDynamic = json["tweetMedia"] ?? [];
-          final List<String> tweetMediaIds = tweetMediaIdsDynamic
-              .map((media) => media["mediaId"] as String)
-              .toList();
-
-          // final List<String> userPhotoUrl = await getMediaUrls([profilePhotoId]);
-
-          // final String profilePhotoUrl = userPhotoUrl[0];
-
-          // get timeAgo
-          final String createTime = json["createdAt"] ?? "";
-          final String timeAgo = getTimeAgo(createTime);
-
-          json["profileMediaId"] = profilePhotoId;
-          json["mediaIds"] = tweetMediaIds;
-          json["timeAgo"] = timeAgo;
-
-          tweets.add(ProfileTweetModel.fromJson(json));
-          // print(
-          //   "id$i" +
-          //       "${json['profileMediaId']}--------------------*****--------------",
-          // );
-        }
-        // print("end repo posts ----------------**");
         return Right(tweets);
       } catch (e) {
         // print(e.toString());
@@ -681,6 +593,63 @@ class ProfileRepoImpl implements ProfileRepo {
       return (Left(Failure(errorMessage)));
     } catch (e) {
       return (Left(Failure("can't change password")));
+    }
+  }
+
+  // trends
+  Future<Either<Failure, ForYouResponseModel>> getForYouTrends() async {
+    try {
+      final response = await _dio.get("api/hashtags/categories");
+
+      final json = response.data;
+      final jsonCategories = json["categories"];
+      final people = json["whoToFollow"];
+
+      final List<UserModel> peoplemodels = people
+          .map((p) {
+            p["photo"] = p["profileMedia"]?["id"];
+            p["isFollowing"] = p["isFollowed"];
+            print(p.toString());
+            return UserModel.fromJson(p as Map<String, dynamic>);
+          })
+          .toList()
+          .cast<UserModel>();
+
+      final List<TrendCategory> categories = jsonCategories
+          .map((c) => TrendCategory.fromJson(c))
+          .toList()
+          .cast<TrendCategory>();
+
+      return Right(
+        ForYouResponseModel(
+          categories: categories,
+          suggestedUsers: peoplemodels,
+        ),
+      );
+    } on DioException catch (e) {
+      return (Left(Failure(e.toString())));
+    } catch (e) {
+      return (Left(Failure(e.toString())));
+    }
+  }
+
+  Future<Either<Failure, TrendCategory>> getTrenCategory(String catName) async {
+    try {
+      final response = await _dio.get(
+        "api/hashtags/categories",
+        queryParameters: {"category": catName},
+      );
+
+      final TrendCategory category = TrendCategory.fromJson(response.data);
+      return Right(category);
+    } on DioException catch (_) {
+      return (Left(
+        Failure("cannot get trends at this time, try again later..."),
+      ));
+    } catch (e) {
+      return (Left(
+        Failure("cannot get trends at this time, try again later..."),
+      ));
     }
   }
 }

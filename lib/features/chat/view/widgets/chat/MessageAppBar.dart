@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:lite_x/core/theme/palette.dart';
-import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 
 class MessageAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
   final String? profileImage;
   final String subtitle;
   final VoidCallback? onProfileTap;
-  final VoidCallback? onVideoCallTap;
-  final VoidCallback? onAudioCallTap;
 
   const MessageAppBar({
     super.key,
@@ -16,8 +13,6 @@ class MessageAppBar extends StatelessWidget implements PreferredSizeWidget {
     required this.subtitle,
     this.profileImage,
     this.onProfileTap,
-    this.onVideoCallTap,
-    this.onAudioCallTap,
   });
 
   @override
@@ -60,17 +55,6 @@ class MessageAppBar extends StatelessWidget implements PreferredSizeWidget {
           ],
         ),
       ),
-      actions: [
-        IconButton(
-          icon: Icon(MdiIcons.videoPlusOutline, size: 28, color: Colors.white),
-          onPressed: onVideoCallTap,
-        ),
-        IconButton(
-          icon: Icon(MdiIcons.phoneOutline, size: 25, color: Colors.white),
-          onPressed: onAudioCallTap,
-        ),
-        const SizedBox(width: 4),
-      ],
     );
   }
 }

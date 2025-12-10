@@ -26,7 +26,7 @@ class _ExploreProfileScreenState extends ConsumerState<ExploreProfileScreen> {
             leading: Padding(
               padding: EdgeInsets.all(5).copyWith(left: 10),
               child: BuildSmallProfileImage(
-                userId: currentUser?.username ?? "",
+                username: currentUser?.username ?? "",
                 radius: 20,
               ),
             ),

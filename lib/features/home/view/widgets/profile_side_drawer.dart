@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lite_x/core/models/usermodel.dart';
 import 'package:lite_x/core/providers/current_user_provider.dart';
 import 'package:lite_x/features/home/providers/user_profile_provider.dart';
+import 'package:lite_x/features/profile/models/profile_model.dart';
+import 'package:lite_x/features/profile/models/shared.dart';
+import 'package:lite_x/features/profile/view_model/providers.dart';
 
 class ProfileSideDrawer extends ConsumerWidget {
   const ProfileSideDrawer({super.key});
@@ -22,13 +26,17 @@ class ProfileSideDrawer extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
-    final profileState = ref.watch(userProfileProvider);
+    final profileState = ref.watch(profileDataProvider(user?.username ?? ""));
 
     return Drawer(
       backgroundColor: Colors.black,
       child: SafeArea(
         child: profileState.when(
-          data: (profile) => _buildDrawerContent(context, ref, user, profile),
+          data: (either) => either.fold(
+            (l) => _buildDrawerContent(context, ref, user, null),
+            (profileData) =>
+                _buildDrawerContent(context, ref, user, profileData),
+          ),
           loading: () => _buildLoadingDrawer(context, ref, user),
           error: (_, __) => _buildDrawerContent(context, ref, user, null),
         ),
@@ -39,69 +47,68 @@ class ProfileSideDrawer extends ConsumerWidget {
   Widget _buildDrawerContent(
     BuildContext context,
     WidgetRef ref,
-    dynamic user,
-    dynamic profile,
+    UserModel? user,
+    ProfileModel? profileData,
   ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              CircleAvatar(
-                radius: 32,
-                backgroundColor: Colors.grey[850],
-                backgroundImage: profile?.profilePhotoUrl != null
-                    ? NetworkImage(profile!.profilePhotoUrl!)
-                    : (_getPhotoUrl(user?.photo) != null
-                          ? NetworkImage(_getPhotoUrl(user!.photo)!)
-                          : null),
-                child:
-                    profile?.profilePhotoUrl == null &&
-                        _getPhotoUrl(user?.photo) == null
-                    ? Icon(Icons.person, color: Colors.grey[500], size: 32)
-                    : null,
-              ),
-              const SizedBox(height: 12),
-              Text(
-                profile?.name ?? user?.name ?? 'User',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
+          child: InkWell(
+            onTap: () {
+              context.push("/profilescreen/${user?.username}");
+            },
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                BuildSmallProfileImage(
+                  radius: 35,
+                  username: user?.username ?? "",
                 ),
-              ),
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  Text(
-                    '@${profile?.username ?? user?.username ?? 'username'}',
-                    style: TextStyle(color: Colors.grey[500], fontSize: 14),
+                const SizedBox(height: 12),
+                Text(
+                  profileData?.displayName ?? user?.name ?? 'User',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
                   ),
-                  if (profile?.verified == true) ...[
-                    const SizedBox(width: 4),
-                    Icon(
-                      Icons.verified,
-                      color: const Color(0xFF1DA1F2),
-                      size: 16,
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Text(
+                      '@${profileData?.username ?? user?.username ?? 'username'}',
+                      style: TextStyle(color: Colors.grey[500], fontSize: 14),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (profileData?.isVerified == true) ...[
+                      const SizedBox(width: 4),
+                      Icon(
+                        Icons.verified,
+                        color: const Color(0xFF1DA1F2),
+                        size: 16,
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    _buildStat(
+                      '${profileData?.followingCount ?? user?.interests.length ?? 0}',
+                      'Following',
+                    ),
+                    const SizedBox(width: 16),
+                    _buildStat(
+                      '${profileData?.followersCount ?? 0}',
+                      'Followers',
                     ),
                   ],
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  _buildStat(
-                    '${profile?.followingCount ?? user?.interests.length ?? 0}',
-                    'Following',
-                  ),
-                  const SizedBox(width: 16),
-                  _buildStat('${profile?.followersCount ?? 0}', 'Followers'),
-                ],
-              ),
-            ],
+                ),
+              ],
+            ),
           ),
         ),
         const Divider(color: Color(0xFF1f1f1f), height: 1),

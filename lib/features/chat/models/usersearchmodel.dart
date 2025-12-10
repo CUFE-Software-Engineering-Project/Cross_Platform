@@ -32,13 +32,24 @@ class UserSearchModel extends HiveObject {
   });
 
   factory UserSearchModel.fromMap(Map<String, dynamic> map) {
+    String? profileImage;
+    if (map["profileMedia"] != null) {
+      if (map["profileMedia"] is Map) {
+        profileImage = map["profileMedia"]["keyName"];
+      } else if (map["profileMedia"] is String) {
+        profileImage = map["profileMedia"];
+      }
+    }
+
     return UserSearchModel(
       id: map["id"] ?? "",
       username: map["username"] ?? "",
       name: map["name"] ?? "",
       bio: map["bio"],
-      profileMedia: map["profileMedia"],
-      followers: map["_count"]?["followers"] ?? 0,
+      profileMedia: profileImage,
+      followers: (map["_count"] != null && map["_count"]["followers"] != null)
+          ? map["_count"]["followers"]
+          : 0,
     );
   }
 }

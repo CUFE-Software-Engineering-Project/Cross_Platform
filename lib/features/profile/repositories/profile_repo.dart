@@ -7,9 +7,13 @@ import 'package:lite_x/features/profile/models/shared.dart';
 import 'package:dartz/dartz.dart';
 import 'package:lite_x/features/profile/models/tweet_reply_model.dart';
 import 'package:lite_x/features/profile/models/user_model.dart';
+import 'package:lite_x/features/trends/models/for_you_response_model.dart';
+import 'package:lite_x/features/trends/models/trend_category.dart';
 
 abstract class ProfileRepo {
-  Future<Either<Failure, ProfileModel>> getProfileData(String userName,String currentUsername,
+  Future<Either<Failure, ProfileModel>> getProfileData(
+    String userName,
+    String currentUsername,
   );
 
   Future<Either<Failure, List<UserModel>>> getFollowers(String userName);
@@ -74,11 +78,8 @@ abstract class ProfileRepo {
     String tweetId,
     CreateReplyModel createreplyModel,
   );
-  Future<Either<Failure, void>> retweetProfileTweet(
-    String tweetId,
-  );
+  Future<Either<Failure, void>> retweetProfileTweet(String tweetId);
   Future<Either<Failure, void>> deleteRetweetProfileTweet(String tweetId);
-  
 
   // emain and password
   Future<Either<Failure, void>> changeEmailProfile(String newEmail);
@@ -91,4 +92,7 @@ abstract class ProfileRepo {
     String newPassword,
     String confirmNewPassword,
   );
+
+  Future<Either<Failure, ForYouResponseModel>> getForYouTrends();
+  Future<Either<Failure, TrendCategory>> getTrenCategory(String catName);
 }

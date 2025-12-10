@@ -14,31 +14,26 @@ class ConversationModel extends HiveObject {
   DateTime createdAt;
   @HiveField(3)
   DateTime updatedAt;
+
   @HiveField(4)
-  String? groupName;
-  @HiveField(5)
-  String? groupPhotoKey;
-  @HiveField(6)
-  String? groupDescription;
-  @HiveField(7)
   List<String> participantIds;
-  @HiveField(8)
+  @HiveField(5)
   String? lastMessageContent;
-  @HiveField(9)
+  @HiveField(6)
   DateTime? lastMessageTime;
-  @HiveField(10)
+  @HiveField(7)
   String? lastMessageSenderId;
-  @HiveField(11)
+  @HiveField(8)
   int unseenCount;
-  @HiveField(12)
+  @HiveField(9)
   String? dmPartnerUserId;
-  @HiveField(13)
+  @HiveField(10)
   String? dmPartnerName;
-  @HiveField(14)
+  @HiveField(11)
   String? dmPartnerUsername;
-  @HiveField(15)
+  @HiveField(12)
   String? dmPartnerProfileKey;
-  @HiveField(16)
+  @HiveField(13)
   String? lastMessageType;
 
   ConversationModel({
@@ -46,14 +41,11 @@ class ConversationModel extends HiveObject {
     required this.isDMChat,
     required this.createdAt,
     required this.updatedAt,
-    this.groupName,
-    this.groupPhotoKey,
-    this.groupDescription,
     required this.participantIds,
     this.lastMessageContent,
     this.lastMessageTime,
     this.lastMessageSenderId,
-    this.unseenCount = 0,
+    this.unseenCount = 1, //
     this.dmPartnerUserId,
     this.dmPartnerName,
     this.dmPartnerUsername,
@@ -90,19 +82,6 @@ class ConversationModel extends HiveObject {
     }
 
     final unseenCount = json['unseenMessagesCount'] as int? ?? 0;
-    Map<String, dynamic>? chatGroup;
-
-    if (json['chatGroup'] is List) {
-      if ((json['chatGroup'] as List).isNotEmpty) {
-        chatGroup = (json['chatGroup'] as List).first;
-      } else {
-        chatGroup = null;
-      }
-    } else if (json['chatGroup'] is Map) {
-      chatGroup = json['chatGroup'] as Map<String, dynamic>;
-    } else {
-      chatGroup = null;
-    }
 
     final isDm = json['DMChat'] as bool;
     String? dmPartnerUserId;
@@ -129,9 +108,6 @@ class ConversationModel extends HiveObject {
       isDMChat: isDm,
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
-      groupName: chatGroup?['name'] as String?,
-      groupPhotoKey: chatGroup?['photo'] as String?,
-      groupDescription: chatGroup?['description'] as String?,
       participantIds: participantIds,
       lastMessageContent: lastMessageContent,
       lastMessageTime: lastMessageTime,
@@ -148,19 +124,11 @@ class ConversationModel extends HiveObject {
   bool get isGroup => !isDMChat;
 
   String getDisplayName() {
-    if (isDMChat) {
-      return dmPartnerName ?? dmPartnerUsername ?? "Unknown User";
-    } else {
-      return groupName ?? "Group Chat";
-    }
+    return dmPartnerName ?? dmPartnerUsername ?? "Unknown User";
   }
 
   String? getDisplayImageKey() {
-    if (isDMChat) {
-      return dmPartnerProfileKey;
-    } else {
-      return groupPhotoKey;
-    }
+    return dmPartnerProfileKey;
   }
 
   String? getOtherParticipantId(String currentUserId) {
@@ -173,7 +141,7 @@ class ConversationModel extends HiveObject {
 
   @override
   String toString() {
-    return 'ConversationModel(id: $id, isDMChat: $isDMChat, createdAt: $createdAt, updatedAt: $updatedAt, groupName: $groupName, groupPhotoKey: $groupPhotoKey, groupDescription: $groupDescription, participantIds: $participantIds, lastMessageContent: $lastMessageContent, lastMessageTime: $lastMessageTime, lastMessageSenderId: $lastMessageSenderId, unseenCount: $unseenCount, dmPartnerUserId: $dmPartnerUserId, dmPartnerName: $dmPartnerName, dmPartnerUsername: $dmPartnerUsername, dmPartnerProfileKey: $dmPartnerProfileKey, lastMessageType: $lastMessageType)';
+    return 'ConversationModel(id: $id, isDMChat: $isDMChat, createdAt: $createdAt, updatedAt: $updatedAt, participantIds: $participantIds, lastMessageContent: $lastMessageContent, lastMessageTime: $lastMessageTime, lastMessageSenderId: $lastMessageSenderId, unseenCount: $unseenCount, dmPartnerUserId: $dmPartnerUserId, dmPartnerName: $dmPartnerName, dmPartnerUsername: $dmPartnerUsername, dmPartnerProfileKey: $dmPartnerProfileKey, lastMessageType: $lastMessageType)';
   }
 
   @override
@@ -185,9 +153,6 @@ class ConversationModel extends HiveObject {
         other.isDMChat == isDMChat &&
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt &&
-        other.groupName == groupName &&
-        other.groupPhotoKey == groupPhotoKey &&
-        other.groupDescription == groupDescription &&
         listEquals(other.participantIds, participantIds) &&
         other.lastMessageContent == lastMessageContent &&
         other.lastMessageTime == lastMessageTime &&
@@ -206,9 +171,6 @@ class ConversationModel extends HiveObject {
         isDMChat.hashCode ^
         createdAt.hashCode ^
         updatedAt.hashCode ^
-        groupName.hashCode ^
-        groupPhotoKey.hashCode ^
-        groupDescription.hashCode ^
         participantIds.hashCode ^
         lastMessageContent.hashCode ^
         lastMessageTime.hashCode ^
@@ -245,9 +207,7 @@ class ConversationModel extends HiveObject {
       isDMChat: isDMChat ?? this.isDMChat,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
-      groupName: groupName ?? this.groupName,
-      groupPhotoKey: groupPhotoKey ?? this.groupPhotoKey,
-      groupDescription: groupDescription ?? this.groupDescription,
+
       participantIds: participantIds ?? this.participantIds,
       lastMessageContent: lastMessageContent ?? this.lastMessageContent,
       lastMessageTime: lastMessageTime ?? this.lastMessageTime,
@@ -267,9 +227,7 @@ class ConversationModel extends HiveObject {
       'isDMChat': isDMChat,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
-      'groupName': groupName,
-      'groupPhotoKey': groupPhotoKey,
-      'groupDescription': groupDescription,
+
       'participantIds': participantIds,
       'lastMessageContent': lastMessageContent,
       'lastMessageTime': lastMessageTime?.millisecondsSinceEpoch,
@@ -289,13 +247,7 @@ class ConversationModel extends HiveObject {
       isDMChat: map['isDMChat'] as bool,
       createdAt: DateTime.parse(map['createdAt'] as String),
       updatedAt: DateTime.parse(map['updatedAt'] as String),
-      groupName: map['groupName'] != null ? map['groupName'] as String : null,
-      groupPhotoKey: map['groupPhotoKey'] != null
-          ? map['groupPhotoKey'] as String
-          : null,
-      groupDescription: map['groupDescription'] != null
-          ? map['groupDescription'] as String
-          : null,
+
       participantIds: List<String>.from(map['participantIds'] as List),
       lastMessageContent: map['lastMessageContent'] != null
           ? map['lastMessageContent'] as String

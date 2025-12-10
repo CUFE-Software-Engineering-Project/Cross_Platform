@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lite_x/core/providers/current_user_provider.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
 import 'package:lite_x/core/theme/palette.dart';
 import 'package:lite_x/core/view/widgets/Loader.dart';
@@ -41,14 +42,11 @@ class IntroScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final size = MediaQuery.of(context).size;
-
-    // Listen to auth state changes
     ref.listen(authViewModelProvider, (previous, next) {
       final authViewModel = ref.read(authViewModelProvider.notifier);
 
       if (next.type == AuthStateType.authenticated) {
-        context.goNamed(RouteConstants.homescreen);
-        authViewModel.resetState();
+        context.goNamed(RouteConstants.setbirthdate);
       } else if (next.type == AuthStateType.error) {
         _showErrorToast(
           context,
