@@ -188,9 +188,7 @@ class AuthViewModel extends _$AuthViewModel {
         result.fold(
           (failure) =>
               print("FCM: Failed to register token: ${failure.message}"),
-          (message) => print(
-            "FCM: Token registered successfully: $message",
-          ), // change later
+          (message) => print("FCM: Token registered successfully: $message"),
         );
       } else {
         print('User declined or has not accepted permission');
@@ -386,6 +384,17 @@ class AuthViewModel extends _$AuthViewModel {
     );
   }
 
+  //------------------------------------------------suggest-usernames-------------------------------------------//
+  Future<List<String>> suggestUsernames({required String username}) async {
+    final result = await _authRemoteRepository.suggest_usernames(
+      username: username,
+    );
+    return result.fold((failure) {
+      print("Username suggestion failed: ${failure.message}");
+      return [];
+    }, (suggestions) => suggestions);
+  }
+
   //-----------------------------------------------------------setbirthdate-------------------------------------------------------------------------//
   Future<void> Setbirthdate({required String birthDate}) async {
     final currentUser = ref.read(currentUserProvider);
@@ -482,16 +491,29 @@ class AuthViewModel extends _$AuthViewModel {
             final localPath = file.path;
 
             final currentUser = ref.read(currentUserProvider);
+
             if (currentUser != null) {
-              final updatedUser = currentUser.copyWith(
-                photo: mediaId,
-                localProfilePhotoPath: localPath,
+              final updateResult = await _authRemoteRepository
+                  .updateProfilePhoto(currentUser.id, mediaId);
+
+              updateResult.fold(
+                (failure) async {
+                  state = AuthState.error("Uploaded but backend update failed");
+                },
+                (_) async {
+                  final updatedUser = currentUser.copyWith(
+                    photo: mediaId,
+                    localProfilePhotoPath: localPath,
+                  );
+
+                  await _authLocalRepository.saveUser(updatedUser);
+                  ref.read(currentUserProvider.notifier).adduser(updatedUser);
+
+                  state = AuthState.success(
+                    "Profile photo updated successfully",
+                  );
+                },
               );
-
-              await _authLocalRepository.saveUser(updatedUser);
-              ref.read(currentUserProvider.notifier).adduser(updatedUser);
-
-              state = AuthState.success("Profile photo uploaded and saved");
             }
           },
         );

@@ -1,18 +1,13 @@
-// ignore_for_file: unused_import
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lite_x/core/providers/current_user_provider.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
 import 'package:lite_x/core/theme/palette.dart';
 import 'package:lite_x/core/view/widgets/Loader.dart';
-import 'package:lite_x/features/auth/repositories/auth_remote_repository.dart';
 import 'package:lite_x/features/auth/view/widgets/buildTermsText.dart';
 import 'package:lite_x/features/auth/view/widgets/buildXLogo.dart';
 import 'package:lite_x/features/auth/view_model/auth_state.dart';
 import 'package:lite_x/features/auth/view_model/auth_view_model.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 
 class IntroScreen extends ConsumerWidget {
   const IntroScreen({super.key});
@@ -107,7 +102,7 @@ class IntroScreen extends ConsumerWidget {
             ),
             SizedBox(height: size.height * 0.15),
             _buildAuthButtons(context, ref),
-            const SizedBox(height: 25),
+            const SizedBox(height: 20),
             buildTermsText(),
             const SizedBox(height: 5),
             _buildLoginSection(context),

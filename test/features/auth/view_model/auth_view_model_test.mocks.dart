@@ -300,6 +300,24 @@ class MockAuthRemoteRepository extends _i1.Mock
           as _i3.Future<_i4.Either<_i5.AppFailure, bool>>);
 
   @override
+  _i3.Future<_i4.Either<_i5.AppFailure, List<String>>> suggest_usernames({
+    required String? username,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(#suggest_usernames, [], {#username: username}),
+            returnValue:
+                _i3.Future<_i4.Either<_i5.AppFailure, List<String>>>.value(
+                  _i8.dummyValue<_i4.Either<_i5.AppFailure, List<String>>>(
+                    this,
+                    Invocation.method(#suggest_usernames, [], {
+                      #username: username,
+                    }),
+                  ),
+                ),
+          )
+          as _i3.Future<_i4.Either<_i5.AppFailure, List<String>>>);
+
+  @override
   _i3.Future<_i4.Either<_i5.AppFailure, String>> forget_password({
     required String? email,
   }) =>

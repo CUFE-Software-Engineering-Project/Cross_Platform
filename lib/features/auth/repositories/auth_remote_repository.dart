@@ -169,9 +169,10 @@ class AuthRemoteRepository {
         'api/auth/finalize_signup',
         data: {'email': email, 'password': password},
       );
-
+      print("asermohamed${response.data['tokens']}");
       final user = UserModel.fromMap(response.data['user']);
       final tokens = TokensModel.fromMap(response.data['tokens']);
+
       return right((user, tokens));
     } on DioException {
       return left(AppFailure(message: 'Signup failed'));
@@ -264,6 +265,19 @@ class AuthRemoteRepository {
       return right(file);
     } catch (e) {
       return left(AppFailure(message: 'Download failed $e'));
+    }
+  }
+
+  //-----------------------------------------------------------------------updateprofilephoto----------------------------------------------------------------------------------//
+  Future<Either<AppFailure, void>> updateProfilePhoto(
+    String userId,
+    String mediaId,
+  ) async {
+    try {
+      await _dio.patch("api/users/profile-picture/$userId/$mediaId");
+      return const Right(());
+    } catch (e) {
+      return Left(AppFailure(message: "couldn't update profile picture"));
     }
   }
 
@@ -365,6 +379,7 @@ class AuthRemoteRepository {
     }
   }
 
+  //-----------------------------------------------check email-------------------------------------------------------------------------------------//
   Future<Either<AppFailure, bool>> check_email({required String email}) async {
     try {
       final response = await _dio.post(
@@ -374,6 +389,24 @@ class AuthRemoteRepository {
       return right(response.data['exists'] ?? false);
     } on DioException {
       return left(AppFailure(message: 'Email check failed'));
+    } catch (e) {
+      return left(AppFailure(message: e.toString()));
+    }
+  }
+
+  //--------------------------------------suggest usernames--------------------------------------//
+  Future<Either<AppFailure, List<String>>> suggest_usernames({
+    required String username,
+  }) async {
+    try {
+      final response = await _dio.post(
+        'api/auth/suggest-usernames',
+        data: {'name': username},
+      );
+      final suggestions = List<String>.from(response.data['suggestions'] ?? []);
+      return right(suggestions);
+    } on DioException {
+      return left(AppFailure(message: 'Username suggestions failed'));
     } catch (e) {
       return left(AppFailure(message: e.toString()));
     }
