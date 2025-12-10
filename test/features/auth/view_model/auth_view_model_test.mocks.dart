@@ -221,6 +221,31 @@ class MockAuthRemoteRepository extends _i1.Mock
           >);
 
   @override
+  _i3.Future<_i4.Either<_i5.AppFailure, String>> setbirthdate({
+    required String? day,
+    required String? month,
+    required String? year,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(#setbirthdate, [], {
+              #day: day,
+              #month: month,
+              #year: year,
+            }),
+            returnValue: _i3.Future<_i4.Either<_i5.AppFailure, String>>.value(
+              _i8.dummyValue<_i4.Either<_i5.AppFailure, String>>(
+                this,
+                Invocation.method(#setbirthdate, [], {
+                  #day: day,
+                  #month: month,
+                  #year: year,
+                }),
+              ),
+            ),
+          )
+          as _i3.Future<_i4.Either<_i5.AppFailure, String>>);
+
+  @override
   _i3.Future<_i4.Either<_i5.AppFailure, String>> registerFcmToken({
     required String? fcmToken,
   }) =>

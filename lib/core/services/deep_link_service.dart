@@ -21,7 +21,6 @@ class DeepLinkService {
       }
     });
 
-    // إضافة مراقب لحالة التطبيق
     WidgetsBinding.instance.addObserver(_observer);
   }
 

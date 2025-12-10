@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lite_x/core/providers/current_user_provider.dart';
 import 'package:lite_x/core/theme/Palette.dart';
-import 'package:lite_x/features/chat/models/messagemodel.dart';
-
+import 'package:lite_x/features/chat/providers/activeChatIdProvider.dart';
 import 'package:lite_x/features/chat/view/widgets/chat/MessageAppBar.dart';
 import 'package:lite_x/features/chat/view/widgets/chat/MessageBubble.dart';
 import 'package:lite_x/features/chat/view/widgets/chat/MessageOptionsSheet.dart';
@@ -11,16 +10,14 @@ import 'package:lite_x/features/chat/view/widgets/chat/TypingIndicator.dart';
 import 'package:lite_x/features/chat/view/widgets/chat/message_input_bar.dart';
 import 'package:lite_x/features/chat/view_model/chat/Chat_view_model.dart';
 import 'package:lite_x/features/chat/view_model/conversions/Conversations_view_model.dart';
-import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   final String chatId;
-  final String title; // name of user or group name
-  final String? subtitle; // username or group count
+  final String title; // name of user
+  final String? subtitle; // username
   final String? profileImage;
   final bool isGroup;
   final int? recipientFollowersCount;
-
   const ChatScreen({
     super.key,
     required this.chatId,
@@ -37,32 +34,40 @@ class ChatScreen extends ConsumerStatefulWidget {
 
 class _ChatScreenState extends ConsumerState<ChatScreen> {
   late String _currentUserId;
-  final ItemPositionsListener _itemPositionsListener =
-      ItemPositionsListener.create();
   bool _isExiting = false;
   bool _showScrollToBottomButton = false;
   final ScrollController _scrollController = ScrollController();
-  late ChatViewModel notifier;
-
+  bool _isLoadingMore = false;
   ProviderSubscription<ChatState>? _chatSub;
 
   @override
   void initState() {
     super.initState();
     _currentUserId = ref.read(currentUserProvider)!.id;
-    notifier = ref.read(chatViewModelProvider.notifier);
+    _scrollController.addListener(_onScroll);
+    _scrollController.addListener(_onScroll);
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
 
       _setupChatSubscription();
 
       ref.read(chatViewModelProvider.notifier).loadChat(widget.chatId);
+      ref.read(activeChatProvider.notifier).setActive(widget.chatId);
       ref
           .read(conversationsViewModelProvider.notifier)
           .markChatAsRead(widget.chatId);
     });
+  }
 
-    _itemPositionsListener.itemPositions.addListener(_scrollListener);
+  @override
+  void dispose() {
+    _chatSub?.close();
+    _chatSub = null;
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+
+    super.dispose();
   }
 
   void _setupChatSubscription() {
@@ -70,75 +75,92 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       previous,
       next,
     ) {
-      if (_isExiting || !mounted) return;
+      if (!mounted || _isExiting) return;
 
       final notifier = ref.read(chatViewModelProvider.notifier);
       if (!notifier.isActiveChat(widget.chatId)) return;
 
-      final positions = _itemPositionsListener.itemPositions.value;
-      final isAtBottom =
-          positions.isEmpty ||
-          positions.any((pos) => pos.index == 0 && pos.itemLeadingEdge < 0.1);
+      final shouldAutoScroll = _shouldAutoScrollToBottom(previous, next);
 
-      final lastMsg = next.messages.lastOrNull;
-
-      if (lastMsg != null && (lastMsg.userId == _currentUserId || isAtBottom)) {
+      if (shouldAutoScroll) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (_isExiting || !mounted) return;
-          _scrollToBottom();
+          _scrollToBottom(animate: true);
         });
       }
     }, fireImmediately: false);
   }
 
-  @override
-  void dispose() {
-    _isExiting = true;
+  bool _shouldAutoScrollToBottom(ChatState? previous, ChatState next) {
+    if (previous == null || previous.messages.isEmpty) return true;
 
-    _chatSub?.close();
-    _chatSub = null;
+    if (previous.messages.length == next.messages.length) return false;
 
-    _itemPositionsListener.itemPositions.removeListener(_scrollListener);
+    final lastMsg = next.messages.lastOrNull;
+    if (lastMsg == null) return false;
 
-    try {
-      final savedNotifier = notifier;
+    final isMine = lastMsg.userId == _currentUserId;
+    final isNearBottom = _isScrolledToBottom();
 
-      Future.microtask(() {
-        savedNotifier.sendTyping(false);
-        savedNotifier.exitChat();
-      });
-    } catch (e) {
-      debugPrint("Error during dispose: $e");
-    }
-
-    super.dispose();
+    return isMine || isNearBottom;
   }
 
-  void _scrollListener() {
+  bool _isScrolledToBottom() {
+    if (!_scrollController.hasClients) return true;
+
+    const threshold = 100.0;
+    final position = _scrollController.position;
+
+    return position.pixels <= threshold;
+  }
+
+  void _onScroll() {
     if (_isExiting || !mounted) return;
 
-    final positions = _itemPositionsListener.itemPositions.value;
-    if (positions.isEmpty) return;
-
-    final isBottomVisible = positions.any((pos) => pos.index == 0);
-    final shouldShowButton = !isBottomVisible;
-
+    final shouldShowButton = !_isScrolledToBottom();
     if (shouldShowButton != _showScrollToBottomButton) {
       setState(() {
         _showScrollToBottomButton = shouldShowButton;
       });
     }
+
+    if (_scrollController.position.pixels >=
+            _scrollController.position.maxScrollExtent - 200 &&
+        !_isLoadingMore) {
+      _loadMoreMessages();
+    }
   }
 
-  void _scrollToBottom() {
+  Future<void> _loadMoreMessages() async {
+    if (_isLoadingMore) return;
+
+    final chatState = ref.read(chatViewModelProvider);
+    if (chatState.isLoadingHistory) return;
+
+    setState(() {
+      _isLoadingMore = true;
+    });
+
+    await ref.read(chatViewModelProvider.notifier).loadOlderMessages();
+
+    setState(() {
+      _isLoadingMore = false;
+    });
+  }
+
+  void _scrollToBottom({bool animate = true}) {
     if (!mounted || _isExiting) return;
     if (!_scrollController.hasClients) return;
 
-    _scrollController.animateTo(
-      0,
-      duration: const Duration(milliseconds: 200),
-      curve: Curves.easeOut,
-    );
+    if (animate) {
+      _scrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    } else {
+      _scrollController.jumpTo(0);
+    }
   }
 
   void _handleSendMessage(String text) {
@@ -147,33 +169,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final currentUser = ref.read(currentUserProvider);
     if (currentUser == null || text.trim().isEmpty) return;
 
-    final tempId = DateTime.now().millisecondsSinceEpoch.toString();
-    final message = MessageModel(
-      id: tempId,
-      chatId: widget.chatId,
-      userId: currentUser.id,
-      content: text.trim(),
-      createdAt: DateTime.now(),
-      status: 'PENDING',
-      messageType: 'text',
-    );
-
-    ref.read(chatViewModelProvider.notifier).sendMessage(message);
+    ref
+        .read(chatViewModelProvider.notifier)
+        .sendMessage(content: text.trim(), messageType: 'text');
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_isExiting || !mounted) return;
-      _scrollToBottom();
+      _scrollToBottom(animate: true);
     });
-  }
-
-  void _handleDeleteMessage(MessageModel message, bool forEveryone) {
-    print(
-      'Delete message ${message.id} for ${forEveryone ? "everyone" : "me"}',
-    );
-  }
-
-  void _handleEditMessage(MessageModel message) {
-    print('Edit message ${message.id}');
   }
 
   @override
@@ -198,18 +201,33 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           Expanded(
             child: Stack(
               children: [
-                if (chatState.isLoading)
+                if (chatState.isLoading && messages.isEmpty)
                   const Center(child: CircularProgressIndicator())
                 else
                   ListView.separated(
                     controller: _scrollController,
                     reverse: true,
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    itemCount: messages.length + 1,
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 10,
+                      horizontal: 8,
+                    ),
+                    itemCount:
+                        messages.length + (chatState.isLoadingHistory ? 2 : 1),
                     separatorBuilder: (_, __) => const SizedBox(height: 6),
                     itemBuilder: (context, index) {
-                      if (index == messages.length)
+                      if (chatState.isLoadingHistory &&
+                          index == messages.length + 1) {
+                        return const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(16.0),
+                            child: CircularProgressIndicator(),
+                          ),
+                        );
+                      }
+
+                      if (index == messages.length) {
                         return _buildProfileHeader();
+                      }
 
                       final message = messages[messages.length - index - 1];
                       final isMe = message.userId == currentUser.id;
@@ -223,36 +241,42 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                             context: context,
                             message: message,
                             isMe: isMe,
-                            onDeleteForMe: () =>
-                                _handleDeleteMessage(message, false),
-                            onDeleteForEveryone: () =>
-                                _handleDeleteMessage(message, true),
-                            onEdit: () => _handleEditMessage(message),
                           );
                         },
                       );
                     },
                   ),
+
                 if (chatState.isRecipientTyping)
                   Positioned(
                     bottom: 0,
                     left: 0,
                     right: 0,
-                    child: TypingIndicator(userName: widget.title),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.transparent,
+                            Theme.of(context).scaffoldBackgroundColor,
+                          ],
+                        ),
+                      ),
+                      child: TypingIndicator(userName: widget.title),
+                    ),
                   ),
 
                 _buildScrollToBottomButton(),
               ],
             ),
           ),
+
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               child: MessageInputBar(
                 onSendMessage: _handleSendMessage,
-                onSendAudio: null,
-                onSendImage: null,
-                onSendGif: null,
                 onTypingChanged: (isTyping) {
                   ref.read(chatViewModelProvider.notifier).sendTyping(isTyping);
                 },
@@ -273,9 +297,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           CircleAvatar(
             radius: 45,
             backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
-            // backgroundImage: widget.profileImage != null
-            //     ? NetworkImage(widget.profileImage!)
-            //     : null,
+            backgroundImage: widget.profileImage != null
+                ? NetworkImage(widget.profileImage!)
+                : null,
             child: widget.profileImage == null
                 ? Text(
                     widget.title[0].toUpperCase(),
@@ -287,48 +311,50 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   )
                 : null,
           ),
-          const SizedBox(height: 5),
+          const SizedBox(height: 8),
 
           Text(
             widget.title,
             style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
               color: Palette.textPrimary,
             ),
           ),
-          if (widget.subtitle != null)
+
+          if (widget.subtitle != null) ...[
+            const SizedBox(height: 2),
             Text(
               '@${widget.subtitle}',
-              style: TextStyle(
-                fontSize: 16,
-                color: Color.fromARGB(255, 133, 139, 145),
-              ),
+              style: const TextStyle(fontSize: 15, color: Color(0xFF858B91)),
             ),
-          const SizedBox(height: 12),
+          ],
 
-          if (widget.recipientFollowersCount != null)
+          if (widget.recipientFollowersCount != null) ...[
+            const SizedBox(height: 8),
             Text(
               '${widget.recipientFollowersCount} Followers',
-              style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
             ),
+          ],
 
           const SizedBox(height: 20),
 
           Divider(
-            thickness: 0.2,
-            color: Colors.grey[500],
-            indent: 10,
-            endIndent: 10,
+            thickness: 0.5,
+            color: Colors.grey[300],
+            indent: 20,
+            endIndent: 20,
           ),
-          const SizedBox(height: 4),
+
+          const SizedBox(height: 8),
 
           Text(
-            'Today',
+            _getConversationStartDate(),
             style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: Palette.textPrimary,
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: Colors.grey[600],
             ),
           ),
         ],
@@ -336,20 +362,51 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     );
   }
 
+  String _getConversationStartDate() {
+    final chatState = ref.read(chatViewModelProvider);
+    if (chatState.messages.isEmpty) return 'Today';
+
+    final oldestMessage = chatState.messages.first;
+    final now = DateTime.now();
+    final messageDate = oldestMessage.createdAt;
+
+    final difference = now.difference(messageDate);
+
+    if (difference.inDays == 0) {
+      return 'Today';
+    } else if (difference.inDays == 1) {
+      return 'Yesterday';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays} days ago';
+    } else {
+      return '${messageDate.day}/${messageDate.month}/${messageDate.year}';
+    }
+  }
+
   Widget _buildScrollToBottomButton() {
     return Positioned(
-      bottom: 10.0,
-      right: 10.0,
-      child: AnimatedOpacity(
-        opacity: _showScrollToBottomButton ? 1.0 : 0.0,
-        duration: const Duration(milliseconds: 300),
-        child: IgnorePointer(
-          ignoring: !_showScrollToBottomButton,
-          child: FloatingActionButton.small(
-            onPressed: _scrollToBottom,
-            tooltip: 'Scroll to bottom',
-            backgroundColor: Theme.of(context).primaryColor,
-            child: const Icon(Icons.arrow_downward, color: Colors.white),
+      bottom: 16.0,
+      right: 16.0,
+      child: AnimatedScale(
+        scale: _showScrollToBottomButton ? 1.0 : 0.0,
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeInOut,
+        child: AnimatedOpacity(
+          opacity: _showScrollToBottomButton ? 1.0 : 0.0,
+          duration: const Duration(milliseconds: 200),
+          child: IgnorePointer(
+            ignoring: !_showScrollToBottomButton,
+            child: FloatingActionButton.small(
+              onPressed: () => _scrollToBottom(animate: true),
+              tooltip: 'Scroll to bottom',
+              backgroundColor: Theme.of(context).primaryColor,
+              elevation: 4,
+              child: const Icon(
+                Icons.keyboard_arrow_down_rounded,
+                color: Colors.white,
+                size: 24,
+              ),
+            ),
           ),
         ),
       ),

@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'auth_view_model.dart';
+part of 'activeChatIdProvider.dart';
 
 // **************************************************************************
 // RiverpodGenerator
@@ -9,52 +9,51 @@ part of 'auth_view_model.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 
-@ProviderFor(AuthViewModel)
-const authViewModelProvider = AuthViewModelProvider._();
+@ProviderFor(ActiveChat)
+const activeChatProvider = ActiveChatProvider._();
 
-final class AuthViewModelProvider
-    extends $NotifierProvider<AuthViewModel, AuthState> {
-  const AuthViewModelProvider._()
+final class ActiveChatProvider extends $NotifierProvider<ActiveChat, String?> {
+  const ActiveChatProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
-        name: r'authViewModelProvider',
-        isAutoDispose: false,
+        name: r'activeChatProvider',
+        isAutoDispose: true,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
 
   @override
-  String debugGetCreateSourceHash() => _$authViewModelHash();
+  String debugGetCreateSourceHash() => _$activeChatHash();
 
   @$internal
   @override
-  AuthViewModel create() => AuthViewModel();
+  ActiveChat create() => ActiveChat();
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(AuthState value) {
+  Override overrideWithValue(String? value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<AuthState>(value),
+      providerOverride: $SyncValueProvider<String?>(value),
     );
   }
 }
 
-String _$authViewModelHash() => r'8803fa622ac8d66784a46d9529d74f4f9577043e';
+String _$activeChatHash() => r'23f0395134ca4d8af5a88f7ad3482566e0783170';
 
-abstract class _$AuthViewModel extends $Notifier<AuthState> {
-  AuthState build();
+abstract class _$ActiveChat extends $Notifier<String?> {
+  String? build();
   @$mustCallSuper
   @override
   void runBuild() {
     final created = build();
-    final ref = this.ref as $Ref<AuthState, AuthState>;
+    final ref = this.ref as $Ref<String?, String?>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<AuthState, AuthState>,
-              AuthState,
+              AnyNotifier<String?, String?>,
+              String?,
               Object?,
               Object?
             >;

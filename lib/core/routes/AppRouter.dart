@@ -19,7 +19,7 @@ import 'package:lite_x/features/auth/view/screens/Create_Account/Password_Screen
 import 'package:lite_x/features/auth/view/screens/Create_Account/Upload_Profile_Photo_Screen.dart';
 import 'package:lite_x/features/auth/view/screens/Create_Account/Verification_Screen.dart';
 import 'package:lite_x/features/auth/view/screens/Log_In/VerificationForgot_Screen.dart';
-import 'package:lite_x/features/chat/view/screens/Search_Direct_messages.dart';
+import 'package:lite_x/features/auth/view/screens/Oauth/SetBirthdate.dart';
 import 'package:lite_x/features/chat/view/screens/Search_User_Group.dart';
 import 'package:lite_x/features/chat/view/screens/chat_Screen.dart';
 import 'package:lite_x/features/chat/view/screens/conversations_screen.dart';
@@ -186,6 +186,14 @@ class Approuter {
         ),
       ),
       GoRoute(
+        name: RouteConstants.setbirthdate,
+        path: "/setbirthdate",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: const Setbirthdate(),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
         name: RouteConstants.ForgotpasswordScreen,
         path: "/ForgotpasswordScreen",
         pageBuilder: (context, state) => CustomTransitionPage(
@@ -281,14 +289,6 @@ class Approuter {
       ),
 
       GoRoute(
-        name: RouteConstants.SearchDirectMessages,
-        path: "/SearchDirectMessages",
-        pageBuilder: (context, state) => CustomTransitionPage(
-          child: const SearchDirectMessages(),
-          transitionsBuilder: _slideRightTransitionBuilder,
-        ),
-      ),
-      GoRoute(
         name: RouteConstants.Interests,
         path: "/Interests",
         pageBuilder: (context, state) => CustomTransitionPage(
@@ -367,6 +367,8 @@ class Approuter {
               subtitle: extraData['subtitle'],
               profileImage: extraData['avatarUrl'],
               isGroup: extraData['isGroup'] ?? false,
+              recipientFollowersCount:
+                  extraData['recipientFollowersCount'] ?? 0,
             ),
             transitionsBuilder: _slideRightTransitionBuilder,
           );

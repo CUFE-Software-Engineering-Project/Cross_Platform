@@ -1,37 +1,48 @@
+import 'dart:async';
 import 'package:lite_x/core/models/usermodel.dart';
 import 'package:lite_x/core/providers/current_user_provider.dart';
 import 'package:lite_x/features/chat/models/messagemodel.dart';
 import 'package:lite_x/features/chat/repositories/chat_local_repository.dart';
 import 'package:lite_x/features/chat/repositories/chat_remote_repository.dart';
 import 'package:lite_x/features/chat/repositories/socket_repository.dart';
+import 'package:lite_x/features/chat/view_model/conversions/Conversations_view_model.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:uuid/uuid.dart';
 part 'Chat_view_model.g.dart';
 
 class ChatState {
   final List<MessageModel> messages;
   final bool isRecipientTyping;
   final bool isLoading;
+  final bool isLoadingHistory;
+  final bool hasMoreHistory;
 
   ChatState({
     this.messages = const [],
     this.isRecipientTyping = false,
     this.isLoading = false,
+    this.isLoadingHistory = false,
+    this.hasMoreHistory = true,
   });
 
   ChatState copyWith({
     List<MessageModel>? messages,
     bool? isRecipientTyping,
     bool? isLoading,
+    bool? isLoadingHistory,
+    bool? hasMoreHistory,
   }) {
     return ChatState(
       messages: messages ?? this.messages,
       isRecipientTyping: isRecipientTyping ?? this.isRecipientTyping,
       isLoading: isLoading ?? this.isLoading,
+      isLoadingHistory: isLoadingHistory ?? this.isLoadingHistory,
+      hasMoreHistory: hasMoreHistory ?? this.hasMoreHistory,
     );
   }
 }
 
-@Riverpod(keepAlive: true)
+@riverpod
 class ChatViewModel extends _$ChatViewModel {
   late ChatRemoteRepository _chatRemoteRepository;
   late ChatLocalRepository _chatLocalRepository;
@@ -39,7 +50,13 @@ class ChatViewModel extends _$ChatViewModel {
   UserModel? _currentUser;
   String? _activeChatId;
   String? _myUserId;
-
+  bool _isDisposed = false; //
+  final List<MessageModel> _historyBuffer = [];
+  final Set<String> _loadedMessageIds = {};
+  StreamSubscription? _msgSub;
+  StreamSubscription? _ackSub;
+  StreamSubscription? _typingSub;
+  StreamSubscription? _readSub;
   @override
   ChatState build() {
     _chatRemoteRepository = ref.watch(chatRemoteRepositoryProvider);
@@ -50,7 +67,12 @@ class ChatViewModel extends _$ChatViewModel {
     _setupSocketListeners();
 
     ref.onDispose(() {
-      _socketRepository.disposeListeners();
+      print("Disposing ChatViewModel and cancelling subscriptions");
+      _isDisposed = true;
+      _msgSub?.cancel();
+      _ackSub?.cancel();
+      _typingSub?.cancel();
+      _readSub?.cancel();
     });
     return ChatState(isLoading: false);
   }
@@ -58,67 +80,50 @@ class ChatViewModel extends _$ChatViewModel {
   bool isActiveChat(String chatId) => _activeChatId == chatId;
 
   void _setupSocketListeners() {
-    print("Setting up Socket Listeners in ViewModel...");
-    _socketRepository.onNewMessage((data) {
-      print("ViewModel Received Message Event");
-      if (_activeChatId == null) return;
-      if (data['chatId'] == _activeChatId) {
-        handleIncomingMessage(data);
-      }
-    });
-    _socketRepository.onMessageAdded((data) {
-      if (_activeChatId == null) return;
-      handleMessageAdded(data);
+    _msgSub = _socketRepository.newMessageStream.listen((data) {
+      if (_isDisposed) return;
+      print("New message received in ChatVM: $data");
+      _handleIncomingMessage(data);
     });
 
-    _socketRepository.onMessagesRead((data) {
-      if (_activeChatId == null) return;
-      handleMessagesRead(data);
+    _ackSub = _socketRepository.messageAddedStream.listen((data) {
+      if (_isDisposed) return;
+      _handleMessageAck(data);
     });
 
-    _socketRepository.onTyping((data) {
-      if (_activeChatId == null) return;
-      handleTypingEvent(data);
+    _readSub = _socketRepository.messagesReadStream.listen((data) {
+      if (_isDisposed) return;
+      _handleMessagesRead(data);
+    });
+
+    _typingSub = _socketRepository.typingStream.listen((data) {
+      if (_isDisposed) return;
+      _handleTypingEvent(data);
     });
   }
 
-  void handleMessageAdded(Map<String, dynamic> data) async {
-    final chatId = data["chatId"];
-    final realMessageId = data["messageId"];
-    if (_activeChatId != chatId) return;
-
-    final index = state.messages.indexWhere(
-      (m) => m.status == "PENDING" && m.chatId == chatId,
-    );
-
-    if (index == -1) return;
-
-    final tempMsg = state.messages[index];
-
-    final updatedMsg = tempMsg.copyWith(id: realMessageId, status: "SENT");
-    final updated = [...state.messages];
-    updated[index] = updatedMsg;
-    state = state.copyWith(messages: updated);
-
-    _chatLocalRepository.saveMessage(updatedMsg);
+  List<MessageModel> _sortMessages(List<MessageModel> messages) {
+    final sorted = [...messages];
+    sorted.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+    return sorted;
   }
 
-  // load messages (offline first)
   Future<void> loadChat(String chatId) async {
-    if (_currentUser == null) {
-      print("Error: No current user found");
-      return;
-    }
+    if (_currentUser == null) return;
 
-    state = state.copyWith(isLoading: true);
-
+    state = state.copyWith(isLoading: true, hasMoreHistory: true);
     _activeChatId = chatId;
     _myUserId = _currentUser!.id;
+    _historyBuffer.clear();
+    _loadedMessageIds.clear();
 
-    final localCached = _chatLocalRepository.getMessagesForChat(chatId);
-    state = state.copyWith(messages: localCached);
+    final cachedMessages = _chatLocalRepository.getCachedMessages(chatId);
+    _loadedMessageIds.addAll(cachedMessages.map((m) => m.id));
 
-    final result = await _chatRemoteRepository.getInitialChatMessages(chatId);
+    final sortedCache = _sortMessages(cachedMessages);
+    state = state.copyWith(messages: sortedCache);
+
+    final result = await _chatRemoteRepository.getlastChatMessages(chatId);
 
     if (_activeChatId != chatId) {
       state = state.copyWith(isLoading: false);
@@ -127,159 +132,229 @@ class ChatViewModel extends _$ChatViewModel {
 
     await result.fold(
       (failure) async {
-        print("Failed to fetch messages: ${failure.message}");
+        if (_isDisposed) return; //
         state = state.copyWith(isLoading: false);
       },
       (serverMessages) async {
-        final mergedMessages = await _mergeAndReconcileMessages(
-          localCached,
-          serverMessages,
-        );
+        if (_isDisposed) return; //
+        await _chatLocalRepository.saveInitialMessages(serverMessages);
+        await _reconcilePendingMessages(chatId, serverMessages);
 
-        await _chatLocalRepository.saveMessages(serverMessages);
+        final updatedCache = _chatLocalRepository.getCachedMessages(chatId);
+        _loadedMessageIds.clear();
+        _loadedMessageIds.addAll(updatedCache.map((m) => m.id));
 
         if (_activeChatId != chatId) {
           state = state.copyWith(isLoading: false);
           return;
         }
 
-        state = state.copyWith(messages: mergedMessages, isLoading: false);
+        final sortedUpdated = _sortMessages(updatedCache);
+        if (_isDisposed) return; //
+        state = state.copyWith(messages: sortedUpdated, isLoading: false);
         _socketRepository.openChat(chatId);
       },
     );
   }
 
-  //for matching messages not send while internet is off
-  MessageModel? _findMatchingServerMessage(pending, serverMessages) {
-    for (final srv in serverMessages) {
-      if (srv.content == pending.content &&
-          srv.chatId == pending.chatId &&
-          srv.userId == pending.userId) {
-        return srv;
-      }
-    }
-    return null;
-  }
-
-  // reconcile the messages
-  Future<List<MessageModel>> _mergeAndReconcileMessages(
-    List<MessageModel> localMessages,
+  Future<void> _reconcilePendingMessages(
+    String chatId,
     List<MessageModel> serverMessages,
   ) async {
-    for (final srv in serverMessages) {
-      await _chatLocalRepository.deleteMessage(srv.id);
-    }
+    final pendingMessages = _chatLocalRepository.getPendingMessages(chatId);
+    if (pendingMessages.isEmpty) return;
 
-    final Map<String, MessageModel> messageMap = {};
-
-    for (final srv in serverMessages) {
-      messageMap[srv.id] = srv;
-      await _chatLocalRepository.saveMessage(srv);
-    }
-
-    for (final localMsg in localMessages) {
-      if (localMsg.status != "PENDING") continue;
-
-      final match = _findMatchingServerMessage(localMsg, serverMessages);
+    for (final pending in pendingMessages) {
+      final match = _findMatchingServerMessage(pending, serverMessages);
       if (match != null) {
-        await _chatLocalRepository.deleteMessage(localMsg.id);
-
-        messageMap[match.id] = match;
+        await _chatLocalRepository.replaceTempWithServerMessage(
+          tempId: pending.id,
+          serverMessage: match,
+        );
       } else {
-        messageMap[localMsg.id] = localMsg;
-        await _chatLocalRepository.saveMessage(localMsg);
+        _socketRepository.sendMessage(pending.toApiRequest());
       }
     }
-
-    final merged = messageMap.values.toList();
-    merged.sort((a, b) => a.createdAt.compareTo(b.createdAt));
-
-    return merged;
   }
 
-  // handle for receivers
-  void handleIncomingMessage(Map<String, dynamic> data) async {
-    if (_activeChatId == null) return;
-
-    final msg = MessageModel.fromApiResponse(data);
-    if (msg.userId == _myUserId) {
-      return;
-    }
-
-    final exists = state.messages.any((m) => m.id == msg.id);
-    if (exists) {
-      _updateLocalMessageWithServerId(msg);
-      return;
-    }
-
-    final isActiveChat =
-        (msg.userId != _myUserId && msg.chatId == _activeChatId);
-
-    if (isActiveChat) {
-      msg.status = "READ";
-    }
-
-    await _chatLocalRepository.saveMessage(msg);
-
-    final updated = [...state.messages, msg];
-    state = state.copyWith(messages: updated);
-    if (isActiveChat) {
-      _socketRepository.openChat(_activeChatId!);
-    }
+  MessageModel? _findMatchingServerMessage(
+    MessageModel pending,
+    List<MessageModel> serverMessages,
+  ) {
+    return serverMessages.cast<MessageModel?>().firstWhere(
+      (srv) =>
+          srv!.content == pending.content &&
+          srv.chatId == pending.chatId &&
+          srv.userId == pending.userId &&
+          srv.createdAt.difference(pending.createdAt).inSeconds.abs() < 60,
+      orElse: () => null,
+    );
   }
 
-  void _updateLocalMessageWithServerId(MessageModel serverMsg) {
-    final index = state.messages.lastIndexWhere(
-      (m) => m.status == "PENDING" && m.chatId == serverMsg.chatId,
+  Future<void> sendMessage({
+    required String content,
+    String messageType = 'text',
+  }) async {
+    if (_activeChatId == null || _myUserId == null) return;
+
+    final tempId = 'temp_${const Uuid().v4()}';
+    final timestamp = DateTime.now();
+
+    final localMessage = MessageModel(
+      id: tempId,
+      chatId: _activeChatId!,
+      userId: _myUserId!,
+      content: content,
+      messageType: messageType,
+      createdAt: timestamp,
+      status: 'SENDING',
+    );
+
+    await _chatLocalRepository.saveMessage(localMessage);
+
+    final updatedMessages = [...state.messages, localMessage];
+    state = state.copyWith(messages: updatedMessages);
+    _loadedMessageIds.add(tempId);
+
+    ref
+        .read(conversationsViewModelProvider.notifier)
+        .updateConversationAfterSending(
+          chatId: _activeChatId!,
+          content: content,
+          messageType: messageType,
+          timestamp: timestamp,
+        );
+
+    _socketRepository.sendMessage(localMessage.toApiRequest());
+  }
+
+  void _handleMessageAck(Map<String, dynamic> data) async {
+    final chatId = data["chatId"] as String?;
+    final realMessageId = data["messageId"] as String?;
+
+    if (chatId == null || realMessageId == null) return;
+    if (_activeChatId != chatId) return;
+
+    final index = state.messages.indexWhere(
+      (m) => m.status == "SENDING" && m.chatId == chatId,
     );
 
     if (index == -1) return;
 
     final tempMsg = state.messages[index];
 
-    final updatedMsg = tempMsg.copyWith(
-      id: serverMsg.id,
-      status: serverMsg.status,
+    final serverMessage = tempMsg.copyWith(id: realMessageId, status: "SENT");
+
+    await _chatLocalRepository.replaceTempWithServerMessage(
+      tempId: tempMsg.id,
+      serverMessage: serverMessage,
     );
 
-    final updated = [...state.messages];
-    updated[index] = updatedMsg;
+    _loadedMessageIds.remove(tempMsg.id);
+    _loadedMessageIds.add(realMessageId);
 
-    _chatLocalRepository.saveMessage(updatedMsg);
-
-    state = state.copyWith(messages: updated);
+    final updatedMessages = [...state.messages];
+    updatedMessages[index] = serverMessage;
+    state = state.copyWith(messages: updatedMessages);
   }
 
-  // send message
-  Future<void> sendMessage(MessageModel localMessage) async {
-    _chatLocalRepository.saveMessage(localMessage);
+  void _handleIncomingMessage(Map<String, dynamic> data) async {
+    final msg = MessageModel.fromApiResponse(data);
 
-    final isAlreadyInState = state.messages.any((m) => m.id == localMessage.id);
+    if (msg.userId == _myUserId) return;
+    if (_loadedMessageIds.contains(msg.id)) return;
 
-    if (!isAlreadyInState) {
-      final updated = [...state.messages, localMessage];
-      state = state.copyWith(messages: updated);
+    final isActiveChat = (_activeChatId == msg.chatId);
+    final finalMsg = msg.copyWith(status: isActiveChat ? "READ" : msg.status);
+
+    await _chatLocalRepository.saveMessage(finalMsg);
+
+    print("is in chat ${isActiveChat}");
+    if (isActiveChat) {
+      final updatedMessages = [...state.messages, finalMsg];
+      if (_isDisposed || _activeChatId != msg.chatId) return; //
+      state = state.copyWith(messages: updatedMessages);
+      _loadedMessageIds.add(msg.id);
+      _socketRepository.openChat(_activeChatId!); // to decrease unseen count
+    }
+  }
+
+  void _handleMessagesRead(Map<String, dynamic> data) async {
+    final chatId = data['chatId'] as String?;
+    if (chatId == null || chatId != _activeChatId) return;
+
+    final messagesBeforeUpdate = [...state.messages];
+
+    await _chatLocalRepository.markMessagesAsRead(chatId, _myUserId!);
+
+    final updatedMessages = messagesBeforeUpdate.map((msg) {
+      if (msg.chatId == chatId &&
+          msg.userId == _myUserId &&
+          msg.status != "READ") {
+        return msg.copyWith(status: "READ");
+      }
+      return msg;
+    }).toList();
+
+    state = state.copyWith(messages: updatedMessages);
+  }
+
+  Future<void> loadOlderMessages() async {
+    if (_activeChatId == null ||
+        state.isLoadingHistory ||
+        !state.hasMoreHistory) {
+      return;
     }
 
-    _socketRepository.sendMessage(localMessage.toApiRequest());
+    final allCurrentMessages = [...state.messages, ..._historyBuffer];
+    if (allCurrentMessages.isEmpty) return;
+
+    final sortedCurrent = _sortMessages(allCurrentMessages);
+    final oldestMessage = sortedCurrent.first;
+    final lastTimestamp = oldestMessage.createdAt;
+
+    state = state.copyWith(isLoadingHistory: true);
+
+    final result = await _chatRemoteRepository.getOlderMessagesChat(
+      chatId: _activeChatId!,
+      lastMessageTimestamp: lastTimestamp,
+    );
+
+    await result.fold(
+      (failure) async {
+        if (_isDisposed) return; //
+        state = state.copyWith(isLoadingHistory: false);
+      },
+      (olderMessages) async {
+        if (_isDisposed) return; //
+        if (olderMessages.isEmpty) {
+          state = state.copyWith(
+            isLoadingHistory: false,
+            hasMoreHistory: false,
+          );
+          return;
+        }
+
+        final newMessages = olderMessages
+            .where((msg) => !_loadedMessageIds.contains(msg.id))
+            .toList();
+
+        _historyBuffer.addAll(newMessages);
+        _loadedMessageIds.addAll(newMessages.map((m) => m.id));
+
+        final allMessages = [..._historyBuffer, ...state.messages];
+
+        state = state.copyWith(messages: allMessages, isLoadingHistory: false);
+      },
+    );
   }
 
-  // handle read status event
-  void handleMessagesRead(Map<String, dynamic> data) {
-    final chatId = data['chatId'];
-    if (chatId == null || chatId != _activeChatId) return;
-    _chatLocalRepository.markMessagesAsRead(chatId, _myUserId!);
-    final updated = _chatLocalRepository.getMessagesForChat(chatId);
-    state = state.copyWith(messages: updated);
-  }
-
-  // typing indicator
   void sendTyping(bool isTyping) {
     if (_activeChatId == null) return;
     _socketRepository.sendTyping(_activeChatId!, isTyping);
   }
 
-  void handleTypingEvent(dynamic data) {
+  void _handleTypingEvent(dynamic data) {
     if (_activeChatId == null) return;
 
     final typingChatId = data['chatId'] as String?;
@@ -291,16 +366,11 @@ class ChatViewModel extends _$ChatViewModel {
     state = state.copyWith(isRecipientTyping: isTyping);
   }
 
-  void exitChat() {
-    final previousChatId = _activeChatId;
-    _activeChatId = null;
-
-    if (previousChatId != null) {
-      state = ChatState(
-        isRecipientTyping: false,
-        messages: [],
-        isLoading: false,
-      );
-    }
-  }
+  // void exitChat() {
+  //   if (_activeChatId == null) return;
+  //   _activeChatId = null;
+  //   _historyBuffer.clear();
+  //   _loadedMessageIds.clear();
+  //   state = ChatState(isRecipientTyping: false, messages: [], isLoading: false);
+  // }
 }

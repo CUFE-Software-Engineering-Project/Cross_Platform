@@ -1,7 +1,9 @@
 // lib/features/shared/widgets/bottom_navigation.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lite_x/core/providers/unseenChatsCountProvider.dart';
 import 'package:lite_x/core/view/screen/app_shell.dart';
+import 'package:lite_x/features/chat/repositories/socket_repository.dart';
 
 class XBottomNavigation extends ConsumerWidget {
   const XBottomNavigation({super.key});
@@ -9,6 +11,7 @@ class XBottomNavigation extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedIndex = ref.watch(shellNavigationProvider);
+    final unseen = ref.watch(unseenChatsCountProvider);
 
     return Container(
       height: 60,
@@ -39,10 +42,46 @@ class XBottomNavigation extends ConsumerWidget {
             isSelected: selectedIndex == 3,
             onTap: () => _onTabTapped(ref, 3),
           ),
-          _NavItem(
-            icon: Icons.mail_outline,
-            isSelected: selectedIndex == 4,
-            onTap: () => _onTabTapped(ref, 4),
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              GestureDetector(
+                onTap: () => _onTabTapped(ref, 4),
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  child: Icon(
+                    Icons.mail_outline,
+                    color: selectedIndex == 4 ? Colors.white : Colors.grey[600],
+                    size: 26,
+                  ),
+                ),
+              ),
+              if (unseen > 0)
+                Positioned(
+                  right: 8,
+                  top: 10,
+                  child: Container(
+                    padding: const EdgeInsets.all(1),
+                    decoration: BoxDecoration(
+                      color: Colors.blue,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: 12,
+                      minHeight: 12,
+                    ),
+                    child: Text(
+                      unseen > 99 ? '99+' : unseen.toString(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 8,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+            ],
           ),
         ],
       ),
@@ -51,6 +90,11 @@ class XBottomNavigation extends ConsumerWidget {
 
   void _onTabTapped(WidgetRef ref, int index) {
     ref.read(shellNavigationProvider.notifier).state = index;
+
+    if (index == 4) {
+      ref.read(unseenChatsCountProvider.notifier).state = 0;
+      ref.read(socketRepositoryProvider).sendOpenMessageTab();
+    }
   }
 }
 

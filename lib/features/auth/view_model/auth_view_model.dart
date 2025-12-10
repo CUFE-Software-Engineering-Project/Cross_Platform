@@ -7,6 +7,7 @@ import 'package:lite_x/features/auth/repositories/auth_local_repository.dart';
 import 'package:lite_x/features/auth/repositories/auth_remote_repository.dart';
 import 'package:lite_x/features/auth/view_model/auth_state.dart';
 import 'package:lite_x/core/providers/current_user_provider.dart';
+import 'package:lite_x/features/chat/repositories/chat_local_repository.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 part 'auth_view_model.g.dart';
 
@@ -14,11 +15,13 @@ part 'auth_view_model.g.dart';
 class AuthViewModel extends _$AuthViewModel {
   late AuthRemoteRepository _authRemoteRepository;
   late AuthLocalRepository _authLocalRepository;
+  late ChatLocalRepository _chatLocalRepository;
 
   @override
   AuthState build() {
     _authRemoteRepository = ref.read(authRemoteRepositoryProvider);
     _authLocalRepository = ref.read(authLocalRepositoryProvider);
+    _chatLocalRepository = ref.read(chatLocalRepositoryProvider);
     Future(() async {
       await Future.delayed(const Duration(milliseconds: 300));
       await _checkAuthStatus();
@@ -210,6 +213,7 @@ class AuthViewModel extends _$AuthViewModel {
       email: email,
       password: password,
     );
+    print("login result:$result");
     result.fold((failure) => state = AuthState.error(failure.message), (
       data,
     ) async {
@@ -220,6 +224,10 @@ class AuthViewModel extends _$AuthViewModel {
       ]);
       ref.read(currentUserProvider.notifier).adduser(user);
       state = AuthState.authenticated('Login successful');
+      if (!Platform.environment.containsKey('FLUTTER_TEST')) {
+        _registerFcmToken();
+        _listenForFcmTokenRefresh();
+      }
     });
   }
 
@@ -228,6 +236,7 @@ class AuthViewModel extends _$AuthViewModel {
     try {
       await _authLocalRepository.clearTokens();
       await _authLocalRepository.clearUser();
+      await _chatLocalRepository.clearAll();
       ref.read(currentUserProvider.notifier).clearUser();
       state = AuthState.unauthenticated();
     } catch (e) {
@@ -377,6 +386,43 @@ class AuthViewModel extends _$AuthViewModel {
     );
   }
 
+  //-----------------------------------------------------------setbirthdate-------------------------------------------------------------------------//
+  Future<void> Setbirthdate({required String birthDate}) async {
+    final currentUser = ref.read(currentUserProvider);
+    if (currentUser == null) {
+      state = AuthState.error('User not found');
+      return;
+    }
+
+    final parts = birthDate.split('/');
+    if (parts.length != 3) {
+      state = AuthState.error('Invalid date format');
+      return;
+    }
+
+    final month = parts[0];
+    final day = parts[1];
+    final year = parts[2];
+
+    final result = await _authRemoteRepository.setbirthdate(
+      day: day,
+      month: month,
+      year: year,
+    );
+
+    await result.fold(
+      (failure) async {
+        state = AuthState.error(failure.message);
+      },
+      (message) async {
+        final updated = currentUser.copyWith(dob: '$month/$day/$year');
+        ref.read(currentUserProvider.notifier).state = updated;
+
+        state = AuthState.success('Birthdate set successfully');
+      },
+    );
+  }
+
   //-------------------------------------------------Token Management--------------------------------------------------------------------------------------//
   String? getAccessToken() {
     final tokens = _authLocalRepository.getTokens();
@@ -491,6 +537,8 @@ class AuthViewModel extends _$AuthViewModel {
 
         ref.read(currentUserProvider.notifier).adduser(user);
         state = AuthState.authenticated('Social login successful');
+        _registerFcmToken();
+        _listenForFcmTokenRefresh();
       },
     );
   }

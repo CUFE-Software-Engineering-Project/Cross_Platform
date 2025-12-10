@@ -21,7 +21,15 @@ void main() async {
 
 Future<void> init() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } on FirebaseException catch (e) {
+    if (e.code != 'duplicate-app') {
+      rethrow;
+    }
+  }
   DeepLinkService.init();
   await Hive.initFlutter();
   Hive.registerAdapter(UserModelAdapter());
@@ -38,7 +46,6 @@ Future<void> init() async {
   await Hive.openBox<ConversationModel>('conversationsBox');
   await Hive.openBox<MessageModel>('messagesBox');
   await dotenv.load(fileName: ".env");
-
   await Hive.openBox<SearchHistoryHiveModel>('search_history');
 }
 
