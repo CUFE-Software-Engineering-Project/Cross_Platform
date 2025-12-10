@@ -191,6 +191,10 @@ class ProfileRepoImpl implements ProfileRepo {
     }
   }
 
+  
+  
+  
+
   @override
   Future<Either<Failure, List<ProfileTweetModel>>> getProfileLikes(
     String username,
@@ -198,12 +202,42 @@ class ProfileRepoImpl implements ProfileRepo {
     try {
       try {
         // print("Start api ---------------------**");
-        final res = await _dio.get("api/tweets/likedtweets");
+        final res = await _dio.get("api/tweets/users/$username");
         // print("end api ---------------------**");
         final List<dynamic> jsonList = res.data["data"] ?? [];
 
-        final tweets = convertJsonListToTweetList(jsonList);
+        List<ProfileTweetModel> tweets = [];
+        for (int i = 0; i < jsonList.length; i++) {
+          final Map<String, dynamic> json = jsonList[i] as Map<String, dynamic>;
+          if (json["tweetType"]?.toLowerCase() == "reply") continue;
+          // get profile photo url and tweet medial urls
+          final String profilePhotoId =
+              json["user"]?["profileMedia"]?["id"] ?? "";
 
+          final List<dynamic> tweetMediaIdsDynamic = json["tweetMedia"] ?? [];
+          final List<String> tweetMediaIds = tweetMediaIdsDynamic
+              .map((media) => media["mediaId"] as String)
+              .toList();
+
+          // final List<String> userPhotoUrl = await getMediaUrls([profilePhotoId]);
+
+          // final String profilePhotoUrl = userPhotoUrl[0];
+
+          // get timeAgo
+          final String createTime = json["createdAt"] ?? "";
+          final String timeAgo = getTimeAgo(createTime);
+
+          json["profileMediaId"] = profilePhotoId;
+          json["mediaIds"] = tweetMediaIds;
+          json["timeAgo"] = timeAgo;
+
+          tweets.add(ProfileTweetModel.fromJson(json));
+          // print(
+          //   "id$i" +
+          //       "${json['profileMediaId']}--------------------*****--------------",
+          // );
+        }
+        // print("end repo posts ----------------**");
         return Right(tweets);
       } catch (e) {
         // print(e.toString());

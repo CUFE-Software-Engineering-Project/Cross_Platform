@@ -6,7 +6,7 @@ import 'package:lite_x/features/profile/models/profile_tweet_model.dart';
 import 'package:lite_x/features/profile/models/shared.dart';
 import 'package:lite_x/features/profile/models/user_model.dart';
 import 'package:lite_x/features/profile/view/widgets/following_followers/follower_card.dart';
-import 'package:lite_x/features/profile/view/widgets/profile_tweets/profile_normal_tweet_widget.dart';
+import 'package:lite_x/features/profile/view/widgets/profile_tweets/profile_normal_tweet_widget.dart' hide Padding;
 import 'package:lite_x/features/profile/view/widgets/profile_tweets/profile_posts_list.dart';
 import 'package:lite_x/features/profile/view/widgets/profile_tweets/profile_quote_widget.dart';
 import 'package:lite_x/features/profile/view/widgets/profile_tweets/profile_retweet_widget.dart';

@@ -4,7 +4,7 @@ import 'package:lite_x/features/profile/models/profile_model.dart';
 import 'package:lite_x/features/profile/models/profile_tweet_model.dart';
 import 'package:lite_x/features/profile/models/shared.dart';
 import 'package:lite_x/features/profile/view/widgets/profile_tweets/profile_normar_tweet_quot.dart'
-    hide InterActionsRowOfTweet;
+    hide InterActionsRowOfTweet, Padding;
 import 'package:lite_x/features/profile/view_model/providers.dart';
 
 class ProfileQuoteWidget extends ConsumerWidget implements ProfileTweet {
