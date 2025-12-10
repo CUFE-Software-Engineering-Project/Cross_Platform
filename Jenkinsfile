@@ -182,7 +182,7 @@ EOF
                                 
                                 for layer_dir in */; do
                                     if [ -f "${layer_dir}layer.tar" ]; then
-                                        tar -tf "${layer_dir}layer.tar" 2>/dev/null | grep "\.apk$" || true
+                                        tar -tf "${layer_dir}layer.tar" 2>/dev/null | grep '\.apk$' || true
                                     fi
                                 done
                                 
