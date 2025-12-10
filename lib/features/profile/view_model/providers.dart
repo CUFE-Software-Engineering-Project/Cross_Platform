@@ -1,4 +1,5 @@
 import 'package:dartz/dartz.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lite_x/core/providers/current_user_provider.dart';
 import 'package:lite_x/core/providers/dio_interceptor.dart';
@@ -12,6 +13,9 @@ import 'package:lite_x/features/profile/models/tweet_reply_model.dart';
 import 'package:lite_x/features/profile/models/user_model.dart';
 import 'package:lite_x/features/profile/repositories/profile_repo.dart';
 import 'package:lite_x/features/profile/repositories/profile_repo_impl.dart';
+import 'package:lite_x/features/trends/models/for_you_response_model.dart';
+import 'package:lite_x/features/trends/models/trend_category.dart';
+import 'package:lite_x/features/trends/models/trend_model.dart';
 
 final profileRepoProvider = Provider<ProfileRepo>((ref) {
   return ProfileRepoImpl(ref.watch(dioProvider));
@@ -24,7 +28,7 @@ final profileDataProvider =
     ) {
       final repo = ref.watch(profileRepoProvider);
       final currUsername = ref.watch(myUserNameProvider);
-      return repo.getProfileData(username);
+      return repo.getProfileData(username, currUsername);
     });
 
 final updateProfileBannerProvider = Provider((ref) {
@@ -309,3 +313,27 @@ final myUserNameProvider = Provider<String>((ref) {
   );
   return Myusername;
 });
+
+// trends
+
+final forYouTrendsProvider =
+    FutureProvider<Either<Failure, ForYouResponseModel>>((ref) async {
+      final repo = ref.watch(profileRepoProvider);
+      return repo.getForYouTrends();
+    });
+
+final trendCategoryProvider =
+    FutureProvider.family<Either<Failure, TrendCategory>, String>((
+      ref,
+      catName,
+    ) async {
+      final repo = ref.watch(profileRepoProvider);
+      return repo.getTrenCategory(catName);
+    });
+
+final profileTrendsProvider = FutureProvider<Either<Failure, List<TrendModel>>>(
+  (ref) async {
+    final repo = ref.watch(profileRepoProvider);
+    return repo.getAvailableTrends();
+  },
+);

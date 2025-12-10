@@ -15,7 +15,7 @@ extension HiveRegistrar on HiveInterface {
   void registerAdapters() {
     registerAdapter(ConversationModelAdapter());
     registerAdapter(MessageModelAdapter());
-    registerAdapter(ProfileModelAdapter());
+    // registerAdapter(ProfileModelAdapter());
     registerAdapter(SearchHistoryHiveModelAdapter());
     registerAdapter(TweetModelAdapter());
     registerAdapter(UserModelAdapter());
@@ -27,7 +27,7 @@ extension IsolatedHiveRegistrar on IsolatedHiveInterface {
   void registerAdapters() {
     registerAdapter(ConversationModelAdapter());
     registerAdapter(MessageModelAdapter());
-    registerAdapter(ProfileModelAdapter());
+    // registerAdapter(ProfileModelAdapter());
     registerAdapter(SearchHistoryHiveModelAdapter());
     registerAdapter(TweetModelAdapter());
     registerAdapter(UserModelAdapter());
