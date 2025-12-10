@@ -28,10 +28,17 @@ class HomeRepository {
       );
 
       final List tweetsData;
-      if (response.data is List) {
+      // Handle response format: { "user": {...}, "recommendations": [...] }
+      if (response.data is Map) {
+        if (response.data['recommendations'] != null) {
+          tweetsData = response.data['recommendations'] as List;
+        } else if (response.data['data'] != null) {
+          tweetsData = response.data['data'] as List;
+        } else {
+          return [];
+        }
+      } else if (response.data is List) {
         tweetsData = response.data as List;
-      } else if (response.data is Map && response.data['data'] != null) {
-        tweetsData = response.data['data'] as List;
       } else {
         return [];
       }
@@ -53,6 +60,8 @@ class HomeRepository {
     int page = 1,
     int limit = 20,
   }) async {
+    // Return mock data if enabled
+
     try {
       final response = await _dio.get(
         'api/home/timeline',
@@ -60,10 +69,15 @@ class HomeRepository {
       );
 
       final List tweetsData;
-      if (response.data is List) {
+      // Handle response format: { "data": [...], "nextCursor": "..." }
+      if (response.data is Map) {
+        if (response.data['data'] != null) {
+          tweetsData = response.data['data'] as List;
+        } else {
+          return [];
+        }
+      } else if (response.data is List) {
         tweetsData = response.data as List;
-      } else if (response.data is Map && response.data['data'] != null) {
-        tweetsData = response.data['data'] as List;
       } else {
         return [];
       }
@@ -513,6 +527,12 @@ class HomeRepository {
         data: {'tweetId': tweetId, 'mediaIds': filteredIds},
       );
     } on DioException catch (e) {
+      final errorMsg = _handleError(e).toLowerCase();
+      // Suppress duplicate media errors as the media is already attached
+      if (errorMsg.contains('duplicate') || errorMsg.contains('already')) {
+        print('⚠️ Media already attached to tweet (suppressing error)');
+        return;
+      }
       throw Exception(_handleError(e));
     }
   }
@@ -771,7 +791,23 @@ class HomeRepository {
         }
       }
 
-      final tweet = await _deserializeTweet(tweetData);
+      // Try to deserialize, but if it fails due to type issues,
+      // fetch the tweet fresh from the server
+      TweetModel? tweet;
+      try {
+        tweet = await _deserializeTweet(tweetData);
+      } catch (typeError) {
+        // If deserialization fails (likely due to type conversion),
+        // fetch the updated tweet from server
+        print('⚠️ Deserialization failed, fetching fresh: $typeError');
+        final freshResponse = await _dio.get('api/tweets/$updatedTweetId');
+        final freshData =
+            freshResponse.data is Map && freshResponse.data['data'] != null
+            ? freshResponse.data['data']
+            : freshResponse.data;
+        tweet = await _deserializeTweet(freshData);
+      }
+
       if (tweet == null) {
         throw Exception('Failed to parse tweet data');
       }
