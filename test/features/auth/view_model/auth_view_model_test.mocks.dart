@@ -191,6 +191,22 @@ class MockAuthRemoteRepository extends _i1.Mock
           as _i3.Future<_i4.Either<_i5.AppFailure, _i10.File>>);
 
   @override
+  _i3.Future<_i4.Either<_i5.AppFailure, void>> updateProfilePhoto(
+    String? userId,
+    String? mediaId,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#updateProfilePhoto, [userId, mediaId]),
+            returnValue: _i3.Future<_i4.Either<_i5.AppFailure, void>>.value(
+              _i8.dummyValue<_i4.Either<_i5.AppFailure, void>>(
+                this,
+                Invocation.method(#updateProfilePhoto, [userId, mediaId]),
+              ),
+            ),
+          )
+          as _i3.Future<_i4.Either<_i5.AppFailure, void>>);
+
+  @override
   _i3.Future<_i4.Either<_i5.AppFailure, (_i6.UserModel, _i7.TokensModel)>>
   updateUsername({
     required _i6.UserModel? currentUser,

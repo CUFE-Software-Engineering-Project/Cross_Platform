@@ -24,7 +24,7 @@ final profileDataProvider =
     ) {
       final repo = ref.watch(profileRepoProvider);
       final currUsername = ref.watch(myUserNameProvider);
-      return repo.getProfileData(username, currUsername);
+      return repo.getProfileData(username);
     });
 
 final updateProfileBannerProvider = Provider((ref) {
