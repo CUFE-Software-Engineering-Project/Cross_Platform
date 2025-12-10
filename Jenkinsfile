@@ -85,9 +85,7 @@ EOF
                       --context=. \
                       --dockerfile=Dockerfile \
                       --no-push \
-                      --target=lint \
-                      --cache=true \
-                      --cache-ttl=24h
+                      --target=lint 
                   '''
                 } catch (err) {
                   echo "❌ Lint stage failed: ${err}"
@@ -108,9 +106,7 @@ EOF
                     --context=. \
                     --dockerfile=Dockerfile \
                     --no-push \
-                    --target=test \
-                    --cache=true \
-                    --cache-ttl=24h
+                    --target=test
                 '''
               }
             }
