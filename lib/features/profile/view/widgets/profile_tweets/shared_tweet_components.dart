@@ -241,10 +241,8 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   @override
   void dispose() {
     try {
-      if (_controller != null) {
-        _controller.dispose();
-      }
-    } catch (e) {
+      _controller.dispose();
+        } catch (e) {
       debugPrint('Error disposing video controller: $e');
     }
     super.dispose();
@@ -465,7 +463,7 @@ class _TweetMediaGridState extends ConsumerState<TweetMediaGrid> {
 
     return mediaUrl.when(
       data: (url) {
-        if (url == null || url.isEmpty) {
+        if (url.isEmpty) {
           return _errorContainer(height);
         }
         if (_isVideo(url)) {
