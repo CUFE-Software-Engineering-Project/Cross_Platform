@@ -32,6 +32,7 @@ class AppShell extends ConsumerWidget {
           _buildCommunitiesScreen(), // Index 2 - Communities
           _buildNotificationsScreen(), // Index 3 - Notifications
           ConversationsScreen(),
+
         ],
       ),
       bottomNavigationBar: AnimatedContainer(
