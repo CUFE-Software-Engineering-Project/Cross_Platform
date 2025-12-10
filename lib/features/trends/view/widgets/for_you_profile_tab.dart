@@ -108,7 +108,7 @@ class ForYouProfileTab extends ConsumerWidget {
 
   Widget _buildTredsSection(List<TrendModel> trends) {
     return ListView.builder(
-      padding: EdgetInsets,
+      padding: EdgeInsets.only(left: 16),
       physics: NeverScrollableScrollPhysics(),
       shrinkWrap: true,
       itemBuilder: (context, index) {
