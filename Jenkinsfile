@@ -253,7 +253,7 @@ EOF
                                 
                                 # Create release notes
                                 RELEASE_NOTES="## 📱 Flutter Mobile App - Build #${BUILD_TAG}
-
+        
 ### 📥 Download APK
 Click below to download the latest version of the app:
 - **[app-release-${BUILD_TAG}.apk](https://github.com/CUFE-Software-Engineering-Project/Cross_Platform/releases/download/v${BUILD_TAG}/app-release-${BUILD_TAG}.apk)** (${APK_SIZE})
@@ -263,9 +263,9 @@ Click below to download the latest version of the app:
 |------|-------|
 | **Build Number** | #${BUILD_TAG} |
 | **Build Date** | $(date '+%Y-%m-%d %H:%M:%S UTC') |
-| **Commit Hash** | \`${COMMIT_SHA}\` |
+| **Commit Hash** | \\`${COMMIT_SHA}\\` |
 | **APK Size** | ${APK_SIZE} |
-| **Docker Image** | \`${DOCKER_IMAGE}:build-${BUILD_TAG}\` |
+| **Docker Image** | \\`${DOCKER_IMAGE}:build-${BUILD_TAG}\\` |
 
 ### 📝 Commit Message
 \\`\\`\\`
@@ -281,12 +281,12 @@ ${COMMIT_MSG}
 
 ### 🔗 Links
 - **Jenkins Build:** ${BUILD_URL}
-- **Docker Image:** \`docker pull ${DOCKER_IMAGE}:build-${BUILD_TAG}\`
+- **Docker Image:** \\`docker pull ${DOCKER_IMAGE}:build-${BUILD_TAG}\\`
 - **Repository:** https://github.com/CUFE-Software-Engineering-Project/Cross_Platform
 
 ---
 *Built with ❤️ by Jenkins CI/CD Pipeline*"
-                                
+                        
                                 # Create GitHub release
                                 echo "Creating GitHub release..."
                                 gh release create "v${BUILD_TAG}" \
@@ -304,7 +304,6 @@ ${COMMIT_MSG}
                 }
             }
         }
-
         stage('Archive as Jenkins Artifact') {
             steps {
                 container('kaniko') {
