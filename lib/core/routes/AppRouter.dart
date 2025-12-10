@@ -55,33 +55,8 @@ import 'package:lite_x/features/settings/screens/ChangePassword_Screen.dart';
 
 class Approuter {
   static final GoRouter router = GoRouter(
-    // initialLocation: "/appshell",
-    initialLocation: "/trends",
-    // initialExtra: ProfileModel(
-    //   id: "",
-    //   username: "hazememam",
-    //   displayName: "Hazem Emam",
-    //   email: "hazem@gmail.com",
-    //   bio: "Hello from hazem emam ",
-    //   avatarUrl:
-    //       "https://images.pexels.com/photos/31510092/pexels-photo-31510092.jpeg",
-    //   bannerUrl:
-    //       "https://images.pexels.com/photos/1765033/pexels-photo-1765033.jpeg",
-    //   followersCount: 15,
-    //   followingCount: 20,
-    //   tweetsCount: 15,
-    //   isVerified: false,
-    //   joinedDate: formatDate(DateTime(2004, 8, 21), DateFormatType.fullDate),
-    //   website: "https://google.cof",
-    //   location: "cairo",
-    //   postCount: 2,
-    //   birthDate: formatDate(DateTime(2004, 8, 21), DateFormatType.fullDate),
-    //   isFollowing: false,
-    //   isFollower: false,
-    //   protectedAccount: false,
-    //   isBlockedByMe: true,
-    //   isMutedByMe: false,
-    // ),
+    initialLocation: "/splash",
+    // initialLocation: "/trends",
     routes: [
       GoRoute(
         name: RouteConstants.splash,

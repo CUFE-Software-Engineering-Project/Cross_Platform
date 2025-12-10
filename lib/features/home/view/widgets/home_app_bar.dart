@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:lite_x/core/providers/current_user_provider.dart';
 import 'package:lite_x/features/home/view/widgets/home_tab_bar.dart';
 import 'package:lite_x/features/home/view/widgets/profile_avatar.dart';
 
@@ -27,7 +28,6 @@ class HomeAppBar extends ConsumerWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(appBarSettingsProvider);
-
     return Container(
       color: Colors.black,
       child: SafeArea(
