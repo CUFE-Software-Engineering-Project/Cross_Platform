@@ -268,9 +268,9 @@ Click below to download the latest version of the app:
 | **Docker Image** | \`${DOCKER_IMAGE}:build-${BUILD_TAG}\` |
 
 ### 📝 Commit Message
-\`\`\`
+\\`\\`\\`
 ${COMMIT_MSG}
-\`\`\`
+\\`\\`\\`
 
 ### 📲 Installation Instructions
 1. Download the APK file from the link above
