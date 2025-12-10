@@ -1,4 +1,4 @@
-import 'dart:math';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -24,6 +24,8 @@ class _UsernameScreenState extends ConsumerState<UsernameScreen> {
   final _usernameController = TextEditingController();
   final _isFormValid = ValueNotifier<bool>(false);
   List<String> suggestions = [];
+  Timer? _debounce;
+  bool _isSuggestionLoading = false;
 
   @override
   void initState() {
@@ -33,20 +35,43 @@ class _UsernameScreenState extends ConsumerState<UsernameScreen> {
   }
 
   void _validateForm() {
-    _isFormValid.value =
+    final isValid =
         _usernameController.text.trim().isNotEmpty &&
-        _usernameController.text.trim().length >= 3;
+        _usernameController.text.trim().length > 3;
+
+    _isFormValid.value = isValid;
+
+    if (_usernameController.text.trim().length > 3) {
+      _fetchSuggestions(_usernameController.text.trim());
+    } else {
+      if (suggestions.isNotEmpty || _isSuggestionLoading) {
+        setState(() {
+          suggestions = [];
+          _isSuggestionLoading = false;
+        });
+      }
+    }
   }
 
-  void generateSuggestions(String name) {
-    final clean = name.replaceAll(" ", "").toLowerCase();
+  void _fetchSuggestions(String name) {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+
     setState(() {
-      suggestions = [
-        "${clean}${Random().nextInt(50)}",
-        "${clean}_x",
-        "${clean}_${DateTime.now().year}",
-        "${clean}_${Random().nextInt(9999)}",
-      ];
+      _isSuggestionLoading = true;
+      suggestions = [];
+    });
+
+    _debounce = Timer(const Duration(milliseconds: 500), () async {
+      final fetchedSuggestions = await ref
+          .read(authViewModelProvider.notifier)
+          .suggestUsernames(username: name);
+
+      if (mounted) {
+        setState(() {
+          suggestions = fetchedSuggestions.take(4).toList();
+          _isSuggestionLoading = false;
+        });
+      }
     });
   }
 
@@ -80,6 +105,8 @@ class _UsernameScreenState extends ConsumerState<UsernameScreen> {
 
   @override
   void dispose() {
+    _debounce?.cancel();
+    _usernameController.removeListener(_validateForm);
     _usernameController.dispose();
     _isFormValid.dispose();
     super.dispose();
@@ -101,12 +128,11 @@ class _UsernameScreenState extends ConsumerState<UsernameScreen> {
             backgroundColor: Palette.textPrimary,
           ),
         );
-        // ref.read(authViewModelProvider.notifier).resetState();
       }
     });
 
     final authState = ref.watch(authViewModelProvider);
-    final isLoading = authState.isLoading;
+    final isFormSubmitting = authState.isLoading;
 
     return Scaffold(
       backgroundColor: Palette.background,
@@ -117,7 +143,7 @@ class _UsernameScreenState extends ConsumerState<UsernameScreen> {
         elevation: 0,
       ),
       body: AbsorbPointer(
-        absorbing: isLoading,
+        absorbing: isFormSubmitting,
         child: Stack(
           children: [
             Center(
@@ -159,18 +185,10 @@ class _UsernameScreenState extends ConsumerState<UsernameScreen> {
                                 controller: _usernameController,
                                 labelText: 'Username',
                                 validator: usernameValidator,
-                                onChanged: (value) {
-                                  if (value.isNotEmpty) {
-                                    generateSuggestions(value);
-                                  } else {
-                                    setState(() {
-                                      suggestions = [];
-                                    });
-                                  }
-                                },
                               ),
-                              if (suggestions.isNotEmpty) ...[
-                                const SizedBox(height: 24),
+                              if (suggestions.isNotEmpty &&
+                                  !_isSuggestionLoading) ...[
+                                const SizedBox(height: 20),
                                 Wrap(
                                   spacing: 1,
                                   children: suggestions.asMap().entries.map((
@@ -189,7 +207,7 @@ class _UsernameScreenState extends ConsumerState<UsernameScreen> {
                                           Container(
                                             padding: const EdgeInsets.only(
                                               left: 0,
-                                              right: 10,
+                                              right: 8,
                                               top: 5,
                                               bottom: 5,
                                             ),
@@ -219,11 +237,11 @@ class _UsernameScreenState extends ConsumerState<UsernameScreen> {
                                     );
                                   }).toList(),
                                 ),
-                                const SizedBox(height: 14),
+                                const SizedBox(height: 4),
                                 GestureDetector(
                                   onTap: () {
-                                    generateSuggestions(
-                                      _usernameController.text,
+                                    _fetchSuggestions(
+                                      _usernameController.text.trim(),
                                     );
                                   },
                                   child: const Text(
@@ -245,7 +263,7 @@ class _UsernameScreenState extends ConsumerState<UsernameScreen> {
                 ),
               ),
             ),
-            if (isLoading)
+            if (isFormSubmitting)
               Container(
                 color: Colors.black.withOpacity(0.5),
                 child: const Center(child: Loader()),
@@ -293,7 +311,6 @@ class _UsernameScreenState extends ConsumerState<UsernameScreen> {
                     disabledBackgroundColor: Palette.textWhite.withOpacity(0.6),
                     foregroundColor: Palette.background,
                     disabledForegroundColor: Palette.border,
-                    minimumSize: const Size(0, 38),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(25),
                     ),

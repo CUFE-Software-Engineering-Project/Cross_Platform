@@ -177,7 +177,7 @@ class _PasswordScreenState extends ConsumerState<PasswordScreen> {
         valueListenable: _isFormValid,
         builder: (context, isValid, child) {
           return SizedBox(
-            width: 120,
+            // width: 120,
             child: ElevatedButton(
               onPressed: (isValid && !isLoading) ? _handleSignUp : null,
               style: ElevatedButton.styleFrom(
@@ -185,7 +185,7 @@ class _PasswordScreenState extends ConsumerState<PasswordScreen> {
                 disabledBackgroundColor: Palette.textWhite.withOpacity(0.5),
                 foregroundColor: Palette.background,
                 disabledForegroundColor: Palette.border,
-                minimumSize: const Size(0, 38),
+                minimumSize: const Size(0, 50),
               ),
               child: isLoading
                   ? const SizedBox(
