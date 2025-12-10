@@ -1,10 +1,12 @@
+import 'dart:ffi';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lite_x/features/media/view_model/providers.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
 import 'package:lite_x/features/profile/models/shared.dart';
+import 'package:lite_x/features/profile/view/screens/profilephoto_screen.dart';
 import 'package:lite_x/features/profile/view/widgets/profile/block_button.dart';
 import 'package:lite_x/features/profile/view/widgets/profile/follow_following_button.dart';
 import 'package:lite_x/features/profile/view/widgets/profile/top_icon.dart';
@@ -21,12 +23,13 @@ class ProfileHeader extends ConsumerStatefulWidget {
     required this.isMe,
     required this.showData,
     required this.showDataFunc,
+    // required this.showDataFunc,
   });
-
   final ProfileModel profileData;
   final bool isMe;
   final bool showData;
   final Function showDataFunc;
+  // final Function showDataFunc;
 
   @override
   ConsumerState<ProfileHeader> createState() => _ProfileHeaderState();
@@ -40,455 +43,715 @@ class _ProfileHeaderState extends ConsumerState<ProfileHeader> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        _ProfileBanner(profileData: widget.profileData, isMe: widget.isMe),
-        _ProfileAppBar(
-          profileData: widget.profileData,
-          isMe: widget.isMe,
-          ref: ref,
-          showDataFunc: widget.showDataFunc,
-        ),
-        _buildProfileContent(),
-      ],
-    );
-  }
-
-  Widget _buildProfileContent() {
-    return Column(
-      children: [
-        const SizedBox(height: 120),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _ProfileAvatarRow(
-                profileData: widget.profileData,
-                isMe: widget.isMe,
-                showDataFunc: widget.showDataFunc,
-              ),
-              SizedBox(height: widget.showData ? 0 : 5),
-              _ProfileIdentitySection(
-                profileData: widget.profileData,
-                isMe: widget.isMe,
-              ),
-              if (widget.showData)
-                _ProfileDetailsSection(
-                  profileData: widget.profileData,
-                  isMe: widget.isMe,
+    if (!widget.showData) {
+      return RefreshIndicator(
+        onRefresh: () async {
+          // ignore: unused_result
+          ref.refresh(profileDataProvider(widget.profileData.username));
+        },
+        child: Stack(
+          children: [
+            GestureDetector(
+              onTap: () {
+                if (widget.profileData.bannerUrl.isEmpty) {
+                  context.push("/editProfile", extra: widget.profileData);
+                } else {
+                  context.push(
+                    "/profileCoverScreen",
+                    extra: ProfilePhotoScreenArgs(
+                      isMe: widget.isMe,
+                      profileModel: widget.profileData,
+                    ),
+                  );
+                }
+              },
+              child: Container(
+                height: 165,
+                decoration: BoxDecoration(
+                  color: Colors.blue,
+                  image: widget.profileData.bannerUrl.isEmpty
+                      ? null
+                      : DecorationImage(
+                          image: CachedNetworkImageProvider(
+                            widget.profileData.bannerUrl,
+                          ),
+                          fit: BoxFit.cover,
+                          onError: (exception, stackTrace) => null,
+                        ),
                 ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// Common banner widget
-class _ProfileBanner extends StatelessWidget {
-  final ProfileModel profileData;
-  final bool isMe;
-
-  const _ProfileBanner({required this.profileData, required this.isMe});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        if (profileData.bannerId.isEmpty) {
-          if (isMe) context.push("/editProfile", extra: profileData);
-        } else {
-          context.push(
-            "/profileCoverScreen",
-            extra: ProfilePhotoScreenArgs(
-              isMe: isMe,
-              profileModel: profileData,
+              ),
             ),
-          );
-        }
-      },
-      child: BuildProfileBanner(bannerId: profileData.bannerId),
-    );
-  }
-}
-
-// Common app bar widget
-class _ProfileAppBar extends StatelessWidget {
-  final ProfileModel profileData;
-  final bool isMe;
-  final WidgetRef ref;
-  final Function showDataFunc;
-
-  const _ProfileAppBar({
-    required this.profileData,
-    required this.isMe,
-    required this.ref,
-    required this.showDataFunc,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return AppBar(
-      backgroundColor: Colors.transparent,
-      leading: Padding(
-        padding: const EdgeInsets.all(6.0),
-        child: TopIcon(
-          icon: Icons.arrow_back,
-          actionFunction: () {
-            if (context.canPop()) context.pop();
-          },
-        ),
-      ),
-      actions: [
-        TopIcon(
-          icon: Icons.search_rounded,
-          actionFunction: () {
-            context.push("/profileSearchScreen");
-          },
-        ),
-        const SizedBox(width: 15),
-        isMe
-            ? _build_more_options_profile()
-            : _build_more_options_other_profile(
-                context,
-                profileData,
-                ref,
-                showDataFunc,
+            AppBar(
+              backgroundColor: Colors.transparent,
+              leading: Padding(
+                padding: const EdgeInsets.all(6.0),
+                child: TopIcon(
+                  icon: Icons.arrow_back,
+                  actionFunction: () {
+                    if (context.canPop()) context.pop();
+                    // ignore: unused_result
+                    ref.refresh(
+                      profileDataProvider(widget.profileData.username),
+                    );
+                  },
+                ),
               ),
-        const SizedBox(width: 6),
-      ],
-    );
-  }
-}
+              actions: [
+                TopIcon(
+                  icon: Icons.search_rounded,
+                  actionFunction: () {
+                    context.push("profileSearchScreen");
+                  },
+                ),
+                SizedBox(width: 15),
+                widget.isMe
+                    ? _build_more_options_profile()
+                    : _build_more_options_other_profile(
+                        context,
+                        widget.profileData,
+                        ref,
+                        widget.showDataFunc,
+                      ),
+                SizedBox(width: 6),
+              ],
+            ),
+            Column(
+              // shrinkWrap: true,
+              // physics: NeverScrollableScrollPhysics(),
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 120),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          GestureDetector(
+                            onTap: () {
+                              // TODO: add open profile page
+                              context.push(
+                                '/profilePhotoScreen',
+                                extra: ProfilePhotoScreenArgs(
+                                  isMe: widget.isMe,
+                                  profileModel: widget.profileData,
+                                ),
+                              );
+                            },
+                            child: CircleAvatar(
+                              radius: 45,
+                              backgroundColor: Colors.black,
+                              child: CircleAvatar(
+                                radius: 40,
+                                backgroundColor: Colors.black,
+                                backgroundImage: CachedNetworkImageProvider(
+                                  widget.profileData.avatarUrl,
+                                ),
+                                onBackgroundImageError:
+                                    (exception, stackTrace) => null,
+                              ),
+                            ),
+                          ),
+                          widget.isMe
+                              ? Padding(
+                                  padding: const EdgeInsets.only(top: 60),
+                                  child: OutlinedButton(
+                                    onPressed: () {
+                                      context
+                                          .push<EditProfileStatus>(
+                                            "/editProfile",
+                                            extra: widget.profileData,
+                                          )
+                                          .then((status) {
+                                            if (status ==
+                                                EditProfileStatus
+                                                    .changedSuccessfully) {
+                                              // ignore: unused_result
+                                              ref.refresh(
+                                                profileDataProvider(
+                                                  widget.profileData.username,
+                                                ),
+                                              );
+                                            } else if (status ==
+                                                EditProfileStatus
+                                                    .failedToChange) {
+                                              showTopSnackBar(
+                                                Overlay.of(context),
+                                                CustomSnackBar.error(
+                                                  backgroundColor: Color(
+                                                    0XFF212121,
+                                                  ),
+                                                  icon: Icon(
+                                                    Icons.error,
+                                                    color: Colors.red,
+                                                  ),
+                                                  message:
+                                                      "Profile update failed",
+                                                ),
+                                                displayDuration: const Duration(
+                                                  seconds: 2,
+                                                ),
+                                              );
+                                            } else {}
+                                          });
+                                    },
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: Colors.white,
+                                      side: const BorderSide(
+                                        color: Color(0xFFADADAD),
+                                        width: 1,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 15,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      "Edit profile",
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                  ),
+                                )
+                              : widget.profileData.isBlockedByMe
+                              ? BlockButton(
+                                  profileData: widget.profileData,
+                                  showDataFunc: widget.showDataFunc,
+                                )
+                              : Follow_Following_Button(
+                                  profileData: widget.profileData,
+                                ),
+                        ],
+                      ),
+                      const SizedBox(height: 5),
+                      InkWell(
+                        onTap: () {
+                          //   TODO: ADD verifying logic
+                        },
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Flexible(
+                              child: Text(
+                                widget.profileData.displayName,
+                                style: const TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                            if (widget.isMe)
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const SizedBox(width: 4),
+                                  const Icon(
+                                    Icons.verified,
+                                    color: Color(0xFF1DA1F2),
+                                    size: 18,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  if (!widget.profileData.isVerified)
+                                    Text(
+                                      'Get Verified',
+                                      style: TextStyle(
+                                        color: Color(0xFF1DA1F2),
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                          ],
+                        ),
+                      ),
 
-// Common avatar and action button row
-class _ProfileAvatarRow extends ConsumerWidget {
-  final ProfileModel profileData;
-  final bool isMe;
-  final Function showDataFunc;
+                      const SizedBox(height: 8),
+                      Wrap(
+                        children: [
+                          Text(
+                            "@${widget.profileData.username}",
+                            style: const TextStyle(
+                              color: Colors.grey,
+                              fontSize: 15,
+                            ),
+                          ),
+                          SizedBox(width: 10),
+                          if (widget.isMe == false &&
+                              widget.profileData.isFollower)
+                            Container(
+                              padding: EdgeInsets.symmetric(horizontal: 5),
 
-  const _ProfileAvatarRow({
-    required this.profileData,
-    required this.isMe,
-    required this.showDataFunc,
-  });
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        GestureDetector(
-          onTap: () {
-            context.push(
-              '/profilePhotoScreen',
-              extra: ProfilePhotoScreenArgs(
-                isMe: isMe,
-                profileModel: profileData,
-              ),
-            );
-          },
-          child: BuildProfileImage(avatarId: profileData.avatarId),
+                              decoration: BoxDecoration(
+                                color: Color(0XFF1F2225),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    "Follows you",
+                                    style: TextStyle(
+                                      color: Color(0xFF6D7176),
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
-        _buildActionButton(context, ref),
-      ],
-    );
-  }
-
-  Widget _buildActionButton(BuildContext context, WidgetRef ref) {
-    if (isMe) {
-      return Padding(
-        padding: const EdgeInsets.only(top: 60),
-        child: _buildEditProfileButton(context, ref),
       );
-    } else if (profileData.isBlockedByMe) {
-      return BlockButton(profileData: profileData, showDataFunc: showDataFunc);
-    } else {
-      return Follow_Following_Button(profileData: profileData);
-    }
-  }
-
-  Widget _buildEditProfileButton(BuildContext context, WidgetRef ref) {
-    return OutlinedButton(
-      onPressed: () => _handleEditProfile(context, ref),
-      style: OutlinedButton.styleFrom(
-        foregroundColor: Colors.white,
-        side: const BorderSide(color: Color(0xFFADADAD), width: 1),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        padding: const EdgeInsets.symmetric(horizontal: 15),
-      ),
-      child: const Text(
-        "Edit profile",
-        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-      ),
-    );
-  }
-
-  void _handleEditProfile(BuildContext context, WidgetRef ref) {
-    context.push<EditProfileStatus>("/editProfile", extra: profileData).then((
-      status,
-    ) {
-      if (status == EditProfileStatus.changedSuccessfully) {
-        print("success");
-        // ignore: unused_result
-        ref.refresh(profileDataProvider(profileData.username));
-      } else if (status == EditProfileStatus.failedToChange) {
-        showTopSnackBar(
-          Overlay.of(context),
-          CustomSnackBar.error(
-            backgroundColor: const Color(0XFF212121),
-            icon: const Icon(Icons.error, color: Colors.red),
-            message: "Profile update failed",
-          ),
-          displayDuration: const Duration(seconds: 2),
-        );
-      }
-    });
-  }
-}
-
-// Common name and username section
-class _ProfileIdentitySection extends StatelessWidget {
-  final ProfileModel profileData;
-  final bool isMe;
-
-  const _ProfileIdentitySection({
-    required this.profileData,
-    required this.isMe,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildDisplayName(),
-        const SizedBox(height: 8),
-        _buildUsername(),
-      ],
-    );
-  }
-
-  Widget _buildDisplayName() {
-    return InkWell(
-      onTap: () {
-        // TODO: ADD verifying logic
-      },
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Flexible(
-            child: Text(
-              profileData.displayName,
-              style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+    } else
+      return RefreshIndicator(
+        onRefresh: () async {
+          // ignore: unused_result
+          ref.refresh(profileDataProvider(widget.profileData.username));
+        },
+        child: Stack(
+          children: [
+            GestureDetector(
+              onTap: () {
+                if (widget.profileData.bannerUrl.isEmpty) {
+                  if (widget.isMe)
+                    context.push("/editProfile", extra: widget.profileData);
+                } else {
+                  context.push(
+                    "/profileCoverScreen",
+                    extra: ProfilePhotoScreenArgs(
+                      isMe: widget.isMe,
+                      profileModel: widget.profileData,
+                    ),
+                  );
+                }
+              },
+              child: Container(
+                height: 165,
+                decoration: BoxDecoration(
+                  color: Colors.blue,
+                  image: widget.profileData.bannerUrl.isEmpty
+                      ? null
+                      : DecorationImage(
+                          image: CachedNetworkImageProvider(
+                            widget.profileData.bannerUrl,
+                          ),
+                          fit: BoxFit.cover,
+                          onError: (exception, stackTrace) => null,
+                        ),
+                ),
               ),
             ),
-          ),
-          if (isMe) _buildVerificationBadge(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildVerificationBadge() {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const SizedBox(width: 4),
-        const Icon(Icons.verified, color: Color(0xFF1DA1F2), size: 18),
-        const SizedBox(width: 8),
-        if (!profileData.isVerified)
-          Text(
-            'Get Verified',
-            style: TextStyle(
-              color: const Color(0xFF1DA1F2),
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
+            AppBar(
+              backgroundColor: Colors.transparent,
+              leading: Padding(
+                padding: const EdgeInsets.all(6.0),
+                child: TopIcon(
+                  icon: Icons.arrow_back,
+                  actionFunction: () {
+                    if (context.canPop()) context.pop();
+                    // ignore: unused_result
+                    ref.refresh(
+                      profileDataProvider(widget.profileData.username),
+                    );
+                  },
+                ),
+              ),
+              actions: [
+                TopIcon(
+                  icon: Icons.search_rounded,
+                  actionFunction: () {
+                    context.push("/profileSearchScreen");
+                  },
+                ),
+                SizedBox(width: 15),
+                widget.isMe
+                    ? _build_more_options_profile()
+                    : _build_more_options_other_profile(
+                        context,
+                        widget.profileData,
+                        ref,
+                        widget.showDataFunc,
+                      ),
+                SizedBox(width: 6),
+              ],
             ),
-          ),
-      ],
-    );
-  }
+            Column(
+              // shrinkWrap: true,
+              // physics: NeverScrollableScrollPhysics(),
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 120),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          GestureDetector(
+                            onTap: () {
+                              // TODO: add open profile page
+                              context.push(
+                                '/profilePhotoScreen',
+                                extra: ProfilePhotoScreenArgs(
+                                  isMe: widget.isMe,
+                                  profileModel: widget.profileData,
+                                ),
+                              );
+                            },
+                            child: CircleAvatar(
+                              radius: 45,
+                              backgroundColor: Colors.black,
+                              child: CircleAvatar(
+                                radius: 40,
+                                backgroundColor: Colors.black,
+                                backgroundImage: CachedNetworkImageProvider(
+                                  widget.profileData.avatarUrl,
+                                ),
+                                onBackgroundImageError:
+                                    (exception, stackTrace) => null,
+                              ),
+                            ),
+                          ),
+                          widget.isMe
+                              ? Padding(
+                                  padding: const EdgeInsets.only(top: 60),
+                                  child: OutlinedButton(
+                                    onPressed: () {
+                                      context
+                                          .push<EditProfileStatus>(
+                                            "/editProfile",
+                                            extra: widget.profileData,
+                                          )
+                                          .then((status) {
+                                            if (status ==
+                                                EditProfileStatus
+                                                    .changedSuccessfully) {
+                                              // ignore: unused_result
+                                              ref.refresh(
+                                                profileDataProvider(
+                                                  widget.profileData.username,
+                                                ),
+                                              );
+                                            } else if (status ==
+                                                EditProfileStatus
+                                                    .failedToChange) {
+                                              showTopSnackBar(
+                                                Overlay.of(context),
+                                                CustomSnackBar.error(
+                                                  backgroundColor: Color(
+                                                    0XFF212121,
+                                                  ),
+                                                  icon: Icon(
+                                                    Icons.error,
+                                                    color: Colors.red,
+                                                  ),
+                                                  message:
+                                                      "Profile update failed",
+                                                ),
+                                                displayDuration: const Duration(
+                                                  seconds: 2,
+                                                ),
+                                              );
+                                            } else {}
+                                          });
+                                    },
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: Colors.white,
+                                      side: const BorderSide(
+                                        color: Color(0xFFADADAD),
+                                        width: 1,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 15,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      "Edit profile",
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                  ),
+                                )
+                              : widget.profileData.isBlockedByMe
+                              ? BlockButton(
+                                  profileData: widget.profileData,
+                                  showDataFunc: widget.showDataFunc,
+                                )
+                              : Follow_Following_Button(
+                                  profileData: widget.profileData,
+                                ),
+                        ],
+                      ),
+                      const SizedBox(height: 0),
+                      InkWell(
+                        onTap: () {
+                          //   TODO: ADD verifying logic
+                        },
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Flexible(
+                              child: Text(
+                                widget.profileData.displayName,
+                                style: const TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                            if (widget.isMe)
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const SizedBox(width: 4),
+                                  const Icon(
+                                    Icons.verified,
+                                    color: Color(0xFF1DA1F2),
+                                    size: 18,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  if (!widget.profileData.isVerified)
+                                    Text(
+                                      'Get Verified',
+                                      style: TextStyle(
+                                        color: Color(0xFF1DA1F2),
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                          ],
+                        ),
+                      ),
 
-  Widget _buildUsername() {
-    return Wrap(
-      children: [
-        Text(
-          "@${profileData.username}",
-          style: const TextStyle(color: Colors.grey, fontSize: 15),
-        ),
-        const SizedBox(width: 10),
-        if (!isMe && profileData.isFollower) _buildFollowsYouBadge(),
-      ],
-    );
-  }
+                      const SizedBox(height: 8),
+                      Wrap(
+                        children: [
+                          Text(
+                            "@${widget.profileData.username}",
+                            style: const TextStyle(
+                              color: Colors.grey,
+                              fontSize: 15,
+                            ),
+                          ),
+                          SizedBox(width: 10),
+                          if (widget.isMe == false &&
+                              widget.profileData.isFollower)
+                            Container(
+                              padding: EdgeInsets.symmetric(horizontal: 5),
 
-  Widget _buildFollowsYouBadge() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 5),
-      decoration: BoxDecoration(
-        color: const Color(0XFF1F2225),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: const Text(
-        "Follows you",
-        style: TextStyle(color: Color(0xFF6D7176), fontSize: 12),
-      ),
-    );
-  }
-}
+                              // width: 75,
+                              decoration: BoxDecoration(
+                                color: Color(0XFF1F2225),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    "Follows you",
+                                    style: TextStyle(
+                                      color: Color(0xFF6D7176),
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      if (widget.profileData.bio.isNotEmpty)
+                        Text(
+                          widget.profileData.bio,
+                          style: const TextStyle(fontSize: 15),
+                          maxLines: 3,
+                        ),
+                      if (widget.profileData.bio.isNotEmpty)
+                        const SizedBox(height: 5),
+                      const SizedBox(height: 8),
 
-class _ProfileDetailsSection extends StatelessWidget {
-  final ProfileModel profileData;
-  final bool isMe;
+                      Wrap(
+                        runSpacing: 8,
+                        children: [
+                          if (widget.profileData.location.isNotEmpty)
+                            Wrap(
+                              children: [
+                                const Icon(
+                                  Icons.location_on_outlined,
+                                  color: Colors.grey,
+                                  size: 16,
+                                ),
+                                const SizedBox(width: 1),
+                                Text(
+                                  widget.profileData.location,
+                                  style: const TextStyle(color: Colors.grey),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.clip,
+                                ),
+                                const SizedBox(width: 12),
+                              ],
+                            ),
 
-  const _ProfileDetailsSection({required this.profileData, required this.isMe});
+                          if (widget.profileData.website.isNotEmpty)
+                            Wrap(
+                              children: [
+                                SvgPicture.asset(
+                                  "assets/svg/website.svg",
+                                  width: 16,
+                                  height: 16,
+                                  colorFilter: ColorFilter.mode(
+                                    Colors.grey,
+                                    BlendMode.srcIn,
+                                  ),
+                                ),
+                                const SizedBox(width: 2),
+                                GestureDetector(
+                                  onTap: () async {
+                                    final url = widget.profileData.website;
+                                    final uri = Uri.parse(
+                                      url.startsWith('http')
+                                          ? url
+                                          : 'https://$url',
+                                    );
 
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (profileData.bio.isNotEmpty) ...[
-          Text(
-            profileData.bio,
-            style: const TextStyle(fontSize: 15),
-            maxLines: 3,
-          ),
-          const SizedBox(height: 5),
-        ],
-        const SizedBox(height: 8),
-        _buildProfileMetadata(),
-        const SizedBox(height: 12),
-        _buildFollowCounts(context),
-        const SizedBox(height: 0),
-      ],
-    );
-  }
+                                    if (await canLaunchUrl(uri)) {
+                                      await launchUrl(
+                                        uri,
+                                        mode: LaunchMode.inAppBrowserView,
+                                      );
+                                    } else {
+                                      // Show error message
+                                      if (mounted) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              'Could not open website',
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                    }
+                                  },
+                                  child: Text(
+                                    widget.profileData.website,
+                                    style: const TextStyle(
+                                      color: Colors.blueAccent,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.clip,
+                                  ),
+                                ),
 
-  Widget _buildProfileMetadata() {
-    return Wrap(
-      runSpacing: 8,
-      children: [
-        if (profileData.location.isNotEmpty)
-          _buildMetadataItem(
-            icon: const Icon(
-              Icons.location_on_outlined,
-              color: Colors.grey,
-              size: 16,
+                                const SizedBox(width: 12),
+                              ],
+                            ),
+
+                          if (widget.profileData.birthDate.isNotEmpty)
+                            Wrap(
+                              children: [
+                                SvgPicture.asset(
+                                  "assets/svg/born.svg",
+                                  width: 16,
+                                  height: 16,
+                                  colorFilter: const ColorFilter.mode(
+                                    Colors.grey,
+                                    BlendMode.srcIn,
+                                  ),
+                                ),
+                                const SizedBox(width: 1),
+                                Text(
+                                  "Born ${widget.profileData.birthDate}",
+                                  style: const TextStyle(color: Colors.grey),
+                                ),
+                                const SizedBox(width: 12),
+                              ],
+                            ),
+                          if (widget.profileData.joinedDate.isNotEmpty)
+                            Wrap(
+                              children: [
+                                const Icon(
+                                  Icons.calendar_month_outlined,
+                                  color: Colors.grey,
+                                  size: 16,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  "Joined ${widget.profileData.joinedDate}",
+                                  style: const TextStyle(color: Colors.grey),
+                                ),
+                              ],
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+
+                      Row(
+                        children: [
+                          GestureDetector(
+                            onTap: () {
+                              context.push(
+                                "/followingfollowersscreen/${FollowingFollowersInitialTab.Following}/${widget.isMe ? "me" : "notme"}",
+                                extra: this.widget.profileData,
+                              );
+                            },
+                            child: _buildFollowCount(
+                              widget.profileData.followingCount,
+                              'Following',
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          GestureDetector(
+                            onTap: () {
+                              //   TODO: navigae to followers page
+                              context.push(
+                                "/followingfollowersscreen/${FollowingFollowersInitialTab.Followers}/${widget.isMe ? "me" : "notme"}",
+                                extra: this.widget.profileData,
+                              );
+                            },
+                            child: _buildFollowCount(
+                              widget.profileData.followersCount,
+                              'Follower',
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 0),
+                    ],
+                  ),
+                ),
+              ],
             ),
-            text: profileData.location,
-          ),
-        if (profileData.website.isNotEmpty) _buildWebsiteItem(),
-        if (profileData.birthDate.isNotEmpty)
-          _buildMetadataItem(
-            icon: SvgPicture.asset(
-              "assets/svg/born.svg",
-              width: 16,
-              height: 16,
-              colorFilter: const ColorFilter.mode(Colors.grey, BlendMode.srcIn),
-            ),
-            text: "Born ${profileData.birthDate}",
-          ),
-        if (profileData.joinedDate.isNotEmpty)
-          _buildMetadataItem(
-            icon: const Icon(
-              Icons.calendar_month_outlined,
-              color: Colors.grey,
-              size: 16,
-            ),
-            text: "Joined ${profileData.joinedDate}",
-          ),
-      ],
-    );
-  }
-
-  Widget _buildMetadataItem({required Widget icon, required String text}) {
-    return Wrap(
-      children: [
-        icon,
-        const SizedBox(width: 4),
-        Text(text, style: const TextStyle(color: Colors.grey)),
-        const SizedBox(width: 12),
-      ],
-    );
-  }
-
-  Widget _buildWebsiteItem() {
-    return Wrap(
-      children: [
-        SvgPicture.asset(
-          "assets/svg/website.svg",
-          width: 16,
-          height: 16,
-          colorFilter: const ColorFilter.mode(Colors.grey, BlendMode.srcIn),
+          ],
         ),
-        const SizedBox(width: 2),
-        GestureDetector(
-          onTap: () => _launchWebsite(profileData.website),
-          child: Text(
-            profileData.website,
-            style: const TextStyle(color: Colors.blueAccent),
-            maxLines: 1,
-            overflow: TextOverflow.clip,
-          ),
-        ),
-        const SizedBox(width: 12),
-      ],
-    );
-  }
-
-  Future<void> _launchWebsite(String url) async {
-    final uri = Uri.parse(url.startsWith('http') ? url : 'https://$url');
-
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.inAppBrowserView);
-    } else {
-      // Error handling would be done in the calling context
-    }
-  }
-
-  Widget _buildFollowCounts(BuildContext context) {
-    return Row(
-      children: [
-        _buildFollowCountItem(
-          context,
-          profileData.followingCount,
-          'Following',
-          FollowingFollowersInitialTab.Following,
-        ),
-        const SizedBox(width: 16),
-        _buildFollowCountItem(
-          context,
-          profileData.followersCount,
-          'Follower',
-          FollowingFollowersInitialTab.Followers,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildFollowCountItem(
-    BuildContext context,
-    int count,
-    String label,
-    int tab,
-  ) {
-    return GestureDetector(
-      onTap: () {
-        context.push(
-          "/followingfollowersscreen/$tab/${isMe ? "me" : "notme"}",
-          extra: profileData,
-        );
-      },
-      child: _buildFollowCount(count, label),
-    );
+      );
   }
 }
 
@@ -523,6 +786,15 @@ Widget _build_more_options_profile() {
       onSelected: (value) async {
         switch (value) {
           case 'Share':
+            // // Handle share
+            // final url = profileModel.avatarUrl;
+            // final uri = Uri.parse(
+            //   url.startsWith('http') ? url : 'https://$url',
+            // );
+
+            // Share.share(uri.toString());
+
+            // TODO: add the profile url
             break;
           case 'Drafts':
             break;
@@ -592,6 +864,16 @@ Widget _build_more_options_other_profile(
       onSelected: (value) async {
         switch (value) {
           case 'Share':
+            // // Handle share
+            // final url = profileModel.avatarUrl;
+            // final uri = Uri.parse(
+            //   url.startsWith('http') ? url : 'https://$url',
+            // );
+
+            // Share.share(uri.toString());
+
+            // TODO: add the profile url
+            // print("Share");
             break;
           case 'Add/remove from lists':
             // print("add /remove");
@@ -844,5 +1126,3 @@ Widget _build_more_options_other_profile(
     radius: 20,
   );
 }
-
-

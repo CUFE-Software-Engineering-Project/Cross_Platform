@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lite_x/features/profile/view/widgets/profile/profile_screen_body_draft.dart';
 import 'package:lite_x/features/profile/view/widgets/profile/profile_screen_body.dart';
 import 'package:lite_x/features/profile/view_model/providers.dart';
 

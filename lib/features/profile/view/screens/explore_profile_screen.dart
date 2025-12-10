@@ -27,7 +27,6 @@ class _ExploreProfileScreenState extends ConsumerState<ExploreProfileScreen> {
               padding: EdgeInsets.all(5).copyWith(left: 10),
               child: BuildSmallProfileImage(
                 userId: currentUser?.username ?? "",
-                radius: 20,
               ),
             ),
             title: GestureDetector(

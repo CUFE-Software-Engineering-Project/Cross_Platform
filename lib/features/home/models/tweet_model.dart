@@ -178,19 +178,14 @@ class TweetModel extends HiveObject {
 
       authorName:
           user?['name']?.toString() ??
-          json['name']?.toString() ??
           json['authorName']?.toString() ??
           'Unknown User',
       authorUsername:
           user?['username']?.toString() ??
-          json['username']?.toString() ??
           json['authorUsername']?.toString() ??
           'unknown',
       authorAvatar:
-          _extractProfileMedia(user) ??
-          json['profileMediaKey']?.toString() ??
-          json['authorAvatar']?.toString() ??
-          '',
+          _extractProfileMedia(user) ?? json['authorAvatar']?.toString() ?? '',
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'])
           : DateTime.now(),

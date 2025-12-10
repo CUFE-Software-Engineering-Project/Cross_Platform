@@ -9,8 +9,7 @@ import 'package:lite_x/features/profile/models/tweet_reply_model.dart';
 import 'package:lite_x/features/profile/models/user_model.dart';
 
 abstract class ProfileRepo {
-  Future<Either<Failure, ProfileModel>> getProfileData(String userName,String currentUsername,
-  );
+  Future<Either<Failure, ProfileModel>> getProfileData(String userName);
 
   Future<Either<Failure, List<UserModel>>> getFollowers(String userName);
   Future<Either<Failure, List<UserModel>>> getFollowings(String userName);
@@ -47,14 +46,9 @@ abstract class ProfileRepo {
   Future<Either<Failure, List<ProfileTweetModel>>> getProfilePosts(
     String username,
   );
-  Future<Either<Failure, List<ProfileTweetModel>>> getMediaPosts(
-    String username,
-  );
   Future<Either<Failure, List<ProfileTweetModel>>> getProfileLikes(
     String username,
   );
-
-  Future<Either<Failure, ProfileTweetModel>> getProfileTweet(String tweetId);
   Future<Either<Failure, void>> createTweet(CreateTweetModel createTweetModel);
   Future<Either<Failure, List<TweetReplyModel>>> getTweetReplies(
     String tweetId,
@@ -74,11 +68,6 @@ abstract class ProfileRepo {
     String tweetId,
     CreateReplyModel createreplyModel,
   );
-  Future<Either<Failure, void>> retweetProfileTweet(
-    String tweetId,
-  );
-  Future<Either<Failure, void>> deleteRetweetProfileTweet(String tweetId);
-  
 
   // emain and password
   Future<Either<Failure, void>> changeEmailProfile(String newEmail);

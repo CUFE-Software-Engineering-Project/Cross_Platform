@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lite_x/core/providers/current_user_provider.dart';
 import 'package:lite_x/core/theme/palette.dart';
-import 'package:lite_x/features/profile/models/shared.dart';
 import 'package:lite_x/features/profile/models/user_model.dart';
 import 'package:lite_x/features/settings/view_model/providers.dart';
 
@@ -38,9 +37,7 @@ class MutedAccountsScreen extends ConsumerWidget {
           CircleAvatar(
             radius: 24,
             backgroundColor: Colors.grey.shade800,
-            backgroundImage: CachedNetworkImageProvider(
-              user.image.isNotEmpty ? user.image : unkownUserAvatar,
-            ),
+            backgroundImage: CachedNetworkImageProvider(user.image),
             onBackgroundImageError: (exception, stackTrace) => null,
           ),
           const SizedBox(width: 12),

@@ -59,7 +59,7 @@ class _SearchUserGroupState extends ConsumerState<SearchUserGroup> {
         final users = await ref
             .read(conversationsViewModelProvider.notifier)
             .searchUsers(query);
-        // if (!mounted) return;
+
         ref.read(searchResultsProvider.notifier).state = users;
       } else {
         ref.read(searchResultsProvider.notifier).state = [];
@@ -251,9 +251,10 @@ class _SearchUserGroupState extends ConsumerState<SearchUserGroup> {
                           style: const TextStyle(color: Colors.grey),
                         ),
                         trailing: _isGrouping
-                            ? (isSelected
-                                  ? Icon(Icons.check, color: Colors.grey[600])
-                                  : null)
+                            ? Icon(
+                                isSelected ? Icons.check : null,
+                                color: Colors.grey[600],
+                              )
                             : null,
                         onTap: () => _onUserTapped(user),
                       );

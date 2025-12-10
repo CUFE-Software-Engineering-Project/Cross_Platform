@@ -1,6 +1,4 @@
 import 'package:dio/dio.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lite_x/core/providers/current_user_provider.dart';
 import 'package:lite_x/features/media/download_media.dart';
 import 'package:lite_x/features/profile/models/create_reply_model.dart';
 import 'package:lite_x/features/profile/models/create_tweet_model.dart';
@@ -12,69 +10,56 @@ import 'package:dartz/dartz.dart';
 import 'package:lite_x/features/profile/models/tweet_reply_model.dart';
 import 'package:lite_x/features/profile/models/user_model.dart';
 import 'package:lite_x/features/profile/repositories/profile_repo.dart';
-import 'package:lite_x/features/profile/repositories/profile_storage_service.dart';
-import 'package:lite_x/features/profile/view_model/providers.dart';
+
+// String baseUrl =
+//     "https://app-fd6adf10-3923-46c1-83f7-08c318e4c982.cleverapps.io";
 
 class ProfileRepoImpl implements ProfileRepo {
   Dio _dio;
-  ProfileRepoImpl(Dio d) : _dio = d {}
+  ProfileRepoImpl(Dio d) : _dio = d {
+    // _dio = Dio(
+    //   BaseOptions(
+    //     baseUrl:
+    //         "https://app-dbef67eb-9a2e-44fa-abff-3e8b83204d9c.cleverapps.io/",
+    //     headers: {
+    //       "Authorization":
+    //           "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VybmFtZSI6ImhhemVtZW1hbSIsImVtYWlsIjoiaGF6ZW1AenVkcGNrLmNvbSIsInJvbGUiOiJ1c2VyIiwiaWQiOiJmM2EwZDdmNC0zZDMwLTQ2NjgtOTkyZi1kN2E2ZGM0NjUyNDEiLCJleHAiOjE3NjM2NjczMjcsImlhdCI6MTc2MzY2MzcyNywidmVyc2lvbiI6MiwianRpIjoiNzkzOTI0ZDAtYzAxMi00NTk5LTk4NWYtOTgyNTdlYTIyZmRhIiwiZGV2aWQiOiJlNGY2YTRkZi03MzVkLTRlZGItYTIxZi0wZDZkMTA5Y2M1YmUifQ.PdXybFYl0DyMKIuwCeoi17awgHz72zQlBFR_W1m0IU4",
+    //     },
+    //   ),
+    // );
+  }
 
   @override
-  Future<Either<Failure, ProfileModel>> getProfileData(
-    String userName,
-    String currentUsername,
-  ) async {
+  Future<Either<Failure, ProfileModel>> getProfileData(String userName) async {
     final Response res;
-    final ProfileStorageService storageService = ProfileStorageService();
-
     try {
       res = await _dio.get("api/users/$userName");
       final Map<String, dynamic> json = res.data;
+      final String profilePhotoId = json["profileMediaId"] ?? "";
+      final String profileBannerId = json["coverMediaId"] ?? "";
+
+      List<String> urls = await getMediaUrls([profilePhotoId, profileBannerId]);
+
+      print(urls[0]);
+      print(urls[1]);
+      final String profilePhotoUrl = urls[0];
+      final String profileBannerUrl = urls[1];
+
+      json["profileMedia"] = profilePhotoUrl;
+      json["coverMedia"] = profileBannerUrl;
+      json["avatarId"] = profilePhotoId;
 
       final profileData = ProfileModel.fromJson(json);
-
-      if (userName == currentUsername) {
-        await storageService.init();
-        storageService.storeProfileData(profileData).then((onValue) {
-          storageService.close();
-        });
-      }
-
       return Right(profileData);
     } on DioException catch (e) {
-      print(e.toString());
-      if (userName == currentUsername) {
-        await storageService.init();
-        final localData = await storageService.getProfileData(currentUsername);
-        storageService.close();
-        if (localData == null) {
-          return Left(
-            Failure('Failed to load profile data, try agian later...'),
-          );
-        } else {
-          return Right(localData);
-        }
-      } else {
-        if (e.type == DioExceptionType.connectionTimeout ||
-            e.type == DioExceptionType.receiveTimeout ||
-            e.type == DioExceptionType.sendTimeout) {
-          return Left(Failure('connection timeout, please try agin...'));
-        }
-        return Left(Failure('Failed to load profile data, try agian later...'));
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.sendTimeout) {
+        return Left(Failure('connection timeout, please try agin...'));
       }
+      return Left(Failure('Failed to load profile data, try agian later...'));
     } catch (e) {
-      if (userName == currentUsername) {
-        await storageService.init();
-        final localData = await storageService.getProfileData(currentUsername);
-        storageService.close();
-        if (localData == null)
-          return Left(
-            Failure('Failed to load profile data, try agian later...'),
-          );
-        else {
-          return Right(localData);
-        }
-      }
+      print(e.toString());
       return Left(Failure('Failed to load profile data'));
     }
   }
@@ -113,9 +98,9 @@ class ProfileRepoImpl implements ProfileRepo {
     String username,
   ) async {
     try {
-      // print("Start api ---------------------**");
+      print("Start api ---------------------**");
       final res = await _dio.get("api/tweets/users/$username");
-      // print("end api ---------------------**");
+      print("end api ---------------------**");
       final List<dynamic> jsonList = res.data["data"] ?? [];
 
       List<ProfileTweetModel> tweets = [];
@@ -144,106 +129,15 @@ class ProfileRepoImpl implements ProfileRepo {
         json["timeAgo"] = timeAgo;
 
         tweets.add(ProfileTweetModel.fromJson(json));
-        // print(
-        //   "id$i" +
-        //       "${json['profileMediaId']}--------------------*****--------------",
-        // );
+        print(
+          "id$i" +
+              "${json['profileMediaId']}--------------------*****--------------",
+        );
       }
-      // print("end repo posts ----------------**");
+      print("end repo posts ----------------**");
       return Right(tweets);
     } catch (e) {
-      print(e.toString() + "--------------+++++++++++++++++");
-      return Left(Failure('Failed to load profile posts'));
-    }
-  }
-
-  Future<Either<Failure, ProfileTweetModel>> getProfileTweet(
-    String tweetId,
-  ) async {
-    try {
-      // print("Start api ---------------------**");
-      final res = await _dio.get("api/tweets/$tweetId");
-      // print("end api ---------------------**");
-
-      final Map<String, dynamic> json = res.data as Map<String, dynamic>;
-      // get profile photo url and tweet medial urls
-      final String profilePhotoId = json["user"]?["profileMedia"]?["id"] ?? "";
-
-      final List<dynamic> tweetMediaIdsDynamic = json["tweetMedia"] ?? [];
-      final List<String> tweetMediaIds = tweetMediaIdsDynamic
-          .map((media) => media["mediaId"] as String)
-          .toList();
-
-      // final List<String> userPhotoUrl = await getMediaUrls([profilePhotoId]);
-
-      // final String profilePhotoUrl = userPhotoUrl[0];
-
-      // get timeAgo
-      final String createTime = json["createdAt"] ?? "";
-      final String timeAgo = getTimeAgo(createTime);
-
-      json["profileMediaId"] = profilePhotoId;
-      json["mediaIds"] = tweetMediaIds;
-      json["timeAgo"] = timeAgo;
-
-      // print(
-      //   "id$i" +
-      //       "${json['profileMediaId']}--------------------*****--------------",
-      // );
-
-      // print("end repo posts ----------------**");
-      return Right(ProfileTweetModel.fromJson(json));
-    } catch (e) {
-      print(e.toString() + "--------------+++++++++++++++++");
-      return Left(Failure('Failed to load Tweet'));
-    }
-  }
-
-  @override
-  Future<Either<Failure, List<ProfileTweetModel>>> getMediaPosts(
-    String username,
-  ) async {
-    try {
-      // print("Start api ---------------------**");
-      final res = await _dio.get("api/tweets/users/$username");
-      // print("end api ---------------------**");
-      final List<dynamic> jsonList = res.data["data"] ?? [];
-
-      List<ProfileTweetModel> tweets = [];
-      for (int i = 0; i < jsonList.length; i++) {
-        final Map<String, dynamic> json = jsonList[i] as Map<String, dynamic>;
-        if (json["tweetType"]?.toLowerCase() == "reply") continue;
-        // get profile photo url and tweet medial urls
-        final String profilePhotoId =
-            json["user"]?["profileMedia"]?["id"] ?? "";
-
-        final List<dynamic> tweetMediaIdsDynamic = json["tweetMedia"] ?? [];
-        final List<String> tweetMediaIds = tweetMediaIdsDynamic
-            .map((media) => media["mediaId"] as String)
-            .toList();
-
-        // final List<String> userPhotoUrl = await getMediaUrls([profilePhotoId]);
-
-        // final String profilePhotoUrl = userPhotoUrl[0];
-
-        // get timeAgo
-        final String createTime = json["createdAt"] ?? "";
-        final String timeAgo = getTimeAgo(createTime);
-
-        json["profileMediaId"] = profilePhotoId;
-        json["mediaIds"] = tweetMediaIds;
-        json["timeAgo"] = timeAgo;
-
-        tweets.add(ProfileTweetModel.fromJson(json));
-        // print(
-        //   "id$i" +
-        //       "${json['profileMediaId']}--------------------*****--------------",
-        // );
-      }
-      // print("end repo posts ----------------**");
-      return Right(tweets);
-    } catch (e) {
-      // print(e.toString());
+      print(e.toString());
       return Left(Failure('Failed to load profile posts'));
     }
   }
@@ -253,52 +147,41 @@ class ProfileRepoImpl implements ProfileRepo {
     String username,
   ) async {
     try {
-      try {
-        // print("Start api ---------------------**");
-        final res = await _dio.get("api/tweets/users/$username");
-        // print("end api ---------------------**");
-        final List<dynamic> jsonList = res.data["data"] ?? [];
+      final res = await _dio.get("api/tweets/users/$username");
+      final List<dynamic> jsonList = res.data["data"] ?? [];
 
-        List<ProfileTweetModel> tweets = [];
-        for (int i = 0; i < jsonList.length; i++) {
-          final Map<String, dynamic> json = jsonList[i] as Map<String, dynamic>;
-          if (json["tweetType"]?.toLowerCase() == "reply") continue;
-          // get profile photo url and tweet medial urls
-          final String profilePhotoId =
-              json["user"]?["profileMedia"]?["id"] ?? "";
+      List<ProfileTweetModel> tweets = [];
+      for (int i = 0; i < jsonList.length; i++) {
+        final Map<String, dynamic> json = jsonList[i] as Map<String, dynamic>;
+        if (json["tweetType"]?.toLowerCase() == "reply") continue;
+        // get profile photo url and tweet medial urls
+        final String profilePhotoId =
+            json["user"]?["profileMedia"]?["id"] ?? "";
 
-          final List<dynamic> tweetMediaIdsDynamic = json["tweetMedia"] ?? [];
-          final List<String> tweetMediaIds = tweetMediaIdsDynamic
-              .map((media) => media["mediaId"] as String)
-              .toList();
+        final List<dynamic> tweetMediaIdsDynamic = json["tweetMedia"] ?? [];
+        final List<String> tweetMediaIds = tweetMediaIdsDynamic
+            .map((media) => media["mediaId"] as String)
+            .toList();
 
-          // final List<String> userPhotoUrl = await getMediaUrls([profilePhotoId]);
+        final List<String> userPhotoUrl = await getMediaUrls([profilePhotoId]);
 
-          // final String profilePhotoUrl = userPhotoUrl[0];
+        final String profilePhotoUrl = userPhotoUrl[0];
 
-          // get timeAgo
-          final String createTime = json["createdAt"] ?? "";
-          final String timeAgo = getTimeAgo(createTime);
+        // get timeAgo
+        final String createTime = json["createdAt"] ?? "";
+        final String timeAgo = getTimeAgo(createTime);
 
-          json["profileMediaId"] = profilePhotoId;
-          json["mediaIds"] = tweetMediaIds;
-          json["timeAgo"] = timeAgo;
+        json["profileMediaUrl"] = profilePhotoUrl;
+        json["mediaIds"] = tweetMediaIds;
+        json["timeAgo"] = timeAgo;
 
-          tweets.add(ProfileTweetModel.fromJson(json));
-          // print(
-          //   "id$i" +
-          //       "${json['profileMediaId']}--------------------*****--------------",
-          // );
-        }
-        // print("end repo posts ----------------**");
-        return Right(tweets);
-      } catch (e) {
-        // print(e.toString());
-        return Left(Failure('Failed to load profile posts'));
+        tweets.add(ProfileTweetModel.fromJson(json));
       }
+
+      return Right(tweets);
     } catch (e) {
-      // print(e.toString());
-      return Left(Failure('Failed to load profile likes'));
+      print(e.toString());
+      return Left(Failure('Failed to load profile posts'));
     }
   }
 
@@ -533,26 +416,6 @@ class ProfileRepoImpl implements ProfileRepo {
     }
   }
 
-  Future<Either<Failure, void>> retweetProfileTweet(String tweetId) async {
-    try {
-      await _dio.post("api/tweets/$tweetId/retweets");
-      return const Right(());
-    } catch (e) {
-      return Left(Failure("Can't retweet tweet, try agail..."));
-    }
-  }
-
-  Future<Either<Failure, void>> deleteRetweetProfileTweet(
-    String tweetId,
-  ) async {
-    try {
-      await _dio.delete("api/tweets/$tweetId/retweets");
-      return const Right(());
-    } catch (e) {
-      return Left(Failure("Can't delelte retweet tweet, try agail..."));
-    }
-  }
-
   Future<Either<Failure, void>> unLikeTweet(String tweetId) async {
     try {
       await _dio.delete("api/tweets/$tweetId/likes");
@@ -605,10 +468,9 @@ class ProfileRepoImpl implements ProfileRepo {
       final List<Map<String, dynamic>> rawResults =
           List<Map<String, dynamic>>.from(res.data["users"] ?? []);
       for (int i = 0; i < rawResults.length; i++) {
-        final String mediaId = rawResults[i]["profileMedia"]?["id"] ?? "";
-        // final mediaUrls = await getMediaUrls([mediaId]);
-        rawResults[i]["profileMedia"] = "";
-        rawResults[i]["profileMediaId"] = mediaId;
+        final String mediaId = rawResults[i]["profileMedia"] ?? "";
+        final mediaUrls = await getMediaUrls([mediaId]);
+        rawResults[i]["profileMedia"] = mediaUrls[0];
       }
       final List<SearchUserModel> currentResults = rawResults.map((element) {
         SearchUserModel user = SearchUserModel.fromJson(element);
@@ -616,7 +478,6 @@ class ProfileRepoImpl implements ProfileRepo {
       }).toList();
       return Right(currentResults);
     } catch (e) {
-      print(e.toString() + "-----------@@##");
       return Left(Failure("Can't get search results"));
     }
   }

@@ -42,39 +42,31 @@ class _ProfileScreenBodyState extends ConsumerState<ProfileScreenBody> {
 
   @override
   Widget build(BuildContext context) {
-    return RefreshIndicator(
-      onRefresh: () async {
-        // ignore: unused_result
-        final c = ref.read(myUserNameProvider);
-        print(c + "8888888889999999");
-        ref.refresh(profileDataProvider(widget.profileData.username));
-      },
-      child: CustomScrollView(
-        slivers: [
-          SliverToBoxAdapter(
-            child: ProfileHeader(
-              profileData: widget.profileData,
-              isMe: widget.isMe,
-              showData: showData,
+    return CustomScrollView(
+      slivers: [
+        SliverToBoxAdapter(
+          child: ProfileHeader(
+            profileData: widget.profileData,
+            isMe: widget.isMe,
+            showData: showData,
+            showDataFunc: showDataFunc,
+          ),
+        ),
+        if (!showData)
+          SliverFillRemaining(
+            child: ShowProfileDataBlockedUser(
               showDataFunc: showDataFunc,
+              profileData: widget.profileData,
             ),
           ),
-          if (!showData)
-            SliverFillRemaining(
-              child: ShowProfileDataBlockedUser(
-                showDataFunc: showDataFunc,
-                profileData: widget.profileData,
-              ),
+        if (showData)
+          SliverFillRemaining(
+            child: ProfileTabs(
+              isMe: widget.isMe,
+              profileData: widget.profileData,
             ),
-          if (showData)
-            SliverFillRemaining(
-              child: ProfileTabs(
-                isMe: widget.isMe,
-                profileData: widget.profileData,
-              ),
-            ),
-        ],
-      ),
+          ),
+      ],
     );
   }
 }
