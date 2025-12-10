@@ -1,6 +1,8 @@
 import 'package:dartz/dartz.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
+import 'package:flutter_riverpod/misc.dart';
 import 'package:lite_x/core/providers/current_user_provider.dart';
 import 'package:lite_x/core/providers/dio_interceptor.dart';
 import 'package:lite_x/features/media/download_media.dart';
@@ -17,6 +19,7 @@ import 'package:lite_x/features/trends/models/for_you_response_model.dart';
 import 'package:lite_x/features/trends/models/trend_category.dart';
 import 'package:lite_x/features/trends/models/trend_model.dart';
 
+
 final profileRepoProvider = Provider<ProfileRepo>((ref) {
   return ProfileRepoImpl(ref.watch(dioProvider));
 });
@@ -27,8 +30,7 @@ final profileDataProvider =
       username,
     ) {
       final repo = ref.watch(profileRepoProvider);
-      final currUsername = ref.watch(myUserNameProvider);
-      return repo.getProfileData(username, currUsername);
+      return repo.getProfileData(username);
     });
 
 final updateProfileBannerProvider = Provider((ref) {
@@ -161,15 +163,6 @@ final profilePostsProvider =
       return repo.getProfilePosts(username);
     });
 
-final profileMediaProvider =
-    FutureProvider.family<Either<Failure, List<ProfileTweetModel>>, String>((
-      ref,
-      username,
-    ) {
-      final repo = ref.watch(profileRepoProvider);
-      return repo.getMediaPosts(username);
-    });
-
 final profileLikesProvider =
     FutureProvider.family<Either<Failure, List<ProfileTweetModel>>, String>((
       ref,
@@ -177,15 +170,6 @@ final profileLikesProvider =
     ) {
       final repo = ref.watch(profileRepoProvider);
       return repo.getProfileLikes(username);
-    });
-
-final profileTweetProvider =
-    FutureProvider.family<Either<Failure, ProfileTweetModel>, String>((
-      ref,
-      tweetId,
-    ) {
-      final repo = ref.watch(profileRepoProvider);
-      return repo.getProfileTweet(tweetId);
     });
 
 final tweetRepliesProvider =
@@ -209,20 +193,6 @@ final likeTweetProvider = Provider((ref) {
   final repo = ref.watch(profileRepoProvider);
   return (String tweetId) {
     return repo.likeTweet(tweetId);
-  };
-});
-
-final retweetTweetProvider = Provider((ref) {
-  final repo = ref.watch(profileRepoProvider);
-  return (String tweetId) {
-    return repo.retweetProfileTweet(tweetId);
-  };
-});
-
-final deleteRetweetTweetProvider = Provider((ref) {
-  final repo = ref.watch(profileRepoProvider);
-  return (String tweetId) {
-    return repo.deleteRetweetProfileTweet(tweetId);
   };
 });
 
@@ -292,6 +262,11 @@ final changePasswordProfileProvider = Provider((ref) {
       confirmNewPassword,
     );
   };
+});
+
+final myUserNameProvider = Provider<String>((ref) {
+  final Myusername = ref.watch(currentUserProvider.select((e) => e!.username));
+  return Myusername;
 });
 
 // final myUserNameProvider = Provider<String>((ref) {

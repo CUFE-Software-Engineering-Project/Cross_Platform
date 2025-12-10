@@ -1,34 +1,3 @@
-## Localization Setup
-
-- Added `flutter_localizations` and `intl` to `pubspec.yaml`.
-- Created `l10n.yaml` to configure Flutter's gen-l10n.
-- Added ARB files in `lib/l10n/`:
-  - `app_en.arb`
-  - `app_ar.arb`
-- Wired delegates and supported locales in `lib/main.dart`.
-
-### How to add strings
-- Edit ARB files under `lib/l10n/` and add new keys.
-- Keep the same keys across languages.
-
-### Generate localization code
-- Run:
-  
-  ```powershell
-  flutter gen-l10n
-  ```
-
-- Import and use generated `AppLocalizations` in widgets:
-
-  ```dart
-  import 'package:lite_x/l10n/app_localizations.dart';
-
-  Text(AppLocalizations.of(context)!.trendsTitle)
-  ```
-
-### Switching locales
-- By default, the app supports `en` and `ar` and follows system locale.
-- You can set a specific locale on `MaterialApp.router` by providing `locale: const Locale('ar')`.
 # lite_x
 
 Lite X is a Flutter/Riverpod client for the X-like backend that exposes a complete Tweets API surface. The app now exercises every Tweets Interaction endpoint (create/update/delete, likes, retweets, bookmarks, replies, quotes, mentions, summaries, liked tweets, user timelines, and search) through dedicated repositories, view models, and screens.

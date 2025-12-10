@@ -72,17 +72,17 @@ class AccountInformationScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // if (username.isNotEmpty) ...[
-            //   Text(
-            //     '@$username',
-            //     style: const TextStyle(
-            //       color: Palette.textSecondary,
-            //       fontSize: 18,
-            //       fontWeight: FontWeight.w500,
-            //     ),
-            //   ),
-            //   const SizedBox(height: 12),
-            // ],
+            if (username.isNotEmpty) ...[
+              Text(
+                '@$username',
+                style: const TextStyle(
+                  color: Palette.textSecondary,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
             _section(
               title: '',
               children: [

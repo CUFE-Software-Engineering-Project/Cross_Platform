@@ -5,7 +5,6 @@ class SearchUserModel {
   final bool verified;
   final String bio;
   final String profileMedia;
-  final String profileMediaId;
   final num followers;
   final num score;
   final bool isFollowing;
@@ -22,7 +21,6 @@ class SearchUserModel {
     required this.score,
     required this.isFollowing,
     required this.isFollower,
-    required this.profileMediaId,
   });
 
   factory SearchUserModel.fromJson(Map<String, dynamic> json) {
@@ -37,7 +35,6 @@ class SearchUserModel {
       score: json['score'] ?? 0,
       isFollowing: json['isFollowing'] ?? false,
       isFollower: json['isFollower'] ?? false,
-      profileMediaId: json["profileMediaId"] ?? "",
     );
   }
 
@@ -52,7 +49,6 @@ class SearchUserModel {
     num? score,
     bool? isFollowing,
     bool? isFollower,
-    String? profileMediaId,
   }) {
     return SearchUserModel(
       id: id ?? this.id,
@@ -65,7 +61,6 @@ class SearchUserModel {
       score: score ?? this.score,
       isFollowing: isFollowing ?? this.isFollowing,
       isFollower: isFollower ?? this.isFollower,
-      profileMediaId: profileMedia ?? this.profileMedia,
     );
   }
 }
