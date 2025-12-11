@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
-import 'package:lite_x/features/media/models/shared.dart';
 import 'package:lite_x/features/profile/models/shared.dart';
 import 'package:lite_x/features/media/models/confirm_upload_model.dart';
 import 'package:lite_x/features/media/models/request_upload_model.dart';
@@ -10,7 +9,9 @@ import 'package:lite_x/features/media/repository/media_repo.dart';
 
 class MediaRepoImpL implements MediaRepo {
   Dio _dio;
-  MediaRepoImpL(Dio d) : _dio = d {}
+  MediaRepoImpL(Dio d) : _dio = d {
+    
+  }
 
   Future<Either<Failure, RequestUploadModel>> requestUpload(
     String fileName,
@@ -50,7 +51,7 @@ class MediaRepoImpL implements MediaRepo {
         data: Stream.fromIterable([fileBytes]),
         options: Options(
           headers: {
-            'Content-Type': getMediaType(mediaFile.path),
+            'Content-Type': _getMediaType(mediaFile.path),
             'Content-Length': fileBytes.length,
           },
         ),
@@ -74,6 +75,18 @@ class MediaRepoImpL implements MediaRepo {
       return Left(Failure("can't download media"));
     }
   }
+}
+
+const Map<String, String> _mediaTypes = {
+  'jpg': 'image/jpg',
+  'jpeg': 'image/jpeg',
+  'png': 'image/png',
+  'gif': 'image/gif',
+  'webp': 'image/webp',
+};
+String _getMediaType(String filePath) {
+  final extension = filePath.split('.').last.toLowerCase();
+  return _mediaTypes[extension] ?? 'image/jpeg';
 }
 
 //   Future<Either<AppFailure, Map<String, dynamic>>> uploadProfilePhoto({

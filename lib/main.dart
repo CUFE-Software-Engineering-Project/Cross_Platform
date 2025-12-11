@@ -1,6 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
@@ -14,6 +14,12 @@ import 'package:lite_x/features/profile/models/profile_model.dart';
 import 'package:lite_x/features/search/models/search_history_hive_model.dart';
 import 'firebase_options.dart';
 
+// Background message handler
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  print('Handling a background message: ${message.messageId}');
+  print('Background message data: ${message.data}');
+}
+
 void main() async {
   await init();
   runApp(const ProviderScope(child: MyApp()));
@@ -22,6 +28,10 @@ void main() async {
 Future<void> init() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  
+  // Set up background message handler for FCM
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  
   DeepLinkService.init();
   await Hive.initFlutter();
   Hive.registerAdapter(UserModelAdapter());
@@ -51,12 +61,6 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'X Lite',
       theme: appTheme,
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: const [Locale('en'), Locale('ar')],
       routerConfig: Approuter.router,
     );
   }

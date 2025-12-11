@@ -6,7 +6,6 @@ import 'package:lite_x/features/home/models/tweet_model.dart';
 import 'package:lite_x/features/home/repositories/home_repository.dart';
 import 'package:lite_x/features/home/view/screens/reply_composer_screen.dart';
 import 'package:lite_x/features/home/view/widgets/media_gallery.dart';
-import 'package:lite_x/features/profile/view_model/providers.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
 class ReplyThreadScreen extends ConsumerStatefulWidget {
@@ -27,8 +26,6 @@ class _ReplyThreadScreenState extends ConsumerState<ReplyThreadScreen> {
   bool isLoading = true;
   String? currentUserId;
   final Map<String, int> _viewCounts = {};
-  bool isFollowing = false;
-  bool isFollowLoading = false;
 
   @override
   void initState() {
@@ -42,77 +39,6 @@ class _ReplyThreadScreenState extends ConsumerState<ReplyThreadScreen> {
     final user = ref.read(currentUserProvider);
     if (user != null) {
       currentUserId = user.id;
-    }
-  }
-
-  Future<void> _toggleFollow() async {
-    final currentReplyTweet = allTweets[widget.pathTweetIds.last];
-    if (currentReplyTweet == null || isFollowLoading) return;
-
-    setState(() {
-      isFollowLoading = true;
-    });
-
-    try {
-      final username = currentReplyTweet.authorUsername;
-
-      if (isFollowing) {
-        final unfollowFunc = ref.read(unFollowControllerProvider);
-        final result = await unfollowFunc(username);
-        result.fold(
-          (failure) {
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Failed to unfollow: ${failure.message}'),
-                  backgroundColor: Colors.red,
-                ),
-              );
-            }
-          },
-          (_) {
-            if (mounted) {
-              setState(() {
-                isFollowing = false;
-              });
-            }
-          },
-        );
-      } else {
-        final followFunc = ref.read(followControllerProvider);
-        final result = await followFunc(username);
-        result.fold(
-          (failure) {
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Failed to follow: ${failure.message}'),
-                  backgroundColor: Colors.red,
-                ),
-              );
-            }
-          },
-          (_) {
-            if (mounted) {
-              setState(() {
-                isFollowing = true;
-              });
-            }
-          },
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          isFollowLoading = false;
-        });
-      }
     }
   }
 
@@ -470,26 +396,19 @@ class _ReplyThreadScreenState extends ConsumerState<ReplyThreadScreen> {
                           ),
                         ),
                         const SizedBox(width: 6),
-                        Flexible(
-                          child: Text(
-                            '@${tweet.authorUsername}',
-                            style: TextStyle(
-                              color: Colors.grey[600],
-                              fontSize: 15,
-                            ),
-                            overflow: TextOverflow.ellipsis,
+                        Text(
+                          tweet.authorUsername,
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 15,
                           ),
                         ),
                         const SizedBox(width: 6),
-                        Flexible(
-                          fit: FlexFit.loose,
-                          child: Text(
-                            '· ${timeago.format(tweet.createdAt, locale: 'en_short')}',
-                            style: TextStyle(
-                              color: Colors.grey[600],
-                              fontSize: 15,
-                            ),
-                            overflow: TextOverflow.ellipsis,
+                        Text(
+                          '· ${timeago.format(tweet.createdAt, locale: 'en_short')}',
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 15,
                           ),
                         ),
                       ],
@@ -567,27 +486,14 @@ class _ReplyThreadScreenState extends ConsumerState<ReplyThreadScreen> {
                         ),
                       ),
                       const SizedBox(width: 4),
-                      Flexible(
-                        child: Text(
-                          '@${reply.authorUsername}',
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontSize: 15,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                      Text(
+                        '@${reply.authorUsername}',
+                        style: TextStyle(color: Colors.grey[600], fontSize: 15),
                       ),
                       const SizedBox(width: 4),
-                      Flexible(
-                        fit: FlexFit.loose,
-                        child: Text(
-                          '· ${timeago.format(reply.createdAt, locale: 'en_short')}',
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontSize: 15,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                      Text(
+                        '· ${timeago.format(reply.createdAt, locale: 'en_short')}',
+                        style: TextStyle(color: Colors.grey[600], fontSize: 15),
                       ),
                     ],
                   ),
@@ -598,14 +504,11 @@ class _ReplyThreadScreenState extends ConsumerState<ReplyThreadScreen> {
                         'Replying to ',
                         style: TextStyle(color: Colors.grey[600], fontSize: 15),
                       ),
-                      Flexible(
-                        child: Text(
-                          '@$replyingTo',
-                          style: const TextStyle(
-                            color: Colors.blue,
-                            fontSize: 15,
-                          ),
-                          overflow: TextOverflow.ellipsis,
+                      Text(
+                        replyingTo,
+                        style: const TextStyle(
+                          color: Colors.blue,
+                          fontSize: 15,
                         ),
                       ),
                     ],
@@ -688,12 +591,9 @@ class _ReplyThreadScreenState extends ConsumerState<ReplyThreadScreen> {
                   'Replying to ',
                   style: TextStyle(color: Colors.grey[600], fontSize: 15),
                 ),
-                Flexible(
-                  child: Text(
-                    '@$replyingTo',
-                    style: const TextStyle(color: Colors.blue, fontSize: 15),
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                Text(
+                  replyingTo,
+                  style: const TextStyle(color: Colors.blue, fontSize: 15),
                 ),
               ],
             ),
@@ -801,42 +701,19 @@ class _ReplyThreadScreenState extends ConsumerState<ReplyThreadScreen> {
     } else {
       return Row(
         children: [
-          GestureDetector(
-            onTap: isFollowLoading ? null : _toggleFollow,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-              decoration: BoxDecoration(
-                color: isFollowing ? Colors.transparent : Colors.white,
-                border: isFollowing
-                    ? Border.all(color: Colors.grey[700]!, width: 1)
-                    : null,
-                borderRadius: BorderRadius.circular(20),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: const Text(
+              'Follow',
+              style: TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+                fontSize: 15,
               ),
-              child: isFollowLoading
-                  ? const SizedBox(
-                      width: 60,
-                      height: 20,
-                      child: Center(
-                        child: SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              Colors.grey,
-                            ),
-                          ),
-                        ),
-                      ),
-                    )
-                  : Text(
-                      isFollowing ? 'Following' : 'Follow',
-                      style: TextStyle(
-                        color: isFollowing ? Colors.white : Colors.black,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                      ),
-                    ),
             ),
           ),
           const SizedBox(width: 6),

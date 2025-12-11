@@ -6,7 +6,6 @@ import 'tabs/all_notifications.dart';
 import 'tabs/verified_notifications.dart';
 import 'tabs/mentions_notifications.dart';
 import '../../notification_view_model.dart';
-import '../../mentions_view_model.dart';
 
 class NotificationTabs extends ConsumerStatefulWidget {
   const NotificationTabs({super.key});
@@ -26,7 +25,20 @@ class _NotificationTabsState extends ConsumerState<NotificationTabs>
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
 
+    // Load both all notifications and mentions on initial screen load
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Load all notifications
+      ref.read(notificationViewModelProvider.notifier).build();
+      
+      // Load mentions in parallel
+      ref.read(mentionsViewModelProvider.notifier).build();
+      
+      // Mark notifications as read
+      ref.read(notificationViewModelProvider.notifier).markNotificationsAsRead();
+    });
+
     final fcmService = NotificationFcmService();
+    fcmService.init();
     fcmService.notificationsRefreshCallback = () {
       ref.read(notificationViewModelProvider.notifier).refresh();
     };
@@ -38,18 +50,6 @@ class _NotificationTabsState extends ConsumerState<NotificationTabs>
         setState(() {
           selectedIndex = _tabController.index;
         });
-        // Trigger refresh for the newly selected tab
-        switch (_tabController.index) {
-          case 0:
-            ref.read(notificationViewModelProvider.notifier).refresh();
-            break;
-          case 1:
-            // Verified tab currently static; no provider to refresh
-            break;
-          case 2:
-            ref.read(mentionsViewModelProvider.notifier).refresh();
-            break;
-        }
       }
     });
   }

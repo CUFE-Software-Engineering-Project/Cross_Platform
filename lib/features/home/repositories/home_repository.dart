@@ -28,17 +28,10 @@ class HomeRepository {
       );
 
       final List tweetsData;
-      // Handle response format: { "user": {...}, "recommendations": [...] }
-      if (response.data is Map) {
-        if (response.data['recommendations'] != null) {
-          tweetsData = response.data['recommendations'] as List;
-        } else if (response.data['data'] != null) {
-          tweetsData = response.data['data'] as List;
-        } else {
-          return [];
-        }
-      } else if (response.data is List) {
+      if (response.data is List) {
         tweetsData = response.data as List;
+      } else if (response.data is Map && response.data['data'] != null) {
+        tweetsData = response.data['data'] as List;
       } else {
         return [];
       }
@@ -60,8 +53,6 @@ class HomeRepository {
     int page = 1,
     int limit = 20,
   }) async {
-    // Return mock data if enabled
-
     try {
       final response = await _dio.get(
         'api/home/timeline',
@@ -69,15 +60,10 @@ class HomeRepository {
       );
 
       final List tweetsData;
-      // Handle response format: { "data": [...], "nextCursor": "..." }
-      if (response.data is Map) {
-        if (response.data['data'] != null) {
-          tweetsData = response.data['data'] as List;
-        } else {
-          return [];
-        }
-      } else if (response.data is List) {
+      if (response.data is List) {
         tweetsData = response.data as List;
+      } else if (response.data is Map && response.data['data'] != null) {
+        tweetsData = response.data['data'] as List;
       } else {
         return [];
       }

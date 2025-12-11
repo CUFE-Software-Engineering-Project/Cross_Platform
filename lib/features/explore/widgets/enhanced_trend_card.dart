@@ -82,43 +82,50 @@ class EnhancedTrendCard extends StatelessWidget {
                           ],
                           // Metadata Line
                           Expanded(
-  child: Row(
-    children: [
-      Flexible(
-        child: Text(
-          trend.timestamp ?? '',
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(fontSize: 13, color: Palette.textSecondary),
-        ),
-      ),
-
-      const Text(' · ', style: TextStyle(fontSize: 13)),
-
-      Flexible(
-        child: Text(
-          trend.category ?? '',
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(fontSize: 13, color: Palette.textSecondary),
-        ),
-      ),
-
-      const Text(' · ', style: TextStyle(fontSize: 13)),
-
-      Flexible(
-        child: Text(
-          '${_formatPostCount(trend.postCount)} posts',
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(fontSize: 13, color: Palette.textSecondary),
-        ),
-      ),
-    ],
-  ),
-)
-
-
+                            child: Row(
+                              children: [
+                                if (trend.timestamp != null) ...[
+                                  Text(
+                                    trend.timestamp!,
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      color: Palette.textSecondary,
+                                    ),
+                                  ),
+                                  const Text(
+                                    ' · ',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: Palette.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                                if (trend.category != null) ...[
+                                  Text(
+                                    trend.category!,
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      color: Palette.textSecondary,
+                                    ),
+                                  ),
+                                  const Text(
+                                    ' · ',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: Palette.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                                Text(
+                                  '${_formatPostCount(trend.postCount)} posts',
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    color: Palette.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ],
                       ),
                       ],

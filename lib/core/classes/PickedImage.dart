@@ -42,21 +42,3 @@ Future<List<PickedImage>> pickImages({int maxImages = 4}) async {
     return [];
   }
 }
-
-Future<PickedImage?> pickVideo() async {
-  try {
-    final ImagePicker picker = ImagePicker();
-    final XFile? video = await picker.pickVideo(source: ImageSource.gallery);
-
-    if (video != null) {
-      return PickedImage(
-        file: File(video.path),
-        name: video.name,
-        path: video.path,
-      );
-    }
-    return null;
-  } catch (e) {
-    return null;
-  }
-}

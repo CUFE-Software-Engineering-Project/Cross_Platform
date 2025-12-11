@@ -4,7 +4,6 @@ import 'package:lite_x/core/theme/palette.dart';
 
 import '../empty/all_empty.dart';
 import '../card/all_tweet_card.dart';
-import '../../../notification_model.dart';
 import '../../../notification_view_model.dart';
 
 class AllTab extends ConsumerStatefulWidget {
@@ -16,13 +15,12 @@ class AllTab extends ConsumerStatefulWidget {
 
 class _AllTabState extends ConsumerState<AllTab>
     with AutomaticKeepAliveClientMixin {
-  final GlobalKey<AnimatedListState> _listKey = GlobalKey<AnimatedListState>();
-
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(notificationViewModelProvider.notifier).refresh();
+      // Mark notifications as read when opening the tab
+      ref.read(notificationViewModelProvider.notifier).markNotificationsAsRead();
     });
   }
 
@@ -30,30 +28,36 @@ class _AllTabState extends ConsumerState<AllTab>
   Widget build(BuildContext context) {
     super.build(context);
 
+    // Watch the view model provider instead of stream provider
     final state = ref.watch(notificationViewModelProvider);
 
     return Container(
       color: Palette.background,
       child: state.when(
         data: (items) {
-          if (items.isEmpty) {
-            return const AllEmptyStateWidget();
-          }
-
           return RefreshIndicator(
             onRefresh: () async {
-              await ref
-                  .read(notificationViewModelProvider.notifier)
-                  .refresh();
+              // Call the refresh method that makes API request
+              await ref.read(notificationViewModelProvider.notifier).refresh();
             },
-            child: AnimatedList(
-              key: _listKey,
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
-              initialItemCount: items.length,
-              itemBuilder: (context, index, animation) {
-                return _buildItem(items[index], animation);
-              },
-            ),
+            child: items.isEmpty
+                ? ListView(
+                    children: const [
+                      SizedBox(height: 50),
+                      AllEmptyStateWidget(),
+                    ],
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    itemCount: items.length,
+                    itemBuilder: (context, index) {
+                      final notification = items[index];
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 16.0),
+                        child: AllTweetCardWidget(notification: notification),
+                      );
+                    },
+                  ),
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -62,20 +66,6 @@ class _AllTabState extends ConsumerState<AllTab>
             'Failed to load notifications',
             style: TextStyle(color: Colors.red),
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildItem(NotificationItem notification, Animation<double> animation) {
-    return FadeTransition(
-      opacity: animation,
-      child: SlideTransition(
-        position: Tween(begin: const Offset(0, 0.2), end: Offset.zero)
-            .animate(animation),
-        child: Padding(
-          padding: const EdgeInsets.only(bottom: 16.0),
-          child: AllTweetCardWidget(notification: notification),
         ),
       ),
     );
