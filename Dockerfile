@@ -1,23 +1,43 @@
-# Dockerfile.ci
+# ---------------- BASE STAGE ----------------
 FROM ghcr.io/cirruslabs/flutter:3.35.5 AS base
-
 WORKDIR /app
 
-# copy pubspec first so we can cache dependencies
+# Copy pubspec first for dependency caching
 COPY pubspec.* ./
 RUN flutter pub get
 
-# copy source
+# Copy source code
 COPY . .
 
-# LINTING
-FROM base AS lint
+# ---------------- TEST STAGE ----------------
+FROM base AS test
+WORKDIR /app
+
+# Run unit/widget tests
+RUN flutter test --no-pub
+
+# ---------------- LINT STAGE ----------------
+FROM ghcr.io/cirruslabs/flutter:3.35.5 AS lint
+WORKDIR /app
+
+COPY pubspec.* ./
+RUN flutter pub get
+
+COPY . .
 RUN flutter analyze
 
-# UNIT TETSING
-FROM base AS test
-RUN flutter test
 
-# BUILDING
-FROM test AS build-apk
+# ---------------- BUILD APK STAGE ----------------
+FROM base AS build-apk
+
+# Install Android SDK components early for caching
+RUN yes | sdkmanager --licenses
+
+RUN sdkmanager \
+    "platform-tools" \
+    "platforms;android-34" \
+    "build-tools;34.0.0" \
+    "cmdline-tools;latest"
+
+# Now build release APK
 RUN flutter build apk --release

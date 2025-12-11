@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lite_x/core/providers/emailProvider.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
-import 'package:lite_x/core/theme/palette.dart';
+import 'package:lite_x/core/theme/Palette.dart';
 import 'package:lite_x/core/view/widgets/Loader.dart';
 import 'package:lite_x/features/auth/view/widgets/buildXLogo.dart';
 import 'package:lite_x/features/auth/view_model/auth_state.dart';

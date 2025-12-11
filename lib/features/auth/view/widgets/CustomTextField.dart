@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lite_x/core/theme/palette.dart';
+import 'package:lite_x/core/theme/Palette.dart';
 
 OutlineInputBorder border_sign(Color co, double w) => OutlineInputBorder(
   borderRadius: BorderRadius.circular(5),

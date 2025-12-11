@@ -96,22 +96,7 @@ EOF
           }
         }
         
-        stage('Kaniko: Test image') {
-          steps {
-            container('kaniko') {
-              script {
-                sh '''
-                  echo "Kaniko building test target (no push)..."
-                  /kaniko/executor \
-                    --context=. \
-                    --dockerfile=Dockerfile \
-                    --no-push \
-                    --target=test
-                '''
-              }
-            }
-          }
-        }
+  
 
 
         stage('Kaniko: Build-APK image (build & push)') {

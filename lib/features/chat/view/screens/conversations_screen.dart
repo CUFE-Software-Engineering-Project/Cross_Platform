@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
-import 'package:lite_x/core/theme/palette.dart';
+import 'package:lite_x/core/theme/Palette.dart';
 import 'package:lite_x/features/chat/view/widgets/conversion/conversations_list.dart';
 import 'package:lite_x/features/chat/view/widgets/conversion/conversion_app_bar.dart';
 import 'package:lite_x/features/home/view/widgets/profile_side_drawer.dart';

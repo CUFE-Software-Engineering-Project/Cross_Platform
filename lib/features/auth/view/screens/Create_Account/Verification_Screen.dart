@@ -5,7 +5,7 @@ import 'package:lite_x/core/providers/dobProvider.dart';
 import 'package:lite_x/core/providers/emailProvider.dart';
 import 'package:lite_x/core/providers/nameProvider.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
-import 'package:lite_x/core/theme/palette.dart';
+import 'package:lite_x/core/theme/Palette.dart';
 import 'package:lite_x/core/utils.dart';
 import 'package:lite_x/core/view/widgets/Loader.dart';
 import 'package:lite_x/features/auth/view/widgets/CustomTextField.dart';
