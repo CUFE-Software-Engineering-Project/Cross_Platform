@@ -20,7 +20,7 @@ class ProfileHeader extends ConsumerStatefulWidget {
     required this.showData,
     required this.showDataFunc,
   });
-
+  
   final ProfileModel profileData;
   final bool isMe;
   final bool showData;

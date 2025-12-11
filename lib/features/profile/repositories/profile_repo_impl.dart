@@ -282,6 +282,28 @@ class ProfileRepoImpl implements ProfileRepo {
     }
   }
 
+  Future<Either<Failure, List<UserModel>>> getWhoToFollow() async {
+    try {
+      final response = await _dio.get("api/followings/suggested");
+
+      final people = response.data;
+
+      final List<UserModel> peoplemodels = people
+          .map((p) {
+            p["photo"] = p["profileMedia"]?["id"];
+            p["isFollowing"] = p["isFollowed"];
+            print(p.toString());
+            return UserModel.fromJson(p as Map<String, dynamic>);
+          })
+          .toList()
+          .cast<UserModel>();
+
+      return Right(peoplemodels);
+    } catch (e) {
+      return Left(Failure("couldn't get who To Follow at this time..."));
+    }
+  }
+
   Future<Either<Failure, List<UserModel>>> getFollowings(
     String userName,
   ) async {
@@ -704,6 +726,34 @@ class ProfileRepoImpl implements ProfileRepo {
       return (Left(
         Failure("cannot get trends at this time, try again later..."),
       ));
+    }
+  }
+
+  Future<Either<Failure, Map<String, dynamic>>> getTweetsForHashtag(
+    String hashtagId,
+    String? cursor,
+  ) async {
+    try {
+      final Response<dynamic> res;
+      if (cursor == null)
+        res = await _dio.get("api/hashtags/${hashtagId}/tweets");
+      else {
+        res = await _dio.get(
+          "api/hashtags/${hashtagId}/tweets",
+          queryParameters: {"cursor": cursor},
+        );
+      }
+
+      print("fininsh -------------------------------");
+
+      final List<dynamic> jsonList = res.data["tweets"] ?? [];
+      final String? c = res.data["nextCursor"];
+      final tweets = convertJsonListToTweetList(jsonList);
+
+      return Right({"tweets": tweets, "cursor": c});
+    } catch (e) {
+      return Left(Failure('Failed to tweets for this hashtag'));
+      // return Left(Failure(e.toString()));
     }
   }
 }

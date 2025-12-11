@@ -70,14 +70,16 @@ class CategoryProfileTrendTab extends ConsumerWidget {
                         ),
                       ]
                     : [
-                        SizedBox(height: 20),
-                        _buildTweetsSection(data.viralTweets, pm),
-                        Container(
-                          width: double.infinity,
-                          height: 0.5,
-                          color: Colors.grey,
-                        ),
-                        SizedBox(height: 20),
+                        if (data.viralTweets.length > 0) SizedBox(height: 20),
+                        if (data.viralTweets.length > 0)
+                          _buildTweetsSection(data.viralTweets, pm),
+                        if (data.viralTweets.length > 0)
+                          Container(
+                            width: double.infinity,
+                            height: 0.5,
+                            color: Colors.grey,
+                          ),
+                        if (data.viralTweets.length > 0) SizedBox(height: 20),
                         _buildTredsSection(data, 30),
                       ],
               ),

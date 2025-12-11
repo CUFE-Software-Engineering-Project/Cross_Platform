@@ -45,8 +45,6 @@ class _ProfileScreenBodyState extends ConsumerState<ProfileScreenBody> {
     return RefreshIndicator(
       onRefresh: () async {
         // ignore: unused_result
-        final c = ref.read(myUserNameProvider);
-        print(c + "8888888889999999");
         ref.refresh(profileDataProvider(widget.profileData.username));
       },
       child: CustomScrollView(

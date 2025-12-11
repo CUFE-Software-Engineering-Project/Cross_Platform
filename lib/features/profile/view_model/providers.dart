@@ -336,3 +336,19 @@ final profileTrendsProvider = FutureProvider<Either<Failure, List<TrendModel>>>(
     return repo.getAvailableTrends();
   },
 );
+
+final WhoToFollowProvider = FutureProvider<Either<Failure, List<UserModel>>>((
+  ref,
+) async {
+  final repo = ref.watch(profileRepoProvider);
+  return repo.getWhoToFollow();
+});
+
+final hashtagTweetsProvider =
+    FutureProvider.family<
+      Either<Failure, Map<String, dynamic>>,
+      Map<String, dynamic>
+    >((ref, mapo) {
+      final repo = ref.watch(profileRepoProvider);
+      return repo.getTweetsForHashtag(mapo["hashtagId"] ?? "", mapo["cursor"]);
+    });

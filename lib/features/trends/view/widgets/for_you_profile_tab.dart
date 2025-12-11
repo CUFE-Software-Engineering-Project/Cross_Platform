@@ -113,10 +113,19 @@ class ForYouProfileTab extends ConsumerWidget {
       physics: NeverScrollableScrollPhysics(),
       shrinkWrap: true,
       itemBuilder: (context, index) {
-        return TrendTile(
-          trend: trends[index],
-          trendCategory: "ُEgypt",
-          showRank: false,
+        return GestureDetector(
+          onTap: () {
+            print("tab++***************---");
+            context.push(
+              "/hashtagTweetsScreen",
+              extra: [trends[index], this.pm],
+            );
+          },
+          child: TrendTile(
+            trend: trends[index],
+            trendCategory: "ُEgypt",
+            showRank: false,
+          ),
         );
       },
       itemCount: trends.length <= 6 ? trends.length : 6,
@@ -153,6 +162,7 @@ class ForYouProfileTab extends ConsumerWidget {
                 onTap: () {
                   // TODO: go to who to follow screen
                   // context.push();
+                  context.push("/whoToFollowScreen");
                 },
                 child: Text("Show more", style: TextStyle(color: Colors.blue)),
               ),

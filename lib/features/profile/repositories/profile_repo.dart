@@ -97,4 +97,13 @@ abstract class ProfileRepo {
   Future<Either<Failure, ForYouResponseModel>> getForYouTrends();
   Future<Either<Failure, TrendCategory>> getTrenCategory(String catName);
   Future<Either<Failure, List<TrendModel>>> getAvailableTrends();
+  Future<Either<Failure, List<UserModel>>> getWhoToFollow();
+  Future<Either<Failure, Map<String, dynamic>>> getTweetsForHashtag(
+    String hashtagId,
+    String? cursor,
+  );
+  Future<Either<Failure, Map<String, dynamic>>> getTweetsForExploreCategory(
+    String hashtagId,
+    String? cursor,
+  );
 }
