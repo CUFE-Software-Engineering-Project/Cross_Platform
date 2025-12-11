@@ -321,18 +321,24 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
     return Container(
       padding: const EdgeInsets.all(10),
       alignment: Alignment.centerRight,
-      child: SizedBox(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minWidth: 90, minHeight: 45),
         child: ElevatedButton(
           onPressed: (_isFormValid && !isLoading) ? _handleNext : null,
           style: ElevatedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(25),
+            ),
             backgroundColor: Palette.textWhite,
             disabledBackgroundColor: Palette.textWhite.withOpacity(0.5),
             foregroundColor: Palette.background,
             disabledForegroundColor: Palette.border,
-            minimumSize: const Size(0, 30),
           ),
           child: const Text(
             'Next',
+            maxLines: 1,
+            softWrap: false,
             style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
           ),
         ),

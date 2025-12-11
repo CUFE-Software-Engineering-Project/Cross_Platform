@@ -100,7 +100,7 @@ class _LoginPasswordScreenState extends ConsumerState<LoginPasswordScreen> {
 
       if (next.type == AuthStateType.authenticated) {
         context.goNamed(RouteConstants.homescreen);
-        authViewModel.resetState();
+        // authViewModel.resetState();
       } else if (next.type == AuthStateType.error) {
         _showErrorToast(next.message ?? 'Login failed. Please try again.');
         authViewModel.resetState();

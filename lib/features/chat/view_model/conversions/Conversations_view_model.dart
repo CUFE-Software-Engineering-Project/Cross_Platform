@@ -15,17 +15,25 @@ part 'Conversations_view_model.g.dart';
 
 @Riverpod(keepAlive: true)
 class ConversationsViewModel extends _$ConversationsViewModel {
-  late final ChatRemoteRepository _chatRemoteRepository;
-  late final ChatLocalRepository _chatLocalRepository;
-  late final SocketRepository _socketRepository;
+  // late final ChatRemoteRepository _chatRemoteRepository;
+  // late final ChatLocalRepository _chatLocalRepository;
+  // late final SocketRepository _socketRepository;
   UserModel? _currentUser;
   bool _listening = false;
   StreamSubscription? _messageSub;
+  ChatRemoteRepository get _chatRemoteRepository =>
+      ref.watch(chatRemoteRepositoryProvider);
+
+  ChatLocalRepository get _chatLocalRepository =>
+      ref.watch(chatLocalRepositoryProvider);
+
+  SocketRepository get _socketRepository => ref.watch(socketRepositoryProvider);
+
   @override
   AsyncValue<List<ConversationModel>> build() {
-    _chatRemoteRepository = ref.watch(chatRemoteRepositoryProvider);
-    _chatLocalRepository = ref.watch(chatLocalRepositoryProvider);
-    _socketRepository = ref.watch(socketRepositoryProvider);
+    // _chatRemoteRepository = ref.watch(chatRemoteRepositoryProvider);
+    // _chatLocalRepository = ref.watch(chatLocalRepositoryProvider);
+    // _socketRepository = ref.watch(socketRepositoryProvider);
     _currentUser = ref.watch(currentUserProvider);
     if (!_listening) {
       _listenToNewMessages();
@@ -294,7 +302,13 @@ class ConversationsViewModel extends _$ConversationsViewModel {
       );
     } catch (e, st) {
       print("Conversation Load Failed: $e");
-      state = AsyncValue.error(e, st);
+      final cached = _chatLocalRepository.getAllConversations();
+      if (cached.isNotEmpty) {
+        print("Loading cached conversations because server failed");
+        state = AsyncValue.data([...cached]);
+      } else {
+        state = AsyncValue.error(e, st);
+      }
     }
   }
 

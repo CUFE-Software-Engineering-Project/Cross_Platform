@@ -121,7 +121,7 @@ class AuthRemoteRepository {
     }
   }
 
-  //--------------------------------------------------get categories------------------------------------------------------------//
+  //-------------------------------------------------- categories------------------------------------------------------------//
   Future<Either<AppFailure, List<ExploreCategory>>> getCategories() async {
     try {
       final response = await _dio.get("api/explore/categories");
@@ -147,6 +147,18 @@ class AuthRemoteRepository {
       return right(response.data['message'] ?? "Interests saved");
     } catch (e) {
       return left(AppFailure(message: "Failed to save interests"));
+    }
+  }
+
+  Future<Either<AppFailure, List<String>>> getUserInterests() async {
+    try {
+      final response = await _dio.get("api/explore/preferred-categories");
+      final list = response.data['preferredCategories'] as List;
+      final names = list.map((e) => e['name'].toString()).toList();
+
+      return right(names);
+    } catch (e) {
+      return left(AppFailure(message: "Failed to load interests"));
     }
   }
 
@@ -324,6 +336,7 @@ class AuthRemoteRepository {
       );
       final newUsername = response.data['user']['username'] as String;
       final updatedUser = currentUser.copyWith(username: newUsername);
+      print("asermohamed after update username${response.data['tokens']}");
       final newtokens = TokensModel.fromMap_update(response.data['tokens']);
       return right((updatedUser, newtokens));
     } on DioException {

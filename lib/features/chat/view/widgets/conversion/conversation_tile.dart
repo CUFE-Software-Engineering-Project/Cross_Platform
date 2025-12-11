@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
 import 'package:lite_x/core/theme/palette.dart';
+import 'package:lite_x/features/profile/models/shared.dart';
+import 'package:lite_x/features/profile/view/screens/profile_screen.dart';
 
 class ConversationTile extends StatelessWidget {
   final String recipientId;
@@ -31,6 +33,15 @@ class ConversationTile extends StatelessWidget {
     this.recipientFollowersCount = 0,
     this.onLongPress,
   });
+  void _openProfile(BuildContext context, String username) {
+    final normalized = username.startsWith('@')
+        ? username.substring(1)
+        : username;
+
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => ProfilePage(username: normalized)),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -57,19 +68,15 @@ class ConversationTile extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            CircleAvatar(
-              radius: 24,
-              backgroundImage: avatarUrl != null
-                  ? NetworkImage(avatarUrl!)
-                  : null,
-              backgroundColor: Palette.cardBackground,
-              child: avatarUrl == null
-                  ? const Icon(
-                      Icons.person_3_rounded,
-                      color: Palette.textSecondary,
-                    )
-                  : null,
+            GestureDetector(
+              onTap: () {
+                if (username.isNotEmpty) {
+                  _openProfile(context, username);
+                }
+              },
+              child: BuildSmallProfileImage(radius: 24, username: username),
             ),
+
             const SizedBox(width: 12),
 
             Expanded(

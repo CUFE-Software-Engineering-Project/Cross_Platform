@@ -195,29 +195,25 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
       child: ValueListenableBuilder<bool>(
         valueListenable: _isFormValid,
         builder: (context, isValid, child) {
-          return SizedBox(
-            width: 100,
-            height: 45,
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              child: ElevatedButton(
-                onPressed: (isValid && !isLoading) ? _handleNext : null,
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 8,
-                  ),
-                  backgroundColor: Palette.textWhite,
-                  disabledBackgroundColor: Palette.textWhite.withOpacity(0.6),
-                  foregroundColor: Palette.background,
-                  disabledForegroundColor: Palette.border,
+          return ConstrainedBox(
+            constraints: const BoxConstraints(minWidth: 90, minHeight: 45),
+            child: ElevatedButton(
+              onPressed: (isValid && !isLoading) ? _handleNext : null,
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 8,
                 ),
-                child: const Text(
-                  'Next',
-                  softWrap: false,
-                  overflow: TextOverflow.clip,
-                  style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
-                ),
+                backgroundColor: Palette.textWhite,
+                disabledBackgroundColor: Palette.textWhite.withOpacity(0.6),
+                foregroundColor: Palette.background,
+                disabledForegroundColor: Palette.border,
+              ),
+              child: const Text(
+                'Next',
+                softWrap: false,
+                overflow: TextOverflow.clip,
+                style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
               ),
             ),
           );

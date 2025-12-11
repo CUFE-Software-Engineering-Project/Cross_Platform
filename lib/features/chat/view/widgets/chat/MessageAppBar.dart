@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:lite_x/core/theme/palette.dart';
+import 'package:lite_x/features/profile/models/shared.dart';
 
 class MessageAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
-  final String? profileImage;
   final String subtitle;
   final VoidCallback? onProfileTap;
 
@@ -11,7 +11,6 @@ class MessageAppBar extends StatelessWidget implements PreferredSizeWidget {
     super.key,
     required this.title,
     required this.subtitle,
-    this.profileImage,
     this.onProfileTap,
   });
 
@@ -31,15 +30,7 @@ class MessageAppBar extends StatelessWidget implements PreferredSizeWidget {
             const SizedBox(width: 12),
             Hero(
               tag: "message_app_bar",
-              child: CircleAvatar(
-                radius: 18,
-                backgroundImage: profileImage != null
-                    ? NetworkImage(profileImage!)
-                    : null,
-                child: profileImage == null
-                    ? const Icon(Icons.person, color: Colors.white, size: 20)
-                    : null,
-              ),
+              child: BuildSmallProfileImage(radius: 18, username: subtitle),
             ),
             const SizedBox(width: 12),
             Expanded(

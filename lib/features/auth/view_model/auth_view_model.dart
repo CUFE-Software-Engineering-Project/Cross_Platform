@@ -229,6 +229,7 @@ class AuthViewModel extends _$AuthViewModel {
   //-------------------------------------------------Login--------------------------------------------------------------------------------------//
   Future<void> login({required String email, required String password}) async {
     state = AuthState.loading();
+
     final result = await _authRemoteRepository.login(
       email: email,
       password: password,
@@ -243,6 +244,20 @@ class AuthViewModel extends _$AuthViewModel {
         _authLocalRepository.saveTokens(tokens),
       ]);
       ref.read(currentUserProvider.notifier).adduser(user);
+      final interestsResult = await _authRemoteRepository.getUserInterests();
+
+      interestsResult.fold(
+        (err) {
+          print("Failed to load interests");
+        },
+        (interestsList) async {
+          final interestsSet = interestsList.toSet();
+          final updatedUser = user.copyWith(interests: interestsSet);
+          ref.read(currentUserProvider.notifier).adduser(updatedUser);
+          await _authLocalRepository.saveUser(updatedUser);
+        },
+      );
+
       state = AuthState.authenticated('Login successful');
       if (!Platform.environment.containsKey('FLUTTER_TEST')) {
         _registerFcmToken();

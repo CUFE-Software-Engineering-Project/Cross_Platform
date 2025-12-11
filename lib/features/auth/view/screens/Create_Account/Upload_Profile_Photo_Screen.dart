@@ -83,7 +83,6 @@ class _UploadProfilePhotoScreenState
 
   Future<void> _handleNext() async {
     if (selectedImage != null) {
-      // Upload the profile photo
       await ref
           .read(authViewModelProvider.notifier)
           .uploadProfilePhoto(selectedImage!);
@@ -260,9 +259,10 @@ class _UploadProfilePhotoScreenState
     return Padding(
       padding: const EdgeInsets.all(10),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          FittedBox(
-            fit: BoxFit.scaleDown,
+          ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 40, minWidth: 90),
             child: OutlinedButton(
               onPressed: _handleSkip,
               style: OutlinedButton.styleFrom(
@@ -278,48 +278,37 @@ class _UploadProfilePhotoScreenState
               ),
               child: const Text(
                 'Skip for now',
+                maxLines: 1,
                 softWrap: false,
-                overflow: TextOverflow.fade,
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
             ),
           ),
-
-          const Spacer(),
           ValueListenableBuilder<bool>(
             valueListenable: _isFormValid,
             builder: (context, isValid, child) {
-              return SizedBox(
-                width: 100,
-                height: 45,
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: ElevatedButton(
-                    onPressed: isValid ? _handleNext : null,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Palette.textWhite,
-                      disabledBackgroundColor: Palette.textWhite.withOpacity(
-                        0.6,
-                      ),
-                      foregroundColor: Palette.background,
-                      disabledForegroundColor: Palette.border,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 10,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(25),
-                      ),
+              return ConstrainedBox(
+                constraints: const BoxConstraints(minWidth: 90, minHeight: 40),
+                child: ElevatedButton(
+                  onPressed: isValid ? _handleNext : null,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Palette.textWhite,
+                    disabledBackgroundColor: Palette.textWhite.withOpacity(0.6),
+                    foregroundColor: Palette.background,
+                    disabledForegroundColor: Palette.border,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 10,
                     ),
-                    child: const Text(
-                      'Next',
-                      softWrap: false,
-                      overflow: TextOverflow.fade,
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(25),
                     ),
+                  ),
+                  child: const Text(
+                    'Next',
+                    maxLines: 1,
+                    softWrap: false,
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                 ),
               );

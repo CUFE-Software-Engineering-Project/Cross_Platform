@@ -222,7 +222,8 @@ class _InterestsState extends ConsumerState<Interests> {
     return Align(
       alignment: Alignment.bottomCenter,
       child: Container(
-        padding: const EdgeInsets.all(10),
+        width: double.infinity,
+        padding: const EdgeInsets.fromLTRB(16, 10, 16, 30),
         color: Palette.background,
         child: SizedBox(
           width: double.infinity,
@@ -238,12 +239,21 @@ class _InterestsState extends ConsumerState<Interests> {
                 borderRadius: BorderRadius.circular(25),
               ),
             ),
-            child: const Text(
-              'Next',
-              softWrap: false,
-              overflow: TextOverflow.fade,
-              style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
-            ),
+            child: isLoading
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.5,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        Palette.background,
+                      ),
+                    ),
+                  )
+                : const Text(
+                    'Next',
+                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                  ),
           ),
         ),
       ),

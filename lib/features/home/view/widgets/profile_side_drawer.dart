@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lite_x/core/models/usermodel.dart';
 import 'package:lite_x/core/providers/current_user_provider.dart';
+import 'package:lite_x/core/providers/unseenChatsCountProvider.dart';
+import 'package:lite_x/core/view/screen/app_shell.dart';
+import 'package:lite_x/features/chat/repositories/socket_repository.dart';
 import 'package:lite_x/features/home/providers/user_profile_provider.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
 import 'package:lite_x/features/profile/models/shared.dart';
@@ -78,10 +81,12 @@ class ProfileSideDrawer extends ConsumerWidget {
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    Text(
-                      '@${profileData?.username ?? user?.username ?? 'username'}',
-                      style: TextStyle(color: Colors.grey[500], fontSize: 14),
-                      overflow: TextOverflow.ellipsis,
+                    Expanded(
+                      child: Text(
+                        '@${profileData?.username ?? user?.username ?? 'username'}',
+                        style: TextStyle(color: Colors.grey[500], fontSize: 14),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                     if (profileData?.isVerified == true) ...[
                       const SizedBox(width: 4),
@@ -133,9 +138,13 @@ class ProfileSideDrawer extends ConsumerWidget {
               ),
               _DrawerItem(
                 icon: Icons.chat_bubble_outline,
-                trailing: _buildBadge('Beta'),
                 label: 'Chat',
-                onTap: () {},
+                onTap: () {
+                  Navigator.pop(context);
+                  ref.read(unseenChatsCountProvider.notifier).state = 0;
+                  ref.read(socketRepositoryProvider).sendOpenMessageTab();
+                  ref.read(shellNavigationProvider.notifier).state = 4;
+                },
               ),
               _DrawerItem(
                 icon: Icons.bookmark_border,
