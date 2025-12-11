@@ -52,6 +52,7 @@ import 'package:lite_x/features/settings/screens/UserName_Screen.dart';
 import 'package:lite_x/features/settings/screens/YourAccount_Screen.dart';
 import 'package:lite_x/features/settings/screens/AccountInformation_Screen.dart';
 import 'package:lite_x/features/settings/screens/ChangePassword_Screen.dart';
+import 'package:lite_x/features/notifications/view/screens/Notification_Screen.dart';
 
 class Approuter {
   static final GoRouter router = GoRouter(
@@ -363,7 +364,7 @@ class Approuter {
         name: RouteConstants.SearchScreen,
         path: "/searchScreen",
         pageBuilder: (context, state) => CustomTransitionPage(
-          child: SearchScreen(),
+          child: SearchScreen(extra: state.extra as Map<String, dynamic>?),
           transitionsBuilder: _slideRightTransitionBuilder,
         ),
       ),
@@ -436,6 +437,14 @@ class Approuter {
           child: TweetDetailScreen(
             tweetId: state.pathParameters['tweetId'] as String,
           ),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
+        name: RouteConstants.notifications,
+        path: "/notifications",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: const NotificationScreen(),
           transitionsBuilder: _slideRightTransitionBuilder,
         ),
       ),

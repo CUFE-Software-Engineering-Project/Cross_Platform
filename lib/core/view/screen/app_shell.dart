@@ -6,6 +6,7 @@ import 'package:lite_x/features/chat/view/screens/conversations_screen.dart';
 import 'package:lite_x/features/home/view/screens/home_screen.dart';
 import 'package:lite_x/features/profile/view/screens/explore_profile_screen.dart';
 import 'package:lite_x/features/shared/widgets/bottom_navigation.dart';
+import 'package:lite_x/features/notifications/view/screens/Notification_Screen.dart';
 
 // Provider for managing which tab is selected
 final shellNavigationProvider = StateProvider<int>((ref) => 0);
@@ -30,7 +31,7 @@ class AppShell extends ConsumerWidget {
           // _buildSearchScreen(), // Index 1 - Search
           ExploreProfileScreen(),
           _buildCommunitiesScreen(), // Index 2 - Communities
-          _buildNotificationsScreen(), // Index 3 - Notifications
+          NotificationScreen(), // Index 3 - Notifications
           ConversationsScreen(),
 
         ],

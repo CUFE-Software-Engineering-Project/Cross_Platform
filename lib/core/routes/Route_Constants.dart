@@ -46,7 +46,7 @@ class RouteConstants {
       "VerifyChangeEmailProfileScreen";
 
   // search feature
-  static String SearchScreen = "SearchScreen";
+  static String SearchScreen = "searchScreen";
 
   // explore feature
   static String ExploreScreen = "ExploreScreen";
@@ -58,4 +58,5 @@ class RouteConstants {
 
 
   static String TweetDetailsScreen = "TweetDetailsScreen";
+  static String notifications = "notifications";
 }
