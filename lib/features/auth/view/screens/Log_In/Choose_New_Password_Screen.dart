@@ -78,8 +78,8 @@ class _ChooseNewPasswordScreenState
     if (value == null || value.isEmpty) {
       return 'Password is required';
     }
-    if (value.length < 8) {
-      return 'Password must be at least 8 characters';
+    if (value.length < 9) {
+      return 'Password must be at least 9 characters';
     }
     if (value != _newpasswordController.text) {
       return 'Passwords do not match';
@@ -309,18 +309,25 @@ class _ChooseNewPasswordScreenState
         builder: (context, isValid, child) {
           return SizedBox(
             width: 200,
-            child: ElevatedButton(
-              onPressed: (isValid && !isLoading) ? _handleChangePassword : null,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Palette.textWhite,
-                disabledBackgroundColor: Palette.textWhite.withOpacity(0.5),
-                foregroundColor: Palette.background,
-                disabledForegroundColor: Palette.border,
-                minimumSize: const Size(0, 40),
-              ),
-              child: const Text(
-                'Change password',
-                style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+            height: 45,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: ElevatedButton(
+                onPressed: (isValid && !isLoading)
+                    ? _handleChangePassword
+                    : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Palette.textWhite,
+                  disabledBackgroundColor: Palette.textWhite.withOpacity(0.6),
+                  foregroundColor: Palette.background,
+                  disabledForegroundColor: Palette.border,
+                ),
+                child: const Text(
+                  'Change password',
+                  softWrap: false,
+                  overflow: TextOverflow.clip,
+                  style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
+                ),
               ),
             ),
           );

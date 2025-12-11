@@ -276,48 +276,63 @@ class _UsernameScreenState extends ConsumerState<UsernameScreen> {
 
   Widget _buildBottomButtons() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(10),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          OutlinedButton(
-            onPressed: _handleSkip,
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Palette.textWhite,
-              side: const BorderSide(color: Palette.textWhite, width: 1),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(25),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: OutlinedButton(
+              onPressed: _handleSkip,
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Palette.textWhite,
+                side: const BorderSide(color: Palette.textWhite, width: 1),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 10,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(25),
+                ),
+              ),
+              child: const Text(
+                'Skip for now',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
             ),
-            child: const Text(
-              'Skip for now',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-            ),
           ),
+          const Spacer(),
           ValueListenableBuilder<bool>(
             valueListenable: _isFormValid,
             builder: (context, isValid, child) {
               return SizedBox(
-                width: 90,
-                child: ElevatedButton(
-                  onPressed: isValid ? _handleNext : null,
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 5,
+                width: 100,
+                height: 45,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: ElevatedButton(
+                    onPressed: isValid ? _handleNext : null,
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 10,
+                      ),
+                      backgroundColor: Palette.textWhite,
+                      disabledBackgroundColor: Palette.textWhite.withOpacity(
+                        0.6,
+                      ),
+                      foregroundColor: Palette.background,
+                      disabledForegroundColor: Palette.border,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(25),
+                      ),
                     ),
-                    backgroundColor: Palette.textWhite,
-                    disabledBackgroundColor: Palette.textWhite.withOpacity(0.6),
-                    foregroundColor: Palette.background,
-                    disabledForegroundColor: Palette.border,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(25),
+                    child: const Text(
+                      'Next',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                  child: const Text(
-                    'Next',
-                    style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
                   ),
                 ),
               );

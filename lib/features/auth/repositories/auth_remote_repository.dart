@@ -11,6 +11,7 @@ import 'package:lite_x/core/models/TokensModel.dart';
 import 'package:lite_x/core/models/usermodel.dart';
 import 'package:lite_x/core/providers/dio_interceptor.dart';
 import 'package:lite_x/core/services/deep_link_service.dart';
+import 'package:lite_x/features/auth/models/ExploreCategory.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:dio/dio.dart';
@@ -27,11 +28,11 @@ class AuthRemoteRepository {
   final Dio _dio;
   AuthRemoteRepository({required Dio dio}) : _dio = dio;
   //---------------------------------------------------github------------------------------------------------------//
+
   Future<Either<AppFailure, (UserModel, TokensModel)>> loginWithGithub() async {
     try {
       final baseUrl = dotenv.env["API_URL"]!;
       final authUrl = "${baseUrl}oauth2/authorize/github";
-
       final opened = await launchUrl(
         Uri.parse(authUrl),
         mode: LaunchMode.externalApplication,
@@ -40,7 +41,6 @@ class AuthRemoteRepository {
       if (!opened) {
         return left(AppFailure(message: "Could not open browser"));
       }
-
       final uri = await DeepLinkService.waitForLink();
 
       if (uri == null) {
@@ -56,6 +56,7 @@ class AuthRemoteRepository {
       }
 
       final decodedUser = Uri.decodeComponent(userRaw);
+
       final user = UserModel.fromJson(decodedUser);
 
       final tokens = TokensModel(
@@ -70,11 +71,12 @@ class AuthRemoteRepository {
       return left(AppFailure(message: e.toString()));
     }
   }
+
   //--------------------------------------------------------google-------------------------------------------------------------------//
 
   final _googleSignIn = signIn.GoogleSignIn(
     serverClientId:
-        "https://1096363232606-2fducjadk56bt4nsreqkj2jna7oiomga.apps.googleusercontent.com",
+        "1096363232606-2fducjadk56bt4nsreqkj2jna7oiomga.apps.googleusercontent.com",
     scopes: ['email', 'https://www.googleapis.com/auth/userinfo.profile'],
   );
 
@@ -116,6 +118,35 @@ class AuthRemoteRepository {
       return right((user, tokens));
     } catch (e) {
       return left(AppFailure(message: e.toString()));
+    }
+  }
+
+  //--------------------------------------------------get categories------------------------------------------------------------//
+  Future<Either<AppFailure, List<ExploreCategory>>> getCategories() async {
+    try {
+      final response = await _dio.get("api/explore/categories");
+
+      final List data = response.data['data'];
+      final categories = data.map((e) => ExploreCategory.fromMap(e)).toList();
+
+      return right(categories);
+    } catch (e) {
+      return left(AppFailure(message: "Failed to load categories"));
+    }
+  }
+
+  Future<Either<AppFailure, String>> saveUserInterests(
+    Set<String> categories,
+  ) async {
+    try {
+      final response = await _dio.post(
+        "api/explore/preferred-categories",
+        data: {"categories": categories.toList()},
+      );
+
+      return right(response.data['message'] ?? "Interests saved");
+    } catch (e) {
+      return left(AppFailure(message: "Failed to save interests"));
     }
   }
 
@@ -386,6 +417,7 @@ class AuthRemoteRepository {
         'api/auth/getUser',
         data: {'email': email},
       );
+      print("asermohamed${response.data['exists']}");
       return right(response.data['exists'] ?? false);
     } on DioException {
       return left(AppFailure(message: 'Email check failed'));

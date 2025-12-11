@@ -205,6 +205,8 @@ class AuthInterceptor extends Interceptor {
       );
 
       await authLocalRepository.saveTokens(newTokens);
+      await Future.delayed(const Duration(milliseconds: 5000)); //
+
       print("AuthInterceptor: Token refreshed successfully");
       return true;
     } on DioException catch (e) {

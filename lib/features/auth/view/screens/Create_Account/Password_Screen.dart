@@ -177,34 +177,40 @@ class _PasswordScreenState extends ConsumerState<PasswordScreen> {
         valueListenable: _isFormValid,
         builder: (context, isValid, child) {
           return SizedBox(
-            // width: 120,
-            child: ElevatedButton(
-              onPressed: (isValid && !isLoading) ? _handleSignUp : null,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Palette.textWhite,
-                disabledBackgroundColor: Palette.textWhite.withOpacity(0.5),
-                foregroundColor: Palette.background,
-                disabledForegroundColor: Palette.border,
-                minimumSize: const Size(0, 50),
-              ),
-              child: isLoading
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          Palette.background,
+            width: 100,
+            height: 45,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: ElevatedButton(
+                onPressed: (isValid && !isLoading) ? _handleSignUp : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Palette.textWhite,
+                  disabledBackgroundColor: Palette.textWhite.withOpacity(0.5),
+                  foregroundColor: Palette.background,
+                  disabledForegroundColor: Palette.border,
+                  minimumSize: const Size(0, 50),
+                ),
+                child: isLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Palette.background,
+                          ),
+                        ),
+                      )
+                    : const Text(
+                        'Sign up',
+                        softWrap: false,
+                        overflow: TextOverflow.clip,
+                        style: TextStyle(
+                          fontSize: 19,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                    )
-                  : const Text(
-                      'Sign up',
-                      style: TextStyle(
-                        fontSize: 19,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+              ),
             ),
           );
         },

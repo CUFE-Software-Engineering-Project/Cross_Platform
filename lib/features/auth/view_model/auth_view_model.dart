@@ -1,8 +1,8 @@
 import 'dart:io';
-
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:lite_x/core/classes/PickedImage.dart';
 import 'package:lite_x/core/models/usermodel.dart';
+import 'package:lite_x/features/auth/models/ExploreCategory.dart';
 import 'package:lite_x/features/auth/repositories/auth_local_repository.dart';
 import 'package:lite_x/features/auth/repositories/auth_remote_repository.dart';
 import 'package:lite_x/features/auth/view_model/auth_state.dart';
@@ -149,7 +149,17 @@ class AuthViewModel extends _$AuthViewModel {
     );
   }
 
-  Future<void> saveInterests(Set<String> interests) async {
+  //--------------------------------------------Get Categories---------------------------------------------------------//
+  Future<List<ExploreCategory>> getCategories() async {
+    final result = await _authRemoteRepository.getCategories();
+    return result.fold((failure) {
+      print("Failed to load categories: ${failure.message}");
+      return [];
+    }, (categories) => categories);
+  }
+
+  //--------------------------------------------Save Interests---------------------------------------------------------//
+  Future<void> saveInterests(Set<String> categoriesnames) async {
     state = AuthState.loading();
     try {
       final currentUser = ref.read(currentUserProvider);
@@ -157,10 +167,22 @@ class AuthViewModel extends _$AuthViewModel {
         state = AuthState.error("User not found!");
         return;
       }
-      final updatedUser = currentUser.copyWith(interests: interests);
-      await _authLocalRepository.saveUser(updatedUser);
-      ref.read(currentUserProvider.notifier).adduser(updatedUser);
-      state = AuthState.success("Interests saved successfully");
+
+      final result = await _authRemoteRepository.saveUserInterests(
+        categoriesnames,
+      );
+
+      await result.fold(
+        (failure) async {
+          state = AuthState.error(failure.message);
+        },
+        (message) async {
+          final updatedUser = currentUser.copyWith(interests: categoriesnames);
+          await _authLocalRepository.saveUser(updatedUser);
+          ref.read(currentUserProvider.notifier).adduser(updatedUser);
+          state = AuthState.success(message);
+        },
+      );
     } catch (e) {
       state = AuthState.error(e.toString());
     }
@@ -559,8 +581,8 @@ class AuthViewModel extends _$AuthViewModel {
 
         ref.read(currentUserProvider.notifier).adduser(user);
         state = AuthState.authenticated('Social login successful');
-        _registerFcmToken();
-        _listenForFcmTokenRefresh();
+        _registerFcmToken(); //
+        _listenForFcmTokenRefresh(); //
       },
     );
   }

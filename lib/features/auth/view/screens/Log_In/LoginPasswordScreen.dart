@@ -193,49 +193,65 @@ class _LoginPasswordScreenState extends ConsumerState<LoginPasswordScreen> {
 
   Widget _buildBottomButtons(bool isLoading) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(10),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          OutlinedButton(
-            onPressed: isLoading ? null : _handleForgotPassword,
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Palette.textWhite,
-              side: const BorderSide(color: Palette.textWhite, width: 1),
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(25),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: OutlinedButton(
+              onPressed: isLoading ? null : _handleForgotPassword,
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Palette.textWhite,
+                side: const BorderSide(color: Palette.textWhite, width: 1),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 10,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(25),
+                ),
+              ),
+              child: const Text(
+                'Forgot password?',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
             ),
-            child: const Text(
-              'Forgot password?',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-            ),
           ),
+          const Spacer(),
           ValueListenableBuilder<bool>(
             valueListenable: _isFormValid,
             builder: (context, isValid, child) {
               return SizedBox(
-                width: 80,
-                child: ElevatedButton(
-                  onPressed: (isValid && !isLoading) ? _handleLogin : null,
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 5,
+                width: 100,
+                height: 45,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: ElevatedButton(
+                    onPressed: (isValid && !isLoading) ? _handleLogin : null,
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 10,
+                      ),
+                      backgroundColor: Palette.textWhite,
+                      disabledBackgroundColor: Palette.textWhite.withOpacity(
+                        0.6,
+                      ),
+                      foregroundColor: Palette.background,
+                      disabledForegroundColor: Palette.border,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(25),
+                      ),
                     ),
-                    backgroundColor: Palette.textWhite,
-                    disabledBackgroundColor: Palette.textWhite.withOpacity(0.6),
-                    foregroundColor: Palette.background,
-                    disabledForegroundColor: Palette.border,
-                    minimumSize: const Size(0, 38),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(25),
+                    child: const Text(
+                      'Log in',
+                      softWrap: false,
+                      overflow: TextOverflow.clip,
+                      style: TextStyle(
+                        fontSize: 19,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                  child: const Text(
-                    'Log in',
-                    style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
                   ),
                 ),
               );

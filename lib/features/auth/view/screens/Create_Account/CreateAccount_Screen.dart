@@ -329,7 +329,7 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
             disabledBackgroundColor: Palette.textWhite.withOpacity(0.5),
             foregroundColor: Palette.background,
             disabledForegroundColor: Palette.border,
-            minimumSize: const Size(0, 50),
+            minimumSize: const Size(0, 30),
           ),
           child: const Text(
             'Next',

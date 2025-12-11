@@ -248,46 +248,59 @@ class _ConfirmationCodeLocScreenState
 
   Widget _buildBottomButtons(bool isLoading) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(10),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          OutlinedButton(
-            onPressed: isLoading ? null : _handleCancel,
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Palette.textWhite,
-              side: const BorderSide(color: Palette.textWhite, width: 1),
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(25),
-              ),
-            ),
-            child: const Text(
-              'Cancel',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-            ),
-          ),
-          SizedBox(
-            width: 80,
-            child: ElevatedButton(
-              onPressed: isLoading ? null : _handleNext,
-              style: ElevatedButton.styleFrom(
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: OutlinedButton(
+              onPressed: isLoading ? null : _handleCancel,
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Palette.textWhite,
+                side: const BorderSide(color: Palette.textWhite, width: 1),
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 5,
+                  horizontal: 20,
+                  vertical: 10,
                 ),
-                backgroundColor: Palette.textWhite,
-                disabledBackgroundColor: Palette.textWhite.withOpacity(0.6),
-                foregroundColor: Palette.background,
-                disabledForegroundColor: Palette.border,
-                minimumSize: const Size(0, 38),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(25),
                 ),
               ),
               child: const Text(
-                'Next',
-                style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
+                'Cancel',
+                softWrap: false,
+                overflow: TextOverflow.fade,
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              ),
+            ),
+          ),
+          const Spacer(),
+          SizedBox(
+            width: 100,
+            height: 45,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: ElevatedButton(
+                onPressed: isLoading ? null : _handleNext,
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 10,
+                  ),
+                  backgroundColor: Palette.textWhite,
+                  disabledBackgroundColor: Palette.textWhite.withOpacity(0.6),
+                  foregroundColor: Palette.background,
+                  disabledForegroundColor: Palette.border,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(25),
+                  ),
+                ),
+                child: const Text(
+                  'Next',
+                  softWrap: false,
+                  overflow: TextOverflow.fade,
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
               ),
             ),
           ),

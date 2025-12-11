@@ -191,25 +191,33 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
   Widget _buildNextButton(bool isLoading) {
     return Container(
       padding: EdgeInsets.all(10),
-
       alignment: Alignment.centerRight,
       child: ValueListenableBuilder<bool>(
         valueListenable: _isFormValid,
         builder: (context, isValid, child) {
           return SizedBox(
-            width: 90,
-            child: ElevatedButton(
-              onPressed: (isValid && !isLoading) ? _handleNext : null,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Palette.textWhite,
-                disabledBackgroundColor: Palette.textWhite.withOpacity(0.5),
-                foregroundColor: Palette.background,
-                disabledForegroundColor: Palette.border,
-                minimumSize: const Size(0, 40),
-              ),
-              child: const Text(
-                'Next',
-                style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+            width: 100,
+            height: 45,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: ElevatedButton(
+                onPressed: (isValid && !isLoading) ? _handleNext : null,
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 8,
+                  ),
+                  backgroundColor: Palette.textWhite,
+                  disabledBackgroundColor: Palette.textWhite.withOpacity(0.6),
+                  foregroundColor: Palette.background,
+                  disabledForegroundColor: Palette.border,
+                ),
+                child: const Text(
+                  'Next',
+                  softWrap: false,
+                  overflow: TextOverflow.clip,
+                  style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
+                ),
               ),
             ),
           );

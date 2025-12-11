@@ -144,7 +144,7 @@ class _ForgotpasswordScreenState extends ConsumerState<ForgotpasswordScreen> {
                               ),
                               const SizedBox(height: 12),
                               const Text(
-                                'Enter the email, phone number or username associated with your account to change your password.',
+                                'Enter the email associated with your account to change your password.',
                                 style: TextStyle(
                                   fontSize: 15,
                                   color: Palette.textSecondary,
@@ -153,8 +153,7 @@ class _ForgotpasswordScreenState extends ConsumerState<ForgotpasswordScreen> {
                               const SizedBox(height: 10),
                               CustomTextField(
                                 controller: _identifiercontroller,
-                                labelText:
-                                    'Email address, phone number or username',
+                                labelText: 'Email address',
                                 keyboardType: TextInputType.emailAddress,
                                 validator: emailValidator,
                                 onFieldSubmitted: (_) {
@@ -189,23 +188,29 @@ class _ForgotpasswordScreenState extends ConsumerState<ForgotpasswordScreen> {
         valueListenable: _isFormValid,
         builder: (context, isValid, child) {
           return SizedBox(
-            width: 80,
-            child: ElevatedButton(
-              onPressed: (isValid && !isLoading) ? _handleNext : null,
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                backgroundColor: Palette.textWhite,
-                disabledBackgroundColor: Palette.textWhite.withOpacity(0.6),
-                foregroundColor: Palette.background,
-                disabledForegroundColor: Palette.border,
-                minimumSize: const Size(0, 30),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(25),
+            width: 100,
+            height: 45,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: ElevatedButton(
+                onPressed: (isValid && !isLoading) ? _handleNext : null,
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 10,
+                  ),
+                  backgroundColor: Palette.textWhite,
+                  disabledBackgroundColor: Palette.textWhite.withOpacity(0.6),
+                  foregroundColor: Palette.background,
+                  disabledForegroundColor: Palette.border,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(25),
+                  ),
                 ),
-              ),
-              child: const Text(
-                'Next',
-                style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
+                child: const Text(
+                  'Next',
+                  style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
+                ),
               ),
             ),
           );

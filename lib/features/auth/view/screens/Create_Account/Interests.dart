@@ -7,6 +7,7 @@ import 'package:lite_x/core/view/widgets/Loader.dart';
 import 'package:lite_x/features/auth/view/widgets/buildXLogo.dart';
 import 'package:lite_x/features/auth/view_model/auth_state.dart';
 import 'package:lite_x/features/auth/view_model/auth_view_model.dart';
+import 'package:lite_x/features/auth/models/ExploreCategory.dart';
 
 class Interests extends ConsumerStatefulWidget {
   const Interests({super.key});
@@ -16,34 +17,59 @@ class Interests extends ConsumerStatefulWidget {
 }
 
 class _InterestsState extends ConsumerState<Interests> {
-  final Set<String> _selectedInterests = {};
-  final Map<String, String> _availableInterests = {
-    'Sports': 'sports',
-    'Entertainment': 'entertainment',
-    'News': 'news',
-    'Technology': 'tech',
-    'Music': 'music',
-    'Gaming': 'gaming',
-    'Fashion & Beauty': 'fashion',
-    'Food': 'food',
-    'Business & Finance': 'business',
-    'Science': 'science',
-  };
+  final Set<String> _selectedCategoryNames = {};
+  List<ExploreCategory> _categories = [];
+  bool _isLoadingCategories = true;
 
-  void _handleNext() {
-    if (_selectedInterests.isNotEmpty) {
-      ref
-          .read(authViewModelProvider.notifier)
-          .saveInterests(_selectedInterests);
+  @override
+  void initState() {
+    super.initState();
+    _loadCategories();
+  }
+
+  Future<void> _loadCategories() async {
+    setState(() {
+      _isLoadingCategories = true;
+    });
+
+    final categories = await ref
+        .read(authViewModelProvider.notifier)
+        .getCategories();
+
+    setState(() {
+      _categories = categories;
+      _isLoadingCategories = false;
+    });
+
+    if (categories.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Failed to load categories',
+              style: TextStyle(color: Colors.white),
+            ),
+            backgroundColor: Colors.black,
+          ),
+        );
+      }
     }
   }
 
-  void _toggleInterest(String interestId) {
+  void _handleNext() {
+    if (_selectedCategoryNames.isNotEmpty) {
+      ref
+          .read(authViewModelProvider.notifier)
+          .saveInterests(_selectedCategoryNames);
+    }
+  }
+
+  void _toggleInterest(String categoryName) {
     setState(() {
-      if (_selectedInterests.contains(interestId)) {
-        _selectedInterests.remove(interestId);
+      if (_selectedCategoryNames.contains(categoryName)) {
+        _selectedCategoryNames.remove(categoryName);
       } else {
-        _selectedInterests.add(interestId);
+        _selectedCategoryNames.add(categoryName);
       }
     });
   }
@@ -57,17 +83,21 @@ class _InterestsState extends ConsumerState<Interests> {
       } else if (next.type == AuthStateType.error) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(next.message ?? 'Failed to save interests'),
-            backgroundColor: Palette.textWhite,
+            content: Text(
+              next.message ?? 'Failed to save interests',
+              style: TextStyle(color: Palette.textWhite),
+            ),
+            backgroundColor: Palette.background,
           ),
         );
-        ref.read(authViewModelProvider.notifier).setAuthenticated();
+        ref.read(authViewModelProvider.notifier).setAuthenticated(); //
       }
     });
 
     final authState = ref.watch(authViewModelProvider);
     final isLoading = authState.isLoading;
-    final bool isNextEnabled = _selectedInterests.isNotEmpty;
+    final bool isNextEnabled = _selectedCategoryNames.isNotEmpty;
+
     return Scaffold(
       backgroundColor: Palette.background,
       appBar: AppBar(
@@ -81,34 +111,55 @@ class _InterestsState extends ConsumerState<Interests> {
         absorbing: isLoading,
         child: Stack(
           children: [
-            SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'What do you want to see on X ?',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                      color: Palette.textWhite,
+            if (_isLoadingCategories)
+              const Center(child: Loader())
+            else
+              SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 16,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'What do you want to see on X ?',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        color: Palette.textWhite,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    'Select topics you\'re interested in to help personalize your experience. You can change these any time.',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Palette.textSecondary,
+                    const SizedBox(height: 10),
+                    const Text(
+                      'Select topics you\'re interested in to help personalize your experience. You can change these any time.',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Palette.textSecondary,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 28),
-                  _buildInterestsWrap(),
-                  const SizedBox(height: 125),
-                ],
+                    const SizedBox(height: 28),
+                    if (_categories.isEmpty)
+                      const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(20.0),
+                          child: Text(
+                            'No categories available',
+                            style: TextStyle(
+                              color: Palette.textTertiary,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
+                      )
+                    else
+                      _buildInterestsWrap(),
+                    const SizedBox(height: 125),
+                  ],
+                ),
               ),
-            ),
-            _buildNextButton(isNextEnabled, isLoading),
+            if (!_isLoadingCategories)
+              _buildNextButton(isNextEnabled, isLoading),
             if (isLoading)
               Container(color: Colors.black, child: const Loader()),
           ],
@@ -118,29 +169,42 @@ class _InterestsState extends ConsumerState<Interests> {
   }
 
   Widget _buildInterestsWrap() {
-    return Wrap(
-      spacing: 12.0,
-      runSpacing: 12.0,
-      children: _availableInterests.entries.map((entry) {
-        final String label = entry.key;
-        final String id = entry.value;
-        final bool isSelected = _selectedInterests.contains(id);
-
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.zero,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        childAspectRatio: 5,
+        crossAxisSpacing: 10.0,
+        mainAxisSpacing: 10.0,
+      ),
+      itemCount: _categories.length,
+      itemBuilder: (context, index) {
+        final category = _categories[index];
+        final bool isSelected = _selectedCategoryNames.contains(category.name);
         return FilterChip(
-          label: Text(
-            label,
-            style: TextStyle(
-              color: isSelected ? Palette.background : Palette.textWhite,
-              fontWeight: FontWeight.bold,
+          label: SizedBox(
+            width: double.infinity,
+            child: Text(
+              category.name,
+              textAlign: TextAlign.center,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: isSelected ? Palette.background : Palette.textWhite,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
             ),
           ),
           selected: isSelected,
           onSelected: (bool selected) {
-            _toggleInterest(id);
+            _toggleInterest(category.name);
           },
           backgroundColor: Palette.cardBackground,
           selectedColor: Palette.primary,
           checkmarkColor: Palette.background,
+          showCheckmark: false,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(50),
             side: BorderSide(
@@ -148,9 +212,9 @@ class _InterestsState extends ConsumerState<Interests> {
               width: 1.5,
             ),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
         );
-      }).toList(),
+      },
     );
   }
 
@@ -158,29 +222,28 @@ class _InterestsState extends ConsumerState<Interests> {
     return Align(
       alignment: Alignment.bottomCenter,
       child: Container(
-        padding: const EdgeInsets.only(
-          bottom: 20,
-          left: 20,
-          right: 20,
-          top: 20,
-        ),
-        decoration: BoxDecoration(color: Palette.background),
-        width: double.infinity,
-        child: ElevatedButton(
-          onPressed: (isEnabled && !isLoading) ? _handleNext : null,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Palette.textWhite,
-            disabledBackgroundColor: Palette.textWhite.withOpacity(0.6),
-            foregroundColor: Palette.background,
-            disabledForegroundColor: Palette.textSecondary,
-            minimumSize: const Size(double.infinity, 50),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(25),
+        padding: const EdgeInsets.all(10),
+        color: Palette.background,
+        child: SizedBox(
+          width: double.infinity,
+          height: 50,
+          child: ElevatedButton(
+            onPressed: (isEnabled && !isLoading) ? _handleNext : null,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Palette.textWhite,
+              disabledBackgroundColor: Palette.textWhite.withOpacity(0.6),
+              foregroundColor: Palette.background,
+              disabledForegroundColor: Palette.textSecondary,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(25),
+              ),
             ),
-          ),
-          child: const Text(
-            'Next',
-            style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
+            child: const Text(
+              'Next',
+              softWrap: false,
+              overflow: TextOverflow.fade,
+              style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
+            ),
           ),
         ),
       ),
