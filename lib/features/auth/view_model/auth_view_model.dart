@@ -8,7 +8,7 @@ import 'package:lite_x/features/auth/repositories/auth_local_repository.dart';
 import 'package:lite_x/features/auth/repositories/auth_remote_repository.dart';
 import 'package:lite_x/features/auth/view_model/auth_state.dart';
 import 'package:lite_x/core/providers/current_user_provider.dart';
-import 'package:lite_x/features/chat/repositories/chat_local_repository.dart';
+// import 'package:lite_x/features/chat/repositories/chat_local_repository.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 part 'auth_view_model.g.dart';
 
@@ -16,13 +16,13 @@ part 'auth_view_model.g.dart';
 class AuthViewModel extends _$AuthViewModel {
   late AuthRemoteRepository _authRemoteRepository;
   late AuthLocalRepository _authLocalRepository;
-  late ChatLocalRepository _chatLocalRepository;
+  // late ChatLocalRepository _chatLocalRepository;
 
   @override
   AuthState build() {
     _authRemoteRepository = ref.read(authRemoteRepositoryProvider);
     _authLocalRepository = ref.read(authLocalRepositoryProvider);
-    _chatLocalRepository = ref.read(chatLocalRepositoryProvider);
+    // _chatLocalRepository = ref.read(chatLocalRepositoryProvider);
     Future(() async {
       await Future.delayed(const Duration(milliseconds: 300));
       await _checkAuthStatus();
