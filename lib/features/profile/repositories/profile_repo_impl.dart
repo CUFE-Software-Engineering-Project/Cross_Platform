@@ -195,6 +195,17 @@ class ProfileRepoImpl implements ProfileRepo {
     }
   }
 
+  Future<Either<Failure, void>> removeBanner(
+    String userId,
+  ) async {
+    try {
+      await _dio.delete("api/users/banner/${userId}");
+      return const Right(());
+    } catch (e) {
+      return Left(Failure("couldn't delete profile banner"));
+    }
+  }
+
   // user interactions
 
   Future<Either<Failure, List<UserModel>>> getFollowers(String userName) async {

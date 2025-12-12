@@ -123,4 +123,9 @@ final List<String> _tabs = [
   "entertainment",
   "cryptocurrency",
   "politics",
+  "soccer",
+  "gaming",
+  "pets",
+  "technology",
+  "shopping",
 ];

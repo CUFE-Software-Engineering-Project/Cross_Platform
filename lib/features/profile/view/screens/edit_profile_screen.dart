@@ -29,6 +29,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   File? _profileImage;
   File? _bannerImage;
 
+  bool _bannerRemoved = false;
+
   final controller = EditProfileController();
 
   // image picking
@@ -43,12 +45,21 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   void changeProfileImage(File profileImage) {
     setState(() {
       _profileImage = profileImage;
+      _bannerRemoved = true;
+    });
+  }
+
+  void _removeBannerImage() {
+    setState(() {
+      _bannerImage = null;
+      _bannerRemoved = true;
     });
   }
 
   void changeBannerImage(File bannerImage) {
     setState(() {
       _bannerImage = bannerImage;
+      _bannerRemoved = false;
     });
   }
 
@@ -91,12 +102,32 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         final res = await updateBanner(widget.profileData.id, ids[0]);
         res.fold(
           (l) {
-            showSmallPopUpMessage(
-              context: context,
-              message: l.message,
-              borderColor: Colors.red,
-              icon: Icon(Icons.error),
-            );
+            if (mounted)
+              showSmallPopUpMessage(
+                context: context,
+                message: l.message,
+                borderColor: Colors.red,
+                icon: Icon(Icons.error),
+              );
+          },
+          (r) {
+            imageUpdated = true;
+          },
+        );
+      }
+
+      if (_bannerRemoved) {
+        final removeBanner = ref.watch(removeBannerProvider);
+        final res = await removeBanner(widget.profileData.id);
+        res.fold(
+          (l) {
+            if (mounted)
+              showSmallPopUpMessage(
+                context: context,
+                message: l.message,
+                borderColor: Colors.red,
+                icon: Icon(Icons.error),
+              );
           },
           (r) {
             imageUpdated = true;
@@ -202,7 +233,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 profileImageFile: _profileImage,
                 bannerImageFile: _bannerImage,
                 changeBannerImage: changeBannerImage,
+                deleteBannerImage: _removeBannerImage,
                 changeProfileImage: changeProfileImage,
+                bannerRemoved: _bannerRemoved,
               ),
 
               EditProfileForm(

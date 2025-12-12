@@ -44,6 +44,13 @@ final updateProfilePhotoProvider = Provider((ref) {
   };
 });
 
+final removeBannerProvider = Provider((ref) {
+  final repo = ref.watch(profileRepoProvider);
+  return (String userId) {
+    return repo.removeBanner(userId);
+  };
+});
+
 final followersProvider =
     FutureProvider.family<Either<Failure, List<UserModel>>, String>((
       ref,

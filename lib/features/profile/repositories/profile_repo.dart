@@ -50,6 +50,8 @@ abstract class ProfileRepo {
     String mediaId,
   );
 
+  Future<Either<Failure, void>> removeBanner(String userId);
+
   // tweets
   Future<Either<Failure, List<ProfileTweetModel>>> getProfilePosts(
     String username,
