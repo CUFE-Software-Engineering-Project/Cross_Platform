@@ -62,41 +62,27 @@ class BasicTweetWidget extends ConsumerWidget implements ProfileTweet {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          GestureDetector(
-                            onTap: () {
-                              context.push(
-                                "/profilescreen/${this.profilePostModel.userUserName}",
-                              );
-                            },
-                            child: Container(
-                              constraints: BoxConstraints(maxWidth: 120),
-                              child: Text(
-                                this.profilePostModel.userDisplayName,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
+                          Container(
+                            constraints: BoxConstraints(maxWidth: 120),
+                            child: Text(
+                              this.profilePostModel.userDisplayName,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ),
                           const SizedBox(width: 4),
                           Flexible(
-                            child: GestureDetector(
-                              onTap: () {
-                                context.push(
-                                  "/profilescreen/${this.profilePostModel.userUserName}",
-                                );
-                              },
-                              child: Text(
-                                "@${this.profilePostModel.userUserName}",
-                                style: const TextStyle(
-                                  color: Colors.grey,
-                                  fontSize: 14,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                                softWrap: false,
+                            child: Text(
+                              "@${this.profilePostModel.userUserName}",
+                              style: const TextStyle(
+                                color: Colors.grey,
+                                fontSize: 14,
                               ),
+                              overflow: TextOverflow.ellipsis,
+                              softWrap: false,
                             ),
                           ),
                           const SizedBox(width: 5),
@@ -157,7 +143,6 @@ class BasicTweetWidget extends ConsumerWidget implements ProfileTweet {
                               padding: const EdgeInsets.only(bottom: 8),
                               child: ExpandableLinkedText(
                                 text: profilePostModel.text,
-                                tweet: this.profilePostModel,
                               ),
                             ),
                       if (profilePostModel.mediaIds.isNotEmpty)
@@ -256,7 +241,9 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   @override
   void dispose() {
     try {
-      _controller.dispose();
+      if (_controller != null) {
+        _controller.dispose();
+      }
     } catch (e) {
       debugPrint('Error disposing video controller: $e');
     }
@@ -289,7 +276,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
       return Container(
         color: Colors.grey[900],
         height: widget.height,
-        child: Center(child: CircularProgressIndicator()),
+        child: Center(child: CircularProgressIndicator(color: Colors.white)),
       );
     }
 
@@ -424,7 +411,7 @@ class _TweetMediaGridState extends ConsumerState<TweetMediaGrid> {
     );
   }
 
-  Widget _errorContainer(double height, String mediaId, WidgetRef ref) {
+  Widget _errorContainer(double height) {
     return Container(
       height: height,
       color: Colors.grey[800],
@@ -435,12 +422,6 @@ class _TweetMediaGridState extends ConsumerState<TweetMediaGrid> {
             Icon(Icons.broken_image, color: Colors.grey, size: 32),
             SizedBox(height: 8),
             Text('Couldn\'t load image', style: TextStyle(color: Colors.grey)),
-            InkWell(
-              onTap: () {
-                ref.refresh(mediaUrlProvider(mediaId));
-              },
-              child: Icon(Icons.refresh, color: Colors.grey),
-            ),
           ],
         ),
       ),
@@ -484,8 +465,8 @@ class _TweetMediaGridState extends ConsumerState<TweetMediaGrid> {
 
     return mediaUrl.when(
       data: (url) {
-        if (url.isEmpty) {
-          return _errorContainer(height, mediaId, ref);
+        if (url == null || url.isEmpty) {
+          return _errorContainer(height);
         }
         if (_isVideo(url)) {
           return VideoPlayerWidget(
@@ -502,14 +483,14 @@ class _TweetMediaGridState extends ConsumerState<TweetMediaGrid> {
           placeholder: (context, url) => _loadingContainer(height),
           errorWidget: (context, url, error) {
             debugPrint('Image load error for $mediaId: $error');
-            return _errorContainer(height, mediaId, ref);
+            return _errorContainer(height);
           },
         );
       },
       loading: () => _loadingContainer(height),
       error: (error, stack) {
         debugPrint('Media URL fetch error for $mediaId: $error');
-        return _errorContainer(height, mediaId, ref);
+        return _errorContainer(height);
       },
     );
   }
@@ -664,12 +645,10 @@ class ExpandableLinkedText extends StatefulWidget {
     super.key,
     required this.text,
     this.trimLines = 3,
-    required this.tweet,
   });
 
   final String text;
   final int trimLines;
-  final ProfileTweetModel tweet;
 
   @override
   State<ExpandableLinkedText> createState() => _ExpandableLinkedTextState();
@@ -690,7 +669,7 @@ class _ExpandableLinkedTextState extends State<ExpandableLinkedText> {
     super.dispose();
   }
 
-  TextSpan _buildSpans(String displayText, List<Map<String, String>> hashs) {
+  TextSpan _buildSpans(String displayText) {
     final regex = RegExp(r'(@[A-Za-z0-9_]+|#[A-Za-z0-9_]+)');
     final matches = regex.allMatches(displayText);
 
@@ -719,18 +698,7 @@ class _ExpandableLinkedTextState extends State<ExpandableLinkedText> {
                   context.push("/profilescreen/${token.substring(1)}");
                 } catch (e) {}
               } else if (token.contains("#")) {
-                final hash_word = token.substring(1);
-                final hash_map = hashs.firstWhere(
-                  (h) => h["hashtagName"] == hash_word.toLowerCase(),
-                );
-                if (hash_map["id"] != null &&
-                    hash_map["hashtagName"] != null &&
-                    hash_map["id"]!.isNotEmpty &&
-                    hash_map["hashtagName"]!.isNotEmpty)
-                  context.push(
-                    "/hashtagTweetsScreen",
-                    extra: [hash_map["id"], hash_map["hashtagName"]],
-                  );
+                // TODO: goto hashtag screen
               }
             },
         ),
@@ -799,13 +767,11 @@ class _ExpandableLinkedTextState extends State<ExpandableLinkedText> {
         }
 
         if (!_isTrimmed) {
-          return RichText(
-            text: _buildSpans(widget.text, widget.tweet.hashtags),
-          );
+          return RichText(text: _buildSpans(widget.text));
         }
 
         if (_expanded) {
-          final full = _buildSpans(widget.text, widget.tweet.hashtags);
+          final full = _buildSpans(widget.text);
           final spans = <TextSpan>[
             full,
             TextSpan(text: ' ', style: baseStyle),
@@ -823,7 +789,7 @@ class _ExpandableLinkedTextState extends State<ExpandableLinkedText> {
           return RichText(text: TextSpan(children: spans));
         } else {
           final display = _trimmed ?? widget.text;
-          final mainSpan = _buildSpans(display, widget.tweet.hashtags);
+          final mainSpan = _buildSpans(display);
           final spans = <TextSpan>[
             mainSpan,
             TextSpan(text: '... ', style: baseStyle),

@@ -19,7 +19,7 @@ class TrendTile extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12.0),
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -39,10 +39,9 @@ class TrendTile extends StatelessWidget {
                 const SizedBox(height: 4),
                 // Title
                 Text(
-                  "#" + trend.title,
+                  trend.title,
                   style: textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
                 const SizedBox(height: 4),

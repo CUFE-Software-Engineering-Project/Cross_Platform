@@ -1,3 +1,4 @@
+import 'package:lite_x/features/profile/models/follower_model.dart';
 import 'package:lite_x/features/profile/models/user_model.dart';
 import 'package:lite_x/features/trends/models/trend_category.dart';
 
