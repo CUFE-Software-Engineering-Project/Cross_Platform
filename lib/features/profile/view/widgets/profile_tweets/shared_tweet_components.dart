@@ -62,27 +62,41 @@ class BasicTweetWidget extends ConsumerWidget implements ProfileTweet {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Container(
-                            constraints: BoxConstraints(maxWidth: 120),
-                            child: Text(
-                              this.profilePostModel.userDisplayName,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                                overflow: TextOverflow.ellipsis,
+                          GestureDetector(
+                            onTap: () {
+                              context.push(
+                                "/profilescreen/${this.profilePostModel.userUserName}",
+                              );
+                            },
+                            child: Container(
+                              constraints: BoxConstraints(maxWidth: 120),
+                              child: Text(
+                                this.profilePostModel.userDisplayName,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
                             ),
                           ),
                           const SizedBox(width: 4),
                           Flexible(
-                            child: Text(
-                              "@${this.profilePostModel.userUserName}",
-                              style: const TextStyle(
-                                color: Colors.grey,
-                                fontSize: 14,
+                            child: GestureDetector(
+                              onTap: () {
+                                context.push(
+                                  "/profilescreen/${this.profilePostModel.userUserName}",
+                                );
+                              },
+                              child: Text(
+                                "@${this.profilePostModel.userUserName}",
+                                style: const TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 14,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                                softWrap: false,
                               ),
-                              overflow: TextOverflow.ellipsis,
-                              softWrap: false,
                             ),
                           ),
                           const SizedBox(width: 5),
@@ -242,7 +256,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   void dispose() {
     try {
       _controller.dispose();
-        } catch (e) {
+    } catch (e) {
       debugPrint('Error disposing video controller: $e');
     }
     super.dispose();
@@ -274,7 +288,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
       return Container(
         color: Colors.grey[900],
         height: widget.height,
-        child: Center(child: CircularProgressIndicator(color: Colors.white)),
+        child: Center(child: CircularProgressIndicator()),
       );
     }
 

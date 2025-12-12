@@ -209,7 +209,7 @@ ProfileTweet getCorrectTweetType(
 ) {
   TweetType type = tweetModel.type;
 
-  if (type == TweetType.ReTweet)
+  if (tweetModel.retweeterUserName.isNotEmpty)
     return ProfileRetweetWidget(profileModel: pm, tweetModel: tweetModel);
 
   if (type == TweetType.Quote)
@@ -464,12 +464,13 @@ class _InterActionsRowOfTweetState
                   retweet(widget.tweet.id).then((res) {
                     res.fold(
                       (l) {
-                        showSmallPopUpMessage(
-                          context: context,
-                          message: l.message,
-                          borderColor: Colors.red,
-                          icon: Icon(Icons.error, color: Colors.red),
-                        );
+                        if (mounted)
+                          showSmallPopUpMessage(
+                            context: context,
+                            message: l.message,
+                            borderColor: Colors.red,
+                            icon: Icon(Icons.error, color: Colors.red),
+                          );
                       },
                       (r) {
                         if (mounted)
@@ -508,12 +509,13 @@ class _InterActionsRowOfTweetState
                   unretweet(widget.tweet.id).then((res) {
                     res.fold(
                       (l) {
-                        showSmallPopUpMessage(
-                          context: context,
-                          message: l.message,
-                          borderColor: Colors.red,
-                          icon: Icon(Icons.error, color: Colors.red),
-                        );
+                        if (mounted)
+                          showSmallPopUpMessage(
+                            context: context,
+                            message: l.message,
+                            borderColor: Colors.red,
+                            icon: Icon(Icons.error, color: Colors.red),
+                          );
                       },
                       (r) {
                         if (mounted)
@@ -581,21 +583,23 @@ class _InterActionsRowOfTweetState
                     (l) {
                       isLikedByMeLocal = true;
                       likesCount += 1;
-                      showSmallPopUpMessage(
-                        context: context,
-                        message: l.message,
-                        borderColor: Colors.red,
-                        icon: Icon(Icons.error, color: Colors.red),
-                      );
+                      if (mounted)
+                        showSmallPopUpMessage(
+                          context: context,
+                          message: l.message,
+                          borderColor: Colors.red,
+                          icon: Icon(Icons.error, color: Colors.red),
+                        );
                       if (mounted) setState(() {});
                     },
                     (r) {
-                      ref.refresh(
-                        profilePostsProvider(widget.tweet.userUserName),
-                      );
-                      final currUser = ref.watch(currentUserProvider);
-                      if (currUser != null)
-                        ref.refresh(profilePostsProvider(currUser.username));
+                      // ref.refresh(
+                      //   profilePostsProvider(widget.tweet.userUserName),
+                      // );
+                      // final currUser = ref.watch(currentUserProvider);
+                      // if (currUser != null) {
+                      //   ref.refresh(profilePostsProvider(currUser.username));
+                      // }
                     },
                   );
                 });
@@ -606,12 +610,13 @@ class _InterActionsRowOfTweetState
                     (l) {
                       isLikedByMeLocal = false;
                       likesCount -= 1;
-                      showSmallPopUpMessage(
-                        context: context,
-                        message: l.message,
-                        borderColor: Colors.red,
-                        icon: Icon(Icons.error, color: Colors.red),
-                      );
+                      if (mounted)
+                        showSmallPopUpMessage(
+                          context: context,
+                          message: l.message,
+                          borderColor: Colors.red,
+                          icon: Icon(Icons.error, color: Colors.red),
+                        );
                       if (mounted) setState(() {});
                     },
                     (r) {
@@ -620,8 +625,9 @@ class _InterActionsRowOfTweetState
                           profilePostsProvider(widget.tweet.userUserName),
                         );
                         final currUser = ref.watch(currentUserProvider);
-                        if (currUser != null)
+                        if (currUser != null) {
                           ref.refresh(profilePostsProvider(currUser.username));
+                        }
                       }
                     },
                   );
@@ -693,24 +699,26 @@ class _InterActionsRowOfTweetState
                       res.fold(
                         (l) {
                           isSavedByMeLocal = true;
-                          showSmallPopUpMessage(
-                            context: context,
-                            message: l.message,
-                            borderColor: Colors.red,
-                            icon: Icon(Icons.error, color: Colors.red),
-                          );
+                          if (mounted)
+                            showSmallPopUpMessage(
+                              context: context,
+                              message: l.message,
+                              borderColor: Colors.red,
+                              icon: Icon(Icons.error, color: Colors.red),
+                            );
                           if (mounted) setState(() {});
                         },
                         (r) {
-                          showSmallPopUpMessage(
-                            context: context,
-                            message: "Post removed from your Bookmarks",
-                            borderColor: Colors.blue,
-                            icon: Icon(
-                              Icons.bookmark_remove,
-                              color: Colors.blue,
-                            ),
-                          );
+                          if (mounted)
+                            showSmallPopUpMessage(
+                              context: context,
+                              message: "Post removed from your Bookmarks",
+                              borderColor: Colors.blue,
+                              icon: Icon(
+                                Icons.bookmark_remove,
+                                color: Colors.blue,
+                              ),
+                            );
                         },
                       );
                     });
@@ -720,21 +728,26 @@ class _InterActionsRowOfTweetState
                       res.fold(
                         (l) {
                           isSavedByMeLocal = false;
-                          showSmallPopUpMessage(
-                            context: context,
-                            message: l.message,
-                            borderColor: Colors.red,
-                            icon: Icon(Icons.error, color: Colors.red),
-                          );
+                          if (mounted)
+                            showSmallPopUpMessage(
+                              context: context,
+                              message: l.message,
+                              borderColor: Colors.red,
+                              icon: Icon(Icons.error, color: Colors.red),
+                            );
                           if (mounted) setState(() {});
                         },
                         (r) {
-                          showSmallPopUpMessage(
-                            context: context,
-                            message: "Post added to your Bookmarks",
-                            borderColor: Colors.blue,
-                            icon: Icon(Icons.bookmark_add, color: Colors.blue),
-                          );
+                          if (mounted)
+                            showSmallPopUpMessage(
+                              context: context,
+                              message: "Post added to your Bookmarks",
+                              borderColor: Colors.blue,
+                              icon: Icon(
+                                Icons.bookmark_add,
+                                color: Colors.blue,
+                              ),
+                            );
                         },
                       );
                     });

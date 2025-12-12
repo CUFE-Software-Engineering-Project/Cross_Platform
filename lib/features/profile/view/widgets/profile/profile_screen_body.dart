@@ -27,6 +27,10 @@ class _ProfileScreenBodyState extends ConsumerState<ProfileScreenBody> {
       showData = false;
     else
       showData = true;
+
+    ref.refresh(profileMediaProvider(widget.profileData.username));
+    ref.refresh(profilePostsProvider(widget.profileData.username));
+    ref.refresh(profileLikesProvider(widget.profileData.username));
     super.initState();
   }
 

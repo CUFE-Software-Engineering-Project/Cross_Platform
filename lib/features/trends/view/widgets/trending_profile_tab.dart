@@ -40,24 +40,35 @@ class TrendingProfileTab extends ConsumerWidget {
                 // ignore: unused_result
                 await ref.refresh(profileTrendsProvider);
               },
-              child: ListView.builder(
-                padding: EdgeInsets.only(left: 16),
-                itemBuilder: (context, index) => InkWell(
-                  onTap: () {
-                    
-                    context.push(
-                      "/hashtagTweetsScreen",
-                      extra: [data[index], this.pm],
-                    );
-                  },
-                  child: TrendTile(
-                    trend: data[index],
-                    trendCategory: "Egypt",
-                    showRank: true,
-                  ),
-                ),
-                itemCount: data.length,
-              ),
+              child: data.isNotEmpty
+                  ? ListView.builder(
+                      padding: EdgeInsets.only(left: 16),
+                      itemBuilder: (context, index) => InkWell(
+                        onTap: () {
+                          context.push(
+                            "/hashtagTweetsScreen",
+                            extra: [data[index], this.pm],
+                          );
+                        },
+                        child: TrendTile(
+                          trend: data[index],
+                          trendCategory: "Egypt",
+                          showRank: true,
+                        ),
+                      ),
+                      itemCount: data.length,
+                    )
+                  : Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Text(
+                        "Nothing to see here -- yet.",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 35,
+                        ),
+                      ),
+                    ),
             );
           },
         );

@@ -87,8 +87,8 @@ class ProfileTweetModel {
       protectedAccount: json["user"]?["protectedAccount"] ?? false,
       verified: json["user"]?["verified"] ?? false,
       parentId: json["parentId"] ?? "",
-      retweeterName: json["retweeterName"] ?? "",
-      retweeterUserName: json["retweeterUserName"] ?? "",
+      retweeterName: json["retweeter"]?["name"] ?? "",
+      retweeterUserName: json["retweeter"]?["username"] ?? "",
       // mediaIds: meidaIds,
     );
   }

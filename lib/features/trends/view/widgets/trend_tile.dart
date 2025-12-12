@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:lite_x/features/profile/models/shared.dart';
 import '../../models/trend_model.dart';
 

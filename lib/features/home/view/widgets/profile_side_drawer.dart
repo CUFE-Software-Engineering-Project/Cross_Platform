@@ -148,8 +148,10 @@ class ProfileSideDrawer extends ConsumerWidget {
               ),
               _DrawerItem(
                 icon: Icons.south_america_outlined,
-                label: 'Spaces',
-                onTap: () {},
+                label: 'Explore',
+                onTap: () {
+                  context.push("/realExploreScreen");
+                },
               ),
               _DrawerItem(
                 icon: Icons.monetization_on_outlined,

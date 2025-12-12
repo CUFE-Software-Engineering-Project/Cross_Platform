@@ -57,7 +57,7 @@ class ForYouProfileTab extends ConsumerWidget {
                 children: [
                   asyncTrends.when(
                     data: (res) => res.fold(
-                      (l) => Text(l.message),
+                      (l) => SizedBox.shrink(),
                       (r) => _buildTredsSection(r),
                     ),
                     error: (err, _) => SizedBox.shrink(),
@@ -115,7 +115,6 @@ class ForYouProfileTab extends ConsumerWidget {
       itemBuilder: (context, index) {
         return GestureDetector(
           onTap: () {
-            print("tab++***************---");
             context.push(
               "/hashtagTweetsScreen",
               extra: [trends[index], this.pm],

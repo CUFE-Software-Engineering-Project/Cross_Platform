@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lite_x/features/profile/models/create_reply_model.dart';
 import 'package:lite_x/features/profile/models/create_tweet_model.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
@@ -10,6 +11,7 @@ import 'package:lite_x/features/profile/models/tweet_reply_model.dart';
 import 'package:lite_x/features/profile/models/user_model.dart';
 import 'package:lite_x/features/profile/repositories/profile_repo.dart';
 import 'package:lite_x/features/profile/repositories/profile_storage_service.dart';
+import 'package:lite_x/features/profile/view_model/providers.dart';
 import 'package:lite_x/features/trends/models/for_you_response_model.dart';
 import 'package:lite_x/features/trends/models/trend_category.dart';
 import 'package:lite_x/features/trends/models/trend_model.dart';
@@ -191,52 +193,14 @@ class ProfileRepoImpl implements ProfileRepo {
     String username,
   ) async {
     try {
-      try {
-        // print("Start api ---------------------**");
-        final res = await _dio.get("api/tweets/users/$username");
-        // print("end api ---------------------**");
-        final List<dynamic> jsonList = res.data["data"] ?? [];
+      final res = await _dio.get("api/tweets/likedtweets");
+      final List<dynamic> jsonList = res.data["data"] ?? [];
 
-        List<ProfileTweetModel> tweets = [];
-        for (int i = 0; i < jsonList.length; i++) {
-          final Map<String, dynamic> json = jsonList[i] as Map<String, dynamic>;
-          if (json["tweetType"]?.toLowerCase() == "reply") continue;
-          // get profile photo url and tweet medial urls
-          final String profilePhotoId =
-              json["user"]?["profileMedia"]?["id"] ?? "";
-
-          final List<dynamic> tweetMediaIdsDynamic = json["tweetMedia"] ?? [];
-          final List<String> tweetMediaIds = tweetMediaIdsDynamic
-              .map((media) => media["mediaId"] as String)
-              .toList();
-
-          // final List<String> userPhotoUrl = await getMediaUrls([profilePhotoId]);
-
-          // final String profilePhotoUrl = userPhotoUrl[0];
-
-          // get timeAgo
-          final String createTime = json["createdAt"] ?? "";
-          final String timeAgo = getTimeAgo(createTime);
-
-          json["profileMediaId"] = profilePhotoId;
-          json["mediaIds"] = tweetMediaIds;
-          json["timeAgo"] = timeAgo;
-
-          tweets.add(ProfileTweetModel.fromJson(json));
-          // print(
-          //   "id$i" +
-          //       "${json['profileMediaId']}--------------------*****--------------",
-          // );
-        }
-        // print("end repo posts ----------------**");
-        return Right(tweets);
-      } catch (e) {
-        // print(e.toString());
-        return Left(Failure('Failed to load profile posts'));
-      }
+      final tweets = convertJsonListToTweetList(jsonList);
+      return Right(tweets);
     } catch (e) {
       // print(e.toString());
-      return Left(Failure('Failed to load profile likes'));
+      return Left(Failure('Failed to load profile posts'));
     }
   }
 
@@ -311,6 +275,11 @@ class ProfileRepoImpl implements ProfileRepo {
       final response = await _dio.get("api/followings/$userName");
       List<dynamic> jsonList = response.data['users'] as List<dynamic>;
       final List<UserModel> usersList = jsonList
+          .where(
+            (json) =>
+                json["followStatus"] == null ||
+                json["followStatus"] == "ACCEPTED",
+          )
           .map((json) => UserModel.fromJson(json))
           .toList();
       return Right(usersList);
@@ -359,18 +328,38 @@ class ProfileRepoImpl implements ProfileRepo {
     }
   }
 
-  Future<Either<Failure, void>> followUser(String username) async {
+  Future<Either<Failure, void>> followUser(String username, Ref ref) async {
     try {
       await _dio.post("api/followers/$username");
+
+      final myUsername = ref.read(myUserNameProvider);
+      ref.refresh(profileDataProvider(myUsername));
+      ref.refresh(profileDataProvider(username));
+      ref.refresh(followersProvider(username));
+      ref.refresh(followingsProvider(myUsername));
+      ref.refresh(followersYouKnowProvider(myUsername));
+      ref.refresh(followersYouKnowProvider(username));
+      ref.refresh(WhoToFollowProvider);
+
       return const Right(());
     } catch (e) {
       return Left(Failure("couldn't follow user"));
     }
   }
 
-  Future<Either<Failure, void>> unFollowUser(String username) async {
+  Future<Either<Failure, void>> unFollowUser(String username, Ref ref) async {
     try {
       await _dio.delete("api/followers/$username");
+
+      final myUsername = ref.read(myUserNameProvider);
+      ref.refresh(profileDataProvider(myUsername));
+      ref.refresh(profileDataProvider(username));
+      ref.refresh(followersProvider(username));
+      ref.refresh(followingsProvider(myUsername));
+      ref.refresh(followersYouKnowProvider(myUsername));
+      ref.refresh(followersYouKnowProvider(username));
+      ref.refresh(WhoToFollowProvider);
+
       return const Right(());
     } catch (e) {
       return Left(Failure("couldn't unfollow user"));
@@ -378,36 +367,45 @@ class ProfileRepoImpl implements ProfileRepo {
   }
 
   // block and mute
-  Future<Either<Failure, void>> blockUser(String username) async {
+  Future<Either<Failure, void>> blockUser(String username, Ref ref) async {
     try {
       await _dio.post("api/blocks/$username");
+      final myUsername = ref.read(myUserNameProvider);
+      ref.refresh(getBlockedUsersProvider(myUsername));
+
       return const Right(());
     } catch (e) {
       return Left(Failure("couldn't block user"));
     }
   }
 
-  Future<Either<Failure, void>> unBlockUser(String username) async {
+  Future<Either<Failure, void>> unBlockUser(String username, Ref ref) async {
     try {
       await _dio.delete("api/blocks/$username");
+      final myUsername = ref.read(myUserNameProvider);
+      ref.refresh(getBlockedUsersProvider(myUsername));
       return const Right(());
     } catch (e) {
       return Left(Failure("couldn't unblock user"));
     }
   }
 
-  Future<Either<Failure, void>> muteUser(String username) async {
+  Future<Either<Failure, void>> muteUser(String username, Ref ref) async {
     try {
       await _dio.post("api/mutes/$username");
+      final myUsername = ref.read(myUserNameProvider);
+      ref.refresh(getMutedUsersProvider(myUsername));
       return const Right(());
     } catch (e) {
       return Left(Failure("couldn't mute user"));
     }
   }
 
-  Future<Either<Failure, void>> unMuteUser(String username) async {
+  Future<Either<Failure, void>> unMuteUser(String username, Ref ref) async {
     try {
       await _dio.delete("api/mutes/$username");
+      final myUsername = ref.read(myUserNameProvider);
+      ref.refresh(getMutedUsersProvider(myUsername));
       return const Right(());
     } catch (e) {
       return Left(Failure("couldn't unmute user"));
@@ -459,9 +457,13 @@ class ProfileRepoImpl implements ProfileRepo {
     }
   }
 
-  Future<Either<Failure, void>> deleteTweet(String tweetId) async {
+  Future<Either<Failure, void>> deleteTweet(String tweetId, Ref ref) async {
     try {
       await _dio.delete("api/tweets/$tweetId");
+      final myUsername = ref.read(myUserNameProvider);
+      ref.refresh(profileMediaProvider(myUsername));
+      ref.refresh(profilePostsProvider(myUsername));
+      ref.refresh(profileLikesProvider(myUsername));
       return Right(());
     } catch (e) {
       return Left(Failure("Can't delete tweet"));
@@ -484,18 +486,29 @@ class ProfileRepoImpl implements ProfileRepo {
   }
 
   // tweets interactions
-  Future<Either<Failure, void>> likeTweet(String tweetId) async {
+  Future<Either<Failure, void>> likeTweet(String tweetId, Ref ref) async {
     try {
       await _dio.post("api/tweets/$tweetId/likes");
+      final myUsername = ref.read(myUserNameProvider);
+      ref.refresh(profileMediaProvider(myUsername));
+      ref.refresh(profilePostsProvider(myUsername));
+      ref.refresh(profileLikesProvider(myUsername));
       return const Right(());
     } catch (e) {
       return Left(Failure("Can't like tweet"));
     }
   }
 
-  Future<Either<Failure, void>> retweetProfileTweet(String tweetId) async {
+  Future<Either<Failure, void>> retweetProfileTweet(
+    String tweetId,
+    Ref ref,
+  ) async {
     try {
       await _dio.post("api/tweets/$tweetId/retweets");
+      final myUsername = ref.read(myUserNameProvider);
+      ref.refresh(profileMediaProvider(myUsername));
+      ref.refresh(profilePostsProvider(myUsername));
+      ref.refresh(profileLikesProvider(myUsername));
       return const Right(());
     } catch (e) {
       return Left(Failure("Can't retweet tweet, try agail..."));
@@ -504,18 +517,27 @@ class ProfileRepoImpl implements ProfileRepo {
 
   Future<Either<Failure, void>> deleteRetweetProfileTweet(
     String tweetId,
+    Ref ref,
   ) async {
     try {
       await _dio.delete("api/tweets/$tweetId/retweets");
+      final myUsername = ref.read(myUserNameProvider);
+      ref.refresh(profileMediaProvider(myUsername));
+      ref.refresh(profilePostsProvider(myUsername));
+      ref.refresh(profileLikesProvider(myUsername));
       return const Right(());
     } catch (e) {
       return Left(Failure("Can't delelte retweet tweet, try agail..."));
     }
   }
 
-  Future<Either<Failure, void>> unLikeTweet(String tweetId) async {
+  Future<Either<Failure, void>> unLikeTweet(String tweetId, Ref ref) async {
     try {
       await _dio.delete("api/tweets/$tweetId/likes");
+      final myUsername = ref.read(myUserNameProvider);
+      ref.refresh(profileMediaProvider(myUsername));
+      ref.refresh(profilePostsProvider(myUsername));
+      ref.refresh(profileLikesProvider(myUsername));
       return const Right(());
     } catch (e) {
       return Left(Failure("Can't unlike tweet"));
@@ -576,7 +598,6 @@ class ProfileRepoImpl implements ProfileRepo {
       }).toList();
       return Right(currentResults);
     } catch (e) {
-      print(e.toString() + "-----------@@##");
       return Left(Failure("Can't get search results"));
     }
   }
@@ -718,7 +739,7 @@ class ProfileRepoImpl implements ProfileRepo {
         return Right(trends);
       }
       return Right([]);
-    } on DioException catch (e) {
+    } on DioException {
       return (Left(
         Failure("cannot get trends at this time, try again later..."),
       ));
@@ -729,31 +750,46 @@ class ProfileRepoImpl implements ProfileRepo {
     }
   }
 
-  Future<Either<Failure, Map<String, dynamic>>> getTweetsForHashtag(
+  Future<Either<Failure, List<ProfileTweetModel>>> getTweetsForHashtag(
     String hashtagId,
-    String? cursor,
   ) async {
     try {
-      final Response<dynamic> res;
-      if (cursor == null)
-        res = await _dio.get("api/hashtags/${hashtagId}/tweets");
-      else {
-        res = await _dio.get(
-          "api/hashtags/${hashtagId}/tweets",
-          queryParameters: {"cursor": cursor},
-        );
-      }
+      final res = await _dio.get("api/hashtags/${hashtagId}/tweets");
 
       print("fininsh -------------------------------");
 
       final List<dynamic> jsonList = res.data["tweets"] ?? [];
-      final String? c = res.data["nextCursor"];
       final tweets = convertJsonListToTweetList(jsonList);
 
-      return Right({"tweets": tweets, "cursor": c});
+      return Right(tweets);
     } catch (e) {
       return Left(Failure('Failed to tweets for this hashtag'));
       // return Left(Failure(e.toString()));
+    }
+  }
+
+  Future<Either<Failure, List<ProfileTweetModel>>> getTweetsForExploreCategory(
+    String categoryName,
+  ) async {
+    try {
+      Response<dynamic> res;
+      if (categoryName != "general")
+        res = await _dio.get(
+          "api/explore",
+          queryParameters: {"category": categoryName},
+        );
+      else {
+        res = await _dio.get("api/explore");
+      }
+
+      final List<dynamic> jsonList = res.data["data"] ?? [];
+
+      final tweets = convertJsonListToTweetList(jsonList);
+
+      return Right(tweets);
+    } catch (e) {
+      // print(e.toString() + "--------------+++++++++++++++++");
+      return Left(Failure('Failed to load ${categoryName} tweets'));
     }
   }
 }

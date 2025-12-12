@@ -24,7 +24,7 @@ import 'package:lite_x/features/chat/view/screens/Search_User_Group.dart';
 import 'package:lite_x/features/chat/view/screens/chat_Screen.dart';
 import 'package:lite_x/features/chat/view/screens/conversations_screen.dart';
 import 'package:lite_x/features/explore/view/explore_screen.dart';
-import 'package:lite_x/features/trends/models/trend_model.dart';
+import 'package:lite_x/features/trends/view/screens/explore_screen.dart';
 import 'package:lite_x/features/trends/view/screens/shatag_tweets_screen.dart';
 import 'package:lite_x/features/trends/view/screens/trends_screen.dart';
 import 'package:lite_x/features/home/view/screens/tweet_screen.dart';
@@ -455,6 +455,14 @@ class Approuter {
         path: "/hashtagTweetsScreen",
         pageBuilder: (context, state) => CustomTransitionPage(
           child: HashtagTweetsScreen(list: state.extra),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
+        name: RouteConstants.RealExploreScreen,
+        path: "/realExploreScreen",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: RealExploreScreen(),
           transitionsBuilder: _slideRightTransitionBuilder,
         ),
       ),

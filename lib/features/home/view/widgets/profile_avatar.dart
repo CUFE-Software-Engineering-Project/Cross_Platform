@@ -28,7 +28,7 @@ class ProfileAvatar extends ConsumerWidget {
 
     return GestureDetector(
       onTap: () => _openDrawer(),
-      child: BuildSmallProfileImage(radius: 20, username: user?.username ?? ""),
+      child: BuildSmallProfileImage(radius: 15, username: user?.username ?? ""),
     );
   }
 

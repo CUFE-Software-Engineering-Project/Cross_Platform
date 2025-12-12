@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lite_x/core/providers/current_user_provider.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
 import 'package:lite_x/features/profile/models/profile_tweet_model.dart';
 import 'package:lite_x/features/profile/models/shared.dart';
@@ -17,9 +16,7 @@ class HashtagTweetsScreen extends ConsumerWidget {
   late final ProfileModel pm;
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final asyncTweets = ref.watch(
-      hashtagTweetsProvider({"hashtagId": trend.id}),
-    );
+    final asyncTweets = ref.watch(hashtagTweetsProvider(trend.id));
 
     return Scaffold(
       appBar: AppBar(
@@ -49,22 +46,19 @@ class HashtagTweetsScreen extends ConsumerWidget {
                     child: Icon(Icons.refresh),
                     onTap: () async {
                       // ignore: unused_result
-                      await ref.refresh(
-                        hashtagTweetsProvider({"hashtagId": trend.id}),
-                      );
+                      await ref.refresh(hashtagTweetsProvider(trend.id));
                     },
                   ),
                 ],
               );
             },
             (data) {
-              final List<ProfileTweetModel> tweets = data["tweets"];
-              final String? cursor = data["cursor"];
+              final List<ProfileTweetModel> tweets = data;
               if (tweets.isEmpty) {
                 return RefreshIndicator(
                   onRefresh: () async {
                     // ignore: unused_result
-                    ref.refresh(hashtagTweetsProvider({"hashtagId": trend.id}));
+                    ref.refresh(hashtagTweetsProvider(trend.id));
                   },
                   child: ListView(
                     children: [
@@ -90,7 +84,7 @@ class HashtagTweetsScreen extends ConsumerWidget {
               return RefreshIndicator(
                 onRefresh: () async {
                   // ignore: unused_result
-                  ref.refresh(hashtagTweetsProvider({"hashtagId": trend.id}));
+                  ref.refresh(hashtagTweetsProvider(trend.id));
                 },
                 child: ListView.separated(
                   cacheExtent: 2000,
@@ -119,9 +113,7 @@ class HashtagTweetsScreen extends ConsumerWidget {
                 child: Icon(Icons.refresh),
                 onTap: () async {
                   // ignore: unused_result
-                  await ref.refresh(
-                    hashtagTweetsProvider({"hashtagId": trend.id}),
-                  );
+                  await ref.refresh(hashtagTweetsProvider(trend.id));
                 },
               ),
             ],
@@ -130,9 +122,7 @@ class HashtagTweetsScreen extends ConsumerWidget {
         loading: () {
           return ListView(
             padding: EdgeInsets.all(20),
-            children: [
-              Center(child: CircularProgressIndicator(color: Colors.red)),
-            ],
+            children: [Center(child: CircularProgressIndicator())],
           );
         },
       ),
