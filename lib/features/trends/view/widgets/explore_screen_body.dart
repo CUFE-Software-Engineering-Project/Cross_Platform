@@ -1,23 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lite_x/core/providers/current_user_provider.dart';
-import 'package:lite_x/features/profile/models/profile_model.dart';
-import 'package:lite_x/features/profile/models/shared.dart';
 import 'package:lite_x/features/profile/view_model/providers.dart';
-import 'package:lite_x/features/trends/view/widgets/category_profile_trend_tab.dart';
-import 'package:lite_x/features/trends/view/widgets/for_you_profile_tab.dart';
-import 'package:lite_x/features/trends/view/widgets/trending_profile_tab.dart';
+import 'package:lite_x/features/trends/view/widgets/explore_category_tab.dart';
 
-class Exploreprofilescreenbody extends ConsumerStatefulWidget {
-  const Exploreprofilescreenbody({super.key});
+class ExploreScreenBody extends ConsumerStatefulWidget {
+  const ExploreScreenBody({super.key});
 
   @override
   ConsumerState<ConsumerStatefulWidget> createState() =>
-      _ExploreprofilescreenbodyState();
+      _ExploreScreenbodyState();
 }
 
-class _ExploreprofilescreenbodyState
-    extends ConsumerState<Exploreprofilescreenbody> {
+class _ExploreScreenbodyState extends ConsumerState<ExploreScreenBody> {
   @override
   Widget build(BuildContext context) {
     final currUser = ref.watch(currentUserProvider);
@@ -31,7 +26,7 @@ class _ExploreprofilescreenbodyState
               shrinkWrap: true,
               physics: NeverScrollableScrollPhysics(),
               children: [
-                Center(child: Text("failed to load trends...")),
+                Center(child: Text("failed to load explore...")),
                 Center(
                   child: IconButton(
                     onPressed: () async {
@@ -48,7 +43,7 @@ class _ExploreprofilescreenbodyState
           },
           (pm) {
             return DefaultTabController(
-              length: 6,
+              length: _tabs.length,
               child: Scaffold(
                 appBar: TabBar(
                   indicatorColor: Color(0xFF1DA1F2),
@@ -63,24 +58,12 @@ class _ExploreprofilescreenbodyState
                   ),
                   labelStyle: TextStyle(fontWeight: FontWeight.bold),
                   unselectedLabelColor: Colors.grey,
-                  tabs: [
-                    Tab(text: 'For You'),
-                    Tab(text: 'Trending'),
-                    Tab(text: 'Global'),
-                    Tab(text: 'News'),
-                    Tab(text: 'Sports'),
-                    Tab(text: 'Entertainment'),
-                  ],
+                  tabs: _tabs.map((x) => Tab(text: x)).toList(),
                 ),
                 body: TabBarView(
-                  children: [
-                    _BuildForYouTab(pm),
-                    _BuildTrendingTab(pm),
-                    _BuildGlobalTab(pm),
-                    _BuildNewsTab(pm),
-                    _BuildSportsTab(pm),
-                    _BuildEntertainmentTab(pm),
-                  ],
+                  children: _tabs
+                      .map((x) => ExploreCategoryTab(categoryName: x, pm: pm))
+                      .toList(),
                 ),
               ),
             );
@@ -93,7 +76,7 @@ class _ExploreprofilescreenbodyState
           shrinkWrap: true,
           physics: NeverScrollableScrollPhysics(),
           children: [
-            Center(child: Text("cannot get trends at this time...")),
+            Center(child: Text("cannot get explore at this time...")),
             Center(
               child: IconButton(
                 onPressed: () async {
@@ -118,38 +101,26 @@ class _ExploreprofilescreenbodyState
   }
 }
 
-Widget _BuildForYouTab(ProfileModel pm) {
-  return ForYouProfileTab(pm: pm);
-}
-
-Widget _BuildTrendingTab(ProfileModel pm) {
-  return TrendingProfileTab(pm: pm);
-}
-
-Widget _BuildGlobalTab(ProfileModel pm) {
-  return CategoryProfileTrendTab(
-    pm: pm,
-    categoryName: TrendsCategoriesTabs.Global,
-  );
-}
-
-Widget _BuildNewsTab(ProfileModel pm) {
-  return CategoryProfileTrendTab(
-    pm: pm,
-    categoryName: TrendsCategoriesTabs.News,
-  );
-}
-
-Widget _BuildSportsTab(ProfileModel pm) {
-  return CategoryProfileTrendTab(
-    pm: pm,
-    categoryName: TrendsCategoriesTabs.Sports,
-  );
-}
-
-Widget _BuildEntertainmentTab(ProfileModel pm) {
-  return CategoryProfileTrendTab(
-    pm: pm,
-    categoryName: TrendsCategoriesTabs.Entertainment,
-  );
-}
+final List<String> _tabs = [
+  "general",
+  "food",
+  "science",
+  "music",
+  "news",
+  "sports",
+  "finance",
+  "fashion",
+  "stocks",
+  "business & finance",
+  "basketball",
+  "baseball",
+  "movies & tv",
+  "celebrity",
+  "american football",
+  "travel",
+  "memes",
+  "health & fitness",
+  "entertainment",
+  "cryptocurrency",
+  "politics",
+];

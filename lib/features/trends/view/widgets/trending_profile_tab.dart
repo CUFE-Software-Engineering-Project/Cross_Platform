@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:lite_x/features/profile/models/profile_model.dart';
 import 'package:lite_x/features/profile/view_model/providers.dart';
 import 'package:lite_x/features/trends/view/widgets/trend_tile.dart';
 
 class TrendingProfileTab extends ConsumerWidget {
-  const TrendingProfileTab({Key? key}) : super(key: key);
+  const TrendingProfileTab({Key? key, required this.pm}) : super(key: key);
+  final ProfileModel pm;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -37,15 +40,35 @@ class TrendingProfileTab extends ConsumerWidget {
                 // ignore: unused_result
                 await ref.refresh(profileTrendsProvider);
               },
-              child: ListView.builder(
-                padding: EdgeInsets.only(left: 16),
-                itemBuilder: (context, index) => TrendTile(
-                  trend: data[index],
-                  trendCategory: "Egypt",
-                  showRank: true,
-                ),
-                itemCount: data.length,
-              ),
+              child: data.isNotEmpty
+                  ? ListView.builder(
+                      padding: EdgeInsets.only(left: 16),
+                      itemBuilder: (context, index) => InkWell(
+                        onTap: () {
+                          context.push(
+                            "/hashtagTweetsScreen",
+                            extra: [data[index].id, data[index].title],
+                          );
+                        },
+                        child: TrendTile(
+                          trend: data[index],
+                          trendCategory: "Egypt",
+                          showRank: true,
+                        ),
+                      ),
+                      itemCount: data.length,
+                    )
+                  : Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Text(
+                        "Nothing to see here -- yet.",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 35,
+                        ),
+                      ),
+                    ),
             );
           },
         );

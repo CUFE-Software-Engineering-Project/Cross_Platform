@@ -57,7 +57,7 @@ class ForYouProfileTab extends ConsumerWidget {
                 children: [
                   asyncTrends.when(
                     data: (res) => res.fold(
-                      (l) => Text(l.message),
+                      (l) => SizedBox.shrink(),
                       (r) => _buildTredsSection(r),
                     ),
                     error: (err, _) => SizedBox.shrink(),
@@ -113,10 +113,18 @@ class ForYouProfileTab extends ConsumerWidget {
       physics: NeverScrollableScrollPhysics(),
       shrinkWrap: true,
       itemBuilder: (context, index) {
-        return TrendTile(
-          trend: trends[index],
-          trendCategory: "ُEgypt",
-          showRank: false,
+        return GestureDetector(
+          onTap: () {
+            context.push(
+              "/hashtagTweetsScreen",
+              extra: [trends[index].id, trends[index].title],
+            );
+          },
+          child: TrendTile(
+            trend: trends[index],
+            trendCategory: "ُEgypt",
+            showRank: false,
+          ),
         );
       },
       itemCount: trends.length <= 6 ? trends.length : 6,
@@ -153,6 +161,7 @@ class ForYouProfileTab extends ConsumerWidget {
                 onTap: () {
                   // TODO: go to who to follow screen
                   // context.push();
+                  context.push("/whoToFollowScreen");
                 },
                 child: Text("Show more", style: TextStyle(color: Colors.blue)),
               ),
@@ -176,7 +185,7 @@ class ForYouProfileTab extends ConsumerWidget {
       children: [
         Container(width: double.infinity, height: 0.25, color: Colors.grey),
         Padding(
-          padding: const EdgeInsets.only(left: 16),
+          padding: const EdgeInsets.only(left: 16, top: 10, bottom: 10),
           child: Text(
             category.categoryName.length >= 2
                 ? "${category.categoryName[0].toUpperCase()}${category.categoryName.substring(1)} Trends"
