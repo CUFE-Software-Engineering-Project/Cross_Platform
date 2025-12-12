@@ -1,5 +1,3 @@
-
-
 import 'package:flutter/material.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
 import 'package:lite_x/features/profile/models/profile_tweet_model.dart';
@@ -34,7 +32,7 @@ class ProfileRetweetWidget extends StatelessWidget implements ProfileTweet {
               ),
               SizedBox(width: 5),
               Text(
-                "You reposted",
+                "${this.tweetModel.retweeterName} reposted",
                 style: TextStyle(
                   color: Colors.grey,
                   fontSize: 14,
