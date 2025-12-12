@@ -48,6 +48,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   void showErrorToast(String message) {
     if (!mounted) return;
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
@@ -62,11 +63,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         backgroundColor: Palette.greycolor,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        margin: EdgeInsets.symmetric(
-          horizontal: MediaQuery.of(context).size.width * 0.15,
-          vertical: MediaQuery.of(context).size.height * 0.4,
-        ),
-        duration: const Duration(seconds: 3),
+        margin: const EdgeInsets.only(left: 20, right: 20, bottom: 20),
+        duration: const Duration(seconds: 2),
       ),
     );
   }
