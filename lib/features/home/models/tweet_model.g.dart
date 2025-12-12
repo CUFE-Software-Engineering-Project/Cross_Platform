@@ -40,30 +40,13 @@ class TweetModelAdapter extends TypeAdapter<TweetModel> {
       bookmarks: fields[18] == null ? 0 : (fields[18] as num).toInt(),
       userId: fields[19] as String?,
       tweetType: fields[20] == null ? 'TWEET' : fields[20] as String,
-      isVerified: fields[21] == null ? false : fields[21] as bool,
-      isProtected: fields[22] == null ? false : fields[22] as bool,
-      recommendationScore: (fields[23] as num?)?.toDouble(),
-      recommendationReasons: fields[24] == null
-          ? const []
-          : (fields[24] as List).cast<String>(),
-      replyControl: fields[25] == null ? 'EVERYONE' : fields[25] as String,
-      isFollowed: fields[26] == null ? false : fields[26] as bool,
-      hashtags: fields[27] == null
-          ? const []
-          : (fields[27] as List).cast<TweetHashtag>(),
-      categories: fields[28] == null
-          ? const []
-          : (fields[28] as List).cast<String>(),
-      retweetedByUsernames: fields[29] == null
-          ? const []
-          : (fields[29] as List).cast<String>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, TweetModel obj) {
     writer
-      ..writeByte(30)
+      ..writeByte(21)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -105,25 +88,7 @@ class TweetModelAdapter extends TypeAdapter<TweetModel> {
       ..writeByte(19)
       ..write(obj.userId)
       ..writeByte(20)
-      ..write(obj.tweetType)
-      ..writeByte(21)
-      ..write(obj.isVerified)
-      ..writeByte(22)
-      ..write(obj.isProtected)
-      ..writeByte(23)
-      ..write(obj.recommendationScore)
-      ..writeByte(24)
-      ..write(obj.recommendationReasons)
-      ..writeByte(25)
-      ..write(obj.replyControl)
-      ..writeByte(26)
-      ..write(obj.isFollowed)
-      ..writeByte(27)
-      ..write(obj.hashtags)
-      ..writeByte(28)
-      ..write(obj.categories)
-      ..writeByte(29)
-      ..write(obj.retweetedByUsernames);
+      ..write(obj.tweetType);
   }
 
   @override
@@ -133,40 +98,6 @@ class TweetModelAdapter extends TypeAdapter<TweetModel> {
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is TweetModelAdapter &&
-          runtimeType == other.runtimeType &&
-          typeId == other.typeId;
-}
-
-class TweetHashtagAdapter extends TypeAdapter<TweetHashtag> {
-  @override
-  final typeId = 7;
-
-  @override
-  TweetHashtag read(BinaryReader reader) {
-    final numOfFields = reader.readByte();
-    final fields = <int, dynamic>{
-      for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
-    };
-    return TweetHashtag(id: fields[0] as String, tagText: fields[1] as String);
-  }
-
-  @override
-  void write(BinaryWriter writer, TweetHashtag obj) {
-    writer
-      ..writeByte(2)
-      ..writeByte(0)
-      ..write(obj.id)
-      ..writeByte(1)
-      ..write(obj.tagText);
-  }
-
-  @override
-  int get hashCode => typeId.hashCode;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is TweetHashtagAdapter &&
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:lite_x/features/profile/view/screens/profile_screen.dart';
 import 'expandable_text.dart';
 import 'media_gallery.dart';
 import '../../models/tweet_model.dart';
@@ -37,12 +36,6 @@ class TweetWidget extends StatelessWidget {
   final String? tweetId;
   final bool isOwnTweet;
   final TweetModel? quotedTweet;
-  final List<String> recommendationReasons;
-  final bool showRecommendationReasons;
-
-  /// Usernames of accounts that retweeted/reposted this tweet.
-  /// When present, a small context header is shown above the tweet.
-  final List<String> retweetedByUsernames;
 
   const TweetWidget({
     super.key,
@@ -78,9 +71,6 @@ class TweetWidget extends StatelessWidget {
     this.tweetId,
     this.isOwnTweet = false,
     this.quotedTweet,
-    this.recommendationReasons = const [],
-    this.showRecommendationReasons = false,
-    this.retweetedByUsernames = const [],
   });
 
   @override
@@ -98,15 +88,6 @@ class TweetWidget extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (retweetedByUsernames.isNotEmpty) ...[
-              _buildRetweetContextHeader(),
-              const SizedBox(height: 8),
-            ],
-            if (showRecommendationReasons &&
-                recommendationReasons.isNotEmpty) ...[
-              _buildRecommendationReasons(),
-              const SizedBox(height: 8),
-            ],
             if (_contextLabel != null) ...[
               _buildContextPill(_contextLabel!),
               const SizedBox(height: 12),
@@ -122,16 +103,16 @@ class TweetWidget extends StatelessWidget {
                     children: [
                       _buildUserInfoRow(context),
                       const SizedBox(height: 8),
-                      _buildTweetText(context),
+                      _buildTweetText(),
                       const SizedBox(height: 12),
+                      if (quotedTweet != null) ...[
+                        _buildQuotedTweet(),
+                        const SizedBox(height: 12),
+                      ],
                       if (mediaUrls.isNotEmpty ||
                           imageUrl != null ||
                           videoUrl != null) ...[
                         _buildMediaContent(),
-                        const SizedBox(height: 12),
-                      ],
-                      if (quotedTweet != null) ...[
-                        _buildQuotedTweet(),
                         const SizedBox(height: 12),
                       ],
                       _buildActionButtons(),
@@ -142,40 +123,6 @@ class TweetWidget extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildRetweetContextHeader() {
-    final firstRaw = retweetedByUsernames.first;
-    final first = firstRaw.startsWith('@') ? firstRaw.substring(1) : firstRaw;
-    final othersCount = retweetedByUsernames.length - 1;
-
-    final type = tweetType.toUpperCase();
-    final verb = type == 'RETWEET' ? 'Retweeted' : 'Reposted';
-
-    final text = othersCount > 0
-        ? '@$first and $othersCount others $verb'
-        : '@$first $verb';
-
-    return Padding(
-      padding: const EdgeInsets.only(left: 52),
-      child: Row(
-        children: [
-          Icon(Icons.repeat, size: 14, color: Colors.grey[500]),
-          const SizedBox(width: 6),
-          Flexible(
-            child: Text(
-              text,
-              style: TextStyle(
-                color: Colors.grey[500],
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-              ),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -414,7 +361,7 @@ class TweetWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildTweetText(BuildContext context) {
+  Widget _buildTweetText() {
     return ExpandableText(
       text: content,
       maxLines: 4,
@@ -423,20 +370,6 @@ class TweetWidget extends StatelessWidget {
           ? TextDirection.rtl
           : TextDirection.ltr,
       onReadMore: onTap,
-      // Intentionally disable hashtag navigation from feeds.
-      // Users should open the tweet first, then navigate from tweet detail.
-      onHashtagTap: null,
-      onMentionTap: (username) {
-        // Navigate to user's profile
-        final normalizedUsername = username.startsWith('@')
-            ? username.substring(1)
-            : username;
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => ProfilePage(username: normalizedUsername),
-          ),
-        );
-      },
     );
   }
 
@@ -501,10 +434,21 @@ class TweetWidget extends StatelessWidget {
           ),
           if (quotedTweet!.images.isNotEmpty) ...[
             const SizedBox(height: 8),
-            MediaGallery(
-              urls: quotedTweet!.images,
-              maxHeight: 200,
-              borderRadius: 8,
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.network(
+                quotedTweet!.images.first,
+                height: 120,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    height: 120,
+                    color: Colors.grey[800],
+                    child: const Icon(Icons.image, color: Colors.grey),
+                  );
+                },
+              ),
             ),
           ],
         ],
@@ -720,66 +664,10 @@ class TweetWidget extends StatelessWidget {
         return 'Reply';
       case 'RETWEET':
       case 'REPOST':
-      case 'QUOTE':
-        // Don't show context label for retweets, reposts, and quotes
-        return null;
+        return 'Repost';
       default:
         return null;
     }
-  }
-
-  Widget _buildRecommendationReasons() {
-    // Format the reasons for display
-    String reasonText = '';
-    if (recommendationReasons.contains('topic')) {
-      reasonText = '🏷️ Topic you follow';
-    } else if (recommendationReasons.isNotEmpty) {
-      // Skip trending, global, following, from_following, liked_by_following, and similar
-      final filteredReasons = recommendationReasons
-          .where(
-            (r) =>
-                r != 'trending' &&
-                r != 'global' &&
-                r != 'following' &&
-                r != 'from_following' &&
-                r != 'liked_by_following' &&
-                r != 'liked_by' &&
-                !r.contains('following') &&
-                !r.contains('liked'),
-          )
-          .toList();
-
-      if (filteredReasons.isNotEmpty) {
-        final reason = filteredReasons.first;
-        // Convert underscores to spaces for display
-        final displayReason = reason.replaceAll('_', ' ');
-        reasonText =
-            '⭐ ${displayReason[0].toUpperCase()}${displayReason.substring(1)}';
-      }
-    }
-
-    if (reasonText.isEmpty) return const SizedBox.shrink();
-
-    return Padding(
-      padding: const EdgeInsets.only(left: 52), // Align with tweet content
-      child: Row(
-        children: [
-          Icon(Icons.auto_awesome, size: 12, color: Colors.grey[500]),
-          const SizedBox(width: 4),
-          Flexible(
-            child: Text(
-              reasonText,
-              style: TextStyle(
-                color: Colors.grey[500],
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   Widget _buildContextPill(String label) {

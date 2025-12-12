@@ -30,7 +30,6 @@ import 'package:lite_x/features/trends/view/screens/explore_screen.dart';
 import 'package:lite_x/features/trends/view/screens/shatag_tweets_screen.dart';
 import 'package:lite_x/features/trends/view/screens/trends_screen.dart';
 import 'package:lite_x/features/home/view/screens/tweet_screen.dart';
-import 'package:lite_x/features/home/view/screens/mentioned_tweets_screen.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
 import 'package:lite_x/features/profile/models/shared.dart';
 import 'package:lite_x/features/profile/view/screens/birthdate_screen.dart';
@@ -475,16 +474,6 @@ class Approuter {
         path: "/notifications",
         pageBuilder: (context, state) => CustomTransitionPage(
           child: const NotificationScreen(),
-          transitionsBuilder: _slideRightTransitionBuilder,
-        ),
-      ),
-      GoRoute(
-        name: RouteConstants.MentionedTweetsScreen,
-        path: "/mentionedTweets/:username",
-        pageBuilder: (context, state) => CustomTransitionPage(
-          child: MentionedTweetsScreen(
-            username: state.pathParameters['username'] as String,
-          ),
           transitionsBuilder: _slideRightTransitionBuilder,
         ),
       ),

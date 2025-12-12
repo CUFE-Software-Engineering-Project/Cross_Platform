@@ -1,11 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lite_x/core/providers/dio_interceptor.dart';
-import 'package:lite_x/features/home/models/reposted_by_user_model.dart';
 import 'package:lite_x/features/home/models/tweet_model.dart';
 import 'package:lite_x/features/home/models/tweet_summary.dart';
 import 'package:lite_x/features/home/models/user_profile_model.dart';
-import 'package:lite_x/features/home/models/user_suggestion.dart';
 import 'package:lite_x/features/media/download_media.dart';
 
 final homeRepositoryProvider = Provider<HomeRepository>((ref) {
@@ -19,66 +17,38 @@ class HomeRepository {
 
   Dio get _dio => _ref.read(dioProvider);
 
-  Future<({List<TweetModel> tweets, String? nextCursor})> fetchForYouTweets({
+  Future<List<TweetModel>> fetchForYouTweets({
     int page = 1,
     int limit = 20,
-    String? cursor,
   }) async {
     try {
-      final queryParams = <String, dynamic>{'limit': limit};
-      if (cursor != null) {
-        queryParams['cursor'] = cursor;
-      } else {
-        queryParams['page'] = page;
-      }
-
       final response = await _dio.get(
         'api/home/for-you',
-        queryParameters: queryParams,
+        queryParameters: {'page': page, 'limit': limit},
       );
 
       final List tweetsData;
-      String? nextCursor;
-
-      // Handle response format:
-      // { "user": {...}, "recommendations": [...], "items": [...], "nextCursor": "...", "generatedAt": "..." }
+      // Handle response format: { "user": {...}, "recommendations": [...] }
       if (response.data is Map) {
-        // Extract nextCursor if present
-        nextCursor = response.data['nextCursor']?.toString();
-
-        // Try recommendations first (personalized feed)
         if (response.data['recommendations'] != null) {
           tweetsData = response.data['recommendations'] as List;
-        }
-        // Then try items (generic feed)
-        else if (response.data['items'] != null) {
-          tweetsData = response.data['items'] as List;
-        }
-        // Fallback to data field
-        else if (response.data['data'] != null) {
+        } else if (response.data['data'] != null) {
           tweetsData = response.data['data'] as List;
         } else {
-          print('⚠️ No tweets found in For You response');
-          return (tweets: <TweetModel>[], nextCursor: null);
+          return [];
         }
       } else if (response.data is List) {
         tweetsData = response.data as List;
       } else {
-        print('⚠️ Unexpected response format: ${response.data.runtimeType}');
-        return (tweets: <TweetModel>[], nextCursor: null);
+        return [];
       }
 
       if (tweetsData.isEmpty) {
-        print('📭 For You feed is empty');
-        return (tweets: <TweetModel>[], nextCursor: nextCursor);
+        return [];
       }
 
-      print(
-        '✅ Fetched ${tweetsData.length} tweets for For You feed (nextCursor: $nextCursor)',
-      );
       final tweets = await _deserializeTweets(tweetsData);
-      final filteredTweets = _filterTimelineTweets(tweets);
-      return (tweets: filteredTweets, nextCursor: nextCursor);
+      return _filterTimelineTweets(tweets);
     } on DioException catch (e) {
       throw _handleError(e);
     } catch (e) {
@@ -86,84 +56,38 @@ class HomeRepository {
     }
   }
 
-  Future<({List<TweetModel> tweets, String? nextCursor})> fetchFollowingTweets({
+  Future<List<TweetModel>> fetchFollowingTweets({
     int page = 1,
     int limit = 20,
-    String? cursor,
   }) async {
     // Return mock data if enabled
 
     try {
-      final queryParams = <String, dynamic>{'limit': limit};
-      if (cursor != null) {
-        queryParams['cursor'] = cursor;
-      } else {
-        queryParams['page'] = page;
-      }
-
       final response = await _dio.get(
         'api/home/timeline',
-        queryParameters: queryParams,
+        queryParameters: {'page': page, 'limit': limit},
       );
 
       final List tweetsData;
-      String? nextCursor;
-
-      // Handle response format: { "items": [...], "nextCursor": "..." } or { "data": [...] }
+      // Handle response format: { "data": [...], "nextCursor": "..." }
       if (response.data is Map) {
-        final map = Map<String, dynamic>.from(response.data as Map);
-
-        // Some backends nest timeline payloads.
-        final dynamic root = (map['timeline'] is Map)
-            ? map['timeline']
-            : (map['items'] is Map)
-            ? map['items']
-            : map;
-
-        final rootMap = root is Map ? Map<String, dynamic>.from(root) : map;
-
-        nextCursor =
-            rootMap['nextCursor']?.toString() ?? map['nextCursor']?.toString();
-
-        if (rootMap['items'] is List) {
-          tweetsData = rootMap['items'] as List;
-        } else if (rootMap['data'] is List) {
-          tweetsData = rootMap['data'] as List;
-        } else if (map['items'] is List) {
-          tweetsData = map['items'] as List;
-        } else if (map['data'] is List) {
-          tweetsData = map['data'] as List;
+        if (response.data['data'] != null) {
+          tweetsData = response.data['data'] as List;
         } else {
-          print('⚠️ No tweets found in Following response: ${response.data}');
-          return (tweets: <TweetModel>[], nextCursor: null);
+          return [];
         }
       } else if (response.data is List) {
         tweetsData = response.data as List;
       } else {
-        return (tweets: <TweetModel>[], nextCursor: null);
+        return [];
       }
 
       if (tweetsData.isEmpty) {
-        return (tweets: <TweetModel>[], nextCursor: nextCursor);
+        return [];
       }
 
-      print(
-        '✅ Fetched ${tweetsData.length} tweets for Following feed (nextCursor: $nextCursor)',
-      );
       final tweets = await _deserializeTweets(tweetsData);
-      // Timeline should not show replies.
-      final filteredTweets = tweets.where((tweet) {
-        final type = tweet.tweetType.toUpperCase();
-        if (type == 'REPLY') return false;
-        // Extra safety: treat parent-linked items as replies.
-        return tweet.replyToId == null;
-      }).toList();
-
-      print(
-        '🧾 Timeline deserialized ${tweets.length} items; after filtering replies: ${filteredTweets.length}',
-      );
-
-      return (tweets: filteredTweets, nextCursor: nextCursor);
+      return _filterTimelineTweets(tweets);
     } on DioException catch (e) {
       throw _handleError(e);
     } catch (e) {
@@ -626,14 +550,6 @@ class HomeRepository {
     }
   }
 
-  /// Returns the current media IDs attached to a tweet.
-  ///
-  /// This is the only reliable way to get IDs because in many places we replace
-  /// IDs with resolved URLs for display.
-  Future<List<String>> getTweetMediaIds(String tweetId) async {
-    return await _fetchTweetMediaIds(tweetId);
-  }
-
   List<dynamic> _extractDynamicList(dynamic data) {
     if (data is List) return data;
     if (data is Map && data['data'] is List) {
@@ -755,95 +671,35 @@ class HomeRepository {
     }
   }
 
-  Future<({List<TweetModel> tweets, String? nextCursor})> getQuotes(
-    String tweetId, {
-    String? cursor,
-  }) async {
+  Future<List<TweetModel>> getQuotes(String tweetId) async {
     try {
-      final queryParams = <String, dynamic>{};
-      if (cursor != null && cursor.isNotEmpty) {
-        queryParams['cursor'] = cursor;
-      }
-
-      final response = await _dio.get(
-        'api/tweets/$tweetId/quotes',
-        queryParameters: queryParams.isEmpty ? null : queryParams,
-      );
-
-      String? nextCursor;
-      dynamic rawList;
-
-      if (response.data is Map) {
-        final map = response.data as Map;
-        nextCursor = map['cursor']?.toString() ?? map['nextCursor']?.toString();
-        rawList = map['data'] ?? map['items'];
-      } else {
-        rawList = response.data;
-      }
-
-      final data = rawList is List ? rawList : <dynamic>[];
+      final response = await _dio.get('api/tweets/$tweetId/quotes');
+      final data = response.data is Map && response.data['data'] != null
+          ? response.data['data']
+          : response.data;
 
       final List<TweetModel> tweets = [];
-      for (var json in data) {
+      for (var json in (data as List)) {
         try {
-          if (json is Map<String, dynamic>) {
-            final tweet = TweetModel.fromJson(json);
-            tweets.add(tweet);
-          } else if (json is Map) {
-            final tweet = TweetModel.fromJson(Map<String, dynamic>.from(json));
-            tweets.add(tweet);
-          }
+          final tweet = TweetModel.fromJson(json);
+          tweets.add(tweet);
         } catch (e) {
           // Silently handle error
         }
       }
-
-      return (tweets: tweets, nextCursor: nextCursor);
+      return tweets;
     } on DioException catch (e) {
       throw _handleError(e);
     }
   }
 
-  Future<({List<RepostedByUserModel> users, String? nextCursor})> getRetweets(
-    String tweetId, {
-    String? cursor,
-  }) async {
+  Future<List<Map<String, dynamic>>> getRetweets(String tweetId) async {
     try {
-      final queryParams = <String, dynamic>{};
-      if (cursor != null && cursor.isNotEmpty) {
-        queryParams['cursor'] = cursor;
-      }
-
-      final response = await _dio.get(
-        'api/tweets/$tweetId/retweets',
-        queryParameters: queryParams.isEmpty ? null : queryParams,
-      );
-
-      String? nextCursor;
-      dynamic rawList;
-
-      if (response.data is Map) {
-        final map = response.data as Map;
-        nextCursor = map['cursor']?.toString() ?? map['nextCursor']?.toString();
-        rawList = map['data'] ?? map['users'] ?? map['items'];
-      } else {
-        rawList = response.data;
-      }
-
-      final list = rawList is List ? rawList : <dynamic>[];
-      final users = <RepostedByUserModel>[];
-
-      for (final item in list) {
-        if (item is Map<String, dynamic>) {
-          users.add(RepostedByUserModel.fromJson(item));
-        } else if (item is Map) {
-          users.add(
-            RepostedByUserModel.fromJson(Map<String, dynamic>.from(item)),
-          );
-        }
-      }
-
-      return (users: users, nextCursor: nextCursor);
+      final response = await _dio.get('api/tweets/$tweetId/retweets');
+      final data = response.data is Map && response.data['data'] != null
+          ? response.data['data']
+          : response.data;
+      return List<Map<String, dynamic>>.from(data);
     } on DioException catch (e) {
       throw _handleError(e);
     }
@@ -853,13 +709,19 @@ class HomeRepository {
     try {
       final response = await _dio.get('api/tweets/$tweetId/summary');
 
-      // Handle both direct response and nested data structure.
-      // Dio sometimes gives Map<dynamic, dynamic>, so always normalize via _extractMap.
-      final outer = _extractMap(response.data);
-      final inner = outer['data'];
-      final normalized = inner == null ? outer : _extractMap(inner);
+      // Handle both direct response and nested data structure
+      final Map<String, dynamic> data;
+      if (response.data is Map<String, dynamic>) {
+        if (response.data.containsKey('data')) {
+          data = response.data['data'] as Map<String, dynamic>;
+        } else {
+          data = response.data as Map<String, dynamic>;
+        }
+      } else {
+        data = _extractMap(response.data);
+      }
 
-      return TweetSummary.fromJson(normalized);
+      return TweetSummary.fromJson(data);
     } on DioException catch (e) {
       throw _handleError(e);
     } catch (e) {
@@ -890,42 +752,6 @@ class HomeRepository {
     }
   }
 
-  Future<List<UserSuggestion>> searchUsers(String query) async {
-    final trimmedQuery = query.trim();
-    if (trimmedQuery.isEmpty) {
-      return [];
-    }
-
-    try {
-      final response = await _dio.get(
-        'api/users/search',
-        queryParameters: {'query': trimmedQuery},
-      );
-
-      // Handle response format: { "users": [...], "nextCursor": ... }
-      final Map<String, dynamic> data;
-      if (response.data is Map<String, dynamic>) {
-        data = response.data as Map<String, dynamic>;
-      } else {
-        data = _extractMap(response.data);
-      }
-
-      // Extract users array from the response
-      final List usersData;
-      if (data.containsKey('users')) {
-        usersData = data['users'] as List;
-      } else {
-        usersData = _extractList(response.data);
-      }
-
-      return usersData.map((user) => UserSuggestion.fromJson(user)).toList();
-    } on DioException catch (e) {
-      throw _handleError(e);
-    } catch (e) {
-      throw Exception('Failed to search users: $e');
-    }
-  }
-
   Future<List<TweetModel>> getUserTweets(
     String username, {
     int page = 1,
@@ -950,39 +776,15 @@ class HomeRepository {
     List<String> mediaIds = const [],
   }) async {
     try {
-      final payload = Map<String, dynamic>.from(data);
-
-      // Some screens send media under `tweetMedia`, others under `mediaIds`.
-      // For edits we want to send the *full* set (kept + new) so removed media
-      // is excluded, and new media is included.
-      final normalizedFromPayload = _normalizeMediaIds(
-        payload['mediaIds'] ?? payload['tweetMedia'],
-      );
-      final normalizedFromArg = mediaIds.where((id) => id.isNotEmpty).toList();
-      final effectiveMediaIds =
-          (normalizedFromPayload.isNotEmpty
-                  ? normalizedFromPayload
-                  : normalizedFromArg)
-              .toSet()
-              .toList();
-
-      if (effectiveMediaIds.isNotEmpty) {
-        // API expects `tweetMedia` only.
-        payload.remove('mediaIds');
-        payload['tweetMedia'] = effectiveMediaIds;
-      } else {
-        payload.remove('mediaIds');
-      }
-
-      final response = await _dio.patch('api/tweets/$tweetId', data: payload);
+      final response = await _dio.patch('api/tweets/$tweetId', data: data);
 
       final tweetData = response.data is Map && response.data['data'] != null
           ? response.data['data']
           : response.data;
 
       final updatedTweetId = tweetData['id']?.toString() ?? tweetId;
-      if (effectiveMediaIds.isNotEmpty && updatedTweetId.isNotEmpty) {
-        await _attachMediaToTweet(updatedTweetId, effectiveMediaIds);
+      if (mediaIds.isNotEmpty && updatedTweetId.isNotEmpty) {
+        await _attachMediaToTweet(updatedTweetId, mediaIds);
         final attachedMedia = await _fetchTweetMediaIds(updatedTweetId);
         if (attachedMedia.isNotEmpty) {
           tweetData['media'] = attachedMedia;
@@ -1015,56 +817,6 @@ class HomeRepository {
     } catch (e) {
       rethrow;
     }
-  }
-
-  List<String> _normalizeMediaIds(dynamic value) {
-    if (value == null) return const [];
-
-    if (value is List) {
-      return value
-          .map((e) => _extractMediaIdToken(e?.toString()))
-          .where((id) => id.isNotEmpty)
-          .toList();
-    }
-
-    if (value is String) {
-      final id = _extractMediaIdToken(value);
-      return id.isEmpty ? const [] : [id];
-    }
-
-    return const [];
-  }
-
-  String _extractMediaIdToken(String? raw) {
-    if (raw == null) return '';
-    var value = raw.trim();
-    if (value.isEmpty) return '';
-
-    // Strip query/fragment and leave last path segment.
-    value = value.split('?').first.split('#').first;
-    if (value.contains('/')) {
-      value = value.split('/').last;
-    }
-
-    // Prefer extracting UUID from filenames like: <uuid>-...jpg
-    final uuidMatch = RegExp(
-      r'[0-9a-fA-F]{8}-'
-      r'[0-9a-fA-F]{4}-'
-      r'[0-9a-fA-F]{4}-'
-      r'[0-9a-fA-F]{4}-'
-      r'[0-9a-fA-F]{12}',
-    ).firstMatch(value);
-    if (uuidMatch != null) {
-      return uuidMatch.group(0) ?? '';
-    }
-
-    // Fallback: remove common extensions.
-    value = value.replaceAll(
-      RegExp(r'\.(jpg|jpeg|png|gif|webp|mp4|mov)$', caseSensitive: false),
-      '',
-    );
-
-    return value;
   }
 
   String _handleError(DioException error) {

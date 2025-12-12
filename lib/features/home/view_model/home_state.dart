@@ -10,11 +10,6 @@ class HomeState {
   final String? error;
   final bool isRefreshing;
   final FeedType currentFeed;
-  final bool isLoadingMore; // Loading more tweets
-  final String? forYouCursor; // Next cursor for For You feed
-  final String? followingCursor; // Next cursor for Following feed
-  final bool hasMoreForYou; // More tweets available in For You
-  final bool hasMoreFollowing; // More tweets available in Following
 
   const HomeState({
     this.tweets = const [],
@@ -24,11 +19,6 @@ class HomeState {
     this.error,
     this.isRefreshing = false,
     this.currentFeed = FeedType.forYou, // Default to For You feed
-    this.isLoadingMore = false,
-    this.forYouCursor,
-    this.followingCursor,
-    this.hasMoreForYou = true,
-    this.hasMoreFollowing = true,
   });
 
   HomeState copyWith({
@@ -39,11 +29,6 @@ class HomeState {
     String? error,
     bool? isRefreshing,
     FeedType? currentFeed,
-    bool? isLoadingMore,
-    String? forYouCursor,
-    String? followingCursor,
-    bool? hasMoreForYou,
-    bool? hasMoreFollowing,
   }) {
     return HomeState(
       tweets: tweets ?? this.tweets,
@@ -53,11 +38,6 @@ class HomeState {
       error: error ?? this.error,
       isRefreshing: isRefreshing ?? this.isRefreshing,
       currentFeed: currentFeed ?? this.currentFeed,
-      isLoadingMore: isLoadingMore ?? this.isLoadingMore,
-      forYouCursor: forYouCursor ?? this.forYouCursor,
-      followingCursor: followingCursor ?? this.followingCursor,
-      hasMoreForYou: hasMoreForYou ?? this.hasMoreForYou,
-      hasMoreFollowing: hasMoreFollowing ?? this.hasMoreFollowing,
     );
   }
 }

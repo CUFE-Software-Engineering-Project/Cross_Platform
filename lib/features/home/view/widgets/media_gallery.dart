@@ -42,7 +42,6 @@ class MediaGallery extends StatelessWidget {
     if (mediaKey.startsWith('http://') || mediaKey.startsWith('https://')) {
       return mediaKey;
     }
-
     // Otherwise, construct the full URL
     return 'https://litex.siematworld.online/media/$mediaKey';
   }
@@ -128,12 +127,10 @@ class MediaGallery extends StatelessWidget {
     List<String> allImages,
   ) {
     if (!_isValidMediaUrl(url)) {
-      print('⚠️ Invalid media URL: $url');
       return _buildPendingMediaPlaceholder();
     }
 
     final isVideo = _isVideoUrl(url);
-    print('🎬 Media URL: $url, isVideo: $isVideo');
 
     // For videos, show inline auto-playing player
     if (isVideo) {
@@ -207,17 +204,7 @@ class MediaGallery extends StatelessWidget {
       '.m4v',
     ];
 
-    // Check if URL has video extension
-    final hasVideoExtension = videoExtensions.any((ext) => path.endsWith(ext));
-
-    // Also check if the URL contains common video indicators
-    final hasVideoIndicator =
-        path.contains('/video') ||
-        url.toLowerCase().contains('video') ||
-        path.contains('.mp4') ||
-        path.contains('.mov');
-
-    return hasVideoExtension || hasVideoIndicator;
+    return videoExtensions.any((ext) => path.endsWith(ext));
   }
 
   Widget _buildPendingMediaPlaceholder() {

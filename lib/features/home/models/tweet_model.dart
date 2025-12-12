@@ -67,35 +67,6 @@ class TweetModel extends HiveObject {
   @HiveField(20)
   final String tweetType;
 
-  @HiveField(21)
-  final bool isVerified;
-
-  @HiveField(22)
-  final bool isProtected;
-
-  @HiveField(23)
-  final double? recommendationScore;
-
-  @HiveField(24)
-  final List<String> recommendationReasons;
-
-  @HiveField(25)
-  final String replyControl;
-
-  @HiveField(26)
-  final bool isFollowed;
-
-  @HiveField(27)
-  final List<TweetHashtag> hashtags;
-
-  @HiveField(28)
-  final List<String> categories;
-
-  /// Usernames of accounts that retweeted/reposted this tweet.
-  /// Backed by the TimelineItemDTO `retweets.data[].username` payload.
-  @HiveField(29)
-  final List<String> retweetedByUsernames;
-
   TweetModel({
     required this.id,
     required this.content,
@@ -118,15 +89,6 @@ class TweetModel extends HiveObject {
     this.bookmarks = 0,
     this.userId,
     this.tweetType = 'TWEET',
-    this.isVerified = false,
-    this.isProtected = false,
-    this.recommendationScore,
-    this.recommendationReasons = const [],
-    this.replyControl = 'EVERYONE',
-    this.isFollowed = false,
-    this.hashtags = const [],
-    this.categories = const [],
-    this.retweetedByUsernames = const [],
   });
 
   TweetModel copyWith({
@@ -151,15 +113,6 @@ class TweetModel extends HiveObject {
     int? bookmarks,
     String? userId,
     String? tweetType,
-    bool? isVerified,
-    bool? isProtected,
-    double? recommendationScore,
-    List<String>? recommendationReasons,
-    String? replyControl,
-    bool? isFollowed,
-    List<TweetHashtag>? hashtags,
-    List<String>? categories,
-    List<String>? retweetedByUsernames,
   }) {
     return TweetModel(
       id: id ?? this.id,
@@ -183,16 +136,6 @@ class TweetModel extends HiveObject {
       bookmarks: bookmarks ?? this.bookmarks,
       userId: userId ?? this.userId,
       tweetType: tweetType ?? this.tweetType,
-      isVerified: isVerified ?? this.isVerified,
-      isProtected: isProtected ?? this.isProtected,
-      recommendationScore: recommendationScore ?? this.recommendationScore,
-      recommendationReasons:
-          recommendationReasons ?? this.recommendationReasons,
-      replyControl: replyControl ?? this.replyControl,
-      isFollowed: isFollowed ?? this.isFollowed,
-      hashtags: hashtags ?? this.hashtags,
-      categories: categories ?? this.categories,
-      retweetedByUsernames: retweetedByUsernames ?? this.retweetedByUsernames,
     );
   }
 
@@ -219,15 +162,6 @@ class TweetModel extends HiveObject {
       'bookmarks': bookmarks,
       'userId': userId,
       'tweetType': tweetType,
-      'isVerified': isVerified,
-      'isProtected': isProtected,
-      'recommendationScore': recommendationScore,
-      'recommendationReasons': recommendationReasons,
-      'replyControl': replyControl,
-      'isFollowed': isFollowed,
-      'hashtags': hashtags.map((h) => h.toJson()).toList(),
-      'categories': categories,
-      'retweetedByUsernames': retweetedByUsernames,
     };
   }
 
@@ -281,76 +215,15 @@ class TweetModel extends HiveObject {
           ? TweetModel.fromJson(json['quotedTweet'] as Map<String, dynamic>)
           : (json['parent'] != null && json['parent'] is Map
                 ? TweetModel.fromJson(json['parent'] as Map<String, dynamic>)
-                : (json['parentTweet'] != null && json['parentTweet'] is Map
-                      ? TweetModel.fromJson(
-                          json['parentTweet'] as Map<String, dynamic>,
-                        )
-                      : null)),
+                : null),
 
       quotes: _toInt(json['quotesCount'] ?? json['quotes']),
       bookmarks: _toInt(json['bookmarksCount'] ?? json['bookmarks']),
 
       userId: user?['id']?.toString() ?? json['userId']?.toString(),
       tweetType: normalizedTweetType,
-
-      // New fields for recommendation feed
-      isVerified:
-          user?['verified'] as bool? ?? json['verified'] as bool? ?? false,
-      isProtected:
-          user?['protectedAccount'] as bool? ??
-          json['protectedAccount'] as bool? ??
-          false,
-      recommendationScore: _toDouble(json['score']),
-      recommendationReasons: json['reasons'] != null
-          ? List<String>.from(json['reasons'])
-          : [],
-      replyControl: json['replyControl']?.toString() ?? 'EVERYONE',
-
-      // New fields from tweet details
-      // If the tweet has 'from_following' reason, we know the user is followed
-      isFollowed:
-          user?['isFollowed'] as bool? ??
-          json['isFollowed'] as bool? ??
-          (json['reasons'] is List &&
-                  (json['reasons'] as List).contains('from_following')
-              ? true
-              : false),
-      hashtags: _extractHashtags(json),
-      categories: _extractCategories(json),
-      retweetedByUsernames: _extractRetweetedByUsernames(json),
     )..let((tweet) {});
   }
-}
-
-List<String> _extractRetweetedByUsernames(Map<String, dynamic> json) {
-  final dynamic retweets = json['retweets'];
-  if (retweets is Map) {
-    final dynamic data = retweets['data'];
-    if (data is List) {
-      final usernames = <String>[];
-      for (final item in data) {
-        if (item is Map && item['username'] != null) {
-          final u = item['username'].toString().trim();
-          if (u.isNotEmpty) usernames.add(u);
-        }
-      }
-      return usernames;
-    }
-  }
-  return const [];
-}
-
-@HiveType(typeId: 7)
-class TweetHashtag {
-  @HiveField(0)
-  final String id;
-
-  @HiveField(1)
-  final String tagText;
-
-  const TweetHashtag({required this.id, required this.tagText});
-
-  Map<String, dynamic> toJson() => {'id': id, 'tag_text': tagText};
 }
 
 extension _LetExtension<T> on T {
@@ -366,8 +239,6 @@ List<String> _extractMediaUrls(Map<String, dynamic> json) {
     json['media'],
     json['tweetMedia'],
     json['tweet_media'],
-    json['mediaIds'],
-    json['media_ids'],
   ];
 
   for (final source in mediaSources) {
@@ -502,92 +373,4 @@ int _toInt(dynamic value) {
     return int.tryParse(value) ?? 0;
   }
   return 0;
-}
-
-double? _toDouble(dynamic value) {
-  if (value == null) return null;
-  if (value is double) return value;
-  if (value is int) return value.toDouble();
-  if (value is String) {
-    return double.tryParse(value);
-  }
-  return null;
-}
-
-List<TweetHashtag> _extractHashtags(Map<String, dynamic> json) {
-  final hashtags = json['hashtags'];
-  if (hashtags is List) {
-    final result = <TweetHashtag>[];
-
-    for (final item in hashtags) {
-      if (item is String) {
-        final tag = item.trim();
-        if (tag.isNotEmpty) {
-          result.add(TweetHashtag(id: tag, tagText: tag));
-        }
-        continue;
-      }
-
-      if (item is Map) {
-        final map = item.map((k, v) => MapEntry(k.toString(), v));
-
-        // Backend shape: { "hash": { "id": "...", "tag_text": "aboutnews" } }
-        final hash = map['hash'];
-        if (hash is Map) {
-          final hashMap = hash.map((k, v) => MapEntry(k.toString(), v));
-          final id = hashMap['id']?.toString() ?? '';
-          final tagText =
-              hashMap['tag_text']?.toString() ??
-              hashMap['tag']?.toString() ??
-              '';
-          if (id.isNotEmpty && tagText.isNotEmpty) {
-            result.add(TweetHashtag(id: id, tagText: tagText));
-            continue;
-          }
-        }
-
-        // Alternative: {"hashId": "uuid"} (no tag text provided)
-        final hashId = map['hashId']?.toString() ?? '';
-        if (hashId.isNotEmpty) {
-          result.add(TweetHashtag(id: hashId, tagText: hashId));
-          continue;
-        }
-
-        // Alternative: {"id": "uuid", "tag_text": "aboutnews"}
-        final id = map['id']?.toString() ?? '';
-        final tagText = map['tag_text']?.toString() ?? '';
-        if (id.isNotEmpty && tagText.isNotEmpty) {
-          result.add(TweetHashtag(id: id, tagText: tagText));
-        }
-      }
-    }
-
-    return result;
-  }
-  return const <TweetHashtag>[];
-}
-
-List<String> _extractCategories(Map<String, dynamic> json) {
-  final tweetCategories = json['tweetCategories'];
-  if (tweetCategories is List) {
-    return tweetCategories
-        .map((item) {
-          if (item is Map) {
-            // Handle format: {"category": {"name": "news"}}
-            final category = item['category'];
-            if (category is Map) {
-              return category['name']?.toString() ?? '';
-            }
-            // Also handle direct category name
-            return item['name']?.toString() ?? '';
-          } else if (item is String) {
-            return item;
-          }
-          return '';
-        })
-        .where((s) => s.isNotEmpty)
-        .cast<String>()
-        .toList();
-  }
-  return <String>[];
 }

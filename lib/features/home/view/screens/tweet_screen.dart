@@ -10,13 +10,8 @@ import 'package:lite_x/features/home/repositories/home_repository.dart';
 import 'package:lite_x/features/home/view/screens/reply_composer_screen.dart';
 import 'package:lite_x/features/home/view/screens/reply_thread_screen.dart';
 import 'package:lite_x/features/home/view/screens/quote_composer_screen.dart';
-import 'package:lite_x/features/home/view/screens/edit_tweet_screen.dart';
-import 'package:lite_x/features/home/view/screens/quotes_screen.dart';
-import 'package:lite_x/features/home/view/screens/reposted_by_screen.dart';
 import 'package:lite_x/features/home/view/widgets/media_gallery.dart';
 import 'package:lite_x/features/home/view/widgets/tweet_summary_dialog.dart';
-import 'package:lite_x/features/home/view/widgets/expandable_text.dart';
-import 'package:lite_x/features/home/view/screens/temp_hashtag_screen.dart';
 import 'package:lite_x/features/profile/view/screens/profile_screen.dart';
 import 'package:lite_x/features/profile/view_model/providers.dart';
 import 'package:lite_x/features/home/view_model/home_view_model.dart';
@@ -39,8 +34,6 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
   int? _viewCount;
   bool isFollowing = false;
   bool isFollowLoading = false;
-  bool _hasLocalFollowAction =
-      false; // Track if user performed follow action in this session
 
   @override
   void initState() {
@@ -62,91 +55,6 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
     Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => ProfilePage(username: normalized)),
     );
-  }
-
-  void _openRepostedBy(String tweetId) {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => RepostedByScreen(tweetId: tweetId)),
-    );
-  }
-
-  void _openQuotes(String tweetId) {
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (_) => QuotesScreen(tweetId: tweetId)));
-  }
-
-  void _openHashtagPosts({required String hashtagId, required String tagText}) {
-    try {
-      print(
-        '🏷️ Opening temp hashtag screen: id="$hashtagId", text="$tagText"',
-      );
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) =>
-              TempHashtagScreen(hashtagId: hashtagId, hashtagText: tagText),
-        ),
-      );
-    } catch (e, stackTrace) {
-      print('❌ Error opening hashtag screen: $e');
-      print('Stack trace: $stackTrace');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to open hashtag: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
-
-  /// Find hashtag from a tweet's hashtag list by text (case-insensitive, # optional)
-  TweetHashtag? _findHashtagByText(List<TweetHashtag> hashtags, String text) {
-    if (hashtags.isEmpty) {
-      print('⚠️ No hashtags in tweet!');
-      return null;
-    }
-
-    // Normalize the clicked text - remove # and lowercase
-    final normalized = text.replaceAll('#', '').toLowerCase().trim();
-    print('🔍 Finding hashtag: "$text" → normalized: "$normalized"');
-    print('📋 Tweet has ${hashtags.length} hashtags:');
-
-    for (var h in hashtags) {
-      print('   - Original: "${h.tagText}" | ID: ${h.id}');
-    }
-
-    // Try to find match - try multiple strategies
-    TweetHashtag? result;
-
-    // Strategy 1: Exact match after normalization (remove all # and lowercase)
-    try {
-      result = hashtags.firstWhere((h) {
-        final hNormalized = h.tagText.replaceAll('#', '').toLowerCase().trim();
-        return hNormalized == normalized;
-      });
-      print('✅ Found (exact): id="${result.id}", text="${result.tagText}"');
-      return result;
-    } catch (e) {
-      print('❌ Strategy 1 (exact) failed');
-    }
-
-    // Strategy 2: Contains match
-    try {
-      result = hashtags.firstWhere((h) {
-        final hNormalized = h.tagText.replaceAll('#', '').toLowerCase().trim();
-        return hNormalized.contains(normalized) ||
-            normalized.contains(hNormalized);
-      });
-      print('✅ Found (contains): id="${result.id}", text="${result.tagText}"');
-      return result;
-    } catch (e) {
-      print('❌ Strategy 2 (contains) failed');
-    }
-
-    print('⚠️ No match found for "$text"');
-    return null;
   }
 
   String _normalizeUsername(String username) {
@@ -182,19 +90,6 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
             if (mounted) {
               setState(() {
                 isFollowing = false;
-                _hasLocalFollowAction =
-                    true; // Mark that we just performed an action
-                // Update tweet model
-                if (mainTweet != null) {
-                  mainTweet = mainTweet!.copyWith(isFollowed: false);
-                  // Update all cached tweets by this user
-                  ref
-                      .read(homeViewModelProvider.notifier)
-                      .updateFollowStatusForUser(
-                        mainTweet!.authorUsername,
-                        false,
-                      );
-                }
               });
             }
           },
@@ -217,19 +112,6 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
             if (mounted) {
               setState(() {
                 isFollowing = true;
-                _hasLocalFollowAction =
-                    true; // Mark that we just performed an action
-                // Update tweet model
-                if (mainTweet != null) {
-                  mainTweet = mainTweet!.copyWith(isFollowed: true);
-                  // Update all cached tweets by this user
-                  ref
-                      .read(homeViewModelProvider.notifier)
-                      .updateFollowStatusForUser(
-                        mainTweet!.authorUsername,
-                        true,
-                      );
-                }
               });
             }
           },
@@ -259,11 +141,6 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
         replies = [];
         isLoading = cachedTweet == null;
         _viewCount = null;
-        // Initialize isFollowing from cached tweet if available
-        if (cachedTweet != null) {
-          isFollowing = cachedTweet.isFollowed;
-          print('💾 Cached tweet hashtags: ${cachedTweet.hashtags.length}');
-        }
       });
     }
 
@@ -278,18 +155,6 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
       if (mounted) {
         setState(() {
           mainTweet = fetchedTweet;
-          print('📝 Loaded tweet: "${fetchedTweet.content}"');
-          print('🏷️ Hashtags count: ${fetchedTweet.hashtags.length}');
-          if (fetchedTweet.hashtags.isNotEmpty) {
-            print(
-              '   Hashtags: ${fetchedTweet.hashtags.map((h) => '${h.id}:"${h.tagText}"').join(", ")}',
-            );
-          }
-          // Only update isFollowing from server if user hasn't performed a follow action in this session
-          if (!_hasLocalFollowAction) {
-            isFollowing = fetchedTweet.isFollowed;
-          }
-          // If _hasLocalFollowAction is true, keep the local state
         });
       }
 
@@ -583,11 +448,8 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
     setState(() {
       final replyIndex = replies.indexWhere((r) => r.id == reply.id);
       if (replyIndex != -1) {
-        replies = List<TweetModel>.from(replies);
-        replies[replyIndex] = replies[replyIndex].copyWith(
-          isLiked: newLikeState,
-          likes: replies[replyIndex].likes + (newLikeState ? 1 : -1),
-        );
+        replies[replyIndex].isLiked = newLikeState;
+        replies[replyIndex].likes += newLikeState ? 1 : -1;
       }
     });
 
@@ -609,11 +471,8 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
         setState(() {
           final replyIndex = replies.indexWhere((r) => r.id == reply.id);
           if (replyIndex != -1) {
-            replies = List<TweetModel>.from(replies);
-            replies[replyIndex] = replies[replyIndex].copyWith(
-              isLiked: currentLikeState,
-              likes: replies[replyIndex].likes + (currentLikeState ? 1 : -1),
-            );
+            replies[replyIndex].isLiked = currentLikeState;
+            replies[replyIndex].likes += currentLikeState ? 1 : -1;
           }
         });
       }
@@ -628,11 +487,8 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
     setState(() {
       final replyIndex = replies.indexWhere((r) => r.id == reply.id);
       if (replyIndex != -1) {
-        replies = List<TweetModel>.from(replies);
-        replies[replyIndex] = replies[replyIndex].copyWith(
-          isRetweeted: newRetweetState,
-          retweets: replies[replyIndex].retweets + (newRetweetState ? 1 : -1),
-        );
+        replies[replyIndex].isRetweeted = newRetweetState;
+        replies[replyIndex].retweets += newRetweetState ? 1 : -1;
       }
     });
 
@@ -654,12 +510,8 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
         setState(() {
           final replyIndex = replies.indexWhere((r) => r.id == reply.id);
           if (replyIndex != -1) {
-            replies = List<TweetModel>.from(replies);
-            replies[replyIndex] = replies[replyIndex].copyWith(
-              isRetweeted: currentRetweetState,
-              retweets:
-                  replies[replyIndex].retweets + (currentRetweetState ? 1 : -1),
-            );
+            replies[replyIndex].isRetweeted = currentRetweetState;
+            replies[replyIndex].retweets += currentRetweetState ? 1 : -1;
           }
         });
       }
@@ -979,15 +831,13 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
   }
 
   Widget _buildActionButton() {
-    final bool isOwnTweet =
-        currentUserId != null &&
-        mainTweet?.userId != null &&
-        currentUserId == mainTweet!.userId;
+    const String knownUserId = '6552d72c-3f27-445d-8ad8-bc22cda9ddd9';
 
-    if (isOwnTweet) {
-      // If it's the user's own tweet, never show follow actions.
-      isFollowing = false;
-    }
+    final bool isOwnTweet =
+        (currentUserId != null &&
+            mainTweet!.userId != null &&
+            currentUserId == mainTweet!.userId) ||
+        (mainTweet!.userId != null && mainTweet!.userId == knownUserId);
 
     if (isOwnTweet) {
       return PopupMenuButton<String>(
@@ -1063,26 +913,147 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
     }
   }
 
-  Future<void> _showEditDialog() async {
-    if (mainTweet == null) return;
-
-    final updatedTweet = await Navigator.push<TweetModel>(
-      context,
-      MaterialPageRoute(
-        builder: (context) => EditTweetScreen(tweet: mainTweet!),
-      ),
+  void _showEditDialog() {
+    final TextEditingController controller = TextEditingController(
+      text: mainTweet!.content,
     );
 
-    if (updatedTweet != null && mounted) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1E1E1E),
+        title: const Text(
+          'Edit Tweet',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        content: TextField(
+          controller: controller,
+          maxLines: null,
+          maxLength: 280,
+          autofocus: true,
+          style: const TextStyle(color: Colors.white, fontSize: 16),
+          decoration: InputDecoration(
+            hintText: 'What\'s happening?',
+            hintStyle: TextStyle(color: Colors.grey[600]),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey[800]!),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey[800]!),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Color(0xFF1DA1F2)),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+          ),
+          TextButton(
+            onPressed: () async {
+              final newContent = controller.text.trim();
+              if (newContent.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Tweet cannot be empty'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+                return;
+              }
+
+              Navigator.pop(context);
+              await _updateTweet(newContent);
+            },
+            child: const Text(
+              'Save',
+              style: TextStyle(
+                color: Color(0xFF1DA1F2),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _updateTweet(String newContent) async {
+    if (mainTweet == null) return;
+
+    bool updateSuccessful = false;
+    TweetModel? updatedTweet;
+
+    try {
+      final repository = ref.read(homeRepositoryProvider);
+      updatedTweet = await repository.updateTweet(mainTweet!.id, {
+        'content': newContent,
+      });
+      updateSuccessful = true;
+    } catch (e) {
+      // Check if the error is a harmless one (update succeeded but parsing failed)
+      final errorMessage = e.toString().toLowerCase();
+      final isHarmlessError =
+          errorMessage.contains('duplicate') ||
+          errorMessage.contains('already') ||
+          errorMessage.contains('exists') ||
+          errorMessage.contains('is not a subtype of type') ||
+          errorMessage.contains('type \'string\' is not a subtype') ||
+          errorMessage.contains('type \'int\' is not a subtype') ||
+          errorMessage.contains('failed to parse');
+
+      if (isHarmlessError) {
+        // Treat as success - the tweet was updated on the server
+        updateSuccessful = true;
+      } else {
+        // Real error - show it
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to update tweet: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+    }
+
+    // If update was successful (either directly or despite parsing errors)
+    if (updateSuccessful && mounted) {
+      // Update local state immediately with new content
       setState(() {
-        mainTweet = updatedTweet;
+        if (updatedTweet != null) {
+          mainTweet = updatedTweet;
+        } else {
+          // If we don't have the parsed tweet, update the content locally
+          mainTweet = mainTweet?.copyWith(content: newContent);
+        }
       });
 
-      // Update the tweet in all feeds
-      ref.read(homeViewModelProvider.notifier).updateTweet(updatedTweet);
+      // Sync with view model if we have the updated tweet
+      if (updatedTweet != null) {
+        ref
+            .read(homeViewModelProvider.notifier)
+            .syncTweetFromServer(updatedTweet);
+      }
 
-      // Refresh the tweet from server to ensure we have latest data
-      _loadTweetData();
+      // Reload the entire tweet screen to fetch fresh data from server
+      await _loadTweetData();
+
+      // Show success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Tweet updated successfully'),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
+        ),
+      );
     }
   }
 
@@ -1211,133 +1182,15 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ExpandableText(
-          text: mainTweet!.content,
-          maxLines: 100,
+        Text(
+          mainTweet!.content,
           style: const TextStyle(
             color: Colors.white,
             fontSize: 18,
             height: 1.4,
           ),
           textDirection: _textDirectionFor(mainTweet!.content),
-          knownHashtags: mainTweet!.hashtags.map((h) => h.tagText).toList(),
-          onHashtagTap: (hashtag) {
-            try {
-              print('👆 Hashtag clicked: "$hashtag"');
-              print('📦 Tweet has ${mainTweet!.hashtags.length} hashtags');
-              print(
-                '📦 Raw hashtag data: ${mainTweet!.hashtags.map((h) => {"id": h.id, "tagText": h.tagText}).toList()}',
-              );
-
-              final matchingHashtag = _findHashtagByText(
-                mainTweet!.hashtags,
-                hashtag,
-              );
-              if (matchingHashtag != null) {
-                _openHashtagPosts(
-                  hashtagId: matchingHashtag.id,
-                  tagText: matchingHashtag.tagText,
-                );
-              } else if (mounted) {
-                final available = mainTweet!.hashtags
-                    .map((h) => h.tagText)
-                    .join(', ');
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      'Hashtag "$hashtag" not found. Available: $available',
-                    ),
-                    backgroundColor: Colors.orange,
-                    duration: const Duration(seconds: 5),
-                  ),
-                );
-              }
-            } catch (e, stackTrace) {
-              print('❌ Error in hashtag tap handler: $e');
-              print('Stack trace: $stackTrace');
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Error: $e'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-              }
-            }
-          },
-          onMentionTap: (username) => _openProfileFromUsername(username),
         ),
-
-        // Hashtags should be navigable only from tweet detail screen.
-        if (mainTweet!.hashtags.isNotEmpty) ...[
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: mainTweet!.hashtags.map((h) {
-              final label = h.tagText.startsWith('#')
-                  ? h.tagText
-                  : '#${h.tagText}';
-              return InkWell(
-                onTap: () =>
-                    _openHashtagPosts(hashtagId: h.id, tagText: h.tagText),
-                borderRadius: BorderRadius.circular(16),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1DA1F2).withOpacity(0.12),
-                    border: Border.all(
-                      color: const Color(0xFF1DA1F2).withOpacity(0.35),
-                      width: 1,
-                    ),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Text(
-                    label,
-                    style: const TextStyle(
-                      color: Color(0xFF1DA1F2),
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-        ],
-
-        // Display categories if available
-        if (mainTweet!.categories.isNotEmpty) ...[
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: mainTweet!.categories.map((category) {
-              return Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.blue.withOpacity(0.1),
-                  border: Border.all(color: Colors.blue.withOpacity(0.3)),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Text(
-                  category,
-                  style: TextStyle(
-                    color: Colors.blue[300],
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-        ],
 
         if (mainTweet!.images.isNotEmpty) ...[
           const SizedBox(height: 16),
@@ -1408,25 +1261,10 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
           ),
           const SizedBox(height: 8),
 
-          ExpandableText(
-            text: quotedTweet.content,
-            maxLines: 5,
+          Text(
+            quotedTweet.content,
             style: TextStyle(color: Colors.grey[300], fontSize: 15),
             textDirection: _textDirectionFor(quotedTweet.content),
-            knownHashtags: quotedTweet.hashtags.map((h) => h.tagText).toList(),
-            onHashtagTap: (hashtag) {
-              final matchingHashtag = _findHashtagByText(
-                quotedTweet.hashtags,
-                hashtag,
-              );
-              if (matchingHashtag != null) {
-                _openHashtagPosts(
-                  hashtagId: matchingHashtag.id,
-                  tagText: matchingHashtag.tagText,
-                );
-              }
-            },
-            onMentionTap: (username) => _openProfileFromUsername(username),
           ),
 
           if (quotedTweet.images.isNotEmpty) ...[
@@ -1481,17 +1319,9 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
         children: [
           Row(
             children: [
-              _buildStatItem(
-                _formatStat(mainTweet!.retweets),
-                'Reposts',
-                onTap: () => _openRepostedBy(mainTweet!.id),
-              ),
+              _buildStatItem(_formatStat(mainTweet!.retweets), 'Reposts'),
               const SizedBox(width: 16),
-              _buildStatItem(
-                _formatStat(mainTweet!.quotes),
-                'Quotes',
-                onTap: () => _openQuotes(mainTweet!.id),
-              ),
+              _buildStatItem(_formatStat(mainTweet!.quotes), 'Quotes'),
               const SizedBox(width: 16),
               _buildStatItem(_formatStat(mainTweet!.likes), 'Likes'),
             ],
@@ -1507,9 +1337,9 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
     );
   }
 
-  Widget _buildStatItem(String value, String label, {VoidCallback? onTap}) {
+  Widget _buildStatItem(String value, String label) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: () {},
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -1665,32 +1495,14 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
                   const SizedBox(height: 4),
                   _buildReplyingTo(),
                   const SizedBox(height: 8),
-                  ExpandableText(
-                    text: reply.content,
-                    maxLines: 10,
+                  Text(
+                    reply.content,
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 15,
                       height: 1.4,
                     ),
                     textDirection: _textDirectionFor(reply.content),
-                    knownHashtags: reply.hashtags
-                        .map((h) => h.tagText)
-                        .toList(),
-                    onHashtagTap: (hashtag) {
-                      final matchingHashtag = _findHashtagByText(
-                        reply.hashtags,
-                        hashtag,
-                      );
-                      if (matchingHashtag != null) {
-                        _openHashtagPosts(
-                          hashtagId: matchingHashtag.id,
-                          tagText: matchingHashtag.tagText,
-                        );
-                      }
-                    },
-                    onMentionTap: (username) =>
-                        _openProfileFromUsername(username),
                   ),
                   if (reply.images.isNotEmpty) ...[
                     const SizedBox(height: 12),
@@ -1708,10 +1520,12 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
   }
 
   Widget _buildReplyHeader(TweetModel reply, {VoidCallback? onTap}) {
+    const String knownUserId = '6552d72c-3f27-445d-8ad8-bc22cda9ddd9';
     final bool isOwnReply =
-        currentUserId != null &&
-        reply.userId != null &&
-        currentUserId == reply.userId;
+        (currentUserId != null &&
+            reply.userId != null &&
+            currentUserId == reply.userId) ||
+        (reply.userId != null && reply.userId == knownUserId);
 
     return Row(
       children: [

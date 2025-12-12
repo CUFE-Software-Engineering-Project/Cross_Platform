@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,10 +8,6 @@ import 'package:lite_x/features/home/models/tweet_model.dart';
 import 'package:lite_x/features/home/view_model/home_view_model.dart';
 import 'package:lite_x/features/media/upload_media.dart';
 import 'package:lite_x/features/home/providers/user_profile_provider.dart';
-import 'package:lite_x/features/home/services/hashtag_service.dart';
-import 'package:lite_x/features/home/view/widgets/hashtag_suggestions_overlay.dart';
-import 'package:lite_x/features/home/view/widgets/mention_suggestion_overlay.dart';
-import 'package:lite_x/features/home/models/user_suggestion.dart';
 
 enum PostPrivacy {
   everyone,
@@ -70,16 +65,6 @@ class _ReplyComposerScreenState extends ConsumerState<ReplyComposerScreen> {
   final List<File> _selectedMedia = [];
   PostPrivacy _selectedPrivacy = PostPrivacy.everyone;
 
-  // Hashtag suggestions state
-  List<HashtagSuggestion> _hashtagSuggestions = [];
-  String _currentHashtagQuery = '';
-  int _hashtagStartPosition = -1;
-  Timer? _debounceTimer;
-  final LayerLink _layerLink = LayerLink();
-
-  // Mention suggestions state
-  final LayerLink _mentionLayerLink = LayerLink();
-
   String? _getPhotoUrl(String? photo) {
     if (photo == null || photo.isEmpty) return null;
     if (photo.startsWith('http://') || photo.startsWith('https://')) {
@@ -94,15 +79,10 @@ class _ReplyComposerScreenState extends ConsumerState<ReplyComposerScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _focusNode.requestFocus();
     });
-    _textController.addListener(() {
-      _onTextChanged();
-      setState(() {});
-    });
   }
 
   @override
   void dispose() {
-    _debounceTimer?.cancel();
     _textController.dispose();
     _focusNode.dispose();
     super.dispose();
@@ -244,134 +224,6 @@ class _ReplyComposerScreenState extends ConsumerState<ReplyComposerScreen> {
         }
       }
     });
-  }
-
-  void _onTextChanged() {
-    final text = _textController.text;
-    final cursorPosition = _textController.selection.baseOffset;
-
-    if (cursorPosition < 0 || cursorPosition > text.length) return;
-
-    // Check for @ mention first (priority over hashtags)
-    int mentionStart = -1;
-    for (int i = cursorPosition - 1; i >= 0; i--) {
-      if (text[i] == '@') {
-        mentionStart = i;
-        break;
-      }
-      if (text[i] == ' ' || text[i] == '\n') {
-        break;
-      }
-    }
-
-    // If @ mention is found and valid, don't check for hashtags
-    if (mentionStart != -1) {
-      // Check if @ is at start or after whitespace
-      if (mentionStart > 0) {
-        final charBeforeAt = text[mentionStart - 1];
-        if (charBeforeAt != ' ' && charBeforeAt != '\n') {
-          mentionStart = -1;
-        }
-      }
-    }
-
-    // If no valid mention found, check for hashtags
-    if (mentionStart == -1) {
-      int hashtagStart = -1;
-      for (int i = cursorPosition - 1; i >= 0; i--) {
-        if (text[i] == '#') {
-          hashtagStart = i;
-          break;
-        }
-        if (text[i] == ' ' || text[i] == '\n') {
-          break;
-        }
-      }
-
-      if (hashtagStart != -1) {
-        // Extract the hashtag query (without the #)
-        final query = text.substring(hashtagStart + 1, cursorPosition);
-
-        // Only show suggestions if query is not empty and doesn't contain spaces
-        if (query.isNotEmpty && !query.contains(' ') && !query.contains('\n')) {
-          _currentHashtagQuery = query;
-          _hashtagStartPosition = hashtagStart;
-          _searchHashtags(query);
-        } else if (query.isEmpty) {
-          // Show trending hashtags when user just types #
-          _currentHashtagQuery = '';
-          _hashtagStartPosition = hashtagStart;
-          _loadTrendingHashtags();
-        } else {
-          _clearSuggestions();
-        }
-      } else {
-        _clearSuggestions();
-      }
-    } else {
-      // Clear hashtag suggestions when showing mentions
-      if (_hashtagSuggestions.isNotEmpty) {
-        setState(() {
-          _hashtagSuggestions = [];
-        });
-      }
-    }
-  }
-
-  void _searchHashtags(String query) {
-    _debounceTimer?.cancel();
-    _debounceTimer = Timer(const Duration(milliseconds: 300), () async {
-      final hashtagService = ref.read(hashtagServiceProvider);
-      final suggestions = await hashtagService.searchHashtags(query);
-      if (mounted) {
-        setState(() {
-          _hashtagSuggestions = suggestions;
-        });
-      }
-    });
-  }
-
-  void _loadTrendingHashtags() async {
-    final hashtagService = ref.read(hashtagServiceProvider);
-    final suggestions = await hashtagService.fetchTrendingHashtags(limit: 5);
-    if (mounted) {
-      setState(() {
-        _hashtagSuggestions = suggestions;
-      });
-    }
-  }
-
-  void _clearSuggestions() {
-    if (_hashtagSuggestions.isNotEmpty) {
-      setState(() {
-        _hashtagSuggestions = [];
-        _currentHashtagQuery = '';
-        _hashtagStartPosition = -1;
-      });
-    }
-  }
-
-  void _onHashtagSelected(String hashtag) {
-    if (_hashtagStartPosition == -1) return;
-
-    final text = _textController.text;
-    final cursorPosition = _textController.selection.baseOffset;
-
-    // Replace the partial hashtag with the selected one
-    final newText =
-        text.substring(0, _hashtagStartPosition + 1) +
-        hashtag +
-        ' ' +
-        text.substring(cursorPosition);
-
-    final newCursorPosition = _hashtagStartPosition + hashtag.length + 2;
-
-    _textController.value = TextEditingValue(
-      text: newText,
-      selection: TextSelection.collapsed(offset: newCursorPosition),
-    );
-
-    _clearSuggestions();
   }
 
   Future<void> _pickVideo() async {
@@ -626,92 +478,59 @@ class _ReplyComposerScreenState extends ConsumerState<ReplyComposerScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: _buildAppBar(),
-      body: Stack(
+      body: Column(
         children: [
-          Column(
-            children: [
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 12),
-                        _buildReplyingToTweet(),
-                        const SizedBox(height: 8),
-                        _buildReplyComposer(userPhotoUrl),
-                        if (_selectedMedia.isNotEmpty) ...[
-                          const SizedBox(height: 12),
-                          Padding(
-                            padding: const EdgeInsets.only(left: 52),
-                            child: _buildSelectedImagesPreview(),
-                          ),
-                        ],
-                        const SizedBox(height: 12),
-                        Padding(
-                          padding: const EdgeInsets.only(left: 52),
-                          child: InkWell(
-                            onTap: _showPrivacyOptions,
-                            borderRadius: BorderRadius.circular(20),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  _selectedPrivacy.icon,
-                                  color: const Color(0xFF1D9BF0),
-                                  size: 16,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  _selectedPrivacy.label,
-                                  style: const TextStyle(
-                                    color: Color(0xFF1D9BF0),
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
+          Expanded(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 12),
+                    _buildReplyingToTweet(),
+                    const SizedBox(height: 8),
+                    _buildReplyComposer(userPhotoUrl),
+                    if (_selectedMedia.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 52),
+                        child: _buildSelectedImagesPreview(),
+                      ),
+                    ],
+                    const SizedBox(height: 12),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 52),
+                      child: InkWell(
+                        onTap: _showPrivacyOptions,
+                        borderRadius: BorderRadius.circular(20),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              _selectedPrivacy.icon,
+                              color: const Color(0xFF1D9BF0),
+                              size: 16,
                             ),
-                          ),
+                            const SizedBox(width: 4),
+                            Text(
+                              _selectedPrivacy.label,
+                              style: const TextStyle(
+                                color: Color(0xFF1D9BF0),
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
-                  ),
-                ),
-              ),
-              _buildBottomBar(),
-            ],
-          ),
-          // Mention suggestions overlay
-          Positioned(
-            left: 16,
-            right: 16,
-            child: MentionSuggestionOverlay(
-              textController: _textController,
-              onUserSelected: (UserSuggestion user) {
-                // User selection is handled inside the overlay widget
-              },
-              layerLink: _mentionLayerLink,
-            ),
-          ),
-          // Hashtag suggestions overlay
-          if (_hashtagSuggestions.isNotEmpty)
-            Positioned(
-              width: MediaQuery.of(context).size.width - 32,
-              child: CompositedTransformFollower(
-                link: _layerLink,
-                showWhenUnlinked: false,
-                offset: const Offset(0, 80),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: HashtagSuggestionsOverlay(
-                    suggestions: _hashtagSuggestions,
-                    onHashtagSelected: _onHashtagSelected,
-                  ),
+                  ],
                 ),
               ),
             ),
+          ),
+          _buildBottomBar(),
         ],
       ),
     );
@@ -868,32 +687,26 @@ class _ReplyComposerScreenState extends ConsumerState<ReplyComposerScreen> {
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: CompositedTransformTarget(
-            link: _layerLink,
-            child: CompositedTransformTarget(
-              link: _mentionLayerLink,
-              child: TextField(
-                controller: _textController,
-                focusNode: _focusNode,
-                maxLines: null,
-                minLines: 3,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  height: 1.4,
-                ),
-                decoration: InputDecoration(
-                  hintText: 'Post your reply',
-                  hintStyle: TextStyle(color: Colors.grey[600], fontSize: 20),
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.zero,
-                  isDense: true,
-                ),
-                onChanged: (text) {
-                  setState(() {}); // Update button state
-                },
-              ),
+          child: TextField(
+            controller: _textController,
+            focusNode: _focusNode,
+            maxLines: null,
+            minLines: 3,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              height: 1.4,
             ),
+            decoration: InputDecoration(
+              hintText: 'Post your reply',
+              hintStyle: TextStyle(color: Colors.grey[600], fontSize: 20),
+              border: InputBorder.none,
+              contentPadding: EdgeInsets.zero,
+              isDense: true,
+            ),
+            onChanged: (text) {
+              setState(() {}); // Update button state
+            },
           ),
         ),
       ],

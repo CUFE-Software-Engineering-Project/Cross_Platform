@@ -59,7 +59,8 @@ class _SearchUserGroupState extends ConsumerState<SearchUserGroup> {
         final users = await ref
             .read(conversationsViewModelProvider.notifier)
             .searchUsers(query);
-        if (mounted) ref.read(searchResultsProvider.notifier).state = users;
+
+        ref.read(searchResultsProvider.notifier).state = users;
       } else {
         ref.read(searchResultsProvider.notifier).state = [];
       }
