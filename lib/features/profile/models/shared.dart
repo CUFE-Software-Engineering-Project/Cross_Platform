@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lite_x/core/providers/current_user_provider.dart';
+import 'package:lite_x/features/media/download_media.dart';
 import 'package:lite_x/features/media/view_model/providers.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
 import 'package:lite_x/features/profile/models/profile_tweet_model.dart';
@@ -947,11 +948,4 @@ List<ProfileTweetModel> convertJsonListToTweetList(List<dynamic> jsonList) {
     tweets.add(ProfileTweetModel.fromJson(json));
   }
   return tweets;
-}
-
-abstract class TrendsCategoriesTabs {
-  static String Global = "global";
-  static String News = "news";
-  static String Sports = "Sports";
-  static String Entertainment = "entertainment";
 }

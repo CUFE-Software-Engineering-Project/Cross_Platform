@@ -1,7 +1,7 @@
+import 'package:lite_x/features/explore/models/trend_model.dart';
+import 'package:lite_x/features/profile/models/follower_model.dart';
 import 'package:lite_x/features/profile/models/profile_tweet_model.dart';
 import 'package:lite_x/features/profile/models/shared.dart';
-import 'package:lite_x/features/trends/models/trend_model.dart';
-
 
 class TrendCategory {
   final String categoryName;
