@@ -29,7 +29,8 @@ class AuthRemoteRepository {
   AuthRemoteRepository({required Dio dio}) : _dio = dio;
   //---------------------------------------------------github------------------------------------------------------//
 
-  Future<Either<AppFailure, (UserModel, TokensModel)>> loginWithGithub() async {
+  Future<Either<AppFailure, (UserModel user, TokensModel tokens, bool newuser)>>
+  loginWithGithub() async {
     try {
       final baseUrl = dotenv.env["API_URL"]!;
       final authUrl = "${baseUrl}oauth2/authorize/github";
@@ -56,8 +57,9 @@ class AuthRemoteRepository {
       }
 
       final decodedUser = Uri.decodeComponent(userRaw);
-
-      final user = UserModel.fromJson(decodedUser);
+      final Map<String, dynamic> userJson = jsonDecode(decodedUser);
+      final bool newuser = userJson["newuser"];
+      final user = UserModel.fromMap(userJson);
 
       final tokens = TokensModel(
         accessToken: token,
@@ -66,7 +68,7 @@ class AuthRemoteRepository {
         refreshTokenExpiry: DateTime.now().add(const Duration(days: 30)),
       );
 
-      return right((user, tokens));
+      return right((user, tokens, newuser));
     } catch (e) {
       return left(AppFailure(message: e.toString()));
     }
@@ -80,7 +82,7 @@ class AuthRemoteRepository {
     scopes: ['email', 'https://www.googleapis.com/auth/userinfo.profile'],
   );
 
-  Future<Either<AppFailure, (UserModel, TokensModel)>>
+  Future<Either<AppFailure, (UserModel user, TokensModel tokens, bool newuser)>>
   signInWithGoogleAndroid() async {
     try {
       final String apiUrl = dotenv.env["API_URL"]!;
@@ -89,10 +91,14 @@ class AuthRemoteRepository {
       if (googleUser == null) {
         return left(AppFailure(message: "Google login canceled"));
       }
-
       final googleAuth = await googleUser.authentication;
-      final idToken = googleAuth.idToken;
+      final email = googleUser.email;
+      print("GOOGLE EMAIL = $email\n");
 
+      // final existsResult = await check_email(email: email);
+      // final exists = existsResult.fold((_) => false, (v) => v);
+
+      final idToken = googleAuth.idToken;
       debugPrint("GOOGLE ID TOKEN = $idToken");
 
       final resp = await http.post(
@@ -114,8 +120,9 @@ class AuthRemoteRepository {
         accessTokenExpiry: DateTime.now().add(const Duration(hours: 1)),
         refreshTokenExpiry: DateTime.now().add(const Duration(days: 30)),
       );
+      final newuser = data["user"]["newuser"]; //
 
-      return right((user, tokens));
+      return right((user, tokens, newuser));
     } catch (e) {
       return left(AppFailure(message: e.toString()));
     }
@@ -430,7 +437,6 @@ class AuthRemoteRepository {
         'api/auth/getUser',
         data: {'email': email},
       );
-      print("asermohamed${response.data['exists']}");
       return right(response.data['exists'] ?? false);
     } on DioException {
       return left(AppFailure(message: 'Email check failed'));

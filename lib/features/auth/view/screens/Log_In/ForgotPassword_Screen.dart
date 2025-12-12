@@ -187,30 +187,28 @@ class _ForgotpasswordScreenState extends ConsumerState<ForgotpasswordScreen> {
       child: ValueListenableBuilder<bool>(
         valueListenable: _isFormValid,
         builder: (context, isValid, child) {
-          return SizedBox(
-            width: 100,
-            height: 45,
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              child: ElevatedButton(
-                onPressed: (isValid && !isLoading) ? _handleNext : null,
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 10,
-                  ),
-                  backgroundColor: Palette.textWhite,
-                  disabledBackgroundColor: Palette.textWhite.withOpacity(0.6),
-                  foregroundColor: Palette.background,
-                  disabledForegroundColor: Palette.border,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(25),
-                  ),
+          return ConstrainedBox(
+            constraints: const BoxConstraints(minWidth: 90, minHeight: 45),
+            child: ElevatedButton(
+              onPressed: (isValid && !isLoading) ? _handleNext : null,
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 10,
                 ),
-                child: const Text(
-                  'Next',
-                  style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
+                backgroundColor: Palette.textWhite,
+                disabledBackgroundColor: Palette.textWhite.withOpacity(0.6),
+                foregroundColor: Palette.background,
+                disabledForegroundColor: Palette.border,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(25),
                 ),
+              ),
+              child: const Text(
+                'Next',
+                maxLines: 1,
+                softWrap: false,
+                style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
               ),
             ),
           );

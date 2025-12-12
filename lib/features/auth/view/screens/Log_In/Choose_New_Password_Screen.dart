@@ -307,27 +307,21 @@ class _ChooseNewPasswordScreenState
       child: ValueListenableBuilder<bool>(
         valueListenable: _isFormValid,
         builder: (context, isValid, child) {
-          return SizedBox(
-            width: 200,
-            height: 45,
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              child: ElevatedButton(
-                onPressed: (isValid && !isLoading)
-                    ? _handleChangePassword
-                    : null,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Palette.textWhite,
-                  disabledBackgroundColor: Palette.textWhite.withOpacity(0.6),
-                  foregroundColor: Palette.background,
-                  disabledForegroundColor: Palette.border,
-                ),
-                child: const Text(
-                  'Change password',
-                  softWrap: false,
-                  overflow: TextOverflow.clip,
-                  style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
-                ),
+          return ConstrainedBox(
+            constraints: const BoxConstraints(minWidth: 140, minHeight: 45),
+            child: ElevatedButton(
+              onPressed: (isValid && !isLoading) ? _handleChangePassword : null,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Palette.textWhite,
+                disabledBackgroundColor: Palette.textWhite.withOpacity(0.6),
+                foregroundColor: Palette.background,
+                disabledForegroundColor: Palette.border,
+              ),
+              child: const Text(
+                'Change password',
+                maxLines: 1,
+                softWrap: false,
+                style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
               ),
             ),
           );

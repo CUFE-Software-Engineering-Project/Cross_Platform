@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/material.dart';
 import 'package:lite_x/core/classes/PickedImage.dart';
 import 'package:lite_x/core/models/usermodel.dart';
 import 'package:lite_x/features/auth/models/ExploreCategory.dart';
@@ -567,13 +568,33 @@ class AuthViewModel extends _$AuthViewModel {
         state = AuthState.error(failure.message);
       },
       (data) async {
-        final (user, tokens) = data;
+        final (user, tokens, newuser) = data;
         await Future.wait([
           _authLocalRepository.saveUser(user),
           _authLocalRepository.saveTokens(tokens),
         ]);
         ref.read(currentUserProvider.notifier).adduser(user);
-        state = AuthState.authenticated('Signup successful');
+
+        if (newuser) {
+          state = AuthState.authenticated("new_google_user");
+          _registerFcmToken();
+          _listenForFcmTokenRefresh();
+          return;
+        }
+
+        final interestsResult = await _authRemoteRepository.getUserInterests();
+        await interestsResult.fold(
+          (err) async {
+            debugPrint("Failed to fetch interests");
+          },
+          (list) async {
+            final updated = user.copyWith(interests: list.toSet());
+            ref.read(currentUserProvider.notifier).adduser(updated);
+            await _authLocalRepository.saveUser(updated);
+          },
+        );
+
+        state = AuthState.authenticated("google_login_success");
         _registerFcmToken();
         _listenForFcmTokenRefresh();
       },
@@ -588,16 +609,34 @@ class AuthViewModel extends _$AuthViewModel {
         state = AuthState.error(failure.message);
       },
       (data) async {
-        final (user, tokens) = data;
+        final (user, tokens, newuser) = data;
         await Future.wait([
           _authLocalRepository.saveUser(user),
           _authLocalRepository.saveTokens(tokens),
         ]);
-
         ref.read(currentUserProvider.notifier).adduser(user);
-        state = AuthState.authenticated('Social login successful');
-        _registerFcmToken(); //
-        _listenForFcmTokenRefresh(); //
+        if (newuser) {
+          state = AuthState.authenticated("new_github_user");
+          _registerFcmToken();
+          _listenForFcmTokenRefresh();
+          return;
+        }
+
+        final interestsResult = await _authRemoteRepository.getUserInterests();
+        await interestsResult.fold(
+          (err) async {
+            debugPrint("Failed to fetch interests");
+          },
+          (list) async {
+            final updated = user.copyWith(interests: list.toSet());
+            ref.read(currentUserProvider.notifier).adduser(updated);
+            await _authLocalRepository.saveUser(updated);
+          },
+        );
+
+        state = AuthState.authenticated('github_login_success');
+        _registerFcmToken();
+        _listenForFcmTokenRefresh();
       },
     );
   }

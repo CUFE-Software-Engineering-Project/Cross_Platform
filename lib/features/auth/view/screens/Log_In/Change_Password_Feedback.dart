@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
 import 'package:lite_x/core/theme/Palette.dart';
 import 'package:lite_x/features/auth/view/widgets/buildXLogo.dart';
-import 'package:lite_x/features/auth/view_model/auth_view_model.dart';
 
 class ChangePasswordFeedback extends ConsumerStatefulWidget {
   const ChangePasswordFeedback({super.key});
@@ -20,9 +19,9 @@ class _ChangePasswordFeedbackState
   @override
   void initState() {
     super.initState();
-    Future.microtask(() {
-      ref.read(authViewModelProvider.notifier).resetState();
-    });
+    // Future.microtask(() {
+    //   ref.read(authViewModelProvider.notifier).resetState();//
+    // });
   }
 
   void _handleNext() {

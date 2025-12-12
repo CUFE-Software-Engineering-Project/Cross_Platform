@@ -250,9 +250,10 @@ class _ConfirmationCodeLocScreenState
     return Container(
       padding: const EdgeInsets.all(10),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          FittedBox(
-            fit: BoxFit.scaleDown,
+          ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 45, minWidth: 80),
             child: OutlinedButton(
               onPressed: isLoading ? null : _handleCancel,
               style: OutlinedButton.styleFrom(
@@ -268,13 +269,12 @@ class _ConfirmationCodeLocScreenState
               ),
               child: const Text(
                 'Cancel',
+                maxLines: 1,
                 softWrap: false,
-                overflow: TextOverflow.fade,
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
             ),
           ),
-          const Spacer(),
           SizedBox(
             width: 100,
             height: 45,
@@ -297,8 +297,8 @@ class _ConfirmationCodeLocScreenState
                 ),
                 child: const Text(
                   'Next',
+                  maxLines: 1,
                   softWrap: false,
-                  overflow: TextOverflow.fade,
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ),

@@ -41,7 +41,16 @@ class IntroScreen extends ConsumerWidget {
       final authViewModel = ref.read(authViewModelProvider.notifier);
 
       if (next.type == AuthStateType.authenticated) {
-        context.goNamed(RouteConstants.setbirthdate);
+        if (next.message == "new_google_user" ||
+            next.message == "new_github_user") {
+          context.goNamed(RouteConstants.setbirthdate);
+          return;
+        }
+        if (next.message == "google_login_success" ||
+            next.message == "github_login_success") {
+          context.goNamed(RouteConstants.homescreen);
+          return;
+        }
       } else if (next.type == AuthStateType.error) {
         _showErrorToast(
           context,
@@ -106,7 +115,7 @@ class IntroScreen extends ConsumerWidget {
           buildTermsText(),
           const SizedBox(height: 5),
           _buildLoginSection(context),
-          const SizedBox(height: 20),
+          const SizedBox(height: 30),
         ],
       ),
     );

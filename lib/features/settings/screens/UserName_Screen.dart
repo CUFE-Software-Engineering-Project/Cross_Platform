@@ -198,13 +198,13 @@ class _UsernameSettingsState extends ConsumerState<UsernameSettings> {
               onPressed: _isLoading ? null : _handleDone,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.blue,
-                disabledBackgroundColor: Colors.blue.withOpacity(0.5),
+                disabledBackgroundColor: Colors.blue.withOpacity(0.4),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(25),
                 ),
                 padding: const EdgeInsets.symmetric(
                   horizontal: 20,
-                  vertical: 2,
+                  vertical: 4,
                 ),
               ),
               child: _isLoading
@@ -220,7 +220,7 @@ class _UsernameSettingsState extends ConsumerState<UsernameSettings> {
                       'Done',
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 14,
+                        fontSize: 19,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
