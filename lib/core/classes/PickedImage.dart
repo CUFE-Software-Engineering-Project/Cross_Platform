@@ -10,10 +10,10 @@ class PickedImage {
   PickedImage({this.file, this.bytes, required this.name, this.path});
 }
 
-Future<PickedImage?> pickImage() async {
+Future<PickedImage?> pickImage({ImagePicker? picker}) async {
   try {
-    final ImagePicker picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+    final ImagePicker _picker = picker ?? ImagePicker();
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
 
     if (image != null) {
       return PickedImage(
@@ -28,10 +28,13 @@ Future<PickedImage?> pickImage() async {
   }
 }
 
-Future<List<PickedImage>> pickImages({int maxImages = 4}) async {
+Future<List<PickedImage>> pickImages({
+  int maxImages = 4,
+  ImagePicker? picker,
+}) async {
   try {
-    final ImagePicker picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+    final ImagePicker _picker = picker ?? ImagePicker();
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
 
     if (image == null) return [];
 
@@ -43,10 +46,10 @@ Future<List<PickedImage>> pickImages({int maxImages = 4}) async {
   }
 }
 
-Future<PickedImage?> pickVideo() async {
+Future<PickedImage?> pickVideo({ImagePicker? picker}) async {
   try {
-    final ImagePicker picker = ImagePicker();
-    final XFile? video = await picker.pickVideo(source: ImageSource.gallery);
+    final ImagePicker _picker = picker ?? ImagePicker();
+    final XFile? video = await _picker.pickVideo(source: ImageSource.gallery);
 
     if (video != null) {
       return PickedImage(

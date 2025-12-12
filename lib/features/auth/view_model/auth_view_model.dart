@@ -272,7 +272,6 @@ class AuthViewModel extends _$AuthViewModel {
     try {
       await _authLocalRepository.clearTokens();
       await _authLocalRepository.clearUser();
-      await _chatLocalRepository.clearAll();
       ref.read(currentUserProvider.notifier).clearUser();
       state = AuthState.unauthenticated();
     } catch (e) {
