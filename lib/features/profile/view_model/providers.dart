@@ -353,11 +353,11 @@ final hashtagTweetsProvider =
       return repo.getTweetsForHashtag(hashtagId);
     });
 
-final exploreCategoryTweetsProvider =
-    FutureProvider.family<Either<Failure, List<ProfileTweetModel>>, String>((
-      ref,
-      String catName,
-    ) async {
-      final repo = ref.watch(profileRepoProvider);
-      return repo.getTweetsForExploreCategory(catName);
-    });
+// final exploreCategoryTweetsProvider =
+//     FutureProvider.family<Either<Failure, List<ProfileTweetModel>>, String>((
+//       ref,
+//       String catName,
+//     ) async {
+//       final repo = ref.watch(profileRepoProvider);
+//       return repo.getTweetsForExploreCategory(catName);
+//     });

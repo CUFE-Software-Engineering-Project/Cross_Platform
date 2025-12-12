@@ -13,6 +13,7 @@ import 'package:lite_x/features/profile/repositories/profile_repo.dart';
 import 'package:lite_x/features/profile/repositories/profile_storage_service.dart';
 import 'package:lite_x/features/profile/view_model/providers.dart';
 import 'package:lite_x/features/trends/models/for_you_response_model.dart';
+import 'package:lite_x/features/trends/models/paginated_tweets.dart';
 import 'package:lite_x/features/trends/models/trend_category.dart';
 import 'package:lite_x/features/trends/models/trend_model.dart';
 
@@ -764,26 +765,34 @@ class ProfileRepoImpl implements ProfileRepo {
     }
   }
 
-  Future<Either<Failure, List<ProfileTweetModel>>> getTweetsForExploreCategory(
-    String categoryName,
-  ) async {
+  Future<Either<Failure, PaginatedTweets>> getTweetsForExploreCategory(
+    String categoryName, {
+    String? cursor,
+  }) async {
     try {
       Response<dynamic> res;
-      if (categoryName != "general")
-        res = await _dio.get(
-          "api/explore",
-          queryParameters: {"category": categoryName},
-        );
-      else {
-        res = await _dio.get("api/explore");
+      final queryParams = <String, dynamic>{};
+      print("cursor: " + cursor.toString() + "999999999999999999");
+      if (categoryName != "general") {
+        queryParams['category'] = categoryName;
       }
 
+      if (cursor != null && cursor.isNotEmpty) {
+        queryParams['cursor'] = cursor;
+      }
+
+      res = await _dio.get("api/explore", queryParameters: queryParams);
+
       final List<dynamic> jsonList = res.data["data"] ?? [];
+      final String? nextCursor = res.data["cursor"] as String?;
 
       final tweets = convertJsonListToTweetList(jsonList, false);
 
-      return Right(tweets);
+      print("cursor: " + cursor.toString() + "999999999999999999");
+
+      return Right(PaginatedTweets(tweets: tweets, nextCursor: nextCursor));
     } catch (e) {
+      print("fail-----------------------------------------------____");
       return Left(Failure('Failed to load ${categoryName} tweets'));
     }
   }

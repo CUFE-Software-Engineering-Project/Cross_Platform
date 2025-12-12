@@ -9,6 +9,7 @@ import 'package:dartz/dartz.dart';
 import 'package:lite_x/features/profile/models/tweet_reply_model.dart';
 import 'package:lite_x/features/profile/models/user_model.dart';
 import 'package:lite_x/features/trends/models/for_you_response_model.dart';
+import 'package:lite_x/features/trends/models/paginated_tweets.dart';
 import 'package:lite_x/features/trends/models/trend_category.dart';
 import 'package:lite_x/features/trends/models/trend_model.dart';
 
@@ -105,7 +106,8 @@ abstract class ProfileRepo {
   Future<Either<Failure, List<ProfileTweetModel>>> getTweetsForHashtag(
     String hashtagId,
   );
-  Future<Either<Failure, List<ProfileTweetModel>>> getTweetsForExploreCategory(
-    String categoryName,
-  );
+  Future<Either<Failure, PaginatedTweets>> getTweetsForExploreCategory(
+    String categoryName, {
+    String? cursor,
+  });
 }
