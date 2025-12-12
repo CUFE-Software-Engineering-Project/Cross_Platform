@@ -1,6 +1,9 @@
 import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uuid/uuid.dart';
 import 'package:lite_x/core/constants/server_constants.dart';
 import 'package:lite_x/core/models/TokensModel.dart';
 import 'package:lite_x/features/auth/repositories/auth_local_repository.dart';
@@ -21,6 +24,10 @@ class AuthInterceptor extends Interceptor {
   bool _isRefreshing = false;
   final List<Completer<bool>> _refreshCompleters = [];
 
+  static const _deviceIdStorageKey = 'device_id';
+  static const _deviceIdHeader = 'x-device-id';
+  static const _uuid = Uuid();
+
   AuthInterceptor(this._ref);
 
   @override
@@ -28,6 +35,17 @@ class AuthInterceptor extends Interceptor {
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
+    // Some backend routes require a device identifier. Postman may include this
+    // via headers/environment, while the app may not.
+    // Send a stable per-install id on every request.
+    try {
+      final deviceId = await _getOrCreateDeviceId();
+      options.headers[_deviceIdHeader] = deviceId;
+    } catch (e) {
+      // Do not block network calls if persistence fails.
+      print('AuthInterceptor: Failed to set device id header - $e');
+    }
+
     if (_shouldSkipAuth(options.path)) {
       return handler.next(options);
     }
@@ -84,6 +102,18 @@ class AuthInterceptor extends Interceptor {
     }
 
     return handler.next(options);
+  }
+
+  Future<String> _getOrCreateDeviceId() async {
+    final prefs = await SharedPreferences.getInstance();
+    final existing = prefs.getString(_deviceIdStorageKey);
+    if (existing != null && existing.trim().isNotEmpty) {
+      return existing;
+    }
+
+    final created = _uuid.v4();
+    await prefs.setString(_deviceIdStorageKey, created);
+    return created;
   }
 
   @override

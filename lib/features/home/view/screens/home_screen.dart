@@ -104,6 +104,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     }
 
     _lastScrollOffset = currentOffset;
+
+    // Check if we're near the bottom and should load more tweets
+    final maxScroll = activeController.position.maxScrollExtent;
+    final currentScroll = activeController.position.pixels;
+    final delta = maxScroll - currentScroll;
+
+    // Load more when within 500 pixels of the bottom
+    if (delta < 500) {
+      ref.read(homeViewModelProvider.notifier).loadMoreTweets();
+    }
   }
 
   @override
@@ -150,6 +160,36 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               homeState.isLoading,
               feedName,
             ),
+            // Loading more indicator at the bottom
+            if (homeState.isLoadingMore)
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 20.0),
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      color: Color(0xFF1DA1F2),
+                      strokeWidth: 2,
+                    ),
+                  ),
+                ),
+              ),
+            // End of feed indicator
+            if (!homeState.isLoadingMore &&
+                tweets.isNotEmpty &&
+                ((currentFeed == FeedType.forYou && !homeState.hasMoreForYou) ||
+                    (currentFeed == FeedType.following &&
+                        !homeState.hasMoreFollowing)))
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 20.0),
+                  child: Center(
+                    child: Text(
+                      'You\'ve reached the end',
+                      style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
@@ -302,6 +342,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           content: tweet.content,
           imageUrl: tweet.images.isNotEmpty ? tweet.images.first : null,
           mediaUrls: tweet.images,
+          retweetedByUsernames: tweet.retweetedByUsernames,
           onProfileTap: () => _openProfile(tweet.authorUsername),
           replyCount: tweet.replies,
           retweetCount: tweet.retweets,
@@ -310,7 +351,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           isLiked: tweet.isLiked,
           isRetweeted: tweet.isRetweeted,
           isOwnTweet: isOwnTweet,
+          isVerified: tweet.isVerified,
           quotedTweet: tweet.quotedTweet,
+          recommendationReasons: tweet.recommendationReasons,
+          // Show recommendation reasons for both For You and Following feeds if reasons exist
+          showRecommendationReasons: tweet.recommendationReasons.isNotEmpty,
 
           onTap: () {
             Navigator.of(context).push(

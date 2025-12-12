@@ -1,20 +1,24 @@
 class TweetSummary {
+  final String? id;
+  final String? tweetId;
+  final String? summary;
   final int views;
   final int likes;
   final int replies;
   final int retweets;
   final int quotes;
   final int bookmarks;
-  final String? summary;
 
   const TweetSummary({
+    this.id,
+    this.tweetId,
+    this.summary,
     this.views = 0,
     this.likes = 0,
     this.replies = 0,
     this.retweets = 0,
     this.quotes = 0,
     this.bookmarks = 0,
-    this.summary,
   });
 
   factory TweetSummary.fromJson(Map<String, dynamic> json) {
@@ -39,13 +43,15 @@ class TweetSummary {
     }
 
     return TweetSummary(
+      id: json['id']?.toString(),
+      tweetId: json['tweetId']?.toString(),
+      summary: json['summary']?.toString(),
       views: coalesceInts(['views', 'viewCount', 'viewsCount']),
       likes: coalesceInts(['likes', 'likesCount']),
       replies: coalesceInts(['replies', 'repliesCount']),
       retweets: coalesceInts(['retweets', 'retweetCount']),
       quotes: coalesceInts(['quotes', 'quotesCount']),
       bookmarks: coalesceInts(['bookmarks', 'bookmarksCount']),
-      summary: json['summary']?.toString(),
     );
   }
 }
