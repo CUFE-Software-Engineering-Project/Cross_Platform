@@ -6,7 +6,6 @@ import 'package:lite_x/core/providers/current_user_provider.dart';
 import 'package:lite_x/core/providers/unseenChatsCountProvider.dart';
 import 'package:lite_x/core/view/screen/app_shell.dart';
 import 'package:lite_x/features/chat/repositories/socket_repository.dart';
-import 'package:lite_x/features/home/providers/user_profile_provider.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
 import 'package:lite_x/features/profile/models/shared.dart';
 import 'package:lite_x/features/profile/view_model/providers.dart';

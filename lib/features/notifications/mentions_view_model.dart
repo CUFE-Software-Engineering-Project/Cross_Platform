@@ -1,5 +1,4 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import './repositories/mentions_repository.dart';
 import 'mentions_model.dart';
 import './mentions_provider.dart';
 

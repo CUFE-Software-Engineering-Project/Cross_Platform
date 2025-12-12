@@ -1,4 +1,3 @@
-import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lite_x/core/providers/dio_interceptor.dart';
 import '../notification_model.dart';

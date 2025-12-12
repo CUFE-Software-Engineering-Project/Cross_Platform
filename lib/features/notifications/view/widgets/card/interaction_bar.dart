@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:dio/dio.dart';
 import 'package:lite_x/core/theme/palette.dart';
 import 'package:lite_x/core/providers/dio_interceptor.dart';
 import 'package:lite_x/features/home/repositories/home_repository.dart';

@@ -1,5 +1,4 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import './repositories/notification_repository.dart';
 import 'notification_model.dart';
 import './notification_provider.dart';
 

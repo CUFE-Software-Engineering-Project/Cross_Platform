@@ -141,14 +141,12 @@ class _AllTweetCardWidgetState extends ConsumerState<AllTweetCardWidget> {
 
     final vm = ref.read(notificationViewModelProvider.notifier);
     final currentTweetId = tweetId;
-    if (currentTweetId != null) {
-      vm.updateTweetInteractions(
-        currentTweetId,
-        likesCount: _likesCount,
-        isLiked: _liked,
-      );
-    }
-
+    vm.updateTweetInteractions(
+      currentTweetId,
+      likesCount: _likesCount,
+      isLiked: _liked,
+    );
+  
     try {
       final dio = ref.read(dioProvider);
       if (previousLiked) {
@@ -163,14 +161,12 @@ class _AllTweetCardWidgetState extends ConsumerState<AllTweetCardWidget> {
           _likesCount = previousCount;
         });
         final currentTweetId = tweetId;
-        if (currentTweetId != null) {
-          ref.read(notificationViewModelProvider.notifier).updateTweetInteractions(
-                currentTweetId,
-                likesCount: previousCount,
-                isLiked: previousLiked,
-              );
-        }
-      }
+        ref.read(notificationViewModelProvider.notifier).updateTweetInteractions(
+              currentTweetId,
+              likesCount: previousCount,
+              isLiked: previousLiked,
+            );
+            }
       _showSnack('Unable to ${previousLiked ? 'unlike' : 'like'} right now.');
     } finally {
       _processingLike = false;
@@ -199,14 +195,12 @@ class _AllTweetCardWidgetState extends ConsumerState<AllTweetCardWidget> {
 
     final vm = ref.read(notificationViewModelProvider.notifier);
     final currentTweetId = tweetId;
-    if (currentTweetId != null) {
-      vm.updateTweetInteractions(
-        currentTweetId,
-        repostsCount: _repostsCount,
-        isRetweeted: _retweeted,
-      );
-    }
-
+    vm.updateTweetInteractions(
+      currentTweetId,
+      repostsCount: _repostsCount,
+      isRetweeted: _retweeted,
+    );
+  
     try {
       final dio = ref.read(dioProvider);
       if (previousState) {
@@ -221,14 +215,12 @@ class _AllTweetCardWidgetState extends ConsumerState<AllTweetCardWidget> {
           _repostsCount = previousCount;
         });
         final currentTweetId = tweetId;
-        if (currentTweetId != null) {
-          ref.read(notificationViewModelProvider.notifier).updateTweetInteractions(
-                currentTweetId,
-                repostsCount: previousCount,
-                isRetweeted: previousState,
-              );
-        }
-      }
+        ref.read(notificationViewModelProvider.notifier).updateTweetInteractions(
+              currentTweetId,
+              repostsCount: previousCount,
+              isRetweeted: previousState,
+            );
+            }
       _showSnack('Unable to ${previousState ? 'undo' : 'send'} repost.');
     } finally {
       _processingRetweet = false;

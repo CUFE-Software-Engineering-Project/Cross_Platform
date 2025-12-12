@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
 import 'package:lite_x/features/profile/models/shared.dart';
-import 'package:lite_x/features/profile/view_model/providers.dart';
 import 'package:lite_x/features/trends/view_model/trends_view_model.dart';
 
 class ExploreCategoryTab extends ConsumerWidget {
