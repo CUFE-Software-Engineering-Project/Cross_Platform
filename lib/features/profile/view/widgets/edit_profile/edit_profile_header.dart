@@ -9,7 +9,6 @@ import 'package:lite_x/features/media/view_model/providers.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
 import 'package:lite_x/features/profile/models/shared.dart';
 import 'package:lite_x/features/profile/view/widgets/edit_profile/controller/edit_profile_controller.dart';
-import 'package:provider/provider.dart';
 
 class EditProfileHeader extends ConsumerWidget {
   final EditProfileController controller;

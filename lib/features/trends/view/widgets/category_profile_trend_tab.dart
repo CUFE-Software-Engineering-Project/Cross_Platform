@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
 import 'package:lite_x/features/profile/models/profile_tweet_model.dart';
 import 'package:lite_x/features/profile/models/shared.dart';
@@ -15,14 +14,18 @@ import 'package:lite_x/features/trends/models/trend_category.dart';
 import 'package:lite_x/features/trends/models/trend_model.dart';
 import 'package:lite_x/features/trends/view/widgets/trend_tile.dart';
 
-class ForYouProfileTab extends ConsumerWidget {
-  const ForYouProfileTab({Key? key, required this.pm}) : super(key: key);
+class CategoryProfileTrendTab extends ConsumerWidget {
+  const CategoryProfileTrendTab({
+    Key? key,
+    required this.pm,
+    required this.categoryName,
+  }) : super(key: key);
   final ProfileModel pm;
+  final String categoryName;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final asyncData = ref.watch(forYouTrendsProvider);
-    final asyncTrends = ref.watch(profileTrendsProvider);
+    final asyncData = ref.watch(trendCategoryProvider(this.categoryName));
     return asyncData.when(
       data: (res) {
         return res.fold(
@@ -37,7 +40,7 @@ class ForYouProfileTab extends ConsumerWidget {
                   child: IconButton(
                     onPressed: () async {
                       // ignore: unused_result
-                      ref.refresh(forYouTrendsProvider);
+                      ref.refresh(trendCategoryProvider(this.categoryName));
                     },
                     icon: Icon(Icons.refresh),
                   ),
@@ -49,29 +52,34 @@ class ForYouProfileTab extends ConsumerWidget {
             return RefreshIndicator(
               onRefresh: () async {
                 // ignore: unused_result
-                ref.invalidate(forYouTrendsProvider);
-                // Optionally wait for the new data
-                await ref.read(forYouTrendsProvider.future);
+                await ref.refresh(trendCategoryProvider(this.categoryName));
               },
               child: ListView(
-                children: [
-                  asyncTrends.when(
-                    data: (res) => res.fold(
-                      (l) => Text(l.message),
-                      (r) => _buildTredsSection(r),
-                    ),
-                    error: (err, _) => SizedBox.shrink(),
-                    loading: () => SizedBox.shrink(),
-                  ),
-                  _buildWhoToFollowSection(data.suggestedUsers, context),
-                  ListView.builder(
-                    shrinkWrap: true,
-                    physics: NeverScrollableScrollPhysics(),
-                    itemBuilder: (context, index) =>
-                        _buildCategorySection(data.categories[index], pm),
-                    itemCount: data.categories.length,
-                  ),
-                ],
+                children: data.trends.isEmpty && data.viralTweets.isEmpty
+                    ? [
+                        Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Text(
+                            "Nothing to see here -- yet.",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 35,
+                            ),
+                          ),
+                        ),
+                      ]
+                    : [
+                        SizedBox(height: 20),
+                        _buildTweetsSection(data.viralTweets, pm),
+                        Container(
+                          width: double.infinity,
+                          height: 0.5,
+                          color: Colors.grey,
+                        ),
+                        SizedBox(height: 20),
+                        _buildTredsSection(data, 30),
+                      ],
               ),
             );
           },
@@ -90,7 +98,7 @@ class ForYouProfileTab extends ConsumerWidget {
               child: IconButton(
                 onPressed: () async {
                   // ignore: unused_result
-                  ref.refresh(forYouTrendsProvider);
+                  ref.refresh(trendCategoryProvider(this.categoryName));
                 },
                 icon: Icon(Icons.refresh),
               ),
@@ -107,66 +115,28 @@ class ForYouProfileTab extends ConsumerWidget {
     );
   }
 
-  Widget _buildTredsSection(List<TrendModel> trends) {
+  Widget _buildTredsSection(TrendCategory category, int limit) {
     return ListView.builder(
       padding: EdgeInsets.only(left: 16),
       physics: NeverScrollableScrollPhysics(),
       shrinkWrap: true,
       itemBuilder: (context, index) {
         return TrendTile(
-          trend: trends[index],
-          trendCategory: "ُEgypt",
+          trend: category.trends[index],
+          trendCategory: category.categoryName.length >= 2
+              ? "${category.categoryName[0].toUpperCase()}${category.categoryName.substring(1)}"
+              : "",
           showRank: false,
         );
       },
-      itemCount: trends.length <= 6 ? trends.length : 6,
+      itemCount: category.trends.length <= limit
+          ? category.trends.length
+          : limit,
     );
   }
 
-  Widget _buildWhoToFollowSection(List<UserModel> users, BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      mainAxisAlignment: MainAxisAlignment.start,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(height: 0.2, color: Colors.grey),
-        Padding(
-          padding: EdgeInsets.only(left: 16, top: 5),
-          child: Text(
-            "Who to Follow",
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
-          ),
-        ),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ListView.builder(
-              shrinkWrap: true,
-              physics: NeverScrollableScrollPhysics(),
-              itemBuilder: (context, index) =>
-                  FollowerCard(user: users[index], isMe: true),
-              itemCount: users.length <= 5 ? users.length : 5,
-            ),
-            Padding(
-              padding: const EdgeInsets.only(left: 16, bottom: 16),
-              child: GestureDetector(
-                onTap: () {
-                  // TODO: go to who to follow screen
-                  // context.push();
-                },
-                child: Text("Show more", style: TextStyle(color: Colors.blue)),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildCategorySection(TrendCategory category, ProfileModel pm) {
-    List<ProfileTweetModel> filteredData = category.viralTweets;
-
-    if (filteredData.isEmpty) {
+  Widget _buildTweetsSection(List<ProfileTweetModel> tweets, ProfileModel pm) {
+    if (tweets.isEmpty) {
       return SizedBox.shrink();
     }
     return Column(
@@ -174,39 +144,29 @@ class ForYouProfileTab extends ConsumerWidget {
       mainAxisAlignment: MainAxisAlignment.start,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(width: double.infinity, height: 0.25, color: Colors.grey),
-        Padding(
-          padding: const EdgeInsets.only(left: 16),
-          child: Text(
-            category.categoryName.length >= 2
-                ? "${category.categoryName[0].toUpperCase()}${category.categoryName.substring(1)} Trends"
-                : "",
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
-          ),
-        ),
         ListView.separated(
           shrinkWrap: true,
           physics: NeverScrollableScrollPhysics(),
           itemBuilder: (context, index) {
-            TweetType type = filteredData[index].type;
+            TweetType type = tweets[index].type;
             if (type == TweetType.ReTweet)
               return ProfileRetweetWidget(
                 profileModel: pm,
-                tweetModel: filteredData[index],
+                tweetModel: tweets[index],
               );
 
             if (type == TweetType.Quote)
               return ProfileQuoteWidget(
-                tweetModel: filteredData[index],
+                tweetModel: tweets[index],
                 profileModel: pm,
               );
 
             return ProfileNormalTweetWidget(
               profileModel: pm,
-              profilePostModel: filteredData[index],
+              profilePostModel: tweets[index],
             );
           },
-          itemCount: filteredData.length <= 5 ? filteredData.length : 5,
+          itemCount: tweets.length <= 5 ? tweets.length : 5,
           separatorBuilder: (context, index) {
             return Container(
               width: double.infinity,

@@ -1,10 +1,6 @@
 import 'package:dio/dio.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lite_x/core/providers/current_user_provider.dart';
-import 'package:lite_x/features/media/download_media.dart';
 import 'package:lite_x/features/profile/models/create_reply_model.dart';
 import 'package:lite_x/features/profile/models/create_tweet_model.dart';
-import 'package:lite_x/features/profile/models/follower_model.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
 import 'package:lite_x/features/profile/models/profile_tweet_model.dart';
 import 'package:lite_x/features/profile/models/search_user_model.dart';
@@ -14,7 +10,6 @@ import 'package:lite_x/features/profile/models/tweet_reply_model.dart';
 import 'package:lite_x/features/profile/models/user_model.dart';
 import 'package:lite_x/features/profile/repositories/profile_repo.dart';
 import 'package:lite_x/features/profile/repositories/profile_storage_service.dart';
-import 'package:lite_x/features/profile/view_model/providers.dart';
 import 'package:lite_x/features/trends/models/for_you_response_model.dart';
 import 'package:lite_x/features/trends/models/trend_category.dart';
 import 'package:lite_x/features/trends/models/trend_model.dart';
@@ -190,10 +185,6 @@ class ProfileRepoImpl implements ProfileRepo {
       return Left(Failure('Failed to load profile posts'));
     }
   }
-
-  
-  
-  
 
   @override
   Future<Either<Failure, List<ProfileTweetModel>>> getProfileLikes(
@@ -706,9 +697,13 @@ class ProfileRepoImpl implements ProfileRepo {
       }
       return Right([]);
     } on DioException catch (e) {
-      return (Left(Failure(e.toString())));
+      return (Left(
+        Failure("cannot get trends at this time, try again later..."),
+      ));
     } catch (e) {
-      return (Left(Failure(e.toString())));
+      return (Left(
+        Failure("cannot get trends at this time, try again later..."),
+      ));
     }
   }
 }
