@@ -1,12 +1,13 @@
-
-
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lite_x/core/providers/current_user_provider.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
 import 'package:lite_x/features/profile/models/profile_tweet_model.dart';
 import 'package:lite_x/features/profile/models/shared.dart';
 import 'package:lite_x/features/profile/view/widgets/profile_tweets/profile_normal_tweet_widget.dart';
+import 'package:lite_x/features/profile/view/widgets/profile_tweets/profile_quote_widget.dart';
 
-class ProfileRetweetWidget extends StatelessWidget implements ProfileTweet {
+class ProfileRetweetWidget extends ConsumerWidget implements ProfileTweet {
   const ProfileRetweetWidget({
     super.key,
     required this.tweetModel,
@@ -16,7 +17,11 @@ class ProfileRetweetWidget extends StatelessWidget implements ProfileTweet {
   final ProfileTweetModel tweetModel;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currUser = ref.read(currentUserProvider);
+    bool myRetweet = false;
+    if (currUser != null && currUser.username == tweetModel.retweeterUserName)
+      myRetweet = true;
     return Column(
       children: [
         Padding(
@@ -34,7 +39,7 @@ class ProfileRetweetWidget extends StatelessWidget implements ProfileTweet {
               ),
               SizedBox(width: 5),
               Text(
-                "You reposted",
+                "${myRetweet ? "You" : this.tweetModel.retweeterName} reposted",
                 style: TextStyle(
                   color: Colors.grey,
                   fontSize: 14,
@@ -44,10 +49,15 @@ class ProfileRetweetWidget extends StatelessWidget implements ProfileTweet {
             ],
           ),
         ),
-        ProfileNormalTweetWidget(
-          profileModel: this.profileModel,
-          profilePostModel: this.tweetModel,
-        ),
+        tweetModel.type == TweetType.Quote
+            ? ProfileQuoteWidget(
+                tweetModel: tweetModel,
+                profileModel: this.profileModel,
+              )
+            : ProfileNormalTweetWidget(
+                profileModel: this.profileModel,
+                profilePostModel: this.tweetModel,
+              ),
       ],
     );
   }
