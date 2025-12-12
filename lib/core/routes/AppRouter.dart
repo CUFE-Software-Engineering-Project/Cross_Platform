@@ -24,6 +24,10 @@ import 'package:lite_x/features/chat/view/screens/Search_User_Group.dart';
 import 'package:lite_x/features/chat/view/screens/chat_Screen.dart';
 import 'package:lite_x/features/chat/view/screens/conversations_screen.dart';
 import 'package:lite_x/features/explore/view/explore_screen.dart';
+import 'package:lite_x/features/home/models/tweet_model.dart';
+import 'package:lite_x/features/home/view/screens/quote_composer_screen.dart';
+import 'package:lite_x/features/trends/view/screens/explore_screen.dart';
+import 'package:lite_x/features/trends/view/screens/shatag_tweets_screen.dart';
 import 'package:lite_x/features/trends/view/screens/trends_screen.dart';
 import 'package:lite_x/features/home/view/screens/tweet_screen.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
@@ -52,6 +56,8 @@ import 'package:lite_x/features/settings/screens/UserName_Screen.dart';
 import 'package:lite_x/features/settings/screens/YourAccount_Screen.dart';
 import 'package:lite_x/features/settings/screens/AccountInformation_Screen.dart';
 import 'package:lite_x/features/settings/screens/ChangePassword_Screen.dart';
+import 'package:lite_x/features/trends/view/screens/who_to_follow_screen.dart';
+import 'package:lite_x/features/notifications/view/screens/Notification_Screen.dart';
 
 class Approuter {
   static final GoRouter router = GoRouter(
@@ -363,7 +369,7 @@ class Approuter {
         name: RouteConstants.SearchScreen,
         path: "/searchScreen",
         pageBuilder: (context, state) => CustomTransitionPage(
-          child: SearchScreen(),
+          child: SearchScreen(extra: state.extra as Map<String, dynamic>?),
           transitionsBuilder: _slideRightTransitionBuilder,
         ),
       ),
@@ -436,6 +442,38 @@ class Approuter {
           child: TweetDetailScreen(
             tweetId: state.pathParameters['tweetId'] as String,
           ),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
+        name: RouteConstants.WhoToFollowScreen,
+        path: "/whoToFollowScreen",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: WhoToFollowScreen(),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
+        name: RouteConstants.HashtagTweetsScreen,
+        path: "/hashtagTweetsScreen",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: HashtagTweetsScreen(list: state.extra),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
+        name: RouteConstants.RealExploreScreen,
+        path: "/realExploreScreen",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: RealExploreScreen(),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
+        name: RouteConstants.notifications,
+        path: "/notifications",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: const NotificationScreen(),
           transitionsBuilder: _slideRightTransitionBuilder,
         ),
       ),

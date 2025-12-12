@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
 import 'package:lite_x/features/profile/models/profile_tweet_model.dart';
 import 'package:lite_x/features/profile/models/shared.dart';
-import 'package:lite_x/features/profile/models/user_model.dart';
-import 'package:lite_x/features/profile/view/widgets/following_followers/follower_card.dart';
 import 'package:lite_x/features/profile/view/widgets/profile_tweets/profile_normal_tweet_widget.dart'
     hide Padding;
 import 'package:lite_x/features/profile/view/widgets/profile_tweets/profile_quote_widget.dart';
 import 'package:lite_x/features/profile/view/widgets/profile_tweets/profile_retweet_widget.dart';
 import 'package:lite_x/features/profile/view_model/providers.dart';
 import 'package:lite_x/features/trends/models/trend_category.dart';
-import 'package:lite_x/features/trends/models/trend_model.dart';
 import 'package:lite_x/features/trends/view/widgets/trend_tile.dart';
 
 class CategoryProfileTrendTab extends ConsumerWidget {
@@ -70,14 +68,16 @@ class CategoryProfileTrendTab extends ConsumerWidget {
                         ),
                       ]
                     : [
-                        SizedBox(height: 20),
-                        _buildTweetsSection(data.viralTweets, pm),
-                        Container(
-                          width: double.infinity,
-                          height: 0.5,
-                          color: Colors.grey,
-                        ),
-                        SizedBox(height: 20),
+                        if (data.viralTweets.length > 0) SizedBox(height: 20),
+                        if (data.viralTweets.length > 0)
+                          _buildTweetsSection(data.viralTweets, pm),
+                        if (data.viralTweets.length > 0)
+                          Container(
+                            width: double.infinity,
+                            height: 0.5,
+                            color: Colors.grey,
+                          ),
+                        if (data.viralTweets.length > 0) SizedBox(height: 20),
                         _buildTredsSection(data, 30),
                       ],
               ),
@@ -121,12 +121,20 @@ class CategoryProfileTrendTab extends ConsumerWidget {
       physics: NeverScrollableScrollPhysics(),
       shrinkWrap: true,
       itemBuilder: (context, index) {
-        return TrendTile(
-          trend: category.trends[index],
-          trendCategory: category.categoryName.length >= 2
-              ? "${category.categoryName[0].toUpperCase()}${category.categoryName.substring(1)}"
-              : "",
-          showRank: false,
+        return GestureDetector(
+          onTap: () {
+            context.push(
+              "/hashtagTweetsScreen",
+              extra: [category.trends[index].id, category.trends[index].title],
+            );
+          },
+          child: TrendTile(
+            trend: category.trends[index],
+            trendCategory: category.categoryName.length >= 2
+                ? "${category.categoryName[0].toUpperCase()}${category.categoryName.substring(1)}"
+                : "",
+            showRank: false,
+          ),
         );
       },
       itemCount: category.trends.length <= limit
