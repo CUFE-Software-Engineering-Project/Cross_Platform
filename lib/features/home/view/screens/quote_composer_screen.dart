@@ -9,6 +9,8 @@ import 'package:lite_x/features/home/view_model/home_view_model.dart';
 import 'package:lite_x/features/media/upload_media.dart';
 import 'package:lite_x/core/providers/current_user_provider.dart';
 import 'package:lite_x/features/home/providers/user_profile_provider.dart';
+import 'package:lite_x/features/home/view/widgets/mention_suggestion_overlay.dart';
+import 'package:lite_x/features/home/models/user_suggestion.dart';
 
 class QuoteComposerScreen extends ConsumerStatefulWidget {
   final TweetModel quotedTweet;
@@ -26,6 +28,9 @@ class _QuoteComposerScreenState extends ConsumerState<QuoteComposerScreen> {
   bool _isPosting = false;
   final List<File> _selectedMedia = [];
 
+  // Mention suggestions state
+  final LayerLink _mentionLayerLink = LayerLink();
+
   String? _getPhotoUrl(String? photo) {
     if (photo == null || photo.isEmpty) return null;
     if (photo.startsWith('http://') || photo.startsWith('https://')) {
@@ -39,6 +44,9 @@ class _QuoteComposerScreenState extends ConsumerState<QuoteComposerScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _focusNode.requestFocus();
+    });
+    _textController.addListener(() {
+      setState(() {});
     });
   }
 
@@ -310,19 +318,35 @@ class _QuoteComposerScreenState extends ConsumerState<QuoteComposerScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: _buildAppBar(),
-      body: Column(
+      body: Stack(
         children: [
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildQuoteComposer(),
-                  const SizedBox(height: 16),
-                  _buildQuotedTweet(),
-                ],
+          Column(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildQuoteComposer(),
+                      const SizedBox(height: 16),
+                      _buildQuotedTweet(),
+                    ],
+                  ),
+                ),
               ),
+            ],
+          ),
+          // Mention suggestions overlay
+          Positioned(
+            left: 16,
+            right: 16,
+            child: MentionSuggestionOverlay(
+              textController: _textController,
+              onUserSelected: (UserSuggestion user) {
+                // User selection is handled inside the overlay widget
+              },
+              layerLink: _mentionLayerLink,
             ),
           ),
         ],
@@ -411,19 +435,22 @@ class _QuoteComposerScreenState extends ConsumerState<QuoteComposerScreen> {
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: TextField(
-                controller: _textController,
-                focusNode: _focusNode,
-                maxLines: null,
-                style: const TextStyle(color: Colors.white, fontSize: 18),
-                decoration: InputDecoration(
-                  hintText: 'Add a comment...',
-                  hintStyle: TextStyle(color: Colors.grey[600], fontSize: 18),
-                  border: InputBorder.none,
+              child: CompositedTransformTarget(
+                link: _mentionLayerLink,
+                child: TextField(
+                  controller: _textController,
+                  focusNode: _focusNode,
+                  maxLines: null,
+                  style: const TextStyle(color: Colors.white, fontSize: 18),
+                  decoration: InputDecoration(
+                    hintText: 'Add a comment...',
+                    hintStyle: TextStyle(color: Colors.grey[600], fontSize: 18),
+                    border: InputBorder.none,
+                  ),
+                  onChanged: (value) {
+                    setState(() {});
+                  },
                 ),
-                onChanged: (value) {
-                  setState(() {});
-                },
               ),
             ),
           ],
