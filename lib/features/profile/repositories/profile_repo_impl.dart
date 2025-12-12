@@ -195,9 +195,7 @@ class ProfileRepoImpl implements ProfileRepo {
     }
   }
 
-  Future<Either<Failure, void>> removeBanner(
-    String userId,
-  ) async {
+  Future<Either<Failure, void>> removeBanner(String userId) async {
     try {
       await _dio.delete("api/users/banner/${userId}");
       return const Right(());
@@ -373,6 +371,7 @@ class ProfileRepoImpl implements ProfileRepo {
       await _dio.post("api/mutes/$username");
       final myUsername = ref.read(myUserNameProvider);
       ref.refresh(getMutedUsersProvider(myUsername));
+      ref.refresh(profileDataProvider(username));
       return const Right(());
     } catch (e) {
       return Left(Failure("couldn't mute user"));
@@ -384,6 +383,8 @@ class ProfileRepoImpl implements ProfileRepo {
       await _dio.delete("api/mutes/$username");
       final myUsername = ref.read(myUserNameProvider);
       ref.refresh(getMutedUsersProvider(myUsername));
+      ref.refresh(profileDataProvider(username));
+
       return const Right(());
     } catch (e) {
       return Left(Failure("couldn't unmute user"));
