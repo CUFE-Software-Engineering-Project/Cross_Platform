@@ -9,6 +9,8 @@ import 'package:lite_x/features/search/providers/search_providers.dart';
 import 'package:lite_x/features/search/view/search_results_screen.dart';
 import 'package:lite_x/features/search/view/widgets/search_bar.dart';
 import 'package:lite_x/features/search/view/widgets/people_card.dart';
+import 'package:lite_x/features/profile/models/shared.dart';
+
 
 class SearchScreen extends ConsumerStatefulWidget {
   final Map<String, dynamic>? extra;
@@ -181,22 +183,16 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                         );
 
                         return ListTile(
-                          leading: CircleAvatar(
-                            radius: 18,
-                            backgroundColor: Palette.cardBackground,
-                            backgroundImage: (user.avatarUrl != null &&
-                                    user.avatarUrl!.isNotEmpty)
-                                ? NetworkImage(user.avatarUrl!)
-                                : null,
-                            child: (user.avatarUrl == null ||
-                                    user.avatarUrl!.isEmpty)
-                                ? const Icon(
-                                    Icons.person,
-                                    color: Palette.textPrimary,
-                                    size: 18,
-                                  )
-                                : null,
-                          ),
+                          leading: ClipOval(
+              child: SizedBox(
+                width: 40,
+                height: 40,
+                child: BuildSmallProfileImage(
+                  mediaId: user.avatarUrl,
+                  radius: 20,
+                ),
+              ),
+            ),
                           title: Text(
                             user.name,
                             overflow: TextOverflow.ellipsis,

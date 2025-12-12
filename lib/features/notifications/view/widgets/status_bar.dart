@@ -27,16 +27,18 @@ class Statusbar extends ConsumerWidget {
             children: [
               GestureDetector(
                 onTap: () => scaffoldKey.currentState?.openDrawer(),
-                child: Container(
-                  width: 56,
-                  height: 53,
-                  alignment: Alignment.centerLeft,
-                  child: BuildSmallProfileImage(
-                    mediaId: avatarUrl,
-                    radius: 16,
-                  ),
+                child: ClipOval(
+              child: SizedBox(
+                width: 40,
+                height: 40,
+                child: BuildSmallProfileImage(
+                  mediaId: avatarUrl,
+                  radius: 20,
                 ),
               ),
+            ),
+              ),
+              SizedBox(width: 12),
               Text(
                 'Notifications',
                 style: TextStyle(

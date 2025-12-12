@@ -110,6 +110,15 @@ class _AllTweetCardWidgetState extends ConsumerState<AllTweetCardWidget> {
     );
   }
 
+  void _openUserProfile() {
+    final username = notification.actor.username;
+    if (username.isEmpty) {
+      _showSnack('User profile not available');
+      return;
+    }
+    Navigator.of(context).pushNamed('/profile', arguments: {'username': username});
+  }
+
   Future<void> _toggleLike() async {
     if (_processingLike) return;
     final tweetId = _tweetId;
@@ -486,8 +495,6 @@ class _AllTweetCardWidgetState extends ConsumerState<AllTweetCardWidget> {
         (notification.quotedContent?.isNotEmpty ?? false);
   }
 
-  bool get _hasMetrics =>
-      notification.repliesCount > 0 || _repostsCount > 0 || _likesCount > 0;
 
   Widget _metricButton({
     required IconData icon,
@@ -669,13 +676,8 @@ class _AllTweetCardWidgetState extends ConsumerState<AllTweetCardWidget> {
     );
   }
 
-  Widget _buildConversationCard() {
-    final String bodyText;
-    if (notification.tweet != null && notification.tweet!.content.isNotEmpty) {
-      bodyText = notification.tweet!.content;
-    } else {
-      bodyText = notification.body;
-    }
+  Widget _buildFollowCard() {
+    final description = _getActionText();
 
     return _cardShell(
       onTap: _hasTweetLink ? _openTweetDetail : null,
@@ -692,21 +694,87 @@ class _AllTweetCardWidgetState extends ConsumerState<AllTweetCardWidget> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: RichText(
+                        text: TextSpan(
+                          text: '${notification.actor.name} ',
+                          style: _nameStyle,
+                          children: [
+                            TextSpan(
+                              text: description,
+                              style: _secondaryStyle,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    _buildTimestampText(),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildConversationCard() {
+    final String bodyText;
+    if (notification.tweet != null && notification.tweet!.content.isNotEmpty) {
+      bodyText = notification.tweet!.content;
+    } else {
+      bodyText = notification.body;
+    }
+
+    return _cardShell(
+      onTap: _hasTweetLink ? _openTweetDetail : null,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          GestureDetector(
+            onTap: _openUserProfile,
+            child: ClipOval(
+              child: SizedBox(
+                width: 40,
+                height: 40,
+                child: BuildSmallProfileImage(
+                  mediaId: notification.mediaUrl,
+                  radius: 20,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
                     Flexible(
-                      child: Text(
-                        notification.actor.name,
-                        style: _nameStyle,
-                        overflow: TextOverflow.ellipsis,
+                      child: GestureDetector(
+                        onTap: _openUserProfile,
+                        child: Text(
+                          notification.actor.name,
+                          style: _nameStyle,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 6),
-                    Text(
-                      '${_actorHandle()} · ${_formatTimestamp(notification.createdAt)}',
-                      style: const TextStyle(
-                        fontFamily: 'SF Pro Text',
-                        color: Palette.textTertiary,
-                        fontSize: 13,
+                    GestureDetector(
+                      onTap: _openUserProfile,
+                      child: Text(
+                        '${_actorHandle()} · ${_formatTimestamp(notification.createdAt)}',
+                        style: const TextStyle(
+                          fontFamily: 'SF Pro Text',
+                          color: Palette.textTertiary,
+                          fontSize: 13,
+                        ),
                       ),
                     ),
                     const Spacer(),
@@ -726,7 +794,7 @@ class _AllTweetCardWidgetState extends ConsumerState<AllTweetCardWidget> {
                   Text(bodyText, style: _bodyStyle),
                 ],
                 if (_hasQuotedTweet()) _buildQuotedTweet(),
-                if (_hasMetrics) _buildMetricsRow(),
+                _buildMetricsRow(),
               ],
             ),
           ),
@@ -747,10 +815,7 @@ class _AllTweetCardWidgetState extends ConsumerState<AllTweetCardWidget> {
       return _buildActivityCard(icon: Icons.favorite, color: Palette.like);
     }
     if (_isFollow) {
-      return _buildActivityCard(
-        icon: Icons.person,
-        color: Palette.textSecondary,
-      );
+      return _buildFollowCard();
     }
     return _buildConversationCard();
   }

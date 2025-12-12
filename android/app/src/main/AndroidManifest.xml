@@ -30,9 +30,9 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="myapp"
-                      android:host="login"
-                      android:pathPrefix="/success" />
+                <data android:scheme="https"
+                      android:host="app-dbef67eb-9a2e-44fa-abff-3e8b83204d9c.cleverapps.io"
+                      android:pathPrefix="/login/success" />
             </intent-filter>
         </activity>
         <activity android:name="com.yalantis.ucrop.UCropActivity"

@@ -36,31 +36,44 @@ class _AllTabState extends ConsumerState<AllTab>
       color: Palette.background,
       child: state.when(
         data: (items) {
-          if (items.isEmpty) {
-            return const AllEmptyStateWidget();
-          }
-
           return RefreshIndicator(
             onRefresh: () async {
               await ref
                   .read(notificationViewModelProvider.notifier)
                   .refresh();
             },
-            child: AnimatedList(
-              key: _listKey,
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
-              initialItemCount: items.length,
-              itemBuilder: (context, index, animation) {
-                return _buildItem(items[index], animation);
-              },
-            ),
+            child: items.isEmpty
+                ? ListView(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    children: const [AllEmptyStateWidget()],
+                  )
+                : AnimatedList(
+                  key: _listKey,
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  initialItemCount: items.length,
+                  itemBuilder: (context, index, animation) {
+                    return _buildItem(items[index], animation);
+                  },
+                ),
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, st) => const Center(
-          child: Text(
-            'Failed to load notifications',
-            style: TextStyle(color: Colors.red),
+        error: (e, st) => Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text(
+                'Failed to load notifications',
+                style: TextStyle(color: Colors.red),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () {
+                  ref.read(notificationViewModelProvider.notifier).refresh();
+                },
+                child: const Text('Retry'),
+              ),
+            ],
           ),
         ),
       ),

@@ -32,28 +32,41 @@ class _MentionsTabState extends ConsumerState<MentionsTab>
       color: Palette.background,
       child: state.when(
         data: (items) {
-          if (items.isEmpty) {
-            return const MentionsEmptyStateWidget();
-          }
-
           return RefreshIndicator(
             onRefresh: () async {
               await ref.read(mentionsViewModelProvider.notifier).refresh();
             },
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
-              itemCount: items.length,
-              itemBuilder: (context, index) {
-                return MentionTweetCard(mention: items[index]);
-              },
-            ),
+            child: items.isEmpty
+                ? ListView(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    children: const [MentionsEmptyStateWidget()],
+                  )
+                : ListView.builder(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  itemCount: items.length,
+                  itemBuilder: (context, index) {
+                    return MentionTweetCard(mention: items[index]);
+                  },
+                ),
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, st) => const Center(
-          child: Text(
-            'Failed to load mentions',
-            style: TextStyle(color: Colors.red),
+        error: (e, st) => Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text(
+                'Failed to load mentions',
+                style: TextStyle(color: Colors.red),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () {
+                  ref.read(mentionsViewModelProvider.notifier).refresh();
+                },
+                child: const Text('Retry'),
+              ),
+            ],
           ),
         ),
       ),

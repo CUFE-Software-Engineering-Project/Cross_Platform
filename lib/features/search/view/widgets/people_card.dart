@@ -25,9 +25,15 @@ class PeopleCard extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: Row(
           children: [
-            BuildSmallProfileImage(
-              mediaId: user.avatarUrl,
-              radius: 20,
+            ClipOval(
+              child: SizedBox(
+                width: 40,
+                height: 40,
+                child: BuildSmallProfileImage(
+                  mediaId: user.avatarUrl,
+                  radius: 20,
+                ),
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
