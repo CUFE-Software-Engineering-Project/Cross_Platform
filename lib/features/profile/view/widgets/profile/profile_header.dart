@@ -844,5 +844,3 @@ Widget _build_more_options_other_profile(
     radius: 20,
   );
 }
-
-

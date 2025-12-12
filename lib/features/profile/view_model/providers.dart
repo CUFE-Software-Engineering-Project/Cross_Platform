@@ -45,6 +45,13 @@ final updateProfilePhotoProvider = Provider((ref) {
   };
 });
 
+final removeBannerProvider = Provider((ref) {
+  final repo = ref.watch(profileRepoProvider);
+  return (String userId) {
+    return repo.removeBanner(userId);
+  };
+});
+
 final followersProvider =
     FutureProvider.family<Either<Failure, List<UserModel>>, String>((
       ref,
@@ -84,21 +91,21 @@ final verifiedFollowersProvider =
 final followControllerProvider = Provider((ref) {
   final repo = ref.watch(profileRepoProvider);
   return (String username) {
-    return repo.followUser(username);
+    return repo.followUser(username, ref);
   };
 });
 
 final blockUserProvider = Provider((ref) {
   final repo = ref.watch(profileRepoProvider);
   return (String username) {
-    return repo.blockUser(username);
+    return repo.blockUser(username, ref);
   };
 });
 
 final unBlockUserProvider = Provider((ref) {
   final repo = ref.watch(profileRepoProvider);
   return (String username) {
-    return repo.unBlockUser(username);
+    return repo.unBlockUser(username, ref);
   };
 });
 
@@ -123,21 +130,21 @@ final getMutedUsersProvider =
 final muteUserProvider = Provider((ref) {
   final repo = ref.watch(profileRepoProvider);
   return (String username) {
-    return repo.muteUser(username);
+    return repo.muteUser(username, ref);
   };
 });
 
 final unMuteUserProvider = Provider((ref) {
   final repo = ref.watch(profileRepoProvider);
   return (String username) {
-    return repo.unMuteUser(username);
+    return repo.unMuteUser(username, ref);
   };
 });
 
 final unFollowControllerProvider = Provider((ref) {
   final repo = ref.watch(profileRepoProvider);
   return (String username) {
-    return repo.unFollowUser(username);
+    return repo.unFollowUser(username, ref);
   };
 });
 
@@ -200,7 +207,7 @@ final tweetRepliesProvider =
 final deleteTweetProvider = Provider((ref) {
   final repo = ref.watch(profileRepoProvider);
   return (String tweetId) {
-    return repo.deleteTweet(tweetId);
+    return repo.deleteTweet(tweetId, ref);
   };
 });
 
@@ -208,28 +215,28 @@ final deleteTweetProvider = Provider((ref) {
 final likeTweetProvider = Provider((ref) {
   final repo = ref.watch(profileRepoProvider);
   return (String tweetId) {
-    return repo.likeTweet(tweetId);
+    return repo.likeTweet(tweetId, ref);
   };
 });
 
 final retweetTweetProvider = Provider((ref) {
   final repo = ref.watch(profileRepoProvider);
   return (String tweetId) {
-    return repo.retweetProfileTweet(tweetId);
+    return repo.retweetProfileTweet(tweetId, ref);
   };
 });
 
 final deleteRetweetTweetProvider = Provider((ref) {
   final repo = ref.watch(profileRepoProvider);
   return (String tweetId) {
-    return repo.deleteRetweetProfileTweet(tweetId);
+    return repo.deleteRetweetProfileTweet(tweetId, ref);
   };
 });
 
 final unlikeTweetProvider = Provider((ref) {
   final repo = ref.watch(profileRepoProvider);
   return (String tweetId) {
-    return repo.unLikeTweet(tweetId);
+    return repo.unLikeTweet(tweetId, ref);
   };
 });
 
@@ -337,3 +344,28 @@ final profileTrendsProvider = FutureProvider<Either<Failure, List<TrendModel>>>(
     return repo.getAvailableTrends();
   },
 );
+
+final WhoToFollowProvider = FutureProvider<Either<Failure, List<UserModel>>>((
+  ref,
+) async {
+  final repo = ref.watch(profileRepoProvider);
+  return repo.getWhoToFollow();
+});
+
+final hashtagTweetsProvider =
+    FutureProvider.family<Either<Failure, List<ProfileTweetModel>>, String>((
+      ref,
+      hashtagId,
+    ) {
+      final repo = ref.watch(profileRepoProvider);
+      return repo.getTweetsForHashtag(hashtagId);
+    });
+
+// final exploreCategoryTweetsProvider =
+//     FutureProvider.family<Either<Failure, List<ProfileTweetModel>>, String>((
+//       ref,
+//       String catName,
+//     ) async {
+//       final repo = ref.watch(profileRepoProvider);
+//       return repo.getTweetsForExploreCategory(catName);
+//     });

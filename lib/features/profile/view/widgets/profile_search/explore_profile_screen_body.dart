@@ -28,7 +28,7 @@ class _ExploreprofilescreenbodyState
               shrinkWrap: true,
               physics: NeverScrollableScrollPhysics(),
               children: [
-                Center(child: Text(l.message)),
+                Center(child: Text("failed to load trends...")),
                 Center(
                   child: IconButton(
                     onPressed: () async {
@@ -115,7 +115,7 @@ Widget _BuildForYouTab(ProfileModel pm) {
 }
 
 Widget _BuildTrendingTab(ProfileModel pm) {
-  return TrendingProfileTab();
+  return TrendingProfileTab(pm: pm);
 }
 
 Widget _BuildNewsTab(ProfileModel pm) {
