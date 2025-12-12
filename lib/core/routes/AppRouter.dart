@@ -25,6 +25,7 @@ import 'package:lite_x/features/chat/view/screens/chat_Screen.dart';
 import 'package:lite_x/features/chat/view/screens/conversations_screen.dart';
 import 'package:lite_x/features/explore/view/explore_screen.dart';
 import 'package:lite_x/features/home/view/screens/tweet_screen.dart';
+import 'package:lite_x/features/home/view/screens/mentioned_tweets_screen.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
 import 'package:lite_x/features/profile/models/shared.dart';
 import 'package:lite_x/features/profile/view/screens/birthdate_screen.dart';
@@ -449,6 +450,17 @@ class Approuter {
         pageBuilder: (context, state) => CustomTransitionPage(
           child: TweetDetailScreen(
             tweetId: state.pathParameters['tweetId'] as String,
+          ),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+
+      GoRoute(
+        name: RouteConstants.MentionedTweetsScreen,
+        path: "/mentionedTweets/:username",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: MentionedTweetsScreen(
+            username: state.pathParameters['username'] as String,
           ),
           transitionsBuilder: _slideRightTransitionBuilder,
         ),

@@ -50,19 +50,28 @@ class ProfileSideDrawer extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              CircleAvatar(
-                radius: 32,
-                backgroundColor: Colors.grey[850],
-                backgroundImage: profile?.profilePhotoUrl != null
-                    ? NetworkImage(profile!.profilePhotoUrl!)
-                    : (_getPhotoUrl(user?.photo) != null
-                          ? NetworkImage(_getPhotoUrl(user!.photo)!)
-                          : null),
-                child:
-                    profile?.profilePhotoUrl == null &&
-                        _getPhotoUrl(user?.photo) == null
-                    ? Icon(Icons.person, color: Colors.grey[500], size: 32)
-                    : null,
+              Builder(
+                builder: (context) {
+                  final profilePhoto = profile?.profilePhotoUrl;
+                  final userPhoto = _getPhotoUrl(user?.photo);
+
+                  print(
+                    '🖼️ ProfileSideDrawer - Profile Photo URL: $profilePhoto',
+                  );
+                  print('🖼️ ProfileSideDrawer - User Photo: ${user?.photo}');
+                  print('🖼️ ProfileSideDrawer - User Photo URL: $userPhoto');
+
+                  return CircleAvatar(
+                    radius: 32,
+                    backgroundColor: Colors.grey[850],
+                    backgroundImage: profilePhoto != null
+                        ? NetworkImage(profilePhoto)
+                        : (userPhoto != null ? NetworkImage(userPhoto) : null),
+                    child: profilePhoto == null && userPhoto == null
+                        ? Icon(Icons.person, color: Colors.grey[500], size: 32)
+                        : null,
+                  );
+                },
               ),
               const SizedBox(height: 12),
               Text(

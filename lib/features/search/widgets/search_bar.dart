@@ -57,8 +57,10 @@ class SearchBar extends ConsumerWidget {
                 ),
 
                 isDense: true,
-                contentPadding:
-                    const EdgeInsets.symmetric(vertical: 0, horizontal: 12),
+                contentPadding: const EdgeInsets.symmetric(
+                  vertical: 0,
+                  horizontal: 12,
+                ),
               ),
               onChanged: (value) {
                 ref.read(searchViewModelProvider.notifier).search(value);
