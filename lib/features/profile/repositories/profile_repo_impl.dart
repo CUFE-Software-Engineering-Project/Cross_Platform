@@ -43,7 +43,7 @@ class ProfileRepoImpl implements ProfileRepo {
 
       return Right(profileData);
     } on DioException catch (e) {
-      print(e.toString());
+      print("can't get profile data");
       if (userName == currentUsername) {
         await storageService.init();
         final localData = await storageService.getProfileData(currentUsername);
@@ -104,7 +104,6 @@ class ProfileRepoImpl implements ProfileRepo {
 
       return Right(ProfileModel.fromJson(res.data));
     } catch (e) {
-      print("----------\n${e.toString()}\n---------");
       return Left(Failure("can't update profile data"));
     }
   }
@@ -118,12 +117,11 @@ class ProfileRepoImpl implements ProfileRepo {
 
       final List<dynamic> jsonList = res.data["data"] ?? [];
 
-      final tweets = convertJsonListToTweetList(jsonList);
+      final tweets = convertJsonListToTweetList(jsonList, false);
 
       return Right(tweets);
     } catch (e) {
-      // print(e.toString() + "--------------+++++++++++++++++");
-      return Left(Failure('Failed to load profile posts'));
+      return Left(Failure("can't get profile tweets..."));
     }
   }
 
@@ -133,38 +131,11 @@ class ProfileRepoImpl implements ProfileRepo {
     try {
       // print("Start api ---------------------**");
       final res = await _dio.get("api/tweets/$tweetId");
-      // print("end api ---------------------**");
 
       final Map<String, dynamic> json = res.data as Map<String, dynamic>;
-      // get profile photo url and tweet medial urls
-      final String profilePhotoId = json["user"]?["profileMedia"]?["id"] ?? "";
-
-      final List<dynamic> tweetMediaIdsDynamic = json["tweetMedia"] ?? [];
-      final List<String> tweetMediaIds = tweetMediaIdsDynamic
-          .map((media) => media["media"]?["id"] as String)
-          .toList();
-
-      // final List<String> userPhotoUrl = await getMediaUrls([profilePhotoId]);
-
-      // final String profilePhotoUrl = userPhotoUrl[0];
-
-      // get timeAgo
-      final String createTime = json["createdAt"] ?? "";
-      final String timeAgo = getTimeAgo(createTime);
-
-      json["profileMediaId"] = profilePhotoId;
-      json["mediaIds"] = tweetMediaIds;
-      json["timeAgo"] = timeAgo;
-
-      // print(
-      //   "id$i" +
-      //       "${json['profileMediaId']}--------------------*****--------------",
-      // );
-
-      // print("end repo posts ----------------**");
-      return Right(ProfileTweetModel.fromJson(json));
+      final tweets = convertJsonListToTweetList([json], true);
+      return Right(tweets[0]);
     } catch (e) {
-      print(e.toString() + "--------------+++++++++++++++++");
       return Left(Failure('Failed to load Tweet'));
     }
   }
@@ -174,16 +145,12 @@ class ProfileRepoImpl implements ProfileRepo {
     String username,
   ) async {
     try {
-      // print("Start api ---------------------**");
       final res = await _dio.get("api/tweets/users/$username");
-      // print("end api ---------------------**");
       final List<dynamic> jsonList = res.data["data"] ?? [];
 
-      final tweets = convertJsonListToTweetList(jsonList);
-      // print("end repo posts ----------------**");
+      final tweets = convertJsonListToTweetList(jsonList, false);
       return Right(tweets);
     } catch (e) {
-      // print(e.toString());
       return Left(Failure('Failed to load profile posts'));
     }
   }
@@ -196,10 +163,9 @@ class ProfileRepoImpl implements ProfileRepo {
       final res = await _dio.get("api/tweets/likedtweets");
       final List<dynamic> jsonList = res.data["data"] ?? [];
 
-      final tweets = convertJsonListToTweetList(jsonList);
+      final tweets = convertJsonListToTweetList(jsonList, false);
       return Right(tweets);
     } catch (e) {
-      // print(e.toString());
       return Left(Failure('Failed to load profile posts'));
     }
   }
@@ -607,6 +573,30 @@ class ProfileRepoImpl implements ProfileRepo {
       await _dio.post("api/auth/change-email", data: {"email": newEmail});
       // await Future.delayed(Duration(seconds: 3));
       return Right(());
+    } on DioException catch (e) {
+      final statusCode = e.response?.statusCode;
+      if (statusCode != null && statusCode >= 400 && statusCode < 500) {
+        final responseData = e.response!.data;
+        String? errorMessage;
+        if (responseData is Map && responseData.containsKey('error')) {
+          errorMessage = responseData['error'] as String;
+        } else if (responseData is String) {
+          errorMessage = responseData;
+        }
+        return Left(
+          Failure(
+            errorMessage != null
+                ? errorMessage
+                : "couldn't change email, Please try again later",
+          ),
+        );
+      } else
+        return Left(
+          Failure(
+            e.response?.statusMessage ??
+                "couldn't change email, Please try again later",
+          ),
+        );
     } catch (e) {
       print(e);
       return Left(Failure("couldn't change email, Please try again later"));
@@ -626,9 +616,20 @@ class ProfileRepoImpl implements ProfileRepo {
       );
       return Right(());
     } on DioException catch (e) {
-      final String errorMessage =
-          e.response?.data["error"] ?? "can't verify code";
-      return (Left(Failure(errorMessage)));
+      final statusCode = e.response?.statusCode;
+      String? errorMessage;
+      if (statusCode != null && statusCode >= 400 && statusCode < 500) {
+        final responseData = e.response!.data;
+        if (responseData is Map && responseData.containsKey('message')) {
+          errorMessage = responseData['message'];
+        } else if (responseData is String) {
+          errorMessage = responseData;
+        }
+      }
+
+      return Left(
+        Failure(errorMessage != null ? errorMessage : "can't verify code"),
+      );
     } catch (e) {
       return (Left(Failure("can't verify code")));
     }
@@ -755,16 +756,11 @@ class ProfileRepoImpl implements ProfileRepo {
   ) async {
     try {
       final res = await _dio.get("api/hashtags/${hashtagId}/tweets");
-
-      print("fininsh -------------------------------");
-
       final List<dynamic> jsonList = res.data["tweets"] ?? [];
-      final tweets = convertJsonListToTweetList(jsonList);
-
+      final tweets = convertJsonListToTweetList(jsonList, true);
       return Right(tweets);
     } catch (e) {
-      return Left(Failure('Failed to tweets for this hashtag'));
-      // return Left(Failure(e.toString()));
+      return Left(Failure('Failed to load tweets for this hashtag'));
     }
   }
 
@@ -784,11 +780,10 @@ class ProfileRepoImpl implements ProfileRepo {
 
       final List<dynamic> jsonList = res.data["data"] ?? [];
 
-      final tweets = convertJsonListToTweetList(jsonList);
+      final tweets = convertJsonListToTweetList(jsonList, false);
 
       return Right(tweets);
     } catch (e) {
-      // print(e.toString() + "--------------+++++++++++++++++");
       return Left(Failure('Failed to load ${categoryName} tweets'));
     }
   }

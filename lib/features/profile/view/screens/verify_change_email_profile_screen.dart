@@ -46,6 +46,32 @@ class _VerifyChangeEmailScreenProfileState
     super.dispose();
   }
 
+  void _resendCode() {
+    final changeEmail = ref.read(changeEmailProfileProvider);
+    changeEmail(widget.newEmail).then((res) {
+      res.fold(
+        (l) {
+          if (mounted)
+            showSmallPopUpMessage(
+              context: context,
+              message: "Can't send code again...",
+              borderColor: Colors.red,
+              icon: Icon(Icons.error, color: Colors.red),
+            );
+        },
+        (r) async {
+          if (mounted)
+            showSmallPopUpMessage(
+              context: context,
+              message: "Verification code again...",
+              borderColor: Colors.blue,
+              icon: Icon(Icons.check_circle, color: Colors.blue),
+            );
+        },
+      );
+    });
+  }
+
   void _onCodeChanged(String value) {
     setState(() {
       _isNextButtonEnabled = value.trim().isNotEmpty && _isValidCode(value);
@@ -170,6 +196,8 @@ class _VerifyChangeEmailScreenProfileState
                     onChanged: (value) {
                       _onCodeChanged(value);
                     },
+                    maxLength: 6,
+
                     keyboardType: TextInputType.number,
                     enabled: _enableForm,
                     focusNode: _codeFocusNode,
@@ -212,7 +240,7 @@ class _VerifyChangeEmailScreenProfileState
                   SizedBox(height: 5),
                   GestureDetector(
                     onTap: () {
-                      // TODO: handle didn't recieve code
+                      _resendCode();
                     },
                     child: Text(
                       "Didn't recieve code?",

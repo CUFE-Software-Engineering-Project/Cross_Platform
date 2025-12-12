@@ -47,7 +47,7 @@ class TrendingProfileTab extends ConsumerWidget {
                         onTap: () {
                           context.push(
                             "/hashtagTweetsScreen",
-                            extra: [data[index], this.pm],
+                            extra: [data[index].id, data[index].title],
                           );
                         },
                         child: TrendTile(

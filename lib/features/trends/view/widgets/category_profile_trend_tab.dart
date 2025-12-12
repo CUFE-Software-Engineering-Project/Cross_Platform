@@ -125,7 +125,7 @@ class CategoryProfileTrendTab extends ConsumerWidget {
           onTap: () {
             context.push(
               "/hashtagTweetsScreen",
-              extra: [category.trends[index], this.pm],
+              extra: [category.trends[index].id, category.trends[index].title],
             );
           },
           child: TrendTile(

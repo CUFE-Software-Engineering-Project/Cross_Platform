@@ -20,7 +20,7 @@ class ProfileHeader extends ConsumerStatefulWidget {
     required this.showData,
     required this.showDataFunc,
   });
-  
+
   final ProfileModel profileData;
   final bool isMe;
   final bool showData;
@@ -842,5 +842,3 @@ Widget _build_more_options_other_profile(
     radius: 20,
   );
 }
-
-

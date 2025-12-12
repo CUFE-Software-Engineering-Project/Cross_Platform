@@ -117,7 +117,7 @@ class ForYouProfileTab extends ConsumerWidget {
           onTap: () {
             context.push(
               "/hashtagTweetsScreen",
-              extra: [trends[index], this.pm],
+              extra: [trends[index].id, trends[index].title],
             );
           },
           child: TrendTile(
@@ -185,7 +185,7 @@ class ForYouProfileTab extends ConsumerWidget {
       children: [
         Container(width: double.infinity, height: 0.25, color: Colors.grey),
         Padding(
-          padding: const EdgeInsets.only(left: 16),
+          padding: const EdgeInsets.only(left: 16, top: 10, bottom: 10),
           child: Text(
             category.categoryName.length >= 2
                 ? "${category.categoryName[0].toUpperCase()}${category.categoryName.substring(1)} Trends"

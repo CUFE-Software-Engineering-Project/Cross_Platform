@@ -24,6 +24,8 @@ import 'package:lite_x/features/chat/view/screens/Search_User_Group.dart';
 import 'package:lite_x/features/chat/view/screens/chat_Screen.dart';
 import 'package:lite_x/features/chat/view/screens/conversations_screen.dart';
 import 'package:lite_x/features/explore/view/explore_screen.dart';
+import 'package:lite_x/features/home/models/tweet_model.dart';
+import 'package:lite_x/features/home/view/screens/quote_composer_screen.dart';
 import 'package:lite_x/features/trends/view/screens/explore_screen.dart';
 import 'package:lite_x/features/trends/view/screens/shatag_tweets_screen.dart';
 import 'package:lite_x/features/trends/view/screens/trends_screen.dart';
@@ -463,6 +465,14 @@ class Approuter {
         path: "/realExploreScreen",
         pageBuilder: (context, state) => CustomTransitionPage(
           child: RealExploreScreen(),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
+        name: "QuoteComposerScreen",
+        path: "/quoteComposerScreen",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: QuoteComposerScreen(quotedTweet: state.extra as TweetModel),
           transitionsBuilder: _slideRightTransitionBuilder,
         ),
       ),
