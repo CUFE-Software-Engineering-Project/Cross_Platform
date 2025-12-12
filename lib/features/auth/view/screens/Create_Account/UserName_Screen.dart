@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lite_x/core/providers/current_user_provider.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
-import 'package:lite_x/core/theme/palette.dart';
+import 'package:lite_x/core/theme/Palette.dart';
 import 'package:lite_x/core/utils.dart';
 import 'package:lite_x/core/view/widgets/Loader.dart';
 import 'package:lite_x/features/auth/view/widgets/CustomTextField.dart';
@@ -276,36 +276,45 @@ class _UsernameScreenState extends ConsumerState<UsernameScreen> {
 
   Widget _buildBottomButtons() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(10),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          OutlinedButton(
-            onPressed: _handleSkip,
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Palette.textWhite,
-              side: const BorderSide(color: Palette.textWhite, width: 1),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(25),
+          ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 45, minWidth: 80),
+            child: OutlinedButton(
+              onPressed: _handleSkip,
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Palette.textWhite,
+                side: const BorderSide(color: Palette.textWhite, width: 1),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 10,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(25),
+                ),
+              ),
+              child: const Text(
+                'Skip for now',
+                maxLines: 1,
+                softWrap: false,
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
             ),
-            child: const Text(
-              'Skip for now',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-            ),
           ),
+
           ValueListenableBuilder<bool>(
             valueListenable: _isFormValid,
             builder: (context, isValid, child) {
-              return SizedBox(
-                width: 90,
+              return ConstrainedBox(
+                constraints: const BoxConstraints(minWidth: 90, minHeight: 45),
                 child: ElevatedButton(
                   onPressed: isValid ? _handleNext : null,
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 5,
+                      horizontal: 20,
+                      vertical: 10,
                     ),
                     backgroundColor: Palette.textWhite,
                     disabledBackgroundColor: Palette.textWhite.withOpacity(0.6),
@@ -317,7 +326,9 @@ class _UsernameScreenState extends ConsumerState<UsernameScreen> {
                   ),
                   child: const Text(
                     'Next',
-                    style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
+                    maxLines: 1,
+                    softWrap: false,
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                 ),
               );

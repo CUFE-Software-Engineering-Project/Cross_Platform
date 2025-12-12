@@ -5,7 +5,7 @@ import 'package:lite_x/core/providers/dobProvider.dart';
 import 'package:lite_x/core/providers/emailProvider.dart';
 import 'package:lite_x/core/providers/nameProvider.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
-import 'package:lite_x/core/theme/palette.dart';
+import 'package:lite_x/core/theme/Palette.dart';
 import 'package:lite_x/core/utils.dart';
 import 'package:lite_x/core/view/widgets/Loader.dart';
 import 'package:lite_x/features/auth/view/widgets/CustomTextField.dart';
@@ -191,25 +191,29 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
   Widget _buildNextButton(bool isLoading) {
     return Container(
       padding: EdgeInsets.all(10),
-
       alignment: Alignment.centerRight,
       child: ValueListenableBuilder<bool>(
         valueListenable: _isFormValid,
         builder: (context, isValid, child) {
-          return SizedBox(
-            width: 90,
+          return ConstrainedBox(
+            constraints: const BoxConstraints(minWidth: 90, minHeight: 45),
             child: ElevatedButton(
               onPressed: (isValid && !isLoading) ? _handleNext : null,
               style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 8,
+                ),
                 backgroundColor: Palette.textWhite,
-                disabledBackgroundColor: Palette.textWhite.withOpacity(0.5),
+                disabledBackgroundColor: Palette.textWhite.withOpacity(0.6),
                 foregroundColor: Palette.background,
                 disabledForegroundColor: Palette.border,
-                minimumSize: const Size(0, 40),
               ),
               child: const Text(
                 'Next',
-                style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                softWrap: false,
+                overflow: TextOverflow.clip,
+                style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
               ),
             ),
           );

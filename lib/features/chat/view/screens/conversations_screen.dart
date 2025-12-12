@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
-import 'package:lite_x/core/theme/palette.dart';
+import 'package:lite_x/core/theme/Palette.dart';
 import 'package:lite_x/features/chat/view/widgets/conversion/conversations_list.dart';
 import 'package:lite_x/features/chat/view/widgets/conversion/conversion_app_bar.dart';
+import 'package:lite_x/features/home/view/widgets/profile_side_drawer.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 
 class ConversationsScreen extends StatelessWidget {
@@ -12,6 +13,7 @@ class ConversationsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: const ProfileSideDrawer(),
       backgroundColor: Palette.background,
       appBar: const ConversationAppBar(),
       body: const ConversationsList(),

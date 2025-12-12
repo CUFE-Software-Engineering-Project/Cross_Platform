@@ -82,4 +82,8 @@ class AuthLocalRepository {
     ]);
     _tokenStreamController.add(null);
   }
+
+  void dispose() {
+    _tokenStreamController.close();
+  }
 }

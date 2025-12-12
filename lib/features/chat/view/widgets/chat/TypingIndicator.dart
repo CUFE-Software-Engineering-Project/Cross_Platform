@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lite_x/core/theme/palette.dart';
+import 'package:lite_x/core/theme/Palette.dart';
 
 class TypingIndicator extends StatefulWidget {
   final String userName;

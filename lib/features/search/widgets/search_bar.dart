@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../view_model/search_view_model.dart';
-import 'package:lite_x/core/theme/palette.dart';
+import 'package:lite_x/core/theme/Palette.dart';
 
 class SearchBar extends ConsumerWidget {
   const SearchBar({super.key});
@@ -57,8 +57,10 @@ class SearchBar extends ConsumerWidget {
                 ),
 
                 isDense: true,
-                contentPadding:
-                    const EdgeInsets.symmetric(vertical: 0, horizontal: 12),
+                contentPadding: const EdgeInsets.symmetric(
+                  vertical: 0,
+                  horizontal: 12,
+                ),
               ),
               onChanged: (value) {
                 ref.read(searchViewModelProvider.notifier).search(value);

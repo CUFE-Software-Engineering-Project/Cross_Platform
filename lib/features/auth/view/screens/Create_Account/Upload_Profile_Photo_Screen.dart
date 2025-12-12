@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lite_x/core/classes/PickedImage.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
-import 'package:lite_x/core/theme/palette.dart';
+import 'package:lite_x/core/theme/Palette.dart';
 import 'package:lite_x/core/view/widgets/Loader.dart';
 import 'package:lite_x/features/auth/view/widgets/buildXLogo.dart';
 import 'package:dotted_border/dotted_border.dart';
@@ -83,7 +83,6 @@ class _UploadProfilePhotoScreenState
 
   Future<void> _handleNext() async {
     if (selectedImage != null) {
-      // Upload the profile photo
       await ref
           .read(authViewModelProvider.notifier)
           .uploadProfilePhoto(selectedImage!);
@@ -257,50 +256,59 @@ class _UploadProfilePhotoScreenState
   }
 
   Widget _buildBottomButtons() {
-    return Container(
-      padding: const EdgeInsets.all(16),
+    return Padding(
+      padding: const EdgeInsets.all(10),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          OutlinedButton(
-            onPressed: _handleSkip,
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Palette.textWhite,
-              side: const BorderSide(color: Palette.textWhite, width: 1),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(25),
+          ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 40, minWidth: 90),
+            child: OutlinedButton(
+              onPressed: _handleSkip,
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Palette.textWhite,
+                side: const BorderSide(color: Palette.textWhite, width: 1),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 10,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(25),
+                ),
               ),
-            ),
-            child: const Text(
-              'Skip for now',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              child: const Text(
+                'Skip for now',
+                maxLines: 1,
+                softWrap: false,
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              ),
             ),
           ),
           ValueListenableBuilder<bool>(
             valueListenable: _isFormValid,
             builder: (context, isValid, child) {
-              return SizedBox(
-                width: 90,
+              return ConstrainedBox(
+                constraints: const BoxConstraints(minWidth: 90, minHeight: 40),
                 child: ElevatedButton(
                   onPressed: isValid ? _handleNext : null,
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 5,
-                    ),
                     backgroundColor: Palette.textWhite,
                     disabledBackgroundColor: Palette.textWhite.withOpacity(0.6),
                     foregroundColor: Palette.background,
                     disabledForegroundColor: Palette.border,
-                    minimumSize: const Size(0, 38),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 10,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(25),
                     ),
                   ),
                   child: const Text(
                     'Next',
-                    style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
+                    maxLines: 1,
+                    softWrap: false,
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                 ),
               );

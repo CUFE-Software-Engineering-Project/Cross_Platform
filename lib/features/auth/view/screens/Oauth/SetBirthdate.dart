@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
-import 'package:lite_x/core/theme/palette.dart';
+import 'package:lite_x/core/theme/Palette.dart';
 import 'package:lite_x/core/utils.dart';
 import 'package:lite_x/core/view/widgets/Loader.dart';
 import 'package:lite_x/features/auth/view/widgets/CustomTextField.dart';
@@ -189,16 +189,23 @@ class _SetbirthdateState extends ConsumerState<Setbirthdate> {
       child: ValueListenableBuilder<bool>(
         valueListenable: _isFormValid,
         builder: (context, isValid, child) {
-          return SizedBox(
-            width: 120,
+          return ConstrainedBox(
+            constraints: const BoxConstraints(minWidth: 100, minHeight: 45),
             child: ElevatedButton(
               onPressed: (isValid && !isLoading) ? _handleSignUp : null,
               style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 8,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
+                ),
+
                 backgroundColor: Palette.textWhite,
                 disabledBackgroundColor: Palette.textWhite.withOpacity(0.5),
                 foregroundColor: Palette.background,
                 disabledForegroundColor: Palette.border,
-                minimumSize: const Size(0, 38),
               ),
               child: isLoading
                   ? const SizedBox(
@@ -213,6 +220,8 @@ class _SetbirthdateState extends ConsumerState<Setbirthdate> {
                     )
                   : const Text(
                       'Sign up',
+                      maxLines: 1,
+                      softWrap: false,
                       style: TextStyle(
                         fontSize: 19,
                         fontWeight: FontWeight.bold,
