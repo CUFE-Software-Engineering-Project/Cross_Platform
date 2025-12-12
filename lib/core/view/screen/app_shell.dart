@@ -33,22 +33,7 @@ class AppShell extends ConsumerWidget {
           _buildCommunitiesScreen(), // Index 2 - Communities
           NotificationScreen(), // Index 3 - Notifications
           ConversationsScreen(),
-          //// Index 4 - Messages
-          // ListView(
-          //   children: [
-          //     Padding(
-          //       padding: const EdgeInsets.all(24),
-          //       child: Text(
-          //         "Nothing to see here -- yet.",
-          //         style: TextStyle(
-          //           color: Colors.white,
-          //           fontWeight: FontWeight.bold,
-          //           fontSize: 35,
-          //         ),
-          //       ),
-          //     ),
-          //   ],
-          // ),
+
         ],
       ),
       bottomNavigationBar: AnimatedContainer(
@@ -62,16 +47,6 @@ class AppShell extends ConsumerWidget {
           opacity: isBottomNavVisible ? 1.0 : 0.0,
           child: OverflowBox(maxHeight: 60, child: const XBottomNavigation()),
         ),
-      ),
-    );
-  }
-
-  // Placeholder screens - you'll create these later
-  Widget _buildSearchScreen() {
-    return const Center(
-      child: Text(
-        'Search Screen',
-        style: TextStyle(color: Colors.white, fontSize: 24),
       ),
     );
   }

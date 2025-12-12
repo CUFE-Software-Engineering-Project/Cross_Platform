@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'search_view_model.dart';
+part of 'activeChatIdProvider.dart';
 
 // **************************************************************************
 // RiverpodGenerator
@@ -9,52 +9,51 @@ part of 'search_view_model.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 
-@ProviderFor(SearchViewModel)
-const searchViewModelProvider = SearchViewModelProvider._();
+@ProviderFor(ActiveChat)
+const activeChatProvider = ActiveChatProvider._();
 
-final class SearchViewModelProvider
-    extends $NotifierProvider<SearchViewModel, SearchState> {
-  const SearchViewModelProvider._()
+final class ActiveChatProvider extends $NotifierProvider<ActiveChat, String?> {
+  const ActiveChatProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
-        name: r'searchViewModelProvider',
-        isAutoDispose: false,
+        name: r'activeChatProvider',
+        isAutoDispose: true,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
 
   @override
-  String debugGetCreateSourceHash() => _$searchViewModelHash();
+  String debugGetCreateSourceHash() => _$activeChatHash();
 
   @$internal
   @override
-  SearchViewModel create() => SearchViewModel();
+  ActiveChat create() => ActiveChat();
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(SearchState value) {
+  Override overrideWithValue(String? value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<SearchState>(value),
+      providerOverride: $SyncValueProvider<String?>(value),
     );
   }
 }
 
-String _$searchViewModelHash() => r'3b9f4cb58d93e52298e4e42513a2cac8bee5cf50';
+String _$activeChatHash() => r'23f0395134ca4d8af5a88f7ad3482566e0783170';
 
-abstract class _$SearchViewModel extends $Notifier<SearchState> {
-  SearchState build();
+abstract class _$ActiveChat extends $Notifier<String?> {
+  String? build();
   @$mustCallSuper
   @override
   void runBuild() {
     final created = build();
-    final ref = this.ref as $Ref<SearchState, SearchState>;
+    final ref = this.ref as $Ref<String?, String?>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<SearchState, SearchState>,
-              SearchState,
+              AnyNotifier<String?, String?>,
+              String?,
               Object?,
               Object?
             >;

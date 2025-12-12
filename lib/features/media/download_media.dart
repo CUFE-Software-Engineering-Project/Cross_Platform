@@ -4,16 +4,20 @@ import 'package:lite_x/features/media/view_model/providers.dart';
 Future<List<String>> getMediaUrls(List<String> ids) async {
   // print("start getting media---------*****");
   final container = ProviderContainer();
-  final List<String> urls = [];
 
-  for (int i = 0; i < ids.length; i++) {
+  // Fetch all media URLs in parallel
+  final urlFutures = ids.map((id) async {
     try {
-      final url = await container.read(mediaUrlProvider(ids[i]).future);
-      urls.add(url);
+      final url = await container.read(mediaUrlProvider(id).future);
+      print(url + "\n******************************");
+      return url;
     } catch (e) {
-      urls.add("");
+      return "";
     }
-  }
+  }).toList();
+
+  // Wait for all requests to complete
+  final urls = await Future.wait(urlFutures);
 
   // print(
   //   "end getting media---------***** ${urls.isNotEmpty ? urls[0] : 'empty'}",

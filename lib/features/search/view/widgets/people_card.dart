@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lite_x/core/theme/palette.dart';
 import 'package:lite_x/features/search/data/search_repository.dart';
+import 'package:lite_x/features/profile/models/shared.dart';
 
 class PeopleCard extends StatelessWidget {
   final SearchSuggestionUser user;
@@ -24,15 +25,15 @@ class PeopleCard extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: Row(
           children: [
-            CircleAvatar(
-              radius: 20,
-              backgroundColor: Palette.cardBackground,
-              backgroundImage: (user.avatarUrl != null && user.avatarUrl!.isNotEmpty)
-                  ? NetworkImage(user.avatarUrl!)
-                  : null,
-              child: (user.avatarUrl == null || user.avatarUrl!.isEmpty)
-                  ? const Icon(Icons.person, color: Palette.textPrimary, size: 20)
-                  : null,
+            ClipOval(
+              child: SizedBox(
+                width: 40,
+                height: 40,
+                child: BuildSmallProfileImage(
+                  mediaId: user.avatarUrl,
+                  radius: 20,
+                ),
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(

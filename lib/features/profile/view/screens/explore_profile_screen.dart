@@ -26,13 +26,13 @@ class _ExploreProfileScreenState extends ConsumerState<ExploreProfileScreen> {
             leading: Padding(
               padding: EdgeInsets.all(5).copyWith(left: 10),
               child: BuildSmallProfileImage(
-                userId: currentUser?.username ?? "",
+                username: currentUser?.username ?? "",
                 radius: 20,
               ),
             ),
             title: GestureDetector(
               onTap: () {
-                context.push("/profileSearchScreen");
+                context.push("/searchScreen",extra: <String, dynamic>{'showResults': false});
               },
               child: Row(
                 children: [

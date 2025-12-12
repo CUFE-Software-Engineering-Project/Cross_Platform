@@ -241,8 +241,6 @@ class NotificationItem {
   final Actor actor;
   final String? targetUsername;
   final String? quotedAuthor;
-  final String? quotedUsername;
-  final String? quotedProfileMediaId;
   final String? quotedContent;
   final int repliesCount;
   final int repostsCount;
@@ -263,8 +261,6 @@ class NotificationItem {
     required this.actor,
     this.targetUsername,
     this.quotedAuthor,
-    this.quotedUsername,
-    this.quotedProfileMediaId,
     this.quotedContent,
     this.repliesCount = 0,
     this.repostsCount = 0,
@@ -286,8 +282,6 @@ class NotificationItem {
     Actor? actor,
     String? targetUsername,
     String? quotedAuthor,
-    String? quotedUsername,
-    String? quotedProfileMediaId,
     String? quotedContent,
     int? repliesCount,
     int? repostsCount,
@@ -308,8 +302,6 @@ class NotificationItem {
       actor: actor ?? this.actor,
       targetUsername: targetUsername ?? this.targetUsername,
       quotedAuthor: quotedAuthor ?? this.quotedAuthor,
-      quotedUsername: quotedUsername ?? this.quotedUsername,
-      quotedProfileMediaId: quotedProfileMediaId ?? this.quotedProfileMediaId,
       quotedContent: quotedContent ?? this.quotedContent,
       repliesCount: repliesCount ?? this.repliesCount,
       repostsCount: repostsCount ?? this.repostsCount,

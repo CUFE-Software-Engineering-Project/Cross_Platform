@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:dio/dio.dart';
 import 'package:lite_x/core/theme/palette.dart';
 import 'package:lite_x/core/providers/dio_interceptor.dart';
 import 'package:lite_x/features/home/repositories/home_repository.dart';
@@ -14,6 +13,7 @@ class InteractionBar extends ConsumerStatefulWidget {
   final int quotesCount;
   final bool isLiked;
   final bool isRetweeted;
+  final bool isBookmarked;
   final VoidCallback? onUpdate;
 
   const InteractionBar({
@@ -25,6 +25,7 @@ class InteractionBar extends ConsumerStatefulWidget {
     this.quotesCount = 0,
     this.isLiked = false,
     this.isRetweeted = false,
+    this.isBookmarked = false,
     this.onUpdate,
   });
 
@@ -35,6 +36,7 @@ class InteractionBar extends ConsumerStatefulWidget {
 class _InteractionBarState extends ConsumerState<InteractionBar> {
   bool _liked = false;
   bool _retweeted = false;
+  bool _bookmarked = false;
   int _likesCount = 0;
   int _retweetsCount = 0;
   bool _handlingQuote = false;
@@ -44,6 +46,7 @@ class _InteractionBarState extends ConsumerState<InteractionBar> {
     super.initState();
     _liked = widget.isLiked;
     _retweeted = widget.isRetweeted;
+    _bookmarked = widget.isBookmarked;
     _likesCount = widget.likesCount;
     _retweetsCount = widget.retweetCount;
   }
@@ -56,6 +59,9 @@ class _InteractionBarState extends ConsumerState<InteractionBar> {
     }
     if (oldWidget.isRetweeted != widget.isRetweeted) {
       _retweeted = widget.isRetweeted;
+    }
+    if (oldWidget.isBookmarked != widget.isBookmarked) {
+      _bookmarked = widget.isBookmarked;
     }
     if (oldWidget.likesCount != widget.likesCount) {
       _likesCount = widget.likesCount;
@@ -139,8 +145,40 @@ class _InteractionBarState extends ConsumerState<InteractionBar> {
     }
   }
 
+  Future<void> _toggleBookmark() async {
+    final dio = ref.read(dioProvider);
+    final wasBookmarked = _bookmarked;
+
+    // Optimistic update
+    setState(() {
+      _bookmarked = !_bookmarked;
+    });
+
+    try {
+      if (wasBookmarked) {
+        await dio.delete('/api/tweets/${widget.tweetId}/bookmark');
+      } else {
+        await dio.post('/api/tweets/${widget.tweetId}/bookmark');
+      }
+      // Callback to refresh parent if provided
+      widget.onUpdate?.call();
+    } catch (e) {
+      // Revert on error
+      if (mounted) {
+        setState(() {
+          _bookmarked = wasBookmarked;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to update bookmark'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   void _handleReply() {
-    // TODO: Navigate to reply screen or show reply dialog
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Reply functionality coming soon')),
     );
@@ -198,9 +236,17 @@ class _InteractionBarState extends ConsumerState<InteractionBar> {
           _liked ? Palette.like : Palette.reply,
           _toggleLike,
         ),
+        GestureDetector(
+          onTap: _toggleBookmark,
+          child: Icon(
+            _bookmarked ? Icons.bookmark : Icons.bookmark_border,
+            color: _bookmarked ? Palette.primary : Palette.reply,
+            size: 18,
+          ),
+        ),
         _buildButton(
-          Icons.format_quote,
-          widget.quotesCount,
+          Icons.ios_share_outlined,
+          0,
           Palette.reply,
           _handleQuote,
         ),

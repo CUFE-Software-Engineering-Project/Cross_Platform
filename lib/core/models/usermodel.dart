@@ -20,7 +20,7 @@ class UserModel {
   final String username;
 
   @HiveField(4)
-  final String? photo;
+  final String? photo; // media Id
 
   @HiveField(5)
   final String? bio;
@@ -40,7 +40,7 @@ class UserModel {
   @HiveField(10)
   final Set<String> interests;
   @HiveField(11)
-  final String? localProfilePhotoPath;
+  final String? localProfilePhotoPath; // path of local profile photo
 
   UserModel({
     required this.name,

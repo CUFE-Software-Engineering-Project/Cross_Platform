@@ -12,6 +12,9 @@ import 'package:lite_x/features/profile/models/tweet_reply_model.dart';
 import 'package:lite_x/features/profile/models/user_model.dart';
 import 'package:lite_x/features/profile/repositories/profile_repo.dart';
 import 'package:lite_x/features/profile/repositories/profile_repo_impl.dart';
+import 'package:lite_x/features/trends/models/for_you_response_model.dart';
+import 'package:lite_x/features/trends/models/trend_category.dart';
+import 'package:lite_x/features/trends/models/trend_model.dart';
 
 final profileRepoProvider = Provider<ProfileRepo>((ref) {
   return ProfileRepoImpl(ref.watch(dioProvider));
@@ -309,3 +312,27 @@ final myUserNameProvider = Provider<String>((ref) {
   );
   return Myusername;
 });
+
+// trends
+
+final forYouTrendsProvider =
+    FutureProvider<Either<Failure, ForYouResponseModel>>((ref) async {
+      final repo = ref.watch(profileRepoProvider);
+      return repo.getForYouTrends();
+    });
+
+final trendCategoryProvider =
+    FutureProvider.family<Either<Failure, TrendCategory>, String>((
+      ref,
+      catName,
+    ) async {
+      final repo = ref.watch(profileRepoProvider);
+      return repo.getTrenCategory(catName);
+    });
+
+final profileTrendsProvider = FutureProvider<Either<Failure, List<TrendModel>>>(
+  (ref) async {
+    final repo = ref.watch(profileRepoProvider);
+    return repo.getAvailableTrends();
+  },
+);

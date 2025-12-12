@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lite_x/core/theme/palette.dart';
-import 'package:lite_x/features/notifications/notification_fcm_service.dart';
 import 'tabs/all_notifications.dart';
 import 'tabs/verified_notifications.dart';
 import 'tabs/mentions_notifications.dart';
 import '../../notification_view_model.dart';
+import '../../mentions_view_model.dart';
 
 class NotificationTabs extends ConsumerStatefulWidget {
   const NotificationTabs({super.key});
@@ -25,26 +25,7 @@ class _NotificationTabsState extends ConsumerState<NotificationTabs>
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
 
-    // Load both all notifications and mentions on initial screen load
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Load all notifications
-      ref.read(notificationViewModelProvider.notifier).build();
-      
-      // Load mentions in parallel
-      ref.read(mentionsViewModelProvider.notifier).build();
-      
-      // Mark notifications as read
-      ref.read(notificationViewModelProvider.notifier).markNotificationsAsRead();
-    });
-
-    final fcmService = NotificationFcmService();
-    fcmService.init();
-    fcmService.notificationsRefreshCallback = () {
-      ref.read(notificationViewModelProvider.notifier).refresh();
-    };
-    fcmService.mentionsRefreshCallback = () {
-      ref.read(mentionsViewModelProvider.notifier).refresh();
-    };
+    
     _tabController.addListener(() {
       if (selectedIndex != _tabController.index) {
         setState(() {
@@ -56,9 +37,6 @@ class _NotificationTabsState extends ConsumerState<NotificationTabs>
 
   @override
   void dispose() {
-    final fcmService = NotificationFcmService();
-    fcmService.notificationsRefreshCallback = null;
-    fcmService.mentionsRefreshCallback = null;
     _tabController.dispose();
     super.dispose();
   }

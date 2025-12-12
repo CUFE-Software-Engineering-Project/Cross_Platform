@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lite_x/core/models/usermodel.dart';
 import 'package:lite_x/core/providers/current_user_provider.dart';
 import 'package:lite_x/core/theme/palette.dart';
-import '../../notification_provider.dart';
+import 'package:lite_x/features/profile/models/shared.dart';
 
 class Statusbar extends ConsumerWidget {
   final GlobalKey<ScaffoldState> scaffoldKey;
@@ -15,7 +15,6 @@ class Statusbar extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final UserModel? currentUser = ref.watch(currentUserProvider);
     final avatarUrl = currentUser?.photo;
-    final unseenCount = ref.watch(unseenNotificationsCountProvider);
 
     return Container(
       height: 53,
@@ -28,65 +27,27 @@ class Statusbar extends ConsumerWidget {
             children: [
               GestureDetector(
                 onTap: () => scaffoldKey.currentState?.openDrawer(),
-                child: Container(
-                  width: 56,
-                  height: 53,
-                  alignment: Alignment.centerLeft,
-                  child: CircleAvatar(
-                    backgroundColor: Colors.grey[800],
-                    radius: 16,
-                    backgroundImage: avatarUrl != null && avatarUrl.isNotEmpty
-                        ? NetworkImage(avatarUrl)
-                        : null,
-                    child: (avatarUrl == null || avatarUrl.isEmpty)
-                        ? Icon(Icons.person, color: Colors.grey[400], size: 18)
-                        : null,
-                  ),
+                child: ClipOval(
+              child: SizedBox(
+                width: 40,
+                height: 40,
+                child: BuildSmallProfileImage(
+                  mediaId: avatarUrl,
+                  radius: 20,
                 ),
               ),
-              Stack(
-                alignment: Alignment.topRight,
-                children: [
-                  Text(
-                    'Notifications',
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontWeight: FontWeight.w700,
-                      fontSize: 17,
-                      color: Palette.textWhite,
-                      letterSpacing: -0.3,
-                    ),
-                  ),
-                  // Unseen count badge
-                  unseenCount.when(
-                    data: (count) {
-                      if (count > 0) {
-                        return Positioned(
-                          right: -8,
-                          top: -8,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Palette.like,
-                              shape: BoxShape.circle,
-                            ),
-                            padding: const EdgeInsets.all(4),
-                            child: Text(
-                              count > 99 ? '99+' : '$count',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        );
-                      }
-                      return const SizedBox.shrink();
-                    },
-                    loading: () => const SizedBox.shrink(),
-                    error: (_, __) => const SizedBox.shrink(),
-                  ),
-                ],
+            ),
+              ),
+              SizedBox(width: 12),
+              Text(
+                'Notifications',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontWeight: FontWeight.w700,
+                  fontSize: 17,
+                  color: Palette.textWhite,
+                  letterSpacing: -0.3,
+                ),
               ),
             ],
           ),

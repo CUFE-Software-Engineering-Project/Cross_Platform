@@ -4,6 +4,7 @@ import 'package:lite_x/core/theme/palette.dart';
 
 import '../empty/all_empty.dart';
 import '../card/all_tweet_card.dart';
+import '../../../notification_model.dart';
 import '../../../notification_view_model.dart';
 
 class AllTab extends ConsumerStatefulWidget {
@@ -15,12 +16,12 @@ class AllTab extends ConsumerStatefulWidget {
 
 class _AllTabState extends ConsumerState<AllTab>
     with AutomaticKeepAliveClientMixin {
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Mark notifications as read when opening the tab
-      ref.read(notificationViewModelProvider.notifier).markNotificationsAsRead();
+      ref.read(notificationViewModelProvider.notifier).refresh();
     });
   }
 
@@ -28,7 +29,6 @@ class _AllTabState extends ConsumerState<AllTab>
   Widget build(BuildContext context) {
     super.build(context);
 
-    // Watch the view model provider instead of stream provider
     final state = ref.watch(notificationViewModelProvider);
 
     return Container(
@@ -37,37 +37,71 @@ class _AllTabState extends ConsumerState<AllTab>
         data: (items) {
           return RefreshIndicator(
             onRefresh: () async {
-              // Call the refresh method that makes API request
-              await ref.read(notificationViewModelProvider.notifier).refresh();
+              await ref
+                  .read(notificationViewModelProvider.notifier)
+                  .refresh();
             },
             child: items.isEmpty
                 ? ListView(
-                    children: const [
-                      SizedBox(height: 50),
-                      AllEmptyStateWidget(),
-                    ],
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    children: const [AllEmptyStateWidget()],
                   )
                 : ListView.builder(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0),
-                    itemCount: items.length,
-                    itemBuilder: (context, index) {
-                      final notification = items[index];
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 16.0),
-                        child: AllTweetCardWidget(notification: notification),
-                      );
-                    },
-                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  itemCount: items.length,
+                  itemBuilder: (context, index) {
+                    return _buildItem(items[index]);
+                  },
+                ),
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, st) => const Center(
-          child: Text(
-            'Failed to load notifications',
-            style: TextStyle(color: Colors.red),
+        error: (e, st) => Center(
+          child: Padding(
+            padding: const EdgeInsets.only(top: 50.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.error_outline, size: 64, color: Colors.red[400]),
+                const SizedBox(height: 16),
+                Text(
+                  'Error loading notifications',
+                  style: TextStyle(color: Colors.grey[400], fontSize: 18),
+                ),
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 32.0),
+                  child: Text(
+                    "Try again later.Or Retry",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.grey[500], fontSize: 14),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () {
+                    ref.read(notificationViewModelProvider.notifier).refresh();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF1DA1F2),
+                  ),
+                  child: const Text(
+                    'Retry',
+                    style: TextStyle(color: Colors.white, fontSize: 16),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildItem(NotificationItem notification) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16.0),
+      child: AllTweetCardWidget(notification: notification),
     );
   }
 

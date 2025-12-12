@@ -19,6 +19,7 @@ class RouteConstants {
   static String changePasswordScreen = "changePasswordScreen";
   static String Interests = "Interests";
   static String usernamesettings = "usernamesettings";
+  static String setbirthdate = "setbirthdate";
 
   static String FollowingFollowersScreen = "FollowingFollowersScreen";
   static String BirthDateScreen = "BirthDateScreen";
@@ -45,11 +46,16 @@ class RouteConstants {
       "VerifyChangeEmailProfileScreen";
 
   // search feature
-  static String SearchScreen = "SearchScreen";
+  static String SearchScreen = "searchScreen";
 
   // explore feature
   static String ExploreScreen = "ExploreScreen";
   static String ExploreProfileScreen = "ExploreProfileScreen";
+
+
+  // trends feature
+  static String TrendsScreen = "TrendsScreen";
+
 
   static String TweetDetailsScreen = "TweetDetailsScreen";
   static String notifications = "notifications";

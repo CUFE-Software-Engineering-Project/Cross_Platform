@@ -1,12 +1,9 @@
-import 'dart:ffi';
-
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lite_x/core/providers/current_user_provider.dart';
-import 'package:lite_x/features/media/download_media.dart';
 import 'package:lite_x/features/media/view_model/providers.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
 import 'package:lite_x/features/profile/models/profile_tweet_model.dart';
@@ -314,10 +311,10 @@ class BuildSmallProfileImage extends ConsumerStatefulWidget {
     required this.radius,
     super.key,
     this.mediaId,
-    this.userId,
+    this.username,
   });
   String? mediaId;
-  String? userId;
+  String? username;
   double radius;
 
   @override
@@ -348,8 +345,8 @@ class _BuildSmallProfileImageState
           },
         ),
       );
-    } else if (widget.userId != null) {
-      final profileData = ref.watch(profileDataProvider(widget.userId!));
+    } else if (widget.username != null) {
+      final profileData = ref.watch(profileDataProvider(widget.username!));
       return CircleAvatar(
         backgroundColor: Colors.grey,
         radius: widget.radius,
@@ -482,6 +479,9 @@ class _InterActionsRowOfTweetState
                             borderColor: Colors.blue,
                             icon: Icon(Icons.check_circle, color: Colors.blue),
                           );
+                        final currUser = ref.watch(currentUserProvider);
+                        if (currUser != null)
+                          ref.refresh(profilePostsProvider(currUser.username));
                         if (mounted)
                           // ignore: unused_result
                           ref.refresh(
@@ -523,6 +523,10 @@ class _InterActionsRowOfTweetState
                             borderColor: Colors.blue,
                             icon: Icon(Icons.check_circle, color: Colors.blue),
                           );
+                        final currUser = ref.watch(currentUserProvider);
+                        if (currUser != null)
+                          // ignore: unused_result
+                          ref.refresh(profilePostsProvider(currUser.username));
                         if (mounted)
                           // ignore: unused_result
                           ref.refresh(
@@ -573,32 +577,54 @@ class _InterActionsRowOfTweetState
               if (isLikedByMeLocal) {
                 final unlike = ref.watch(unlikeTweetProvider);
                 unlike(widget.tweet.id).then((res) {
-                  res.fold((l) {
-                    isLikedByMeLocal = true;
-                    likesCount += 1;
-                    showSmallPopUpMessage(
-                      context: context,
-                      message: l.message,
-                      borderColor: Colors.red,
-                      icon: Icon(Icons.error, color: Colors.red),
-                    );
-                    if (mounted) setState(() {});
-                  }, (r) {});
+                  res.fold(
+                    (l) {
+                      isLikedByMeLocal = true;
+                      likesCount += 1;
+                      showSmallPopUpMessage(
+                        context: context,
+                        message: l.message,
+                        borderColor: Colors.red,
+                        icon: Icon(Icons.error, color: Colors.red),
+                      );
+                      if (mounted) setState(() {});
+                    },
+                    (r) {
+                      ref.refresh(
+                        profilePostsProvider(widget.tweet.userUserName),
+                      );
+                      final currUser = ref.watch(currentUserProvider);
+                      if (currUser != null)
+                        ref.refresh(profilePostsProvider(currUser.username));
+                    },
+                  );
                 });
               } else {
                 final like = ref.watch(likeTweetProvider);
                 like(widget.tweet.id).then((res) {
-                  res.fold((l) {
-                    isLikedByMeLocal = false;
-                    likesCount -= 1;
-                    showSmallPopUpMessage(
-                      context: context,
-                      message: l.message,
-                      borderColor: Colors.red,
-                      icon: Icon(Icons.error, color: Colors.red),
-                    );
-                    if (mounted) setState(() {});
-                  }, (r) {});
+                  res.fold(
+                    (l) {
+                      isLikedByMeLocal = false;
+                      likesCount -= 1;
+                      showSmallPopUpMessage(
+                        context: context,
+                        message: l.message,
+                        borderColor: Colors.red,
+                        icon: Icon(Icons.error, color: Colors.red),
+                      );
+                      if (mounted) setState(() {});
+                    },
+                    (r) {
+                      if (mounted) {
+                        ref.refresh(
+                          profilePostsProvider(widget.tweet.userUserName),
+                        );
+                        final currUser = ref.watch(currentUserProvider);
+                        if (currUser != null)
+                          ref.refresh(profilePostsProvider(currUser.username));
+                      }
+                    },
+                  );
                 });
               }
               if (mounted)
@@ -894,4 +920,38 @@ class _BuildProfileImageState extends ConsumerState<BuildProfileImage> {
       ),
     );
   }
+}
+
+List<ProfileTweetModel> convertJsonListToTweetList(List<dynamic> jsonList) {
+  List<ProfileTweetModel> tweets = [];
+  for (int i = 0; i < jsonList.length; i++) {
+    print(jsonList[i]);
+    final Map<String, dynamic> json = jsonList[i] as Map<String, dynamic>;
+    if (json["tweetType"]?.toLowerCase() == "reply") continue;
+
+    final String profilePhotoId = json["user"]?["profileMedia"]?["id"] ?? "";
+
+    final List<dynamic> tweetMediaIdsDynamic = json["tweetMedia"] ?? [];
+    final List<String> tweetMediaIds = tweetMediaIdsDynamic
+        .map((media) => media["media"]?["id"] as String)
+        .toList();
+
+    // get timeAgo
+    final String createTime = json["createdAt"] ?? "";
+    final String timeAgo = getTimeAgo(createTime);
+
+    json["profileMediaId"] = profilePhotoId;
+    json["mediaIds"] = tweetMediaIds;
+    json["timeAgo"] = timeAgo;
+
+    tweets.add(ProfileTweetModel.fromJson(json));
+  }
+  return tweets;
+}
+
+abstract class TrendsCategoriesTabs {
+  static String Global = "global";
+  static String News = "news";
+  static String Sports = "Sports";
+  static String Entertainment = "entertainment";
 }

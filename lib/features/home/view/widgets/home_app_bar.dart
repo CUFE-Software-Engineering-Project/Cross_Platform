@@ -27,7 +27,6 @@ class HomeAppBar extends ConsumerWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(appBarSettingsProvider);
-
     return Container(
       color: Colors.black,
       child: SafeArea(

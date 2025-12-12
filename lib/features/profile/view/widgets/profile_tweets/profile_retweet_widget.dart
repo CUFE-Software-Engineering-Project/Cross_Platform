@@ -32,7 +32,7 @@ class ProfileRetweetWidget extends StatelessWidget implements ProfileTweet {
               ),
               SizedBox(width: 5),
               Text(
-                "You reposted",
+                "${this.tweetModel.retweeterName} reposted",
                 style: TextStyle(
                   color: Colors.grey,
                   fontSize: 14,

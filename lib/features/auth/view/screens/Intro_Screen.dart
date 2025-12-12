@@ -1,17 +1,13 @@
-// ignore_for_file: unused_import
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
 import 'package:lite_x/core/theme/palette.dart';
 import 'package:lite_x/core/view/widgets/Loader.dart';
-import 'package:lite_x/features/auth/repositories/auth_remote_repository.dart';
 import 'package:lite_x/features/auth/view/widgets/buildTermsText.dart';
 import 'package:lite_x/features/auth/view/widgets/buildXLogo.dart';
 import 'package:lite_x/features/auth/view_model/auth_state.dart';
 import 'package:lite_x/features/auth/view_model/auth_view_model.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 
 class IntroScreen extends ConsumerWidget {
   const IntroScreen({super.key});
@@ -41,14 +37,11 @@ class IntroScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final size = MediaQuery.of(context).size;
-
-    // Listen to auth state changes
     ref.listen(authViewModelProvider, (previous, next) {
       final authViewModel = ref.read(authViewModelProvider.notifier);
 
       if (next.type == AuthStateType.authenticated) {
-        context.goNamed(RouteConstants.homescreen);
-        authViewModel.resetState();
+        context.goNamed(RouteConstants.setbirthdate);
       } else if (next.type == AuthStateType.error) {
         _showErrorToast(
           context,
@@ -109,7 +102,7 @@ class IntroScreen extends ConsumerWidget {
             ),
             SizedBox(height: size.height * 0.15),
             _buildAuthButtons(context, ref),
-            const SizedBox(height: 25),
+            const SizedBox(height: 20),
             buildTermsText(),
             const SizedBox(height: 5),
             _buildLoginSection(context),
