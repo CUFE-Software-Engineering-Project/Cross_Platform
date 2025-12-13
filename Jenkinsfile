@@ -39,7 +39,7 @@ pipeline {
                 script {
                     checkout([
                         $class: 'GitSCM',
-                        branches: [[name: '*/main']],
+                        branches: [[name: '*/save_dev_changes']],
                         userRemoteConfigs: [[
                             url: 'https://github.com/CUFE-Software-Engineering-Project/Cross_Platform.git',
                             credentialsId: "${GIT_CREDENTIALS}"
