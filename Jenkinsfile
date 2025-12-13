@@ -121,7 +121,7 @@ EOF
                         sh '''
                         echo "Kaniko building build-apk target and pushing..."
                         /kaniko/executor \
-                            --context=$(pwd) \
+                            --context=$pwd \
                             --dockerfile=Dockerfile.ci \
                             --destination=${DOCKER_IMAGE}:build-${BUILD_TAG} \
                             --tarPath=/workspace/image.tar \
