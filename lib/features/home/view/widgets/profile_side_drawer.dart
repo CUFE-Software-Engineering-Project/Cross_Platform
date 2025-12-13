@@ -141,7 +141,7 @@ class ProfileSideDrawer extends ConsumerWidget {
                 label: 'Chat',
                 onTap: () {
                   Navigator.pop(context);
-                  ref.read(unseenChatsCountProvider.notifier).state = 0;
+                //  ref.read(unseenChatsCountProvider.notifier).state = 0;
                   ref.read(socketRepositoryProvider).sendOpenMessageTab();
                   ref.read(shellNavigationProvider.notifier).state = 4;
                 },
