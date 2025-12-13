@@ -10,10 +10,18 @@ ChatLocalRepository chatLocalRepository(Ref ref) {
 }
 
 class ChatLocalRepository {
-  final Box<ConversationModel> _conversationsBox = Hive.box<ConversationModel>(
-    "conversationsBox",
-  );
-  final Box<MessageModel> _messagesBox = Hive.box<MessageModel>("messagesBox");
+  final Box<ConversationModel> _conversationsBox;
+  final Box<MessageModel> _messagesBox;
+
+  ChatLocalRepository()
+    : _conversationsBox = Hive.box<ConversationModel>("conversationsBox"),
+      _messagesBox = Hive.box<MessageModel>("messagesBox");
+
+  ChatLocalRepository.forTesting({
+    required Box<ConversationModel> conversationsBox,
+    required Box<MessageModel> messagesBox,
+  }) : _conversationsBox = conversationsBox,
+       _messagesBox = messagesBox;
 
   List<MessageModel> getCachedMessages(String chatId) {
     final messages = _messagesBox.values
@@ -64,7 +72,8 @@ class ChatLocalRepository {
 
     for (var msg in messagesToUpdate) {
       msg.status = "READ";
-      await msg.save();
+      // await msg.save();
+      await _messagesBox.put(msg.id, msg); //
     }
   }
 
@@ -72,7 +81,8 @@ class ChatLocalRepository {
     final msg = _messagesBox.get(messageId);
     if (msg != null && msg.status != "READ") {
       msg.status = "SENT";
-      await msg.save();
+      //  await msg.save();
+      await _messagesBox.put(msg.id, msg); //
     }
   }
 

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lite_x/core/theme/palette.dart';
+import 'package:lite_x/core/theme/Palette.dart';
 
 class ExploreNavBar extends StatelessWidget {
   final String? userAvatarUrl;
@@ -21,25 +21,23 @@ class ExploreNavBar extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Palette.background,
-        border: Border(
-          bottom: BorderSide(
-            color: Palette.divider,
-            width: 1,
-          ),
-        ),
+        border: Border(bottom: BorderSide(color: Palette.divider, width: 1)),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: [
           // User Avatar
           GestureDetector(
-            onTap: onAvatarTap ?? () {
-              // Open profile drawer or navigate to profile
-            },
+            onTap:
+                onAvatarTap ??
+                () {
+                  // Open profile drawer or navigate to profile
+                },
             child: CircleAvatar(
               radius: 18,
               backgroundColor: Palette.primary,
-              backgroundImage: userAvatarUrl != null && userAvatarUrl!.isNotEmpty
+              backgroundImage:
+                  userAvatarUrl != null && userAvatarUrl!.isNotEmpty
                   ? NetworkImage(userAvatarUrl!)
                   : null,
               child: userAvatarUrl == null || userAvatarUrl!.isEmpty
@@ -96,15 +94,13 @@ class ExploreNavBar extends StatelessWidget {
 
           // Settings Icon
           IconButton(
-            icon: const Icon(
-              Icons.tune,
-              size: 24,
-              color: Palette.icons,
-            ),
-            onPressed: onSettingsTap ?? () {
-              // Open content preferences
-              _showContentPreferences(context);
-            },
+            icon: const Icon(Icons.tune, size: 24, color: Palette.icons),
+            onPressed:
+                onSettingsTap ??
+                () {
+                  // Open content preferences
+                  _showContentPreferences(context);
+                },
             splashColor: Colors.transparent,
             highlightColor: Colors.transparent,
           ),
@@ -171,4 +167,3 @@ class ExploreNavBar extends StatelessWidget {
     );
   }
 }
-

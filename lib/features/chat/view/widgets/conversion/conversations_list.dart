@@ -150,7 +150,6 @@ class _ConversationsListState extends ConsumerState<ConversationsList> {
   @override
   Widget build(BuildContext context) {
     final conversationsAsync = ref.watch(conversationsViewModelProvider);
-
     return conversationsAsync.when(
       data: (conversations) {
         if (conversations.isEmpty) {

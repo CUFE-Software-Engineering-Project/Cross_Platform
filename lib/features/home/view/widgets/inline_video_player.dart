@@ -36,13 +36,15 @@ class _InlineVideoPlayerState extends State<InlineVideoPlayer> {
 
   Future<void> _initializeVideo() async {
     try {
+      print('🎬 Initializing video: ${widget.videoUrl}');
+
+      final uri = Uri.parse(widget.videoUrl);
       _controller = VideoPlayerController.networkUrl(
-        Uri.parse(widget.videoUrl),
+        uri,
         httpHeaders: {
           'Accept': '*/*',
           'User-Agent':
               'Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.120 Mobile Safari/537.36',
-          'Range': 'bytes=0-',
         },
         videoPlayerOptions: VideoPlayerOptions(
           mixWithOthers: true,
@@ -54,6 +56,8 @@ class _InlineVideoPlayerState extends State<InlineVideoPlayer> {
       _controller.setVolume(0.0); // Start muted
 
       await _controller.initialize();
+
+      print('✅ Video initialized successfully');
 
       if (mounted) {
         setState(() {

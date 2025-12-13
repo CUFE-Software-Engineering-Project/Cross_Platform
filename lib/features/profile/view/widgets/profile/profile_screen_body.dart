@@ -27,6 +27,10 @@ class _ProfileScreenBodyState extends ConsumerState<ProfileScreenBody> {
       showData = false;
     else
       showData = true;
+
+    ref.refresh(profileMediaProvider(widget.profileData.username));
+    ref.refresh(profilePostsProvider(widget.profileData.username));
+    ref.refresh(profileLikesProvider(widget.profileData.username));
     super.initState();
   }
 
@@ -45,8 +49,6 @@ class _ProfileScreenBodyState extends ConsumerState<ProfileScreenBody> {
     return RefreshIndicator(
       onRefresh: () async {
         // ignore: unused_result
-        final c = ref.read(myUserNameProvider);
-        print(c + "8888888889999999");
         ref.refresh(profileDataProvider(widget.profileData.username));
       },
       child: CustomScrollView(

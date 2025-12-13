@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lite_x/core/theme/palette.dart';
+import 'package:lite_x/core/theme/Palette.dart';
 import '../models/who_to_follow_model.dart';
 
 class WhoToFollowCard extends StatelessWidget {
@@ -19,9 +19,11 @@ class WhoToFollowCard extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: onTap ?? () {
-          // Navigate to user profile
-        },
+        onTap:
+            onTap ??
+            () {
+              // Navigate to user profile
+            },
         borderRadius: BorderRadius.circular(12),
         child: Ink(
           decoration: BoxDecoration(
@@ -35,9 +37,11 @@ class WhoToFollowCard extends StatelessWidget {
               children: [
                 // Avatar Section (Left)
                 GestureDetector(
-                  onTap: onTap ?? () {
-                    // Navigate to user profile
-                  },
+                  onTap:
+                      onTap ??
+                      () {
+                        // Navigate to user profile
+                      },
                   child: CircleAvatar(
                     radius: 28,
                     backgroundColor: Palette.primary,
@@ -164,4 +168,3 @@ class WhoToFollowCard extends StatelessWidget {
     );
   }
 }
-

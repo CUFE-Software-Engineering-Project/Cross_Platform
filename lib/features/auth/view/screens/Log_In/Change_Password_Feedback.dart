@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
 import 'package:lite_x/core/theme/Palette.dart';
 import 'package:lite_x/features/auth/view/widgets/buildXLogo.dart';
-import 'package:lite_x/features/auth/view_model/auth_view_model.dart';
 
 class ChangePasswordFeedback extends ConsumerStatefulWidget {
   const ChangePasswordFeedback({super.key});
@@ -20,9 +19,9 @@ class _ChangePasswordFeedbackState
   @override
   void initState() {
     super.initState();
-    Future.microtask(() {
-      ref.read(authViewModelProvider.notifier).resetState();
-    });
+    // Future.microtask(() {
+    //   ref.read(authViewModelProvider.notifier).resetState();//
+    // });
   }
 
   void _handleNext() {
@@ -170,23 +169,26 @@ class _ChangePasswordFeedbackState
       padding: EdgeInsets.all(10),
       alignment: Alignment.centerRight,
       child: SizedBox(
-        width: 80,
-        child: ElevatedButton(
-          onPressed: _selectedMethod.isNotEmpty ? _handleNext : null,
-          style: ElevatedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-            backgroundColor: Palette.textWhite,
-            disabledBackgroundColor: Palette.textWhite.withOpacity(0.6),
-            foregroundColor: Palette.background,
-            disabledForegroundColor: Palette.border,
-            minimumSize: const Size(0, 30),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(25),
+        width: 100,
+        height: 45,
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: ElevatedButton(
+            onPressed: _selectedMethod.isNotEmpty ? _handleNext : null,
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              backgroundColor: Palette.textWhite,
+              disabledBackgroundColor: Palette.textWhite.withOpacity(0.6),
+              foregroundColor: Palette.background,
+              disabledForegroundColor: Palette.border,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(25),
+              ),
             ),
-          ),
-          child: const Text(
-            'Next',
-            style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
+            child: const Text(
+              'Next',
+              style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
+            ),
           ),
         ),
       ),

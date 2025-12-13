@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lite_x/core/providers/emailProvider.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
-import 'package:lite_x/core/theme/palette.dart';
+import 'package:lite_x/core/theme/Palette.dart';
 import 'package:lite_x/core/utils.dart';
 import 'package:lite_x/core/view/widgets/Loader.dart';
 import 'package:lite_x/features/auth/view/widgets/CustomTextField.dart';
@@ -78,8 +78,8 @@ class _ChooseNewPasswordScreenState
     if (value == null || value.isEmpty) {
       return 'Password is required';
     }
-    if (value.length < 8) {
-      return 'Password must be at least 8 characters';
+    if (value.length < 9) {
+      return 'Password must be at least 9 characters';
     }
     if (value != _newpasswordController.text) {
       return 'Passwords do not match';
@@ -307,20 +307,21 @@ class _ChooseNewPasswordScreenState
       child: ValueListenableBuilder<bool>(
         valueListenable: _isFormValid,
         builder: (context, isValid, child) {
-          return SizedBox(
-            width: 200,
+          return ConstrainedBox(
+            constraints: const BoxConstraints(minWidth: 140, minHeight: 45),
             child: ElevatedButton(
               onPressed: (isValid && !isLoading) ? _handleChangePassword : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Palette.textWhite,
-                disabledBackgroundColor: Palette.textWhite.withOpacity(0.5),
+                disabledBackgroundColor: Palette.textWhite.withOpacity(0.6),
                 foregroundColor: Palette.background,
                 disabledForegroundColor: Palette.border,
-                minimumSize: const Size(0, 40),
               ),
               child: const Text(
                 'Change password',
-                style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                maxLines: 1,
+                softWrap: false,
+                style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
               ),
             ),
           );

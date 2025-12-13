@@ -1,3 +1,5 @@
+// ignore_for_file: unused_result
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lite_x/core/providers/current_user_provider.dart';
@@ -10,12 +12,14 @@ import 'package:lite_x/features/chat/view/widgets/chat/TypingIndicator.dart';
 import 'package:lite_x/features/chat/view/widgets/chat/message_input_bar.dart';
 import 'package:lite_x/features/chat/view_model/chat/Chat_view_model.dart';
 import 'package:lite_x/features/chat/view_model/conversions/Conversations_view_model.dart';
+import 'package:lite_x/features/profile/models/shared.dart';
+import 'package:lite_x/features/profile/view_model/providers.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   final String chatId;
   final String title; // name of user
   final String? subtitle; // username
-  final String? profileImage;
+  final String? profileImage; // media id of receiver
   final bool isGroup;
   final int? recipientFollowersCount;
   const ChatScreen({
@@ -49,9 +53,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-
       _setupChatSubscription();
-
+      ref.refresh(followersProvider(widget.subtitle ?? ""));
       ref.read(chatViewModelProvider.notifier).loadChat(widget.chatId);
       ref.read(activeChatProvider.notifier).setActive(widget.chatId);
       ref
@@ -183,7 +186,18 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   Widget build(BuildContext context) {
     final chatState = ref.watch(chatViewModelProvider);
     final currentUser = ref.watch(currentUserProvider);
-
+    final followersAsync = ref.watch(followersProvider(widget.subtitle ?? ""));
+    int latestFollowersCount = widget.recipientFollowersCount ?? 0;
+    followersAsync.when(
+      data: (either) {
+        latestFollowersCount = either.fold(
+          (_) => latestFollowersCount,
+          (users) => users.length,
+        );
+      },
+      loading: () {},
+      error: (_, __) {},
+    );
     if (currentUser == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
@@ -226,7 +240,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                       }
 
                       if (index == messages.length) {
-                        return _buildProfileHeader();
+                        return _buildProfileHeader(latestFollowersCount);
                       }
 
                       final message = messages[messages.length - index - 1];
@@ -288,31 +302,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     );
   }
 
-  Widget _buildProfileHeader() {
+  Widget _buildProfileHeader(int followersCount) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 24.0),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          CircleAvatar(
-            radius: 45,
-            backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
-            backgroundImage: widget.profileImage != null
-                ? NetworkImage(widget.profileImage!)
-                : null,
-            child: widget.profileImage == null
-                ? Text(
-                    widget.title[0].toUpperCase(),
-                    style: TextStyle(
-                      fontSize: 48,
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).primaryColor,
-                    ),
-                  )
-                : null,
-          ),
+          BuildSmallProfileImage(radius: 48, username: widget.subtitle),
           const SizedBox(height: 8),
-
           Text(
             widget.title,
             style: const TextStyle(
@@ -323,20 +320,17 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           ),
 
           if (widget.subtitle != null) ...[
-            const SizedBox(height: 2),
             Text(
               '@${widget.subtitle}',
               style: const TextStyle(fontSize: 15, color: Color(0xFF858B91)),
             ),
           ],
 
-          if (widget.recipientFollowersCount != null) ...[
-            const SizedBox(height: 8),
-            Text(
-              '${widget.recipientFollowersCount} Followers',
-              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-            ),
-          ],
+          const SizedBox(height: 8),
+          Text(
+            '${followersCount} Followers',
+            style: TextStyle(fontSize: 14, color: Color(0xFF858B91)),
+          ),
 
           const SizedBox(height: 20),
 
@@ -347,14 +341,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             endIndent: 20,
           ),
 
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
 
           Text(
             _getConversationStartDate(),
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w500,
-              color: Colors.grey[600],
+              color: Colors.white,
             ),
           ),
         ],
@@ -379,7 +373,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     } else if (difference.inDays < 7) {
       return '${difference.inDays} days ago';
     } else {
-      return '${messageDate.day}/${messageDate.month}/${messageDate.year}';
+      return '${messageDate.day},${messageDate.month},${messageDate.year}';
     }
   }
 

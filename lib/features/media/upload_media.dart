@@ -17,6 +17,7 @@ Future<List<String>> upload_media(List<File> files) async {
     final fileType = getMediaType(file.path);
 
     // request upload
+
     final requestUpload = container.read(requestUploadProvider);
     final requestUploadResponse = await requestUpload(fileName, fileType);
     RequestUploadModel requestUploadModel = RequestUploadModel(

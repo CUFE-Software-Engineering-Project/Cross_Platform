@@ -1,14 +1,14 @@
 import 'dart:async';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
-import 'package:lite_x/core/theme/palette.dart';
+import 'package:lite_x/core/theme/Palette.dart';
 import 'package:lite_x/features/chat/models/usersearchmodel.dart';
 import 'package:lite_x/features/chat/providers/searchResultsProvider.dart';
 import 'package:lite_x/features/chat/view_model/conversions/Conversations_view_model.dart';
+import 'package:lite_x/features/profile/models/shared.dart';
 
 class SearchUserGroup extends ConsumerStatefulWidget {
   const SearchUserGroup({super.key});
@@ -59,8 +59,7 @@ class _SearchUserGroupState extends ConsumerState<SearchUserGroup> {
         final users = await ref
             .read(conversationsViewModelProvider.notifier)
             .searchUsers(query);
-        // if (!mounted) return;
-        ref.read(searchResultsProvider.notifier).state = users;
+        if (mounted) ref.read(searchResultsProvider.notifier).state = users;
       } else {
         ref.read(searchResultsProvider.notifier).state = [];
       }
@@ -227,16 +226,9 @@ class _SearchUserGroupState extends ConsumerState<SearchUserGroup> {
                         (u) => u.id == user.id,
                       );
                       return ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: const Color(0xFF1E2732),
-
-                          backgroundImage: isValidHttpUrl(user.profileMedia)
-                              ? CachedNetworkImageProvider(user.profileMedia!)
-                              : null,
-
-                          child: !isValidHttpUrl(user.profileMedia)
-                              ? const Icon(Icons.person, color: Colors.grey)
-                              : null,
+                        leading: BuildSmallProfileImage(
+                          radius: 24,
+                          username: user.username,
                         ),
 
                         title: Text(
@@ -251,9 +243,10 @@ class _SearchUserGroupState extends ConsumerState<SearchUserGroup> {
                           style: const TextStyle(color: Colors.grey),
                         ),
                         trailing: _isGrouping
-                            ? (isSelected
-                                  ? Icon(Icons.check, color: Colors.grey[600])
-                                  : null)
+                            ? Icon(
+                                isSelected ? Icons.check : null,
+                                color: Colors.grey[600],
+                              )
                             : null,
                         onTap: () => _onUserTapped(user),
                       );

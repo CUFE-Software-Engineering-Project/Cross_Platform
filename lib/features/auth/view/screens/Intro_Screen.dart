@@ -1,18 +1,13 @@
-// ignore_for_file: unused_import
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lite_x/core/providers/current_user_provider.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
-import 'package:lite_x/core/theme/palette.dart';
+import 'package:lite_x/core/theme/Palette.dart';
 import 'package:lite_x/core/view/widgets/Loader.dart';
-import 'package:lite_x/features/auth/repositories/auth_remote_repository.dart';
 import 'package:lite_x/features/auth/view/widgets/buildTermsText.dart';
 import 'package:lite_x/features/auth/view/widgets/buildXLogo.dart';
 import 'package:lite_x/features/auth/view_model/auth_state.dart';
 import 'package:lite_x/features/auth/view_model/auth_view_model.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 
 class IntroScreen extends ConsumerWidget {
   const IntroScreen({super.key});
@@ -46,7 +41,16 @@ class IntroScreen extends ConsumerWidget {
       final authViewModel = ref.read(authViewModelProvider.notifier);
 
       if (next.type == AuthStateType.authenticated) {
-        context.goNamed(RouteConstants.setbirthdate);
+        if (next.message == "new_google_user" ||
+            next.message == "new_github_user") {
+          context.goNamed(RouteConstants.setbirthdate);
+          return;
+        }
+        if (next.message == "google_login_success" ||
+            next.message == "github_login_success") {
+          context.goNamed(RouteConstants.homescreen);
+          return;
+        }
       } else if (next.type == AuthStateType.error) {
         _showErrorToast(
           context,
@@ -83,36 +87,36 @@ class IntroScreen extends ConsumerWidget {
   }
 
   Widget _buildMobileLayout(Size size, BuildContext context, WidgetRef ref) {
-    return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 2),
-            Center(child: buildXLogo(size: 50)),
-            SizedBox(height: size.height * 0.15),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 5.0),
-              child: Text(
-                'See what\'s\nhappening in the\nworld right now.',
-                textAlign: TextAlign.start,
-                style: TextStyle(
-                  fontSize: 34,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Column(
+        mainAxisSize: MainAxisSize.max,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 10),
+          Center(child: buildXLogo(size: 46)),
+          // SizedBox(height: size.height * 0.15),
+          const Spacer(flex: 1),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 5.0),
+            child: Text(
+              'See what\'s\nhappening in the\nworld right now.',
+              textAlign: TextAlign.start,
+              style: TextStyle(
+                fontSize: 34,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
               ),
             ),
-            SizedBox(height: size.height * 0.15),
-            _buildAuthButtons(context, ref),
-            const SizedBox(height: 25),
-            buildTermsText(),
-            const SizedBox(height: 5),
-            _buildLoginSection(context),
-          ],
-        ),
+          ),
+          const Spacer(flex: 1),
+          _buildAuthButtons(context, ref),
+          const SizedBox(height: 20),
+          buildTermsText(),
+          const SizedBox(height: 5),
+          _buildLoginSection(context),
+          const SizedBox(height: 30),
+        ],
       ),
     );
   }
@@ -176,7 +180,7 @@ class IntroScreen extends ConsumerWidget {
         children: [
           const Text(
             'Have an account already? ',
-            style: TextStyle(color: Colors.grey, fontSize: 14),
+            style: TextStyle(color: Colors.grey, fontSize: 16),
           ),
           GestureDetector(
             key: const Key('loginButton'),
@@ -187,7 +191,7 @@ class IntroScreen extends ConsumerWidget {
               'Log in',
               style: TextStyle(
                 color: Palette.info,
-                fontSize: 14,
+                fontSize: 16,
                 fontWeight: FontWeight.w600,
               ),
             ),

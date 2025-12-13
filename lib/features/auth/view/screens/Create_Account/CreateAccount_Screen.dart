@@ -6,7 +6,7 @@ import 'package:lite_x/core/providers/dobProvider.dart';
 import 'package:lite_x/core/providers/emailProvider.dart';
 import 'package:lite_x/core/providers/nameProvider.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
-import 'package:lite_x/core/theme/palette.dart';
+import 'package:lite_x/core/theme/Palette.dart';
 import 'package:lite_x/core/utils.dart';
 import 'package:lite_x/core/view/widgets/Loader.dart';
 import 'package:lite_x/features/auth/view/widgets/CustomTextField.dart';
@@ -267,7 +267,7 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
                               color: Palette.textWhite,
                             ),
                           ),
-                          const SizedBox(height: 150),
+                          const SizedBox(height: 100),
                           CustomTextField(
                             controller: _nameController,
                             labelText: 'Name',
@@ -279,7 +279,7 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
                               context,
                             ).requestFocus(_emailFocus),
                           ),
-                          const SizedBox(height: 10),
+                          const SizedBox(height: 15),
                           CustomTextField(
                             controller: _emailController,
                             labelText: 'Email',
@@ -289,7 +289,7 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
                             focusNode: _emailFocus,
                             validationState: _emailState,
                           ),
-                          const SizedBox(height: 25),
+                          const SizedBox(height: 15),
                           CustomTextField(
                             controller: _dobController,
                             labelText: 'Date of birth',
@@ -303,7 +303,7 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
                   ),
                 ),
                 _buildNextButton(isLoading),
-                const SizedBox(height: 15),
+                const SizedBox(height: 5),
               ],
             ),
           ),
@@ -321,19 +321,24 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
     return Container(
       padding: const EdgeInsets.all(10),
       alignment: Alignment.centerRight,
-      child: SizedBox(
-        width: 90,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minWidth: 90, minHeight: 45),
         child: ElevatedButton(
           onPressed: (_isFormValid && !isLoading) ? _handleNext : null,
           style: ElevatedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(25),
+            ),
             backgroundColor: Palette.textWhite,
             disabledBackgroundColor: Palette.textWhite.withOpacity(0.5),
             foregroundColor: Palette.background,
             disabledForegroundColor: Palette.border,
-            minimumSize: const Size(0, 40),
           ),
           child: const Text(
             'Next',
+            maxLines: 1,
+            softWrap: false,
             style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
           ),
         ),

@@ -1,13 +1,13 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
 import 'package:lite_x/features/profile/models/profile_tweet_model.dart';
 import 'package:lite_x/features/profile/models/shared.dart';
 import 'package:lite_x/features/profile/models/user_model.dart';
 import 'package:lite_x/features/profile/view/widgets/following_followers/follower_card.dart';
-import 'package:lite_x/features/profile/view/widgets/profile_tweets/profile_normal_tweet_widget.dart';
-import 'package:lite_x/features/profile/view/widgets/profile_tweets/profile_posts_list.dart';
+import 'package:lite_x/features/profile/view/widgets/profile_tweets/profile_normal_tweet_widget.dart'
+    hide Padding;
 import 'package:lite_x/features/profile/view/widgets/profile_tweets/profile_quote_widget.dart';
 import 'package:lite_x/features/profile/view/widgets/profile_tweets/profile_retweet_widget.dart';
 import 'package:lite_x/features/profile/view_model/providers.dart';
@@ -22,6 +22,7 @@ class ForYouProfileTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncData = ref.watch(forYouTrendsProvider);
+    final asyncTrends = ref.watch(profileTrendsProvider);
     return asyncData.when(
       data: (res) {
         return res.fold(
@@ -45,17 +46,33 @@ class ForYouProfileTab extends ConsumerWidget {
             );
           },
           (data) {
-            return ListView(
-              children: [
-                _buildWhoToFollowSection(data.suggestedUsers),
-                ListView.builder(
-                  shrinkWrap: true,
-                  physics: NeverScrollableScrollPhysics(),
-                  itemBuilder: (context, index) =>
-                      _buildCategorySection(data.categories[index], pm),
-                  itemCount: data.categories.length,
-                ),
-              ],
+            return RefreshIndicator(
+              onRefresh: () async {
+                // ignore: unused_result
+                ref.invalidate(forYouTrendsProvider);
+                // Optionally wait for the new data
+                await ref.read(forYouTrendsProvider.future);
+              },
+              child: ListView(
+                children: [
+                  asyncTrends.when(
+                    data: (res) => res.fold(
+                      (l) => SizedBox.shrink(),
+                      (r) => _buildTredsSection(r),
+                    ),
+                    error: (err, _) => SizedBox.shrink(),
+                    loading: () => SizedBox.shrink(),
+                  ),
+                  _buildWhoToFollowSection(data.suggestedUsers, context),
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: NeverScrollableScrollPhysics(),
+                    itemBuilder: (context, index) =>
+                        _buildCategorySection(data.categories[index], pm),
+                    itemCount: data.categories.length,
+                  ),
+                ],
+              ),
             );
           },
         );
@@ -83,24 +100,38 @@ class ForYouProfileTab extends ConsumerWidget {
       },
       loading: () {
         return SingleChildScrollView(
+          padding: EdgeInsets.all(20),
           child: Center(child: CircularProgressIndicator()),
         );
       },
     );
   }
 
-  // Widget buildTredsSection(List<TrendModel> trends, String) {
-  //   return ListView.separated(
-  //     physics: NeverScrollableScrollPhysics(),
-  //     shrinkWrap: true,
-  //     itemBuilder: (context, index) {
-  //       return TrendTile(trend: trends[index], trendCategory: trendCategory, showRank: showRank)
-  //     },
+  Widget _buildTredsSection(List<TrendModel> trends) {
+    return ListView.builder(
+      padding: EdgeInsets.only(left: 16),
+      physics: NeverScrollableScrollPhysics(),
+      shrinkWrap: true,
+      itemBuilder: (context, index) {
+        return GestureDetector(
+          onTap: () {
+            context.push(
+              "/hashtagTweetsScreen",
+              extra: [trends[index].id, trends[index].title],
+            );
+          },
+          child: TrendTile(
+            trend: trends[index],
+            trendCategory: "ُEgypt",
+            showRank: false,
+          ),
+        );
+      },
+      itemCount: trends.length <= 6 ? trends.length : 6,
+    );
+  }
 
-  //   );
-  // }
-
-  Widget _buildWhoToFollowSection(List<UserModel> users) {
+  Widget _buildWhoToFollowSection(List<UserModel> users, BuildContext context) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.start,
@@ -114,12 +145,28 @@ class ForYouProfileTab extends ConsumerWidget {
             style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
           ),
         ),
-        ListView.builder(
-          shrinkWrap: true,
-          physics: NeverScrollableScrollPhysics(),
-          itemBuilder: (context, index) =>
-              FollowerCard(user: users[index], isMe: true),
-          itemCount: users.length <= 5 ? users.length : 5,
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ListView.builder(
+              shrinkWrap: true,
+              physics: NeverScrollableScrollPhysics(),
+              itemBuilder: (context, index) =>
+                  FollowerCard(user: users[index], isMe: true),
+              itemCount: users.length <= 5 ? users.length : 5,
+            ),
+            Padding(
+              padding: const EdgeInsets.only(left: 16, bottom: 16),
+              child: GestureDetector(
+                onTap: () {
+                  // TODO: go to who to follow screen
+                  // context.push();
+                  context.push("/whoToFollowScreen");
+                },
+                child: Text("Show more", style: TextStyle(color: Colors.blue)),
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -136,8 +183,9 @@ class ForYouProfileTab extends ConsumerWidget {
       mainAxisAlignment: MainAxisAlignment.start,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Container(width: double.infinity, height: 0.25, color: Colors.grey),
         Padding(
-          padding: const EdgeInsets.only(left: 16, top: 16),
+          padding: const EdgeInsets.only(left: 16, top: 10, bottom: 10),
           child: Text(
             category.categoryName.length >= 2
                 ? "${category.categoryName[0].toUpperCase()}${category.categoryName.substring(1)} Trends"

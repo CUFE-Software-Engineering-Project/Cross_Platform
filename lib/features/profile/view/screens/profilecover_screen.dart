@@ -112,6 +112,7 @@ class ProfileCoverScreen extends ConsumerWidget {
           ),
           body: Column(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               SizedBox(width: double.infinity),
 

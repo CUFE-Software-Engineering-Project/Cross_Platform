@@ -1,11 +1,9 @@
-// ignore_for_file: unused_field
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lite_x/core/providers/emailProvider.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
-import 'package:lite_x/core/theme/palette.dart';
+import 'package:lite_x/core/theme/Palette.dart';
 import 'package:lite_x/core/utils.dart';
 import 'package:lite_x/core/view/widgets/Loader.dart';
 import 'package:lite_x/features/auth/view/widgets/CustomTextField.dart';
@@ -27,23 +25,16 @@ class _PasswordScreenState extends ConsumerState<PasswordScreen> {
   final _passFocus = FocusNode();
   final _isFormValid = ValueNotifier<bool>(false);
 
-  bool _isPassFocused = false;
-
   @override
   void initState() {
     super.initState();
     _passwordController.addListener(_validateForm);
-    _passFocus.addListener(() {
-      setState(() {
-        _isPassFocused = _passFocus.hasFocus;
-      });
-    });
   }
 
   void _validateForm() {
     final passwordValid =
         _passwordController.text.trim().isNotEmpty &&
-        _passwordController.text.length >= 8;
+        _passwordController.text.length >= 9;
     _isFormValid.value = passwordValid;
   }
 
@@ -88,82 +79,85 @@ class _PasswordScreenState extends ConsumerState<PasswordScreen> {
 
     return Scaffold(
       backgroundColor: Palette.background,
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
         title: buildXLogo(size: 36),
         centerTitle: true,
         backgroundColor: Palette.background,
         elevation: 0,
       ),
-      body: AbsorbPointer(
-        absorbing: isLoading,
-        child: Stack(
-          children: [
-            Center(
-              child: Container(
-                width: double.infinity,
-                height: double.infinity,
-                decoration: BoxDecoration(color: Palette.background),
-                child: Column(
-                  children: [
-                    Expanded(
-                      child: Form(
-                        key: _formKey,
-                        child: SingleChildScrollView(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 32,
-                            vertical: 16,
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'You\'ll need a password',
-                                style: TextStyle(
-                                  fontSize: 26,
-                                  fontWeight: FontWeight.w800,
-                                  color: Palette.textWhite,
+      body: SafeArea(
+        child: AbsorbPointer(
+          absorbing: isLoading,
+          child: Stack(
+            children: [
+              Center(
+                child: Container(
+                  width: double.infinity,
+                  height: double.infinity,
+                  decoration: BoxDecoration(color: Palette.background),
+                  child: Column(
+                    children: [
+                      Expanded(
+                        child: Form(
+                          key: _formKey,
+                          child: SingleChildScrollView(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 32,
+                              vertical: 16,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'You\'ll need a password',
+                                  style: TextStyle(
+                                    fontSize: 26,
+                                    fontWeight: FontWeight.w800,
+                                    color: Palette.textWhite,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 10),
-                              const Text(
-                                'Make sure it\'s 8 characters or more.',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Palette.greycolor,
+                                const SizedBox(height: 10),
+                                const Text(
+                                  'Make sure it\'s 9 characters or more.',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Palette.greycolor,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 16),
-                              CustomTextField(
-                                controller: _passwordController,
-                                focusNode: _passFocus,
-                                labelText: 'Password',
-                                isPassword: true,
-                                validator: passwordValidator,
-                                onFieldSubmitted: (_) {
-                                  if (_isFormValid.value) {
-                                    _handleSignUp();
-                                  }
-                                },
-                              ),
-                              const SizedBox(height: 70),
-                              buildTermsTextP(),
-                            ],
+                                const SizedBox(height: 16),
+                                CustomTextField(
+                                  controller: _passwordController,
+                                  focusNode: _passFocus,
+                                  labelText: 'Password',
+                                  isPassword: true,
+                                  validator: passwordValidator,
+                                  onFieldSubmitted: (_) {
+                                    if (_isFormValid.value) {
+                                      _handleSignUp();
+                                    }
+                                  },
+                                ),
+                                const SizedBox(height: 70),
+                                buildTermsTextP(),
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    _buildSignUpButton(isLoading),
-                    const SizedBox(height: 15),
-                  ],
+                      _buildSignUpButton(isLoading),
+                      const SizedBox(height: 15),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            if (isLoading)
-              Container(
-                color: Colors.black.withOpacity(0.5),
-                child: const Center(child: Loader()),
-              ),
-          ],
+              if (isLoading)
+                Container(
+                  color: Colors.black.withOpacity(0.5),
+                  child: const Center(child: Loader()),
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -176,16 +170,19 @@ class _PasswordScreenState extends ConsumerState<PasswordScreen> {
       child: ValueListenableBuilder<bool>(
         valueListenable: _isFormValid,
         builder: (context, isValid, child) {
-          return SizedBox(
-            width: 120,
+          return ConstrainedBox(
+            constraints: const BoxConstraints(minWidth: 100, minHeight: 45),
             child: ElevatedButton(
               onPressed: (isValid && !isLoading) ? _handleSignUp : null,
               style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 6,
+                ),
                 backgroundColor: Palette.textWhite,
                 disabledBackgroundColor: Palette.textWhite.withOpacity(0.5),
                 foregroundColor: Palette.background,
                 disabledForegroundColor: Palette.border,
-                minimumSize: const Size(0, 38),
               ),
               child: isLoading
                   ? const SizedBox(
@@ -200,6 +197,8 @@ class _PasswordScreenState extends ConsumerState<PasswordScreen> {
                     )
                   : const Text(
                       'Sign up',
+                      maxLines: 1,
+                      softWrap: false,
                       style: TextStyle(
                         fontSize: 19,
                         fontWeight: FontWeight.bold,

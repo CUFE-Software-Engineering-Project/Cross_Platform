@@ -9,7 +9,6 @@ import 'package:lite_x/features/media/view_model/providers.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
 import 'package:lite_x/features/profile/models/shared.dart';
 import 'package:lite_x/features/profile/view/widgets/edit_profile/controller/edit_profile_controller.dart';
-import 'package:provider/provider.dart';
 
 class EditProfileHeader extends ConsumerWidget {
   final EditProfileController controller;
@@ -18,6 +17,8 @@ class EditProfileHeader extends ConsumerWidget {
   final File? bannerImageFile;
   final Function changeProfileImage;
   final Function changeBannerImage;
+  final Function deleteBannerImage;
+  final bool bannerRemoved;
   const EditProfileHeader({
     super.key,
     required this.controller,
@@ -26,6 +27,8 @@ class EditProfileHeader extends ConsumerWidget {
     required this.bannerImageFile,
     required this.changeBannerImage,
     required this.changeProfileImage,
+    required this.deleteBannerImage,
+    required this.bannerRemoved,
   });
 
   void pickProfileImage(BuildContext context) async {
@@ -46,10 +49,15 @@ class EditProfileHeader extends ConsumerWidget {
 
   void pickBannerImage(BuildContext context) async {
     ImageSource source = ImageSource.camera;
-    int? x = await controller.showImageSourceDialog(context, 3);
+    int num_of_choices = 3;
+    if (bannerRemoved ||
+        bannerImageFile == null && profileData.bannerId.isEmpty)
+      num_of_choices = 2;
+    int? x = await controller.showImageSourceDialog(context, num_of_choices);
     if (x == null) return;
-    if (x == 2) {
+    if (num_of_choices == 3 && x == 2) {
       // TODO: remove banner photo
+      deleteBannerImage();
       return;
     }
     if (x == 1) source = ImageSource.gallery;
@@ -66,7 +74,9 @@ class EditProfileHeader extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final bannerUrl = ref.watch(mediaUrlProvider(profileData.bannerId));
     final avatarUrl = ref.watch(mediaUrlProvider(profileData.avatarId));
-    DecorationImage? bannerImg = bannerImageFile != null
+    DecorationImage? bannerImg = bannerRemoved
+        ? null
+        : bannerImageFile != null
         ? DecorationImage(image: FileImage(bannerImageFile!))
         : profileData.bannerId.isNotEmpty
         ? bannerUrl.when(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../utils/text_with_hashtags.dart';
 
 class ExpandableText extends StatefulWidget {
   final String text;
@@ -6,6 +7,9 @@ class ExpandableText extends StatefulWidget {
   final TextStyle? style;
   final TextDirection? textDirection;
   final VoidCallback? onReadMore;
+  final Function(String)? onHashtagTap;
+  final Function(String)? onMentionTap;
+  final List<String>? knownHashtags;
 
   const ExpandableText({
     super.key,
@@ -14,6 +18,9 @@ class ExpandableText extends StatefulWidget {
     this.style,
     this.textDirection,
     this.onReadMore,
+    this.onHashtagTap,
+    this.onMentionTap,
+    this.knownHashtags,
   });
 
   @override
@@ -23,18 +30,36 @@ class ExpandableText extends StatefulWidget {
 class _ExpandableTextState extends State<ExpandableText> {
   bool _isExpanded = false;
   bool _showReadMore = false;
+  TextSpan? _cachedTextSpan;
+  String? _cachedText;
+
+  TextSpan _buildTextSpan(TextStyle defaultStyle) {
+    // Cache the text span to avoid rebuilding on every frame
+    if (_cachedText != widget.text || _cachedTextSpan == null) {
+      _cachedText = widget.text;
+      _cachedTextSpan = TextWithHashtags.buildTextSpan(
+        text: widget.text,
+        style: defaultStyle,
+        onHashtagTap: widget.onHashtagTap,
+        onMentionTap: widget.onMentionTap,
+        knownHashtags: widget.knownHashtags,
+      );
+    }
+    return _cachedTextSpan!;
+  }
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
+        final defaultStyle =
+            widget.style ??
+            const TextStyle(color: Colors.white, fontSize: 15, height: 1.4);
+
+        final textSpan = _buildTextSpan(defaultStyle);
+
         final textPainter = TextPainter(
-          text: TextSpan(
-            text: widget.text,
-            style:
-                widget.style ??
-                const TextStyle(color: Colors.white, fontSize: 15, height: 1.4),
-          ),
+          text: textSpan,
           maxLines: widget.maxLines,
           textDirection: widget.textDirection ?? TextDirection.ltr,
         );
@@ -42,23 +67,27 @@ class _ExpandableTextState extends State<ExpandableText> {
         textPainter.layout(maxWidth: constraints.maxWidth);
 
         // Check if text overflows
-        _showReadMore = textPainter.didExceedMaxLines;
+        final showReadMore = textPainter.didExceedMaxLines;
+        if (_showReadMore != showReadMore) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              setState(() {
+                _showReadMore = showReadMore;
+              });
+            }
+          });
+        }
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              widget.text,
-              style:
-                  widget.style ??
-                  const TextStyle(
-                    color: Colors.white,
-                    fontSize: 15,
-                    height: 1.4,
-                  ),
+            RichText(
+              text: textSpan,
               textDirection: widget.textDirection,
               maxLines: _isExpanded ? null : widget.maxLines,
-              overflow: _isExpanded ? null : TextOverflow.ellipsis,
+              overflow: _isExpanded
+                  ? TextOverflow.visible
+                  : TextOverflow.ellipsis,
             ),
             if (_showReadMore)
               GestureDetector(

@@ -92,7 +92,7 @@ class XBottomNavigation extends ConsumerWidget {
     ref.read(shellNavigationProvider.notifier).state = index;
 
     if (index == 4) {
-      ref.read(unseenChatsCountProvider.notifier).state = 0;
+    //  ref.read(unseenChatsCountProvider.notifier).state = 0;
       ref.read(socketRepositoryProvider).sendOpenMessageTab();
     }
   }

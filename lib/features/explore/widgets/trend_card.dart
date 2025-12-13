@@ -1,16 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:lite_x/core/theme/palette.dart';
+import 'package:lite_x/core/theme/Palette.dart';
 import '../models/trend_model.dart';
 
 class TrendCard extends StatelessWidget {
   final TrendModel trend;
   final VoidCallback? onTap;
 
-  const TrendCard({
-    super.key,
-    required this.trend,
-    this.onTap,
-  });
+  const TrendCard({super.key, required this.trend, this.onTap});
 
   String _formatPostCount(int count) {
     if (count >= 1000000) {
@@ -24,19 +20,16 @@ class TrendCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap ?? () {
-        // Navigate to trend timeline
-      },
+      onTap:
+          onTap ??
+          () {
+            // Navigate to trend timeline
+          },
       behavior: HitTestBehavior.opaque,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(
-              color: Palette.divider,
-              width: 1,
-            ),
-          ),
+          border: Border(bottom: BorderSide(color: Palette.divider, width: 1)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -55,8 +48,8 @@ class TrendCard extends StatelessWidget {
                             trend.location != null
                                 ? 'Trending in ${trend.location}'
                                 : trend.category != null
-                                    ? 'Trending in ${trend.category}'
-                                    : '',
+                                ? 'Trending in ${trend.category}'
+                                : '',
                             style: const TextStyle(
                               fontSize: 13,
                               color: Palette.textSecondary,
@@ -124,4 +117,3 @@ class TrendCard extends StatelessWidget {
     );
   }
 }
-

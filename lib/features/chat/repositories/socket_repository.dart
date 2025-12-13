@@ -137,13 +137,13 @@ class SocketRepository {
       if (data != null && !_unseenChatsController.isClosed) {
         _unseenChatsController.add(Map<String, dynamic>.from(data));
       }
-    }); // New listener for unseen chats count
+    });
   }
 
   void sendOpenMessageTab() {
     print("sending open-message-tab");
     _socket?.emit('open-message-tab');
-  } // to be zero when user opens chat tab
+  }
 
   void sendTyping(String chatId, bool isTyping) {
     _socket?.emit('typing', {'chatId': chatId, 'isTyping': isTyping});

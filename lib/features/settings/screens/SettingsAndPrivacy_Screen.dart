@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
-import 'package:lite_x/core/theme/palette.dart';
+import 'package:lite_x/core/theme/Palette.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:lite_x/features/settings/view/widgets/settings_search_bar.dart';
 import 'package:lite_x/features/settings/view/widgets/settings_responsive_scaffold.dart';

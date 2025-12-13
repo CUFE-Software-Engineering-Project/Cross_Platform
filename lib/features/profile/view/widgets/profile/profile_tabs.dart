@@ -13,7 +13,7 @@ class ProfileTabs extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return DefaultTabController(
-      length: isMe ? 6 : 3,
+      length: isMe ? 5 : 2,
       child: Scaffold(
         appBar: AppBar(
           toolbarHeight: 0,
@@ -31,7 +31,6 @@ class ProfileTabs extends ConsumerWidget {
               unselectedLabelColor: Colors.grey,
               tabs: [
                 Tab(text: 'Posts'),
-                Tab(text: 'Replies'),
                 if (isMe == true) Tab(text: 'Highlights'),
                 if (isMe) Tab(text: 'Articles'),
                 Tab(text: 'Media'),
@@ -43,7 +42,6 @@ class ProfileTabs extends ConsumerWidget {
         body: TabBarView(
           children: [
             ProfilePostsTab(profileModel: this.profileData),
-            _buildRepliesTab(), // Replies
             if (isMe) _buildHilightsTab(), // Highlights
             if (isMe) _buildArticlesTab(), // Articles
             ProfileMediaTap(profileModel: this.profileData), // Media

@@ -74,7 +74,7 @@ class EditProfileController {
           ),
           IOSUiSettings(
             title: "",
-            cropStyle: CropStyle.circle,
+            cropStyle: CropStyle.rectangle,
             aspectRatioLockEnabled: false,
             cancelButtonTitle: "Cancel",
             doneButtonTitle: "Apply",

@@ -38,7 +38,8 @@ class UserModel {
   final bool? tfaVerified;
 
   @HiveField(10)
-  final Set<String> interests;
+  final Set<String> interests; // stores only categories names og selected
+
   @HiveField(11)
   final String? localProfilePhotoPath; // path of local profile photo
 

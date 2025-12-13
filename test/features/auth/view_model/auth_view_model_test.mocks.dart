@@ -4,15 +4,16 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _i3;
-import 'dart:io' as _i10;
+import 'dart:io' as _i11;
 
 import 'package:fpdart/fpdart.dart' as _i4;
 import 'package:lite_x/core/classes/AppFailure.dart' as _i5;
-import 'package:lite_x/core/classes/PickedImage.dart' as _i9;
+import 'package:lite_x/core/classes/PickedImage.dart' as _i10;
 import 'package:lite_x/core/models/TokensModel.dart' as _i7;
 import 'package:lite_x/core/models/usermodel.dart' as _i6;
+import 'package:lite_x/features/auth/models/ExploreCategory.dart' as _i9;
 import 'package:lite_x/features/auth/repositories/auth_local_repository.dart'
-    as _i11;
+    as _i12;
 import 'package:lite_x/features/auth/repositories/auth_remote_repository.dart'
     as _i2;
 import 'package:mockito/mockito.dart' as _i1;
@@ -42,40 +43,97 @@ class MockAuthRemoteRepository extends _i1.Mock
   }
 
   @override
-  _i3.Future<_i4.Either<_i5.AppFailure, (_i6.UserModel, _i7.TokensModel)>>
+  _i3.Future<_i4.Either<_i5.AppFailure, (_i6.UserModel, _i7.TokensModel, bool)>>
   loginWithGithub() =>
       (super.noSuchMethod(
             Invocation.method(#loginWithGithub, []),
             returnValue:
                 _i3.Future<
-                  _i4.Either<_i5.AppFailure, (_i6.UserModel, _i7.TokensModel)>
+                  _i4.Either<
+                    _i5.AppFailure,
+                    (_i6.UserModel, _i7.TokensModel, bool)
+                  >
                 >.value(
                   _i8.dummyValue<
-                    _i4.Either<_i5.AppFailure, (_i6.UserModel, _i7.TokensModel)>
+                    _i4.Either<
+                      _i5.AppFailure,
+                      (_i6.UserModel, _i7.TokensModel, bool)
+                    >
                   >(this, Invocation.method(#loginWithGithub, [])),
                 ),
           )
           as _i3.Future<
-            _i4.Either<_i5.AppFailure, (_i6.UserModel, _i7.TokensModel)>
+            _i4.Either<_i5.AppFailure, (_i6.UserModel, _i7.TokensModel, bool)>
           >);
 
   @override
-  _i3.Future<_i4.Either<_i5.AppFailure, (_i6.UserModel, _i7.TokensModel)>>
+  _i3.Future<_i4.Either<_i5.AppFailure, (_i6.UserModel, _i7.TokensModel, bool)>>
   signInWithGoogleAndroid() =>
       (super.noSuchMethod(
             Invocation.method(#signInWithGoogleAndroid, []),
             returnValue:
                 _i3.Future<
-                  _i4.Either<_i5.AppFailure, (_i6.UserModel, _i7.TokensModel)>
+                  _i4.Either<
+                    _i5.AppFailure,
+                    (_i6.UserModel, _i7.TokensModel, bool)
+                  >
                 >.value(
                   _i8.dummyValue<
-                    _i4.Either<_i5.AppFailure, (_i6.UserModel, _i7.TokensModel)>
+                    _i4.Either<
+                      _i5.AppFailure,
+                      (_i6.UserModel, _i7.TokensModel, bool)
+                    >
                   >(this, Invocation.method(#signInWithGoogleAndroid, [])),
                 ),
           )
           as _i3.Future<
-            _i4.Either<_i5.AppFailure, (_i6.UserModel, _i7.TokensModel)>
+            _i4.Either<_i5.AppFailure, (_i6.UserModel, _i7.TokensModel, bool)>
           >);
+
+  @override
+  _i3.Future<_i4.Either<_i5.AppFailure, List<_i9.ExploreCategory>>>
+  getCategories() =>
+      (super.noSuchMethod(
+            Invocation.method(#getCategories, []),
+            returnValue:
+                _i3.Future<
+                  _i4.Either<_i5.AppFailure, List<_i9.ExploreCategory>>
+                >.value(
+                  _i8.dummyValue<
+                    _i4.Either<_i5.AppFailure, List<_i9.ExploreCategory>>
+                  >(this, Invocation.method(#getCategories, [])),
+                ),
+          )
+          as _i3.Future<_i4.Either<_i5.AppFailure, List<_i9.ExploreCategory>>>);
+
+  @override
+  _i3.Future<_i4.Either<_i5.AppFailure, String>> saveUserInterests(
+    Set<String>? categories,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#saveUserInterests, [categories]),
+            returnValue: _i3.Future<_i4.Either<_i5.AppFailure, String>>.value(
+              _i8.dummyValue<_i4.Either<_i5.AppFailure, String>>(
+                this,
+                Invocation.method(#saveUserInterests, [categories]),
+              ),
+            ),
+          )
+          as _i3.Future<_i4.Either<_i5.AppFailure, String>>);
+
+  @override
+  _i3.Future<_i4.Either<_i5.AppFailure, List<String>>> getUserInterests() =>
+      (super.noSuchMethod(
+            Invocation.method(#getUserInterests, []),
+            returnValue:
+                _i3.Future<_i4.Either<_i5.AppFailure, List<String>>>.value(
+                  _i8.dummyValue<_i4.Either<_i5.AppFailure, List<String>>>(
+                    this,
+                    Invocation.method(#getUserInterests, []),
+                  ),
+                ),
+          )
+          as _i3.Future<_i4.Either<_i5.AppFailure, List<String>>>);
 
   @override
   _i3.Future<_i4.Either<_i5.AppFailure, String>> create({
@@ -153,7 +211,7 @@ class MockAuthRemoteRepository extends _i1.Mock
 
   @override
   _i3.Future<_i4.Either<_i5.AppFailure, Map<String, dynamic>>>
-  uploadProfilePhoto({required _i9.PickedImage? pickedImage}) =>
+  uploadProfilePhoto({required _i10.PickedImage? pickedImage}) =>
       (super.noSuchMethod(
             Invocation.method(#uploadProfilePhoto, [], {
               #pickedImage: pickedImage,
@@ -175,20 +233,36 @@ class MockAuthRemoteRepository extends _i1.Mock
           as _i3.Future<_i4.Either<_i5.AppFailure, Map<String, dynamic>>>);
 
   @override
-  _i3.Future<_i4.Either<_i5.AppFailure, _i10.File>> downloadMedia({
+  _i3.Future<_i4.Either<_i5.AppFailure, _i11.File>> downloadMedia({
     required String? mediaId,
   }) =>
       (super.noSuchMethod(
             Invocation.method(#downloadMedia, [], {#mediaId: mediaId}),
             returnValue:
-                _i3.Future<_i4.Either<_i5.AppFailure, _i10.File>>.value(
-                  _i8.dummyValue<_i4.Either<_i5.AppFailure, _i10.File>>(
+                _i3.Future<_i4.Either<_i5.AppFailure, _i11.File>>.value(
+                  _i8.dummyValue<_i4.Either<_i5.AppFailure, _i11.File>>(
                     this,
                     Invocation.method(#downloadMedia, [], {#mediaId: mediaId}),
                   ),
                 ),
           )
-          as _i3.Future<_i4.Either<_i5.AppFailure, _i10.File>>);
+          as _i3.Future<_i4.Either<_i5.AppFailure, _i11.File>>);
+
+  @override
+  _i3.Future<_i4.Either<_i5.AppFailure, void>> updateProfilePhoto(
+    String? userId,
+    String? mediaId,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#updateProfilePhoto, [userId, mediaId]),
+            returnValue: _i3.Future<_i4.Either<_i5.AppFailure, void>>.value(
+              _i8.dummyValue<_i4.Either<_i5.AppFailure, void>>(
+                this,
+                Invocation.method(#updateProfilePhoto, [userId, mediaId]),
+              ),
+            ),
+          )
+          as _i3.Future<_i4.Either<_i5.AppFailure, void>>);
 
   @override
   _i3.Future<_i4.Either<_i5.AppFailure, (_i6.UserModel, _i7.TokensModel)>>
@@ -298,6 +372,24 @@ class MockAuthRemoteRepository extends _i1.Mock
             ),
           )
           as _i3.Future<_i4.Either<_i5.AppFailure, bool>>);
+
+  @override
+  _i3.Future<_i4.Either<_i5.AppFailure, List<String>>> suggest_usernames({
+    required String? username,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(#suggest_usernames, [], {#username: username}),
+            returnValue:
+                _i3.Future<_i4.Either<_i5.AppFailure, List<String>>>.value(
+                  _i8.dummyValue<_i4.Either<_i5.AppFailure, List<String>>>(
+                    this,
+                    Invocation.method(#suggest_usernames, [], {
+                      #username: username,
+                    }),
+                  ),
+                ),
+          )
+          as _i3.Future<_i4.Either<_i5.AppFailure, List<String>>>);
 
   @override
   _i3.Future<_i4.Either<_i5.AppFailure, String>> forget_password({
@@ -430,7 +522,7 @@ class MockAuthRemoteRepository extends _i1.Mock
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockAuthLocalRepository extends _i1.Mock
-    implements _i11.AuthLocalRepository {
+    implements _i12.AuthLocalRepository {
   MockAuthLocalRepository() {
     _i1.throwOnMissingStub(this);
   }
@@ -478,4 +570,10 @@ class MockAuthLocalRepository extends _i1.Mock
             returnValueForMissingStub: _i3.Future<void>.value(),
           )
           as _i3.Future<void>);
+
+  @override
+  void dispose() => super.noSuchMethod(
+    Invocation.method(#dispose, []),
+    returnValueForMissingStub: null,
+  );
 }
