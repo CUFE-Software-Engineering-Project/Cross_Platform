@@ -9,12 +9,6 @@ RUN flutter pub get
 # Copy source code
 COPY . .
 
-# ---------------- TEST STAGE ----------------
-FROM base AS test
-WORKDIR /app
-
-# Run unit/widget tests
-RUN flutter test --no-pub
 
 # ---------------- LINT STAGE ----------------
 FROM ghcr.io/cirruslabs/flutter:3.35.5 AS lint
@@ -41,3 +35,10 @@ RUN sdkmanager \
 
 # Now build release APK
 RUN flutter build apk --release
+
+# ---------------- TEST STAGE ----------------
+FROM base AS test
+WORKDIR /app
+
+# Run unit/widget tests
+RUN flutter test --no-pub
