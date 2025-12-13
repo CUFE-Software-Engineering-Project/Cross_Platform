@@ -171,6 +171,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 ),
                 actions: [
                   GestureDetector(
+                    key:const Key ('saveProfile_edit_profile_screen'),
                     onTap: () {
                       //   TODO: save profile data
                       if (this.isNameFieldEmpty) {

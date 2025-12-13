@@ -119,6 +119,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                 // Current password
                 _label('Current password'),
                 TextFormField(
+                  key:const Key('curPassord_ChangePassword_Screen'),
                   controller: _currentController,
                   obscureText: _obscureCurrent,
                   style: const TextStyle(
@@ -147,6 +148,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                 // New password
                 _label('New password'),
                 TextFormField(
+                  key:const Key('newPassord_ChangePassword_Screen'),
                   controller: _newController,
                   obscureText: _obscureNew,
                   style: const TextStyle(
@@ -181,6 +183,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                 // Confirm password
                 _label('Confirm password'),
                 TextFormField(
+                  key:const Key('confirmPassord_ChangePassword_Screen'),
                   controller: _confirmController,
                   obscureText: _obscureConfirm,
                   style: const TextStyle(
@@ -225,6 +228,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                     width: 260,
                     height: 48,
                     child: ElevatedButton(
+                      key:const Key('updatePassword_ChangePassword_Screen'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.blue,
                         shape: RoundedRectangleBorder(

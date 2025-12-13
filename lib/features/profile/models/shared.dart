@@ -566,6 +566,7 @@ class _InterActionsRowOfTweetState
             ),
           ),
           GestureDetector(
+            key:const Key("likeButton_shared"),
             onTap: () {
               //   TODO: do like action
               if (isLikedByMeLocal) {

@@ -98,6 +98,7 @@ class _EditProfileFormState extends State<EditProfileForm> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               widget.controller.buildProfileInputField(
+                fieldKey:const Key('nameProfile_edit_profile_form'),
                 label: "Name",
                 controller: _nameCtrl,
                 hintText: "Name cannot be blank",
@@ -113,6 +114,7 @@ class _EditProfileFormState extends State<EditProfileForm> {
                 },
               ),
               widget.controller.buildProfileInputField(
+                fieldKey:const Key('bioProfile_edit_profile_form'),
                 label: "Bio",
                 controller: _bioCtrl,
                 hintText: "",
@@ -124,6 +126,7 @@ class _EditProfileFormState extends State<EditProfileForm> {
                 onTap: () {},
               ),
               widget.controller.buildLocationAutocomplete(
+                fieldKey: const Key('locationProfile_edit_profile_form'),
                 controller: _locationCtrl,
                 label: "Location",
                 focusNode: _locationFocusNode,
@@ -133,6 +136,7 @@ class _EditProfileFormState extends State<EditProfileForm> {
                 },
               ),
               widget.controller.buildProfileInputField(
+                fieldKey: const Key('websiteProfile_edit_profile_form'),
                 label: "Website",
                 controller: _websiteCtrl,
                 hintText: "",

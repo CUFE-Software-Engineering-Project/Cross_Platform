@@ -51,7 +51,7 @@ Future<void> login(WidgetTester tester, String email, String password) async {
   expect(loginButton2, findsOneWidget);
   await tester.tap(loginButton2);
   await tester.pump(
-    const Duration(seconds: 3),
+    const Duration(seconds: 5),
   ); // time-based, not waiting for app to settle
 
   print("🔍 After login animation");

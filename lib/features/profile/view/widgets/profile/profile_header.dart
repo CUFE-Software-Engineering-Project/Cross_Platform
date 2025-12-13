@@ -143,6 +143,7 @@ class _ProfileAppBar extends StatelessWidget {
       ),
       actions: [
         TopIcon(
+          key: const Key('SearchButton_profile_header'),
           icon: Icons.search_rounded,
           actionFunction: () {
             context.push("/profileSearchScreen");
@@ -213,6 +214,7 @@ class _ProfileAvatarRow extends ConsumerWidget {
 
   Widget _buildEditProfileButton(BuildContext context, WidgetRef ref) {
     return OutlinedButton(
+      key: const Key('EditProfileButton_profile_header'),
       onPressed: () => _handleEditProfile(context, ref),
       style: OutlinedButton.styleFrom(
         foregroundColor: Colors.white,
@@ -462,6 +464,7 @@ class _ProfileDetailsSection extends StatelessWidget {
           profileData.followingCount,
           'Following',
           FollowingFollowersInitialTab.Following,
+          key: const Key('FollowingCount_profile_header'),
         ),
         const SizedBox(width: 16),
         _buildFollowCountItem(
@@ -469,6 +472,7 @@ class _ProfileDetailsSection extends StatelessWidget {
           profileData.followersCount,
           'Follower',
           FollowingFollowersInitialTab.Followers,
+          key: const Key('FollowerCount_profile_header'),
         ),
       ],
     );
@@ -479,8 +483,10 @@ class _ProfileDetailsSection extends StatelessWidget {
     int count,
     String label,
     int tab,
+    {Key? key}
   ) {
     return GestureDetector(
+      key: key,
       onTap: () {
         context.push(
           "/followingfollowersscreen/$tab/${isMe ? "me" : "notme"}",

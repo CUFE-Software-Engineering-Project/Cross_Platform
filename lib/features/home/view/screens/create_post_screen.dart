@@ -502,6 +502,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: ElevatedButton(
+              key:const Key('postButton_create_post_screen'),
               onPressed: canPost ? _postTweet : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: canPost
@@ -583,6 +584,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                                 ),
                               ],
                               TextField(
+                                key:const Key('postTextField_create_post_screen'),
                                 controller: _textController,
                                 focusNode: _focusNode,
                                 maxLines: null,

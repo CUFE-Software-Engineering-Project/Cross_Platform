@@ -68,6 +68,7 @@ class _ProfileSearchScreenState extends ConsumerState<ProfileSearchScreen> {
             leading: BackButton(onPressed: _navigateBack),
             titleSpacing: 0,
             title: TextFormField(
+              key:const Key('profileSearch_profile_search_screen'),
               focusNode: _searchFocusNode,
               autofocus: true,
               controller: _searchController,

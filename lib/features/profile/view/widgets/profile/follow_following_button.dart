@@ -30,6 +30,7 @@ class __Follow_Following_ButtonState
     return Padding(
       padding: const EdgeInsets.only(top: 60),
       child: OutlinedButton(
+        key:const Key('followFollowing_follow_following_button'),
         onPressed: () async {
           if (isFollowing) {
             final res = await showPopupMessage(

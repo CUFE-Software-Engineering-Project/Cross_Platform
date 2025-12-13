@@ -183,7 +183,7 @@ class EditProfileController {
     maxLines = null,
     int maxLength = 50,
     Widget? trailingWidget,
-    bool? enabels, // For things like birth date selection
+    bool? enabels,Key? fieldKey,
   }) {
     return Padding(
       padding: const EdgeInsets.only(top: 16.0),
@@ -244,7 +244,7 @@ class EditProfileController {
     required TextEditingController controller,
     required String label,
     required FocusNode focusNode,
-    required Function(String) onLocationSelected,
+    required Function(String) onLocationSelected,Key? fieldKey,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

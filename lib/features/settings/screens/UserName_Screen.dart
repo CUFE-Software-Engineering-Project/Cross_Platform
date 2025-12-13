@@ -164,6 +164,7 @@ class _UsernameSettingsState extends ConsumerState<UsernameSettings> {
                   ),
                   const SizedBox(height: 1),
                   TextFormField(
+                    key:const Key('changeUsernameField_UserName_Screen'),
                     controller: _usernameController,
                     style: const TextStyle(color: Colors.white, fontSize: 16),
                     decoration: const InputDecoration(
@@ -195,6 +196,7 @@ class _UsernameSettingsState extends ConsumerState<UsernameSettings> {
             bottom: 5,
             right: 10,
             child: ElevatedButton(
+              key: const Key('Done_Button_UserName_Screen'),
               onPressed: _isLoading ? null : _handleDone,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.blue,

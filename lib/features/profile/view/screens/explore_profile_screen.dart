@@ -31,6 +31,7 @@ class _ExploreProfileScreenState extends ConsumerState<ExploreProfileScreen> {
               ),
             ),
             title: GestureDetector(
+              key:const Key('searchButton_explore_search_screen'),
               onTap: () {
                 context.push("/profileSearchScreen");
               },

@@ -87,6 +87,7 @@ class AccountInformationScreen extends ConsumerWidget {
               title: '',
               children: [
                 InkWell(
+                  key: const Key('Username_AccountInformation_Screen'),
                   onTap: () {
                     context.pushNamed(RouteConstants.usernamesettings);
                   },

@@ -875,6 +875,7 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
       );
     } else {
       return GestureDetector(
+        key:const Key('followUnfollowButton_tweet_screen'),
         onTap: isFollowLoading ? null : _toggleFollow,
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),

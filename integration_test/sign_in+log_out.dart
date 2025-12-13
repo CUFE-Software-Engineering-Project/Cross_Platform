@@ -35,13 +35,14 @@ void main() {
       // Verify that we are logged in by checking for the presence of the PLUS button
       final plusButton = find.byKey(const Key('plusButton_home_screen'));
       expect(plusButton, findsOneWidget);
-      print('✅ Test passed: PLUS button found');
+      await tester.tap(plusButton);
+      await tester.pumpAndSettle(const Duration(seconds: 7));
+      print('✅ Test passed: Logged in and PLUS button found');
 
       final textFollowing = find.text('Following');
       expect(textFollowing, findsOneWidget);
       print('✅ Test passed: Home screen loaded with Following text');
 
-      
       await logOut(tester);
 
       final createAccount = find.text('Create account');
