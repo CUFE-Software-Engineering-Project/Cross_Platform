@@ -33,7 +33,7 @@ final class MentionsViewModelProvider
   MentionsViewModel create() => MentionsViewModel();
 }
 
-String _$mentionsViewModelHash() => r'b4b7fee9bd14e0e9c5690b33009f2aff02480c2f';
+String _$mentionsViewModelHash() => r'b6b449acc4937f38e96fa093e9e92264264fe1bf';
 
 abstract class _$MentionsViewModel extends $AsyncNotifier<List<MentionItem>> {
   FutureOr<List<MentionItem>> build();
