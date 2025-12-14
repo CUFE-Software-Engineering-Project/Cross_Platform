@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lite_x/core/providers/dio_interceptor.dart';
-import 'package:lite_x/core/theme/palette.dart';
+import 'package:lite_x/core/theme/Palette.dart';
 import 'package:lite_x/features/home/repositories/home_repository.dart';
 import 'package:lite_x/features/home/view/screens/quote_composer_screen.dart';
 import 'package:lite_x/features/home/view/screens/tweet_screen.dart';
@@ -116,7 +116,9 @@ class _AllTweetCardWidgetState extends ConsumerState<AllTweetCardWidget> {
       _showSnack('User profile not available');
       return;
     }
-    Navigator.of(context).pushNamed('/profile', arguments: {'username': username});
+    Navigator.of(
+      context,
+    ).pushNamed('/profile', arguments: {'username': username});
   }
 
   Future<void> _toggleLike() async {
@@ -164,7 +166,9 @@ class _AllTweetCardWidgetState extends ConsumerState<AllTweetCardWidget> {
         });
         final currentTweetId = tweetId;
         if (currentTweetId != null) {
-          ref.read(notificationViewModelProvider.notifier).updateTweetInteractions(
+          ref
+              .read(notificationViewModelProvider.notifier)
+              .updateTweetInteractions(
                 currentTweetId,
                 likesCount: previousCount,
                 isLiked: previousLiked,
@@ -222,7 +226,9 @@ class _AllTweetCardWidgetState extends ConsumerState<AllTweetCardWidget> {
         });
         final currentTweetId = tweetId;
         if (currentTweetId != null) {
-          ref.read(notificationViewModelProvider.notifier).updateTweetInteractions(
+          ref
+              .read(notificationViewModelProvider.notifier)
+              .updateTweetInteractions(
                 currentTweetId,
                 repostsCount: previousCount,
                 isRetweeted: previousState,
@@ -260,19 +266,15 @@ class _AllTweetCardWidgetState extends ConsumerState<AllTweetCardWidget> {
       }
 
       final vm = ref.read(notificationViewModelProvider.notifier);
-      vm.updateTweetInteractions(
-        tweetId,
-        isBookmarked: _bookmarked,
-      );
+      vm.updateTweetInteractions(tweetId, isBookmarked: _bookmarked);
     } catch (_) {
       if (mounted) {
         setState(() {
           _bookmarked = previousBookmarked;
         });
-        ref.read(notificationViewModelProvider.notifier).updateTweetInteractions(
-              tweetId,
-              isBookmarked: previousBookmarked,
-            );
+        ref
+            .read(notificationViewModelProvider.notifier)
+            .updateTweetInteractions(tweetId, isBookmarked: previousBookmarked);
       }
       _showSnack('Unable to update bookmark right now.');
     } finally {
@@ -372,9 +374,7 @@ class _AllTweetCardWidgetState extends ConsumerState<AllTweetCardWidget> {
       margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
       padding: padding ?? const EdgeInsets.symmetric(vertical: 12.0),
       decoration: const BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: Colors.white, width: 0.5),
-        ),
+        border: Border(bottom: BorderSide(color: Colors.white, width: 0.5)),
       ),
       child: child,
     );
@@ -394,10 +394,7 @@ class _AllTweetCardWidgetState extends ConsumerState<AllTweetCardWidget> {
     return Container(
       width: 36,
       height: 36,
-      decoration: BoxDecoration(
-        color: Colors.black,
-        shape: BoxShape.circle,
-      ),
+      decoration: BoxDecoration(color: Colors.black, shape: BoxShape.circle),
       child: Icon(icon, color: color, size: 30),
     );
   }
@@ -495,7 +492,6 @@ class _AllTweetCardWidgetState extends ConsumerState<AllTweetCardWidget> {
         (notification.quotedContent?.isNotEmpty ?? false);
   }
 
-
   Widget _metricButton({
     required IconData icon,
     int? count,
@@ -548,10 +544,8 @@ class _AllTweetCardWidgetState extends ConsumerState<AllTweetCardWidget> {
             onTap: _toggleLike,
           ),
           _metricButton(
-            icon:
-                _bookmarked ? Icons.bookmark : Icons.bookmark_border,
-            color:
-                _bookmarked ? Palette.primary : Palette.textTertiary,
+            icon: _bookmarked ? Icons.bookmark : Icons.bookmark_border,
+            color: _bookmarked ? Palette.primary : Palette.textTertiary,
             onTap: _toggleBookmark,
           ),
           _metricButton(
@@ -599,12 +593,7 @@ class _AllTweetCardWidgetState extends ConsumerState<AllTweetCardWidget> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Text(
-                        notification.body,
-                        style: _bodyStyle,
-                      ),
-                    ),
+                    Expanded(child: Text(notification.body, style: _bodyStyle)),
                     const SizedBox(width: 12),
                     _buildTimestampText(),
                   ],
@@ -622,8 +611,7 @@ class _AllTweetCardWidgetState extends ConsumerState<AllTweetCardWidget> {
 
     // Prefer tweet content as snapshot; fall back to notification body
     final String snapshotText;
-    if (notification.tweet != null &&
-        notification.tweet!.content.isNotEmpty) {
+    if (notification.tweet != null && notification.tweet!.content.isNotEmpty) {
       snapshotText = notification.tweet!.content;
     } else {
       snapshotText = notification.body;
@@ -649,10 +637,7 @@ class _AllTweetCardWidgetState extends ConsumerState<AllTweetCardWidget> {
                           text: '${notification.actor.name} ',
                           style: _nameStyle,
                           children: [
-                            TextSpan(
-                              text: description,
-                              style: _secondaryStyle,
-                            ),
+                            TextSpan(text: description, style: _secondaryStyle),
                           ],
                         ),
                       ),
@@ -663,10 +648,7 @@ class _AllTweetCardWidgetState extends ConsumerState<AllTweetCardWidget> {
                 ),
                 if (snapshotText.isNotEmpty) ...[
                   const SizedBox(height: 6),
-                  Text(
-                    snapshotText,
-                    style: _secondaryStyle,
-                  ),
+                  Text(snapshotText, style: _secondaryStyle),
                 ],
               ],
             ),
@@ -684,10 +666,7 @@ class _AllTweetCardWidgetState extends ConsumerState<AllTweetCardWidget> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          BuildSmallProfileImage(
-            mediaId: notification.mediaUrl,
-            radius: 20,
-          ),
+          BuildSmallProfileImage(mediaId: notification.mediaUrl, radius: 20),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -702,10 +681,7 @@ class _AllTweetCardWidgetState extends ConsumerState<AllTweetCardWidget> {
                           text: '${notification.actor.name} ',
                           style: _nameStyle,
                           children: [
-                            TextSpan(
-                              text: description,
-                              style: _secondaryStyle,
-                            ),
+                            TextSpan(text: description, style: _secondaryStyle),
                           ],
                         ),
                       ),

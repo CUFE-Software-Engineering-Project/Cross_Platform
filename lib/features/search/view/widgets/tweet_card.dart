@@ -1,16 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:lite_x/core/theme/palette.dart';
+import 'package:lite_x/core/theme/Palette.dart';
 import 'package:lite_x/features/home/models/tweet_model.dart';
 
 class TweetCardWidget extends StatelessWidget {
   final TweetModel tweet;
   final ValueChanged<String>? onLike;
 
-  const TweetCardWidget({
-    super.key,
-    required this.tweet,
-    this.onLike,
-  });
+  const TweetCardWidget({super.key, required this.tweet, this.onLike});
 
   String _formatTimestamp(DateTime createdAt) {
     final now = DateTime.now();
@@ -43,7 +39,11 @@ class TweetCardWidget extends StatelessWidget {
                   ? NetworkImage(tweet.authorAvatar)
                   : null,
               child: tweet.authorAvatar.isEmpty
-                  ? const Icon(Icons.person, color: Palette.textPrimary, size: 20)
+                  ? const Icon(
+                      Icons.person,
+                      color: Palette.textPrimary,
+                      size: 20,
+                    )
                   : null,
             ),
             const SizedBox(width: 12),
@@ -100,8 +100,9 @@ class TweetCardWidget extends StatelessWidget {
                           tweet.isLiked
                               ? Icons.favorite
                               : Icons.favorite_border,
-                          color:
-                              tweet.isLiked ? Palette.like : Palette.textTertiary,
+                          color: tweet.isLiked
+                              ? Palette.like
+                              : Palette.textTertiary,
                           size: 18,
                         ),
                         padding: EdgeInsets.zero,

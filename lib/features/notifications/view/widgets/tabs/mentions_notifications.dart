@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lite_x/core/theme/palette.dart';
+import 'package:lite_x/core/theme/Palette.dart';
 import '../empty/mention_empty.dart';
 import '../card/mentions_tweet_card.dart';
 import '../../../mentions_view_model.dart';
@@ -42,12 +42,12 @@ class _MentionsTabState extends ConsumerState<MentionsTab>
                     children: const [MentionsEmptyStateWidget()],
                   )
                 : ListView.builder(
-                  padding: const EdgeInsets.symmetric(vertical: 8.0),
-                  itemCount: items.length,
-                  itemBuilder: (context, index) {
-                    return MentionTweetCard(mention: items[index]);
-                  },
-                ),
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    itemCount: items.length,
+                    itemBuilder: (context, index) {
+                      return MentionTweetCard(mention: items[index]);
+                    },
+                  ),
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),

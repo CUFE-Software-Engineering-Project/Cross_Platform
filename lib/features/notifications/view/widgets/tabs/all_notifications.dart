@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lite_x/core/theme/palette.dart';
+import 'package:lite_x/core/theme/Palette.dart';
 
 import '../empty/all_empty.dart';
 import '../card/all_tweet_card.dart';
@@ -38,9 +38,7 @@ class _AllTabState extends ConsumerState<AllTab>
         data: (items) {
           return RefreshIndicator(
             onRefresh: () async {
-              await ref
-                  .read(notificationViewModelProvider.notifier)
-                  .refresh();
+              await ref.read(notificationViewModelProvider.notifier).refresh();
             },
             child: items.isEmpty
                 ? ListView(
@@ -48,13 +46,13 @@ class _AllTabState extends ConsumerState<AllTab>
                     children: const [AllEmptyStateWidget()],
                   )
                 : AnimatedList(
-                  key: _listKey,
-                  padding: const EdgeInsets.symmetric(vertical: 8.0),
-                  initialItemCount: items.length,
-                  itemBuilder: (context, index, animation) {
-                    return _buildItem(items[index], animation);
-                  },
-                ),
+                    key: _listKey,
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    initialItemCount: items.length,
+                    itemBuilder: (context, index, animation) {
+                      return _buildItem(items[index], animation);
+                    },
+                  ),
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -80,12 +78,17 @@ class _AllTabState extends ConsumerState<AllTab>
     );
   }
 
-  Widget _buildItem(NotificationItem notification, Animation<double> animation) {
+  Widget _buildItem(
+    NotificationItem notification,
+    Animation<double> animation,
+  ) {
     return FadeTransition(
       opacity: animation,
       child: SlideTransition(
-        position: Tween(begin: const Offset(0, 0.2), end: Offset.zero)
-            .animate(animation),
+        position: Tween(
+          begin: const Offset(0, 0.2),
+          end: Offset.zero,
+        ).animate(animation),
         child: Padding(
           padding: const EdgeInsets.only(bottom: 16.0),
           child: AllTweetCardWidget(notification: notification),

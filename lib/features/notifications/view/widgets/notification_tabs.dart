@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lite_x/core/theme/palette.dart';
+import 'package:lite_x/core/theme/Palette.dart';
 import 'package:lite_x/features/notifications/notification_fcm_service.dart';
 import 'tabs/all_notifications.dart';
 import 'tabs/verified_notifications.dart';
@@ -70,12 +70,7 @@ class _NotificationTabsState extends ConsumerState<NotificationTabs>
         Container(
           decoration: BoxDecoration(
             color: Palette.background,
-            border: Border(
-              bottom: BorderSide(
-                color: Palette.border,
-                width: 1,
-              ),
-            ),
+            border: Border(bottom: BorderSide(color: Palette.border, width: 1)),
           ),
           height: 53,
           child: Row(

@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lite_x/core/models/usermodel.dart';
 import 'package:lite_x/core/providers/current_user_provider.dart';
-import 'package:lite_x/core/theme/palette.dart';
+import 'package:lite_x/core/theme/Palette.dart';
 import 'package:lite_x/features/profile/models/shared.dart';
 
 class Statusbar extends ConsumerWidget {
@@ -28,15 +28,15 @@ class Statusbar extends ConsumerWidget {
               GestureDetector(
                 onTap: () => scaffoldKey.currentState?.openDrawer(),
                 child: ClipOval(
-              child: SizedBox(
-                width: 40,
-                height: 40,
-                child: BuildSmallProfileImage(
-                  mediaId: avatarUrl,
-                  radius: 20,
+                  child: SizedBox(
+                    width: 40,
+                    height: 40,
+                    child: BuildSmallProfileImage(
+                      mediaId: avatarUrl,
+                      radius: 20,
+                    ),
+                  ),
                 ),
-              ),
-            ),
               ),
               SizedBox(width: 12),
               Text(

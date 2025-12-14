@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lite_x/core/theme/palette.dart';
+import 'package:lite_x/core/theme/Palette.dart';
 import 'package:lite_x/core/providers/dio_interceptor.dart';
 import 'package:lite_x/features/profile/models/shared.dart';
 import 'package:lite_x/features/home/repositories/home_repository.dart';
@@ -58,9 +58,9 @@ class _MentionTweetCardState extends ConsumerState<MentionTweetCard> {
 
   void _showSnack(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   void _openTweetDetail() {
@@ -75,7 +75,9 @@ class _MentionTweetCardState extends ConsumerState<MentionTweetCard> {
       _showSnack('User profile not available');
       return;
     }
-    Navigator.of(context).pushNamed('/profile', arguments: {'username': username});
+    Navigator.of(
+      context,
+    ).pushNamed('/profile', arguments: {'username': username});
   }
 
   Future<void> _openQuoteComposer() async {
@@ -304,9 +306,7 @@ class _MentionTweetCardState extends ConsumerState<MentionTweetCard> {
       margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
       padding: padding ?? const EdgeInsets.symmetric(vertical: 12.0),
       decoration: const BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: Colors.white, width: 0.5),
-        ),
+        border: Border(bottom: BorderSide(color: Colors.white, width: 0.5)),
       ),
       child: child,
     );

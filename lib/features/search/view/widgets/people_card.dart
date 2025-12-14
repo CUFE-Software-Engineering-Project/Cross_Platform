@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lite_x/core/theme/palette.dart';
+import 'package:lite_x/core/theme/Palette.dart';
 import 'package:lite_x/features/search/data/search_repository.dart';
 import 'package:lite_x/features/profile/models/shared.dart';
 
@@ -96,16 +96,17 @@ class PeopleCard extends StatelessWidget {
                       foregroundColor: Colors.black,
                       backgroundColor: Colors.white,
                     ),
-                    child: Text(style: const TextStyle(
-    fontSize: 14,
-    fontWeight: FontWeight.bold,
-  ),
+                    child: Text(
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
 
                       user.isFollowing
                           ? 'Following'
                           : user.isFollower
-                              ? 'Follow back'
-                              : 'Follow'
+                          ? 'Follow back'
+                          : 'Follow',
                     ),
                   )
                 : const SizedBox.shrink(),

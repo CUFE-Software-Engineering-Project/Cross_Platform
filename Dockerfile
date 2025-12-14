@@ -9,13 +9,6 @@ RUN flutter pub get
 # Copy source code
 COPY . .
 
-RUN yes | sdkmanager --licenses
-
-RUN sdkmanager \
-    "platform-tools" \
-    "platforms;android-34" \
-    "build-tools;34.0.0" \
-    "cmdline-tools;latest"
 # ---------------- LINT STAGE ----------------
 FROM base AS lint
 WORKDIR /app
