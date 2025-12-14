@@ -26,6 +26,12 @@ RUN flutter pub get
 COPY . .
 RUN flutter analyze
 
+# ---------------- TEST STAGE ----------------
+FROM base AS test
+WORKDIR /app
+
+# Run unit/widget tests
+RUN flutter test --no-pub
 
 # ---------------- BUILD APK STAGE ----------------
 FROM base AS build-apk
@@ -36,9 +42,4 @@ FROM base AS build-apk
 # Now build release APK
 RUN flutter build apk --release
 
-# ---------------- TEST STAGE ----------------
-FROM base AS test
-WORKDIR /app
 
-# Run unit/widget tests
-RUN flutter test --no-pub

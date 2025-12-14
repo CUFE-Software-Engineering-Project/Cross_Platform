@@ -102,11 +102,11 @@ EOF
               script {
                 sh '''
                   echo "Kaniko building test target (no push)..."
-                  #/kaniko/executor \
-                   # --context=. \
-                    #--dockerfile=Dockerfile \
-                    #--no-push \
-                    #--target=test
+                  /kaniko/executor \
+                    --context=. \
+                    --dockerfile=Dockerfile \
+                    --no-push \
+                    --target=test
                 '''
               }
             }
