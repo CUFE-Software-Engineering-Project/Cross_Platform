@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
-import 'package:lite_x/core/theme/palette.dart';
+import 'package:lite_x/core/theme/Palette.dart';
+import 'package:lite_x/features/profile/models/shared.dart';
+import 'package:lite_x/features/profile/view/screens/profile_screen.dart';
 
 class ConversationTile extends StatelessWidget {
   final String recipientId;
@@ -14,7 +16,8 @@ class ConversationTile extends StatelessWidget {
   final bool isUnread;
   final int unseenCount;
   final bool isDMChat;
-
+  final int recipientFollowersCount;
+  final VoidCallback? onLongPress;
   const ConversationTile({
     super.key,
     required this.name,
@@ -27,7 +30,18 @@ class ConversationTile extends StatelessWidget {
     this.isUnread = false,
     this.unseenCount = 0,
     this.isDMChat = true,
+    this.recipientFollowersCount = 0,
+    this.onLongPress,
   });
+  void _openProfile(BuildContext context, String username) {
+    final normalized = username.startsWith('@')
+        ? username.substring(1)
+        : username;
+
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => ProfilePage(username: normalized)),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,9 +55,11 @@ class ConversationTile extends StatelessWidget {
             'avatarUrl': avatarUrl,
             'subtitle': username,
             'isGroup': isDMChat,
+            'recipientFollowersCount': recipientFollowersCount,
           },
         );
       },
+      onLongPress: onLongPress,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: const BoxDecoration(
@@ -52,19 +68,15 @@ class ConversationTile extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            CircleAvatar(
-              radius: 24,
-              backgroundImage: avatarUrl != null
-                  ? NetworkImage(avatarUrl!)
-                  : null,
-              backgroundColor: Palette.cardBackground,
-              child: avatarUrl == null
-                  ? const Icon(
-                      Icons.person_3_rounded,
-                      color: Palette.textSecondary,
-                    )
-                  : null,
+            GestureDetector(
+              onTap: () {
+                if (username.isNotEmpty) {
+                  _openProfile(context, username);
+                }
+              },
+              child: BuildSmallProfileImage(radius: 24, username: username),
             ),
+
             const SizedBox(width: 12),
 
             Expanded(
@@ -134,21 +146,21 @@ class ConversationTile extends StatelessWidget {
                         const SizedBox(width: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 2,
+                            horizontal: 4,
+                            vertical: 4,
                           ),
                           decoration: BoxDecoration(
                             color: Palette.primary,
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(20),
                           ),
-                          child: Text(
-                            unseenCount > 99 ? '99+' : unseenCount.toString(),
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
+                          // child: Text(
+                          //   unseenCount > 99 ? '99+' : unseenCount.toString(),
+                          //   style: const TextStyle(
+                          //     fontSize: 12,
+                          //     fontWeight: FontWeight.bold,
+                          //     color: Colors.white,
+                          //   ),
+                          // ),
                         ),
                       ],
                     ],

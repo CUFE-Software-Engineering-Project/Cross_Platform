@@ -6,6 +6,7 @@ import 'package:lite_x/features/chat/view/screens/conversations_screen.dart';
 import 'package:lite_x/features/home/view/screens/home_screen.dart';
 import 'package:lite_x/features/profile/view/screens/explore_profile_screen.dart';
 import 'package:lite_x/features/shared/widgets/bottom_navigation.dart';
+import 'package:lite_x/features/notifications/view/screens/Notification_Screen.dart';
 
 // Provider for managing which tab is selected
 final shellNavigationProvider = StateProvider<int>((ref) => 0);
@@ -30,24 +31,9 @@ class AppShell extends ConsumerWidget {
           // _buildSearchScreen(), // Index 1 - Search
           ExploreProfileScreen(),
           _buildCommunitiesScreen(), // Index 2 - Communities
-          _buildNotificationsScreen(), // Index 3 - Notifications
+          NotificationScreen(), // Index 3 - Notifications
           ConversationsScreen(),
-          //// Index 4 - Messages
-          // ListView(
-          //   children: [
-          //     Padding(
-          //       padding: const EdgeInsets.all(24),
-          //       child: Text(
-          //         "Nothing to see here -- yet.",
-          //         style: TextStyle(
-          //           color: Colors.white,
-          //           fontWeight: FontWeight.bold,
-          //           fontSize: 35,
-          //         ),
-          //       ),
-          //     ),
-          //   ],
-          // ),
+
         ],
       ),
       bottomNavigationBar: AnimatedContainer(
@@ -61,16 +47,6 @@ class AppShell extends ConsumerWidget {
           opacity: isBottomNavVisible ? 1.0 : 0.0,
           child: OverflowBox(maxHeight: 60, child: const XBottomNavigation()),
         ),
-      ),
-    );
-  }
-
-  // Placeholder screens - you'll create these later
-  Widget _buildSearchScreen() {
-    return const Center(
-      child: Text(
-        'Search Screen',
-        style: TextStyle(color: Colors.white, fontSize: 24),
       ),
     );
   }

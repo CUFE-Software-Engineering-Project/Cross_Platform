@@ -153,7 +153,7 @@ class _VerificationforgotScreenState
                                 validator: verificationCodeValidator,
                                 controller: _codeController,
                                 labelText: 'Enter your code',
-                                keyboardType: TextInputType.text,
+                                keyboardType: TextInputType.number,
                                 onFieldSubmitted: (_) {
                                   if (_isFormValid.value && !isLoading) {
                                     _handleNext();
@@ -180,48 +180,57 @@ class _VerificationforgotScreenState
 
   Widget _buildBottomButtons(bool isLoading) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(10),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          OutlinedButton(
-            onPressed: isLoading ? null : () => context.pop(),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Palette.textWhite,
-              side: const BorderSide(color: Palette.textWhite, width: 1),
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(25),
+          ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 45, minWidth: 80),
+            child: OutlinedButton(
+              onPressed: isLoading ? null : () => context.pop(),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Palette.textWhite,
+                side: const BorderSide(color: Palette.textWhite, width: 1),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 10,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(25),
+                ),
               ),
-            ),
-            child: const Text(
-              'Back',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              child: const Text(
+                'Back',
+                maxLines: 1,
+                softWrap: false,
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              ),
             ),
           ),
           ValueListenableBuilder<bool>(
             valueListenable: _isFormValid,
             builder: (context, isValid, child) {
-              return SizedBox(
-                width: 80,
+              return ConstrainedBox(
+                constraints: const BoxConstraints(minWidth: 90, minHeight: 40),
                 child: ElevatedButton(
                   onPressed: (isValid && !isLoading) ? _handleNext : null,
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 5,
+                      horizontal: 20,
+                      vertical: 8,
                     ),
                     backgroundColor: Palette.textWhite,
                     disabledBackgroundColor: Palette.textWhite.withOpacity(0.6),
                     foregroundColor: Palette.background,
                     disabledForegroundColor: Palette.border,
-                    minimumSize: const Size(0, 38),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(25),
                     ),
                   ),
                   child: const Text(
                     'Next',
+                    maxLines: 1,
+                    softWrap: false,
                     style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
                   ),
                 ),

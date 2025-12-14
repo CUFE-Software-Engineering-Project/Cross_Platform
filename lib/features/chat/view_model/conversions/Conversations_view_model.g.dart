@@ -48,7 +48,7 @@ final class ConversationsViewModelProvider
 }
 
 String _$conversationsViewModelHash() =>
-    r'02617aac71dc6741834e63d07ab48be13bb9fbd1';
+    r'39a1625fd2be7315ebde79b9ae5f55138f1291a2';
 
 abstract class _$ConversationsViewModel
     extends $Notifier<AsyncValue<List<ConversationModel>>> {

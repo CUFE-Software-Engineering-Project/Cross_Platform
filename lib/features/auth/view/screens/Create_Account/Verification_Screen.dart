@@ -5,7 +5,7 @@ import 'package:lite_x/core/providers/dobProvider.dart';
 import 'package:lite_x/core/providers/emailProvider.dart';
 import 'package:lite_x/core/providers/nameProvider.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
-import 'package:lite_x/core/theme/palette.dart';
+import 'package:lite_x/core/theme/Palette.dart';
 import 'package:lite_x/core/utils.dart';
 import 'package:lite_x/core/view/widgets/Loader.dart';
 import 'package:lite_x/features/auth/view/widgets/CustomTextField.dart';
@@ -45,12 +45,14 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
     if (!_formKey.currentState!.validate()) {
       return;
     }
+    FocusManager.instance.primaryFocus?.unfocus();
     ref
         .read(authViewModelProvider.notifier)
         .verifySignupEmail(email: email, code: _codeController.text.trim());
   }
 
   void _resendCode() {
+    FocusManager.instance.primaryFocus?.unfocus();
     ref
         .read(authViewModelProvider.notifier)
         .createAccount(name: name, email: email, dateOfBirth: dateOfBirth);
@@ -82,100 +84,105 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
         context.goNamed(RouteConstants.passwordscreen);
         authViewModel.resetState();
       } else if (next.type == AuthStateType.error) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              next.message ?? 'Invalid verification code',
-              style: TextStyle(color: Palette.background),
+        FocusManager.instance.primaryFocus?.unfocus();
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                next.message ?? 'Invalid verification code',
+                style: const TextStyle(color: Palette.background),
+              ),
+              backgroundColor: Palette.textWhite,
             ),
-            backgroundColor: Palette.textWhite,
-          ),
-        );
+          );
+        }
         authViewModel.resetState();
       }
     });
 
     final authState = ref.watch(authViewModelProvider);
     final isLoading = authState.isLoading;
-    return Scaffold(
-      backgroundColor: Palette.background,
-      appBar: AppBar(
-        title: buildXLogo(size: 36),
-        centerTitle: true,
+    return GestureDetector(
+      onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+      child: Scaffold(
         backgroundColor: Palette.background,
-        elevation: 0,
-      ),
-      body: AbsorbPointer(
-        absorbing: isLoading,
-
-        child: Stack(
-          children: [
-            Center(
-              child: Container(
-                width: double.infinity,
-                height: double.infinity,
-                decoration: BoxDecoration(color: Palette.background),
-                child: Column(
-                  children: [
-                    Expanded(
-                      child: Form(
-                        key: _formKey,
-                        child: SingleChildScrollView(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 32,
-                            vertical: 16,
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'We sent you a code',
-                                style: TextStyle(
-                                  fontSize: 28,
-                                  fontWeight: FontWeight.w800,
-                                  color: Palette.textWhite,
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              Text(
-                                'Enter it below to verify $email.',
-                                style: const TextStyle(
-                                  fontSize: 15,
-                                  color: Palette.textSecondary,
-                                ),
-                              ),
-                              const SizedBox(height: 32),
-                              CustomTextField(
-                                controller: _codeController,
-                                labelText: 'Verification code',
-                                keyboardType: TextInputType.number,
-                                validator: verificationCodeValidator,
-                              ),
-                              const SizedBox(height: 24),
-                              GestureDetector(
-                                onTap: _resendCode,
-                                child: const Text(
-                                  'Didn\'t receive an email?',
+        appBar: AppBar(
+          title: buildXLogo(size: 36),
+          centerTitle: true,
+          backgroundColor: Palette.background,
+          elevation: 0,
+        ),
+        body: AbsorbPointer(
+          absorbing: isLoading,
+          child: Stack(
+            children: [
+              Center(
+                child: Container(
+                  width: double.infinity,
+                  height: double.infinity,
+                  decoration: BoxDecoration(color: Palette.background),
+                  child: Column(
+                    children: [
+                      Expanded(
+                        child: Form(
+                          key: _formKey,
+                          child: SingleChildScrollView(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 32,
+                              vertical: 16,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'We sent you a code',
                                   style: TextStyle(
-                                    fontSize: 15,
-                                    color: Palette.primary,
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.w800,
+                                    color: Palette.textWhite,
                                   ),
                                 ),
-                              ),
-                            ],
+                                const SizedBox(height: 12),
+                                Text(
+                                  'Enter it below to verify $email.',
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    color: Palette.textSecondary,
+                                  ),
+                                ),
+                                const SizedBox(height: 32),
+                                CustomTextField(
+                                  controller: _codeController,
+                                  labelText: 'Verification code',
+                                  keyboardType: TextInputType.number,
+                                  validator: verificationCodeValidator,
+                                ),
+                                const SizedBox(height: 24),
+                                GestureDetector(
+                                  onTap: _resendCode,
+                                  child: const Text(
+                                    'Didn\'t receive an email?',
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      color: Palette.primary,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    _buildNextButton(isLoading),
-                    const SizedBox(height: 15),
-                  ],
+                      _buildNextButton(isLoading),
+                      const SizedBox(height: 15),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            if (isLoading)
-              Container(color: Colors.black, child: const Loader()),
-          ],
+              if (isLoading)
+                Container(color: Colors.black, child: const Loader()),
+            ],
+          ),
         ),
       ),
     );
@@ -184,25 +191,29 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
   Widget _buildNextButton(bool isLoading) {
     return Container(
       padding: EdgeInsets.all(10),
-
       alignment: Alignment.centerRight,
       child: ValueListenableBuilder<bool>(
         valueListenable: _isFormValid,
         builder: (context, isValid, child) {
-          return SizedBox(
-            width: 90,
+          return ConstrainedBox(
+            constraints: const BoxConstraints(minWidth: 90, minHeight: 45),
             child: ElevatedButton(
               onPressed: (isValid && !isLoading) ? _handleNext : null,
               style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 8,
+                ),
                 backgroundColor: Palette.textWhite,
-                disabledBackgroundColor: Palette.textWhite.withOpacity(0.5),
+                disabledBackgroundColor: Palette.textWhite.withOpacity(0.6),
                 foregroundColor: Palette.background,
                 disabledForegroundColor: Palette.border,
-                minimumSize: const Size(0, 40),
               ),
               child: const Text(
                 'Next',
-                style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                softWrap: false,
+                overflow: TextOverflow.clip,
+                style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
               ),
             ),
           );

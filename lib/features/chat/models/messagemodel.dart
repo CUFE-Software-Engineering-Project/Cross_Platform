@@ -50,6 +50,7 @@ class MessageModel extends HiveObject {
 
   Map<String, dynamic> toApiRequest({List<String>? recipientIds}) {
     return {
+      "createdAt": createdAt.toIso8601String() + "Z",
       "chatId": chatId,
       "data": {"content": content},
       if (recipientIds != null) "recipientId": recipientIds,
@@ -57,6 +58,21 @@ class MessageModel extends HiveObject {
   }
 
   factory MessageModel.fromApiResponse(Map<String, dynamic> json) {
+    final user = json['createdMessage']['user'] as Map<String, dynamic>?;
+    return MessageModel(
+      id: json['createdMessage']['id'] as String,
+      chatId: json['createdMessage']['chatId'] as String,
+      userId: json['createdMessage']['userId'] as String,
+      content: json['createdMessage']['content'] as String?,
+      createdAt: DateTime.parse(json['createdMessage']['createdAt'] as String),
+      status: json['createdMessage']['status'] as String? ?? 'PENDING',
+      senderUsername: user?['username'] as String?,
+      senderName: user?['name'] as String?,
+      senderProfileMediaKey: user?['profileMediaId'] as String?,
+      messageType: 'text',
+    );
+  }
+  factory MessageModel.fromLoadMessages(Map<String, dynamic> json) {
     final user = json['user'] as Map<String, dynamic>?;
     return MessageModel(
       id: json['id'] as String,
@@ -71,7 +87,6 @@ class MessageModel extends HiveObject {
       messageType: 'text',
     );
   }
-
   MessageModel copyWith({
     String? id,
     String? chatId,
@@ -83,7 +98,6 @@ class MessageModel extends HiveObject {
     String? senderName,
     String? senderProfileMediaKey,
     String? messageType,
-    String? localId,
   }) {
     return MessageModel(
       id: id ?? this.id,

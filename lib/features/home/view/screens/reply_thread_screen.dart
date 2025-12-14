@@ -1,11 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:lite_x/core/providers/current_user_provider.dart';
 import 'package:lite_x/features/home/models/tweet_model.dart';
 import 'package:lite_x/features/home/repositories/home_repository.dart';
 import 'package:lite_x/features/home/view/screens/reply_composer_screen.dart';
+import 'package:lite_x/features/home/view/screens/edit_tweet_screen.dart';
+import 'package:lite_x/features/home/view/screens/quotes_screen.dart';
+import 'package:lite_x/features/home/view/screens/reposted_by_screen.dart';
+import 'package:lite_x/features/home/view/screens/temp_hashtag_screen.dart';
+import 'package:lite_x/features/home/view/widgets/expandable_text.dart';
 import 'package:lite_x/features/home/view/widgets/media_gallery.dart';
+import 'package:lite_x/features/profile/view_model/providers.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
 class ReplyThreadScreen extends ConsumerStatefulWidget {
@@ -26,6 +33,8 @@ class _ReplyThreadScreenState extends ConsumerState<ReplyThreadScreen> {
   bool isLoading = true;
   String? currentUserId;
   final Map<String, int> _viewCounts = {};
+  bool isFollowing = false;
+  bool isFollowLoading = false;
 
   @override
   void initState() {
@@ -34,11 +43,134 @@ class _ReplyThreadScreenState extends ConsumerState<ReplyThreadScreen> {
     _loadCurrentUser();
   }
 
+  void _openRepostedBy(String tweetId) {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => RepostedByScreen(tweetId: tweetId)),
+    );
+  }
+
+  void _openQuotes(String tweetId) {
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => QuotesScreen(tweetId: tweetId)));
+  }
+
   void _loadCurrentUser() {
     // Get current user from the provider
     final user = ref.read(currentUserProvider);
     if (user != null) {
       currentUserId = user.id;
+    }
+  }
+
+  /// Find hashtag from a tweet's hashtag list by text (case-insensitive, # optional)
+  TweetHashtag? _findHashtagByText(List<TweetHashtag> hashtags, String text) {
+    if (hashtags.isEmpty) {
+      print('⚠️ [Reply] No hashtags in tweet!');
+      return null;
+    }
+
+    final normalized = text.replaceAll('#', '').toLowerCase().trim();
+    print('🔍 [Reply] Finding: "$text" → "$normalized"');
+    print('📋 Reply has ${hashtags.length} hashtags:');
+    for (var h in hashtags) {
+      print('   - "${h.tagText}" | ID: ${h.id}');
+    }
+
+    // Try exact match
+    try {
+      final result = hashtags.firstWhere(
+        (h) => h.tagText.replaceAll('#', '').toLowerCase().trim() == normalized,
+      );
+      print('✅ [Reply] Found: id="${result.id}"');
+      return result;
+    } catch (e) {
+      print('❌ [Reply] No exact match');
+    }
+
+    // Try contains match
+    try {
+      final result = hashtags.firstWhere((h) {
+        final hNorm = h.tagText.replaceAll('#', '').toLowerCase().trim();
+        return hNorm.contains(normalized) || normalized.contains(hNorm);
+      });
+      print('✅ [Reply] Found (contains): id="${result.id}"');
+      return result;
+    } catch (e) {
+      print('❌ [Reply] No match for "$text"');
+    }
+
+    return null;
+  }
+
+  Future<void> _toggleFollow() async {
+    final currentReplyTweet = allTweets[widget.pathTweetIds.last];
+    if (currentReplyTweet == null || isFollowLoading) return;
+
+    setState(() {
+      isFollowLoading = true;
+    });
+
+    try {
+      final username = currentReplyTweet.authorUsername;
+
+      if (isFollowing) {
+        final unfollowFunc = ref.read(unFollowControllerProvider);
+        final result = await unfollowFunc(username);
+        result.fold(
+          (failure) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Failed to unfollow: ${failure.message}'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          },
+          (_) {
+            if (mounted) {
+              setState(() {
+                isFollowing = false;
+              });
+            }
+          },
+        );
+      } else {
+        final followFunc = ref.read(followControllerProvider);
+        final result = await followFunc(username);
+        result.fold(
+          (failure) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Failed to follow: ${failure.message}'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          },
+          (_) {
+            if (mounted) {
+              setState(() {
+                isFollowing = true;
+              });
+            }
+          },
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          isFollowLoading = false;
+        });
+      }
     }
   }
 
@@ -396,31 +528,62 @@ class _ReplyThreadScreenState extends ConsumerState<ReplyThreadScreen> {
                           ),
                         ),
                         const SizedBox(width: 6),
-                        Text(
-                          tweet.authorUsername,
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontSize: 15,
+                        Flexible(
+                          child: Text(
+                            '@${tweet.authorUsername}',
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 15,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         const SizedBox(width: 6),
-                        Text(
-                          '· ${timeago.format(tweet.createdAt, locale: 'en_short')}',
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontSize: 15,
+                        Flexible(
+                          fit: FlexFit.loose,
+                          child: Text(
+                            '· ${timeago.format(tweet.createdAt, locale: 'en_short')}',
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 15,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 6),
-                    Text(
-                      tweet.content,
+                    ExpandableText(
+                      text: tweet.content,
+                      maxLines: 4,
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 15,
                         height: 1.4,
                       ),
+                      knownHashtags: tweet.hashtags
+                          .map((h) => h.tagText)
+                          .toList(),
+                      onHashtagTap: (hashtag) {
+                        final matchingHashtag = _findHashtagByText(
+                          tweet.hashtags,
+                          hashtag,
+                        );
+                        if (matchingHashtag != null) {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => TempHashtagScreen(
+                                hashtagId: matchingHashtag.id,
+                                hashtagText: matchingHashtag.tagText,
+                              ),
+                            ),
+                          );
+                        }
+                      },
+                      onMentionTap: (username) {
+                        final encodedUsername = Uri.encodeComponent(username);
+                        context.push('/mentionedTweets/$encodedUsername');
+                      },
                     ),
                   ],
                 ),
@@ -486,14 +649,27 @@ class _ReplyThreadScreenState extends ConsumerState<ReplyThreadScreen> {
                         ),
                       ),
                       const SizedBox(width: 4),
-                      Text(
-                        '@${reply.authorUsername}',
-                        style: TextStyle(color: Colors.grey[600], fontSize: 15),
+                      Flexible(
+                        child: Text(
+                          '@${reply.authorUsername}',
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 15,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                       const SizedBox(width: 4),
-                      Text(
-                        '· ${timeago.format(reply.createdAt, locale: 'en_short')}',
-                        style: TextStyle(color: Colors.grey[600], fontSize: 15),
+                      Flexible(
+                        fit: FlexFit.loose,
+                        child: Text(
+                          '· ${timeago.format(reply.createdAt, locale: 'en_short')}',
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 15,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                     ],
                   ),
@@ -504,23 +680,50 @@ class _ReplyThreadScreenState extends ConsumerState<ReplyThreadScreen> {
                         'Replying to ',
                         style: TextStyle(color: Colors.grey[600], fontSize: 15),
                       ),
-                      Text(
-                        replyingTo,
-                        style: const TextStyle(
-                          color: Colors.blue,
-                          fontSize: 15,
+                      Flexible(
+                        child: Text(
+                          '@$replyingTo',
+                          style: const TextStyle(
+                            color: Colors.blue,
+                            fontSize: 15,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 8),
-                  Text(
-                    reply.content,
+                  ExpandableText(
+                    text: reply.content,
+                    maxLines: 4,
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 15,
                       height: 1.4,
                     ),
+                    knownHashtags: reply.hashtags
+                        .map((h) => h.tagText)
+                        .toList(),
+                    onHashtagTap: (hashtag) {
+                      final matchingHashtag = _findHashtagByText(
+                        reply.hashtags,
+                        hashtag,
+                      );
+                      if (matchingHashtag != null) {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => TempHashtagScreen(
+                              hashtagId: matchingHashtag.id,
+                              hashtagText: matchingHashtag.tagText,
+                            ),
+                          ),
+                        );
+                      }
+                    },
+                    onMentionTap: (username) {
+                      final encodedUsername = Uri.encodeComponent(username);
+                      context.push('/mentionedTweets/$encodedUsername');
+                    },
                   ),
                   if (reply.images.isNotEmpty) ...[
                     const SizedBox(height: 12),
@@ -591,21 +794,46 @@ class _ReplyThreadScreenState extends ConsumerState<ReplyThreadScreen> {
                   'Replying to ',
                   style: TextStyle(color: Colors.grey[600], fontSize: 15),
                 ),
-                Text(
-                  replyingTo,
-                  style: const TextStyle(color: Colors.blue, fontSize: 15),
+                Flexible(
+                  child: Text(
+                    '@$replyingTo',
+                    style: const TextStyle(color: Colors.blue, fontSize: 15),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ],
             ),
           ],
           const SizedBox(height: 12),
-          Text(
-            tweet.content,
+          ExpandableText(
+            text: tweet.content,
+            maxLines: 20,
             style: const TextStyle(
               color: Colors.white,
               fontSize: 18,
               height: 1.4,
             ),
+            knownHashtags: tweet.hashtags.map((h) => h.tagText).toList(),
+            onHashtagTap: (hashtag) {
+              final matchingHashtag = _findHashtagByText(
+                tweet.hashtags,
+                hashtag,
+              );
+              if (matchingHashtag != null) {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => TempHashtagScreen(
+                      hashtagId: matchingHashtag.id,
+                      hashtagText: matchingHashtag.tagText,
+                    ),
+                  ),
+                );
+              }
+            },
+            onMentionTap: (username) {
+              final encodedUsername = Uri.encodeComponent(username);
+              context.push('/mentionedTweets/$encodedUsername');
+            },
           ),
           if (tweet.images.isNotEmpty) ...[
             const SizedBox(height: 16),
@@ -701,19 +929,42 @@ class _ReplyThreadScreenState extends ConsumerState<ReplyThreadScreen> {
     } else {
       return Row(
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: const Text(
-              'Follow',
-              style: TextStyle(
-                color: Colors.black,
-                fontWeight: FontWeight.bold,
-                fontSize: 15,
+          GestureDetector(
+            onTap: isFollowLoading ? null : _toggleFollow,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              decoration: BoxDecoration(
+                color: isFollowing ? Colors.transparent : Colors.white,
+                border: isFollowing
+                    ? Border.all(color: Colors.grey[700]!, width: 1)
+                    : null,
+                borderRadius: BorderRadius.circular(20),
               ),
+              child: isFollowLoading
+                  ? const SizedBox(
+                      width: 60,
+                      height: 20,
+                      child: Center(
+                        child: SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.grey,
+                            ),
+                          ),
+                        ),
+                      ),
+                    )
+                  : Text(
+                      isFollowing ? 'Following' : 'Follow',
+                      style: TextStyle(
+                        color: isFollowing ? Colors.white : Colors.black,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
+                    ),
             ),
           ),
           const SizedBox(width: 6),
@@ -804,155 +1055,22 @@ class _ReplyThreadScreenState extends ConsumerState<ReplyThreadScreen> {
     }
   }
 
-  void _showEditDialog(TweetModel tweet) {
-    final TextEditingController controller = TextEditingController(
-      text: tweet.content,
+  Future<void> _showEditDialog(TweetModel tweet) async {
+    final updatedTweet = await Navigator.push<TweetModel>(
+      context,
+      MaterialPageRoute(builder: (context) => EditTweetScreen(tweet: tweet)),
     );
 
-    showDialog(
-      context: context,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          backgroundColor: const Color(0xFF1E1E1E),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: const Text(
-            'Edit Reply',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          content: TextField(
-            controller: controller,
-            maxLines: null,
-            autofocus: true,
-            style: const TextStyle(color: Colors.white),
-            decoration: InputDecoration(
-              hintText: 'What\'s happening?',
-              hintStyle: TextStyle(color: Colors.grey[600]),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey[800]!),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Colors.blue),
-              ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                Navigator.pop(dialogContext);
-                await _updateReply(tweet, controller.text);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-              ),
-              child: const Text('Save'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Future<void> _updateReply(TweetModel tweet, String newContent) async {
-    if (newContent.trim().isEmpty) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Reply content cannot be empty'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-      return;
-    }
-
-    bool updateSuccessful = false;
-    TweetModel? updatedTweet;
-
-    try {
-      final repository = ref.read(homeRepositoryProvider);
-      updatedTweet = await repository.updateTweet(tweet.id, {
-        'content': newContent,
-      });
-      updateSuccessful = true;
-    } catch (e) {
-      // Check if the error is a harmless one (update succeeded but parsing failed)
-      final errorMessage = e.toString().toLowerCase();
-      final isHarmlessError =
-          errorMessage.contains('duplicate') ||
-          errorMessage.contains('already') ||
-          errorMessage.contains('exists') ||
-          errorMessage.contains('is not a subtype of type') ||
-          errorMessage.contains('type \'string\' is not a subtype') ||
-          errorMessage.contains('type \'int\' is not a subtype') ||
-          errorMessage.contains('failed to parse');
-
-      if (isHarmlessError) {
-        updateSuccessful = true;
-        print('⚠️ Update successful but with parsing error: $e');
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Failed to update reply: $e'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-        return;
-      }
-    }
-
-    if (updateSuccessful && mounted) {
-      // Update local state
+    if (updatedTweet != null && mounted) {
       setState(() {
-        if (updatedTweet != null) {
-          // Update in allTweets map
-          if (allTweets.containsKey(tweet.id)) {
-            allTweets[tweet.id] = updatedTweet;
-          }
-          // Update in childReplies list
-          final index = childReplies.indexWhere((t) => t.id == tweet.id);
-          if (index != -1) {
-            childReplies[index] = updatedTweet;
-          }
-        } else {
-          // Update content locally if we don't have the parsed tweet
-          if (allTweets.containsKey(tweet.id)) {
-            allTweets[tweet.id] = tweet.copyWith(content: newContent);
-          }
-          final index = childReplies.indexWhere((t) => t.id == tweet.id);
-          if (index != -1) {
-            childReplies[index] = tweet.copyWith(content: newContent);
-          }
+        // Update in allTweets map
+        if (allTweets.containsKey(tweet.id)) {
+          allTweets[tweet.id] = updatedTweet;
         }
       });
 
-      // Reload thread data to get fresh data from server
-      await _loadThreadData();
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Reply updated successfully'),
-          backgroundColor: Colors.green,
-          duration: Duration(seconds: 2),
-        ),
-      );
+      // Refresh the thread
+      _loadThreadData();
     }
   }
 
@@ -995,6 +1113,18 @@ class _ReplyThreadScreenState extends ConsumerState<ReplyThreadScreen> {
         children: [
           Row(
             children: [
+              _statItem(
+                _formatStat(t.retweets),
+                'Reposts',
+                onTap: () => _openRepostedBy(t.id),
+              ),
+              const SizedBox(width: 16),
+              _statItem(
+                _formatStat(t.quotes),
+                'Quotes',
+                onTap: () => _openQuotes(t.id),
+              ),
+              const SizedBox(width: 16),
               _statItem(_formatStat(t.likes), 'Likes'),
               const SizedBox(width: 16),
               _statItem(_formatStat(t.bookmarks), 'Bookmarks'),
@@ -1005,21 +1135,24 @@ class _ReplyThreadScreenState extends ConsumerState<ReplyThreadScreen> {
     );
   }
 
-  Widget _statItem(String value, String label) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          value,
-          style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 15,
+  Widget _statItem(String value, String label, {VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 15,
+            ),
           ),
-        ),
-        const SizedBox(width: 4),
-        Text(label, style: TextStyle(color: Colors.grey[600], fontSize: 15)),
-      ],
+          const SizedBox(width: 4),
+          Text(label, style: TextStyle(color: Colors.grey[600], fontSize: 15)),
+        ],
+      ),
     );
   }
 

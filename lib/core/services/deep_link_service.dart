@@ -1,6 +1,7 @@
 // ignore_for_file: unnecessary_null_comparison
 
 import 'dart:async';
+import 'dart:developer';
 import 'package:app_links/app_links.dart';
 import 'package:flutter/widgets.dart';
 
@@ -16,12 +17,14 @@ class DeepLinkService {
 
   static void init() {
     _appLinks.uriLinkStream.listen((uri) {
+      log("🔵 DeepLinkService received URI: $uri");
+
       if (uri != null && _completer != null && !_completer!.isCompleted) {
+        log("🟢 Completing deep link future with: $uri");
         _completer!.complete(uri);
       }
     });
 
-    // إضافة مراقب لحالة التطبيق
     WidgetsBinding.instance.addObserver(_observer);
   }
 

@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lite_x/core/providers/current_user_provider.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
-import 'package:lite_x/core/theme/palette.dart';
+import 'package:lite_x/core/theme/Palette.dart';
 import 'package:lite_x/features/settings/view/widgets/settings_responsive_scaffold.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -16,16 +16,27 @@ class YourAccountScreen extends ConsumerWidget {
     return username == null || username.isEmpty ? '' : '@$username';
   }
 
-  Widget _tile({required Widget leading, required String title, required String subtitle, VoidCallback? onTap}) => ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        leading: SizedBox(width: 44, height: 44, child: Center(child: leading)),
-        title: Text(
-          title,
-          style: const TextStyle(color: Palette.textWhite, fontWeight: FontWeight.w600),
-        ),
-        subtitle: Text(subtitle, style: const TextStyle(color: Palette.textSecondary, fontSize: 13)),
-        onTap: onTap,
-      );
+  Widget _tile({
+    required Widget leading,
+    required String title,
+    required String subtitle,
+    VoidCallback? onTap,
+  }) => ListTile(
+    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    leading: SizedBox(width: 44, height: 44, child: Center(child: leading)),
+    title: Text(
+      title,
+      style: const TextStyle(
+        color: Palette.textWhite,
+        fontWeight: FontWeight.w600,
+      ),
+    ),
+    subtitle: Text(
+      subtitle,
+      style: const TextStyle(color: Palette.textSecondary, fontSize: 13),
+    ),
+    onTap: onTap,
+  );
 
   Widget _body(BuildContext context, String subtitle) {
     return SingleChildScrollView(
@@ -37,36 +48,66 @@ class YourAccountScreen extends ConsumerWidget {
             if (subtitle.isNotEmpty) ...[
               Text(
                 subtitle,
-                style: const TextStyle(color: Palette.textSecondary, fontSize: 16, fontWeight: FontWeight.w500),
+                style: const TextStyle(
+                  color: Palette.textSecondary,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
               const SizedBox(height: 8),
             ],
             const SizedBox(height: 8),
             const Text(
               'See information about your account, download an archive of your data, or learn about account deactivation options.',
-              style: TextStyle(color: Palette.textSecondary, fontSize: 16, height: 1.4),
+              style: TextStyle(
+                color: Palette.textSecondary,
+                fontSize: 16,
+                height: 1.4,
+              ),
             ),
             const SizedBox(height: 24),
 
             _tile(
-              leading: Icon(LucideIcons.user, color: Palette.textWhite, size: 22),
+              leading: Icon(
+                LucideIcons.user,
+                color: Palette.textWhite,
+                size: 22,
+              ),
               title: 'Account information',
-              subtitle: 'See your account information like your phone number and email address.',
-              onTap: () => GoRouter.of(context).pushNamed(RouteConstants.accountinformationscreen),
+              subtitle:
+                  'See your account information like your phone number and email address.',
+              onTap: () => GoRouter.of(
+                context,
+              ).pushNamed(RouteConstants.accountinformationscreen),
             ),
             _tile(
-              leading: Icon(LucideIcons.lock, color: Palette.textWhite, size: 22),
+              leading: Icon(
+                LucideIcons.lock,
+                color: Palette.textWhite,
+                size: 22,
+              ),
               title: 'Change your password',
               subtitle: 'Change your password at any time.',
-              onTap: () => GoRouter.of(context).pushNamed(RouteConstants.changePasswordScreen),
+              onTap: () => GoRouter.of(
+                context,
+              ).pushNamed(RouteConstants.changePasswordScreen),
             ),
             _tile(
-              leading: Icon(LucideIcons.download, color: Palette.textWhite, size: 22),
+              leading: Icon(
+                LucideIcons.download,
+                color: Palette.textWhite,
+                size: 22,
+              ),
               title: 'Download an archive of your data',
-              subtitle: 'Get insights into the type of information stored for your account.',
+              subtitle:
+                  'Get insights into the type of information stored for your account.',
             ),
             _tile(
-              leading: Icon(LucideIcons.heart, color: Palette.textWhite, size: 22),
+              leading: Icon(
+                LucideIcons.heart,
+                color: Palette.textWhite,
+                size: 22,
+              ),
               title: 'Deactivate Account',
               subtitle: 'Find out how you can deactivate your account.',
             ),
@@ -79,20 +120,22 @@ class YourAccountScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return LayoutBuilder(builder: (context, constraints) {
-      final subtitle = _subtitle(ref);
-      if (constraints.maxWidth > 600) {
-        return SettingsResponsiveScaffold.web(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final subtitle = _subtitle(ref);
+        if (constraints.maxWidth > 600) {
+          return SettingsResponsiveScaffold.web(
+            title: 'Your account',
+            subtitle: '@profilename',
+            body: _body(context, subtitle),
+          );
+        }
+        return SettingsResponsiveScaffold.mobile(
           title: 'Your account',
-          subtitle: '@profilename',
+          subtitle: '',
           body: _body(context, subtitle),
         );
-      }
-      return SettingsResponsiveScaffold.mobile(
-        title: 'Your account',
-        subtitle: '',
-        body: _body(context, subtitle),
-      );
-    });
+      },
+    );
   }
 }

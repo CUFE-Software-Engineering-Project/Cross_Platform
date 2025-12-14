@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:lite_x/core/theme/palette.dart';
+import 'package:lite_x/core/theme/Palette.dart';
 
 class SettingsResponsiveScaffold extends StatelessWidget {
   final String title;
@@ -24,12 +24,12 @@ class SettingsResponsiveScaffold extends StatelessWidget {
     required Widget body,
     Widget? headerBottom,
   }) => SettingsResponsiveScaffold._(
-        title: title,
-        subtitle: subtitle,
-        body: body,
-        headerBottom: headerBottom,
-        isWeb: false,
-      );
+    title: title,
+    subtitle: subtitle,
+    body: body,
+    headerBottom: headerBottom,
+    isWeb: false,
+  );
 
   factory SettingsResponsiveScaffold.web({
     required String title,
@@ -37,18 +37,22 @@ class SettingsResponsiveScaffold extends StatelessWidget {
     required Widget body,
     Widget? headerBottom,
   }) => SettingsResponsiveScaffold._(
-        title: title,
-        subtitle: subtitle,
-        body: body,
-        headerBottom: headerBottom,
-        isWeb: true,
-      );
+    title: title,
+    subtitle: subtitle,
+    body: body,
+    headerBottom: headerBottom,
+    isWeb: true,
+  );
 
   PreferredSizeWidget _buildAppBar(BuildContext context) {
     return AppBar(
       toolbarHeight: 56,
       leading: IconButton(
-        icon: const Icon(LucideIcons.arrowLeft, color: Palette.textWhite, size: 24),
+        icon: const Icon(
+          LucideIcons.arrowLeft,
+          color: Palette.textWhite,
+          size: 24,
+        ),
         onPressed: () {
           if (Navigator.of(context).canPop()) Navigator.of(context).pop();
         },
@@ -68,7 +72,10 @@ class SettingsResponsiveScaffold extends StatelessWidget {
           if (subtitle.isNotEmpty)
             Text(
               subtitle,
-              style: const TextStyle(color: Palette.textSecondary, fontSize: 13),
+              style: const TextStyle(
+                color: Palette.textSecondary,
+                fontSize: 13,
+              ),
             ),
         ],
       ),
@@ -95,7 +102,10 @@ class SettingsResponsiveScaffold extends StatelessWidget {
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 800),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 8.0,
+            ),
             child: body,
           ),
         ),

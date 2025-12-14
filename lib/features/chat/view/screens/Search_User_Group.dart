@@ -1,13 +1,14 @@
 import 'dart:async';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
-import 'package:lite_x/core/theme/palette.dart';
+import 'package:lite_x/core/theme/Palette.dart';
 import 'package:lite_x/features/chat/models/usersearchmodel.dart';
 import 'package:lite_x/features/chat/providers/searchResultsProvider.dart';
 import 'package:lite_x/features/chat/view_model/conversions/Conversations_view_model.dart';
+import 'package:lite_x/features/profile/models/shared.dart';
 
 class SearchUserGroup extends ConsumerStatefulWidget {
   const SearchUserGroup({super.key});
@@ -19,6 +20,7 @@ class SearchUserGroup extends ConsumerStatefulWidget {
 class _SearchUserGroupState extends ConsumerState<SearchUserGroup> {
   late final TextEditingController _searchController;
   Timer? _debounce;
+  CancelToken? _cancelToken;
 
   String _searchQuery = '';
   bool _isGrouping = false;
@@ -35,25 +37,29 @@ class _SearchUserGroupState extends ConsumerState<SearchUserGroup> {
   @override
   void dispose() {
     _debounce?.cancel();
+    _cancelToken?.cancel();
     _searchController.dispose();
     super.dispose();
   }
 
   void _onSearchChanged() {
-    final query = _searchController.text;
-
-    if (query == _searchQuery) return;
+    final rawQuery = _searchController.text;
+    final query = rawQuery.trim();
+    if (query == _searchQuery && rawQuery.isNotEmpty) return;
 
     _searchQuery = query;
     _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 200), () async {
+    if (_cancelToken != null && !_cancelToken!.isCancelled) {
+      _cancelToken!.cancel();
+    }
+
+    _debounce = Timer(const Duration(milliseconds: 600), () async {
       if (!mounted) return;
       if (query.isNotEmpty) {
         final users = await ref
             .read(conversationsViewModelProvider.notifier)
             .searchUsers(query);
-        // if (!mounted) return;
-        ref.read(searchResultsProvider.notifier).state = users;
+        if (mounted) ref.read(searchResultsProvider.notifier).state = users;
       } else {
         ref.read(searchResultsProvider.notifier).state = [];
       }
@@ -83,37 +89,11 @@ class _SearchUserGroupState extends ConsumerState<SearchUserGroup> {
             'subtitle': "${user.username}",
             'avatarUrl': user.profileMedia,
             'isGroup': false,
+            'recipientFollowersCount': user.followers,
           },
         );
       });
     }
-  }
-
-  void _createGroup() async {
-    if (_selectedUsers.isEmpty) return;
-    final result = await ref
-        .read(conversationsViewModelProvider.notifier)
-        .createChat(
-          isDMChat: false,
-          recipientIds: _selectedUsers.map((u) => u.id).toList(),
-        );
-    result.fold(
-      (failure) => ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(failure.message))),
-      (chatModel) {
-        context.pushNamed(
-          RouteConstants.ChatScreen,
-          pathParameters: {'chatId': chatModel.id},
-          extra: {
-            'title': chatModel.groupName ?? "Group A",
-            'subtitle': "${_selectedUsers.length + 1} members",
-            'avatarUrl': chatModel.groupPhotoKey,
-            'isGroup': true,
-          },
-        );
-      },
-    );
   }
 
   bool isValidHttpUrl(String? url) {
@@ -135,21 +115,7 @@ class _SearchUserGroupState extends ConsumerState<SearchUserGroup> {
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => context.pop(),
         ),
-        actions: _isGrouping && _selectedUsers.isNotEmpty
-            ? [
-                TextButton(
-                  onPressed: _createGroup,
-                  child: Text(
-                    "Create",
-                    style: TextStyle(
-                      color: Palette.textWhite,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ]
-            : null,
+        actions: null,
       ),
       body: Column(
         children: [
@@ -232,26 +198,7 @@ class _SearchUserGroupState extends ConsumerState<SearchUserGroup> {
             ),
           ),
           const Divider(color: Color(0xFF38444D), height: 0.2),
-          if (!_isGrouping)
-            ListTile(
-              leading: const Icon(
-                Icons.groups_outlined,
-                color: Palette.primary,
-              ),
-              title: Text(
-                'Create a group',
-                style: TextStyle(
-                  color: Palette.primary,
-                  fontSize: 17,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              onTap: () {
-                setState(() {
-                  _isGrouping = true;
-                });
-              },
-            ),
+
           Expanded(
             child: users.isEmpty
                 ? Center(
@@ -279,16 +226,9 @@ class _SearchUserGroupState extends ConsumerState<SearchUserGroup> {
                         (u) => u.id == user.id,
                       );
                       return ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: const Color(0xFF1E2732),
-
-                          backgroundImage: isValidHttpUrl(user.profileMedia)
-                              ? CachedNetworkImageProvider(user.profileMedia!)
-                              : null,
-
-                          child: !isValidHttpUrl(user.profileMedia)
-                              ? const Icon(Icons.person, color: Colors.grey)
-                              : null,
+                        leading: BuildSmallProfileImage(
+                          radius: 24,
+                          username: user.username,
                         ),
 
                         title: Text(
@@ -303,9 +243,10 @@ class _SearchUserGroupState extends ConsumerState<SearchUserGroup> {
                           style: const TextStyle(color: Colors.grey),
                         ),
                         trailing: _isGrouping
-                            ? (isSelected
-                                  ? Icon(Icons.check, color: Colors.grey[600])
-                                  : null)
+                            ? Icon(
+                                isSelected ? Icons.check : null,
+                                color: Colors.grey[600],
+                              )
                             : null,
                         onTap: () => _onUserTapped(user),
                       );

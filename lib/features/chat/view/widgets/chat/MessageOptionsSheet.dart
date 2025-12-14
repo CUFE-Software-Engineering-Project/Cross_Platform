@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:lite_x/core/theme/palette.dart';
+import 'package:lite_x/core/theme/Palette.dart';
 import 'package:lite_x/features/chat/models/messagemodel.dart';
 
 class MessageOptionsSheet extends StatelessWidget {
   final MessageModel message;
   final bool isMe;
-
   final VoidCallback? onDeleteForMe;
   final VoidCallback? onDeleteForEveryone;
   final VoidCallback? onEdit;
-
   const MessageOptionsSheet({
     super.key,
     required this.message,

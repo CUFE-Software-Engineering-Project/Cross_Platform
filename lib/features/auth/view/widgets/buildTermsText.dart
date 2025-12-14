@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:lite_x/core/theme/palette.dart';
+import 'package:lite_x/core/theme/Palette.dart';
 
 Widget buildTermsText() {
   return Text.rich(
     TextSpan(
       text: 'By signing up, you agree to our ',
-      style: const TextStyle(color: Colors.grey, fontSize: 16),
+      style: const TextStyle(color: Colors.grey, fontSize: 14),
       children: [
         TextSpan(
           text: 'Terms',

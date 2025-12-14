@@ -1,12 +1,14 @@
 import 'dart:io';
-
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/material.dart';
 import 'package:lite_x/core/classes/PickedImage.dart';
 import 'package:lite_x/core/models/usermodel.dart';
+import 'package:lite_x/features/auth/models/ExploreCategory.dart';
 import 'package:lite_x/features/auth/repositories/auth_local_repository.dart';
 import 'package:lite_x/features/auth/repositories/auth_remote_repository.dart';
 import 'package:lite_x/features/auth/view_model/auth_state.dart';
 import 'package:lite_x/core/providers/current_user_provider.dart';
+// import 'package:lite_x/features/chat/repositories/chat_local_repository.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 part 'auth_view_model.g.dart';
 
@@ -14,11 +16,13 @@ part 'auth_view_model.g.dart';
 class AuthViewModel extends _$AuthViewModel {
   late AuthRemoteRepository _authRemoteRepository;
   late AuthLocalRepository _authLocalRepository;
+  // late ChatLocalRepository _chatLocalRepository;
 
   @override
   AuthState build() {
     _authRemoteRepository = ref.read(authRemoteRepositoryProvider);
     _authLocalRepository = ref.read(authLocalRepositoryProvider);
+    // _chatLocalRepository = ref.read(chatLocalRepositoryProvider);
     Future(() async {
       await Future.delayed(const Duration(milliseconds: 300));
       await _checkAuthStatus();
@@ -146,7 +150,17 @@ class AuthViewModel extends _$AuthViewModel {
     );
   }
 
-  Future<void> saveInterests(Set<String> interests) async {
+  //--------------------------------------------Get Categories---------------------------------------------------------//
+  Future<List<ExploreCategory>> getCategories() async {
+    final result = await _authRemoteRepository.getCategories();
+    return result.fold((failure) {
+      print("Failed to load categories: ${failure.message}");
+      return [];
+    }, (categories) => categories);
+  }
+
+  //--------------------------------------------Save Interests---------------------------------------------------------//
+  Future<void> saveInterests(Set<String> categoriesnames) async {
     state = AuthState.loading();
     try {
       final currentUser = ref.read(currentUserProvider);
@@ -154,10 +168,22 @@ class AuthViewModel extends _$AuthViewModel {
         state = AuthState.error("User not found!");
         return;
       }
-      final updatedUser = currentUser.copyWith(interests: interests);
-      await _authLocalRepository.saveUser(updatedUser);
-      ref.read(currentUserProvider.notifier).adduser(updatedUser);
-      state = AuthState.success("Interests saved successfully");
+
+      final result = await _authRemoteRepository.saveUserInterests(
+        categoriesnames,
+      );
+
+      await result.fold(
+        (failure) async {
+          state = AuthState.error(failure.message);
+        },
+        (message) async {
+          final updatedUser = currentUser.copyWith(interests: categoriesnames);
+          await _authLocalRepository.saveUser(updatedUser);
+          ref.read(currentUserProvider.notifier).adduser(updatedUser);
+          state = AuthState.success(message);
+        },
+      );
     } catch (e) {
       state = AuthState.error(e.toString());
     }
@@ -185,9 +211,7 @@ class AuthViewModel extends _$AuthViewModel {
         result.fold(
           (failure) =>
               print("FCM: Failed to register token: ${failure.message}"),
-          (message) => print(
-            "FCM: Token registered successfully: $message",
-          ), // change later
+          (message) => print("FCM: Token registered successfully: $message"),
         );
       } else {
         print('User declined or has not accepted permission');
@@ -206,10 +230,12 @@ class AuthViewModel extends _$AuthViewModel {
   //-------------------------------------------------Login--------------------------------------------------------------------------------------//
   Future<void> login({required String email, required String password}) async {
     state = AuthState.loading();
+
     final result = await _authRemoteRepository.login(
       email: email,
       password: password,
     );
+    print("login result:$result");
     result.fold((failure) => state = AuthState.error(failure.message), (
       data,
     ) async {
@@ -219,7 +245,25 @@ class AuthViewModel extends _$AuthViewModel {
         _authLocalRepository.saveTokens(tokens),
       ]);
       ref.read(currentUserProvider.notifier).adduser(user);
+      final interestsResult = await _authRemoteRepository.getUserInterests();
+
+      interestsResult.fold(
+        (err) {
+          print("Failed to load interests");
+        },
+        (interestsList) async {
+          final interestsSet = interestsList.toSet();
+          final updatedUser = user.copyWith(interests: interestsSet);
+          ref.read(currentUserProvider.notifier).adduser(updatedUser);
+          await _authLocalRepository.saveUser(updatedUser);
+        },
+      );
+
       state = AuthState.authenticated('Login successful');
+      if (!Platform.environment.containsKey('FLUTTER_TEST')) {
+        _registerFcmToken();
+        _listenForFcmTokenRefresh();
+      }
     });
   }
 
@@ -377,6 +421,54 @@ class AuthViewModel extends _$AuthViewModel {
     );
   }
 
+  //------------------------------------------------suggest-usernames-------------------------------------------//
+  Future<List<String>> suggestUsernames({required String username}) async {
+    final result = await _authRemoteRepository.suggest_usernames(
+      username: username,
+    );
+    return result.fold((failure) {
+      print("Username suggestion failed: ${failure.message}");
+      return [];
+    }, (suggestions) => suggestions);
+  }
+
+  //-----------------------------------------------------------setbirthdate-------------------------------------------------------------------------//
+  Future<void> Setbirthdate({required String birthDate}) async {
+    final currentUser = ref.read(currentUserProvider);
+    if (currentUser == null) {
+      state = AuthState.error('User not found');
+      return;
+    }
+
+    final parts = birthDate.split('/');
+    if (parts.length != 3) {
+      state = AuthState.error('Invalid date format');
+      return;
+    }
+
+    final month = parts[0];
+    final day = parts[1];
+    final year = parts[2];
+
+    final result = await _authRemoteRepository.setbirthdate(
+      day: day,
+      month: month,
+      year: year,
+    );
+
+    await result.fold(
+      (failure) async {
+        state = AuthState.error(failure.message);
+      },
+      (message) async {
+        final updated = currentUser.copyWith(dob: '$month/$day/$year');
+        ref.read(currentUserProvider.notifier).state = updated;
+
+        state = AuthState.success('Birthdate set successfully');
+      },
+    );
+  }
+
   //-------------------------------------------------Token Management--------------------------------------------------------------------------------------//
   String? getAccessToken() {
     final tokens = _authLocalRepository.getTokens();
@@ -436,16 +528,29 @@ class AuthViewModel extends _$AuthViewModel {
             final localPath = file.path;
 
             final currentUser = ref.read(currentUserProvider);
+
             if (currentUser != null) {
-              final updatedUser = currentUser.copyWith(
-                photo: mediaId,
-                localProfilePhotoPath: localPath,
+              final updateResult = await _authRemoteRepository
+                  .updateProfilePhoto(currentUser.id, mediaId);
+
+              updateResult.fold(
+                (failure) async {
+                  state = AuthState.error("Uploaded but backend update failed");
+                },
+                (_) async {
+                  final updatedUser = currentUser.copyWith(
+                    photo: mediaId,
+                    localProfilePhotoPath: localPath,
+                  );
+
+                  await _authLocalRepository.saveUser(updatedUser);
+                  ref.read(currentUserProvider.notifier).adduser(updatedUser);
+
+                  state = AuthState.success(
+                    "Profile photo updated successfully",
+                  );
+                },
               );
-
-              await _authLocalRepository.saveUser(updatedUser);
-              ref.read(currentUserProvider.notifier).adduser(updatedUser);
-
-              state = AuthState.success("Profile photo uploaded and saved");
             }
           },
         );
@@ -462,13 +567,33 @@ class AuthViewModel extends _$AuthViewModel {
         state = AuthState.error(failure.message);
       },
       (data) async {
-        final (user, tokens) = data;
+        final (user, tokens, newuser) = data;
         await Future.wait([
           _authLocalRepository.saveUser(user),
           _authLocalRepository.saveTokens(tokens),
         ]);
         ref.read(currentUserProvider.notifier).adduser(user);
-        state = AuthState.authenticated('Signup successful');
+
+        if (newuser) {
+          state = AuthState.authenticated("new_google_user");
+          _registerFcmToken();
+          _listenForFcmTokenRefresh();
+          return;
+        }
+
+        final interestsResult = await _authRemoteRepository.getUserInterests();
+        await interestsResult.fold(
+          (err) async {
+            debugPrint("Failed to fetch interests");
+          },
+          (list) async {
+            final updated = user.copyWith(interests: list.toSet());
+            ref.read(currentUserProvider.notifier).adduser(updated);
+            await _authLocalRepository.saveUser(updated);
+          },
+        );
+
+        state = AuthState.authenticated("google_login_success");
         _registerFcmToken();
         _listenForFcmTokenRefresh();
       },
@@ -483,14 +608,34 @@ class AuthViewModel extends _$AuthViewModel {
         state = AuthState.error(failure.message);
       },
       (data) async {
-        final (user, tokens) = data;
+        final (user, tokens, newuser) = data;
         await Future.wait([
           _authLocalRepository.saveUser(user),
           _authLocalRepository.saveTokens(tokens),
         ]);
-
         ref.read(currentUserProvider.notifier).adduser(user);
-        state = AuthState.authenticated('Social login successful');
+        if (newuser) {
+          state = AuthState.authenticated("new_github_user");
+          _registerFcmToken();
+          _listenForFcmTokenRefresh();
+          return;
+        }
+
+        final interestsResult = await _authRemoteRepository.getUserInterests();
+        await interestsResult.fold(
+          (err) async {
+            debugPrint("Failed to fetch interests");
+          },
+          (list) async {
+            final updated = user.copyWith(interests: list.toSet());
+            ref.read(currentUserProvider.notifier).adduser(updated);
+            await _authLocalRepository.saveUser(updated);
+          },
+        );
+
+        state = AuthState.authenticated('github_login_success');
+        _registerFcmToken();
+        _listenForFcmTokenRefresh();
       },
     );
   }

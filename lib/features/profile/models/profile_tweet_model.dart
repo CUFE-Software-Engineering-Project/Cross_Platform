@@ -22,6 +22,9 @@ class ProfileTweetModel {
   final TweetType type;
   final List<String> mediaIds;
   final String parentId;
+  final String retweeterName;
+  final String retweeterUserName;
+  final List<Map<String, String>> hashtags;
 
   ProfileTweetModel({
     required this.id,
@@ -45,6 +48,9 @@ class ProfileTweetModel {
     required this.type,
     required this.mediaIds,
     required this.parentId,
+    required this.retweeterName,
+    required this.retweeterUserName,
+    required this.hashtags,
   });
 
   factory ProfileTweetModel.fromJson(Map<String, dynamic> json) {
@@ -62,6 +68,15 @@ class ProfileTweetModel {
     // final List<String> meidaIds = mediaIdsRes.map((json) {
     //   return json["mediaId"] as String;
     // }).toList();
+    final hashtagsList = json["hashtags"];
+    final List<Map<String, String>> hashtagsModelList = hashtagsList
+        .map((h) {
+          final String id = h["hash"]?["id"] ?? "";
+          final String tag_name = h["hash"]?["tag_text"] ?? "";
+          return ({"hashtagName": tag_name, "id": id});
+        })
+        .toList()
+        .cast<Map<String, String>>();
     return ProfileTweetModel(
       id: json['id'] ?? "",
       text: json['content'] ?? "",
@@ -83,7 +98,9 @@ class ProfileTweetModel {
       protectedAccount: json["user"]?["protectedAccount"] ?? false,
       verified: json["user"]?["verified"] ?? false,
       parentId: json["parentId"] ?? "",
-      // mediaIds: meidaIds,
+      retweeterName: json["retweeter"]?["name"] ?? "",
+      retweeterUserName: json["retweeter"]?["username"] ?? "",
+      hashtags: hashtagsModelList,
     );
   }
   // ------------------------------------------

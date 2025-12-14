@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lite_x/core/providers/current_user_provider.dart';
 import 'package:lite_x/features/home/models/tweet_model.dart';
 import 'package:lite_x/features/home/repositories/home_repository.dart';
 import 'package:lite_x/features/home/view_model/home_state.dart';
@@ -9,20 +10,55 @@ final homeViewModelProvider = NotifierProvider<HomeViewModel, HomeState>(() {
 
 class HomeViewModel extends Notifier<HomeState> {
   late HomeRepository _repository;
+  String? _activeUserKey;
 
   @override
   HomeState build() {
     _repository = ref.read(homeRepositoryProvider);
 
-    Future.microtask(() => loadTweets());
+    // IMPORTANT: tie this state to the logged-in user.
+    // Otherwise, when the user logs out and logs in with another account,
+    // the provider can keep the old tweets in memory and show the old timeline.
+    final user = ref.watch(currentUserProvider);
+    final userKey = user?.id ?? user?.username;
+
+    // If logged out, clear everything.
+    if (userKey == null) {
+      _activeUserKey = null;
+      return const HomeState(
+        tweets: [],
+        forYouTweets: [],
+        followingTweets: [],
+        isLoading: false,
+        currentFeed: FeedType.forYou,
+      );
+    }
+
+    // If account changed, reset + fetch fresh feed for the new account.
+    if (_activeUserKey != userKey) {
+      _activeUserKey = userKey;
+      Future.microtask(() => loadTweets(feedType: FeedType.forYou));
+    }
 
     return const HomeState(
       tweets: [],
       forYouTweets: [],
       followingTweets: [],
       isLoading: true,
-      currentFeed: FeedType.following,
+      currentFeed: FeedType.forYou, // Default to For You feed
     );
+  }
+
+  String _getFullPhotoUrl(String? photo) {
+    if (photo == null || photo.isEmpty) return '';
+
+    // If it's already a full URL, return it
+    if (photo.startsWith('http://') || photo.startsWith('https://')) {
+      return photo;
+    }
+
+    // Otherwise, construct the full media URL
+    return 'https://litex.siematworld.online/media/$photo';
   }
 
   Future<void> loadTweets({FeedType? feedType}) async {
@@ -30,19 +66,23 @@ class HomeViewModel extends Notifier<HomeState> {
     state = state.copyWith(isLoading: true, error: null, currentFeed: feed);
 
     try {
-      final tweets = await _fetchTweetsForFeed(feed);
+      final result = await _fetchTweetsForFeed(feed, cursor: null);
 
       if (feed == FeedType.forYou) {
         state = state.copyWith(
-          tweets: tweets,
-          forYouTweets: tweets,
+          tweets: result.tweets,
+          forYouTweets: result.tweets,
           isLoading: false,
+          forYouCursor: result.nextCursor,
+          hasMoreForYou: result.nextCursor != null,
         );
       } else {
         state = state.copyWith(
-          tweets: tweets,
-          followingTweets: tweets,
+          tweets: result.tweets,
+          followingTweets: result.tweets,
           isLoading: false,
+          followingCursor: result.nextCursor,
+          hasMoreFollowing: result.nextCursor != null,
         );
       }
     } catch (e) {
@@ -56,17 +96,26 @@ class HomeViewModel extends Notifier<HomeState> {
   Future<void> switchFeed(FeedType feedType) async {
     if (state.currentFeed == feedType) return;
 
-    // Update current feed immediately to show the correct cached tweets
-    state = state.copyWith(currentFeed: feedType);
-
     final cachedTweets = feedType == FeedType.forYou
         ? state.forYouTweets
         : state.followingTweets;
 
     if (cachedTweets.isNotEmpty) {
       // Use cached tweets without reloading
-      state = state.copyWith(tweets: cachedTweets);
+      state = state.copyWith(
+        currentFeed: feedType,
+        tweets: cachedTweets,
+        isLoading: false,
+      );
     } else {
+      // Show loading indicator and clear tweets while fetching
+      state = state.copyWith(
+        currentFeed: feedType,
+        tweets: [],
+        isLoading: true,
+        error: null,
+      );
+
       // Load fresh tweets if cache is empty
       await loadTweets(feedType: feedType);
     }
@@ -76,19 +125,23 @@ class HomeViewModel extends Notifier<HomeState> {
     state = state.copyWith(isRefreshing: true, error: null);
 
     try {
-      final tweets = await _fetchTweetsForFeed(state.currentFeed);
+      final result = await _fetchTweetsForFeed(state.currentFeed, cursor: null);
 
       if (state.currentFeed == FeedType.forYou) {
         state = state.copyWith(
-          tweets: tweets,
-          forYouTweets: tweets,
+          tweets: result.tweets,
+          forYouTweets: result.tweets,
           isRefreshing: false,
+          forYouCursor: result.nextCursor,
+          hasMoreForYou: result.nextCursor != null,
         );
       } else {
         state = state.copyWith(
-          tweets: tweets,
-          followingTweets: tweets,
+          tweets: result.tweets,
+          followingTweets: result.tweets,
           isRefreshing: false,
+          followingCursor: result.nextCursor,
+          hasMoreFollowing: result.nextCursor != null,
         );
       }
     } catch (e) {
@@ -99,12 +152,69 @@ class HomeViewModel extends Notifier<HomeState> {
     }
   }
 
-  Future<List<TweetModel>> _fetchTweetsForFeed(FeedType feedType) async {
+  Future<void> loadMoreTweets() async {
+    // Don't load if already loading or no more tweets
+    if (state.isLoadingMore) return;
+
+    final hasMore = state.currentFeed == FeedType.forYou
+        ? state.hasMoreForYou
+        : state.hasMoreFollowing;
+
+    if (!hasMore) return;
+
+    final cursor = state.currentFeed == FeedType.forYou
+        ? state.forYouCursor
+        : state.followingCursor;
+
+    if (cursor == null) return;
+
+    state = state.copyWith(isLoadingMore: true);
+
+    try {
+      final result = await _fetchTweetsForFeed(
+        state.currentFeed,
+        cursor: cursor,
+      );
+
+      if (state.currentFeed == FeedType.forYou) {
+        final updatedTweets = [...state.forYouTweets, ...result.tweets];
+        state = state.copyWith(
+          tweets: updatedTweets,
+          forYouTweets: updatedTweets,
+          isLoadingMore: false,
+          forYouCursor: result.nextCursor,
+          hasMoreForYou: result.nextCursor != null,
+        );
+      } else {
+        final updatedTweets = [...state.followingTweets, ...result.tweets];
+        state = state.copyWith(
+          tweets: updatedTweets,
+          followingTweets: updatedTweets,
+          isLoadingMore: false,
+          followingCursor: result.nextCursor,
+          hasMoreFollowing: result.nextCursor != null,
+        );
+      }
+    } catch (e) {
+      state = state.copyWith(
+        isLoadingMore: false,
+        error: 'Failed to load more tweets: $e',
+      );
+    }
+  }
+
+  Future<({List<TweetModel> tweets, String? nextCursor})> _fetchTweetsForFeed(
+    FeedType feedType, {
+    String? cursor,
+  }) async {
     switch (feedType) {
       case FeedType.forYou:
-        return await _repository.fetchForYouTweets();
+        return await _repository.fetchForYouTweets(cursor: cursor, limit: 20);
       case FeedType.following:
-        return await _repository.fetchFollowingTweets();
+        return await _repository.fetchFollowingTweets(
+          cursor: cursor,
+          limit: 20,
+        );
     }
   }
 
@@ -303,12 +413,40 @@ class HomeViewModel extends Notifier<HomeState> {
           followingTweets: updatedFollowing,
         );
       } else {
+        // Ensure the tweet has current user data
+        final currentUser = ref.read(currentUserProvider);
+        print(
+          '📝 CreatePost - Current User: ${currentUser?.username}, Photo: ${currentUser?.photo}',
+        );
+        print(
+          '📝 CreatePost - New Tweet: name=${newTweet.authorName}, username=${newTweet.authorUsername}, avatar=${newTweet.authorAvatar}',
+        );
+
+        final enrichedTweet = currentUser != null
+            ? newTweet.copyWith(
+                authorName: newTweet.authorName == 'Unknown User'
+                    ? currentUser.name
+                    : newTweet.authorName,
+                authorUsername: newTweet.authorUsername == 'unknown'
+                    ? currentUser.username
+                    : newTweet.authorUsername,
+                authorAvatar: newTweet.authorAvatar.isEmpty
+                    ? _getFullPhotoUrl(currentUser.photo)
+                    : newTweet.authorAvatar,
+                userId: newTweet.userId ?? currentUser.id,
+              )
+            : newTweet;
+
+        print(
+          '📝 CreatePost - Enriched Tweet: name=${enrichedTweet.authorName}, username=${enrichedTweet.authorUsername}, avatar=${enrichedTweet.authorAvatar}',
+        );
+
         // New posts should only appear in the Following feed, not For You
-        final updatedFollowing = [newTweet, ...state.followingTweets];
+        final updatedFollowing = [enrichedTweet, ...state.followingTweets];
 
         // Only update current tweets if we're on the Following feed
         final updatedTweets = state.currentFeed == FeedType.following
-            ? [newTweet, ...state.tweets]
+            ? [enrichedTweet, ...state.tweets]
             : state.tweets;
 
         state = state.copyWith(
@@ -338,12 +476,36 @@ class HomeViewModel extends Notifier<HomeState> {
         isBookmarked: updatedTweet.isBookmarked,
         quotes: updatedTweet.quotes,
         bookmarks: updatedTweet.bookmarks,
+        isFollowed: updatedTweet.isFollowed,
       ),
+    );
+  }
+
+  /// Updates the follow status for all tweets by a specific user
+  void updateFollowStatusForUser(String username, bool isFollowed) {
+    final updateTweets = (List<TweetModel> tweets) {
+      return tweets.map((tweet) {
+        if (tweet.authorUsername == username) {
+          return tweet.copyWith(isFollowed: isFollowed);
+        }
+        return tweet;
+      }).toList();
+    };
+
+    state = state.copyWith(
+      tweets: updateTweets(state.tweets),
+      forYouTweets: updateTweets(state.forYouTweets),
+      followingTweets: updateTweets(state.followingTweets),
     );
   }
 
   void incrementQuoteCount(String tweetId) {
     _updateTweetInAllFeeds(tweetId, (t) => t.copyWith(quotes: t.quotes + 1));
+  }
+
+  /// Updates a tweet with new data (content, media, etc.)
+  void updateTweet(TweetModel updatedTweet) {
+    _updateTweetInAllFeeds(updatedTweet.id, (_) => updatedTweet);
   }
 
   List<TweetModel> _updateParentTweetInList(

@@ -1,16 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:lite_x/core/theme/palette.dart';
+import 'package:lite_x/core/theme/Palette.dart';
 import '../models/suggested_tweet_model.dart';
 
 class SuggestedTweetCard extends StatelessWidget {
   final SuggestedTweetModel tweet;
   final VoidCallback? onTap;
 
-  const SuggestedTweetCard({
-    super.key,
-    required this.tweet,
-    this.onTap,
-  });
+  const SuggestedTweetCard({super.key, required this.tweet, this.onTap});
 
   String _formatCount(int count) {
     if (count >= 1000000) {
@@ -24,19 +20,16 @@ class SuggestedTweetCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap ?? () {
-        // Navigate to tweet detail
-      },
+      onTap:
+          onTap ??
+          () {
+            // Navigate to tweet detail
+          },
       behavior: HitTestBehavior.opaque,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(
-              color: Palette.divider,
-              width: 1,
-            ),
-          ),
+          border: Border(bottom: BorderSide(color: Palette.divider, width: 1)),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -207,10 +200,7 @@ class SuggestedTweetCard extends StatelessWidget {
             const SizedBox(width: 4),
             Text(
               _formatCount(count),
-              style: const TextStyle(
-                fontSize: 13,
-                color: Palette.icons,
-              ),
+              style: const TextStyle(fontSize: 13, color: Palette.icons),
             ),
           ],
         ),
@@ -218,4 +208,3 @@ class SuggestedTweetCard extends StatelessWidget {
     );
   }
 }
-

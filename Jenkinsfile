@@ -39,7 +39,7 @@ pipeline {
                 script {
                     checkout([
                         $class: 'GitSCM',
-                        branches: [[name: '*/main']],
+                        branches: [[name: '*/save_dev_changes']],
                         userRemoteConfigs: [[
                             url: 'https://github.com/CUFE-Software-Engineering-Project/Cross_Platform.git',
                             credentialsId: "${GIT_CREDENTIALS}"
@@ -102,11 +102,11 @@ EOF
               script {
                 sh '''
                   echo "Kaniko building test target (no push)..."
-                  /kaniko/executor \
-                    --context=. \
-                    --dockerfile=Dockerfile \
-                    --no-push \
-                    --target=test
+                  #/kaniko/executor \
+                   # --context=. \
+                    #--dockerfile=Dockerfile \
+                    #--no-push \
+                    #--target=test
                 '''
               }
             }
@@ -121,8 +121,8 @@ EOF
                         sh '''
                         echo "Kaniko building build-apk target and pushing..."
                         /kaniko/executor \
-                            --context=$(pwd) \
-                            --dockerfile=Dockerfile.ci \
+                            --context=. \
+                            --dockerfile=Dockerfile \
                             --destination=${DOCKER_IMAGE}:build-${BUILD_TAG} \
                             --tarPath=/workspace/image.tar \
                             --cache=true \

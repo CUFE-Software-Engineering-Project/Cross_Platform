@@ -22,6 +22,7 @@ void main() {
   late ProviderContainer container;
 
   setUpAll(() async {
+    provideDummy<Either<AppFailure, List<String>>>(right(<String>[]));
     provideDummy<Either<AppFailure, String>>(right('dummy string'));
     provideDummy<Either<AppFailure, bool>>(right(true));
     provideDummy<Either<AppFailure, (UserModel, TokensModel)>>(
@@ -267,8 +268,8 @@ void main() {
     );
 
     final testTokens = TokensModel(
-      accessToken: 'access_token_123',
-      refreshToken: 'refresh_token_123',
+      accessToken: 'access_token_123daefsgrdjtjsgtjyjj',
+      refreshToken: 'refresh_token_123ggggggrsyyfjfvgd',
       accessTokenExpiry: DateTime.now().add(const Duration(hours: 1)),
       refreshTokenExpiry: DateTime.now().add(const Duration(days: 30)),
     );
@@ -279,6 +280,9 @@ void main() {
         when(
           mockRemoteRepository.login(email: testEmail, password: testPassword),
         ).thenAnswer((_) async => right((testUser, testTokens)));
+        when(
+          mockRemoteRepository.getUserInterests(),
+        ).thenAnswer((_) async => right(["Tech", "Business"]));
 
         when(
           mockLocalRepository.saveUser(any),
@@ -302,7 +306,10 @@ void main() {
         verify(mockLocalRepository.saveTokens(testTokens)).called(1);
 
         final currentUser = container.read(currentUserProvider);
-        expect(currentUser, testUser);
+        expect(currentUser?.email, testUser.email);
+        expect(currentUser?.id, testUser.id);
+        expect(currentUser?.username, testUser.username);
+        expect(currentUser?.interests, {"Tech", "Business"});
       },
     );
 
@@ -864,6 +871,9 @@ void main() {
     );
 
     test('should save interests and update user on success', () async {
+      when(
+        mockRemoteRepository.saveUserInterests(testInterests),
+      ).thenAnswer((_) async => right("Interests saved successfully"));
       when(
         mockLocalRepository.saveUser(any),
       ).thenAnswer((_) async => Future.value());

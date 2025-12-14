@@ -29,7 +29,6 @@ class _ChangeEmailScreenProfileState
   @override
   void initState() {
     super.initState();
-    // _emailController.addListener(_validateEmail);
   }
 
   @override
@@ -63,13 +62,6 @@ class _ChangeEmailScreenProfileState
     return RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
   }
 
-  // void _validateEmail() {
-  //   setState(() {
-
-  //     print(_emailError);
-  //   });
-  // }
-
   void _handleNext() async {
     final newEmail = _emailController.text.trim();
     setState(() {
@@ -98,13 +90,14 @@ class _ChangeEmailScreenProfileState
       },
       (r) async {
         // TODO:go to verify email
-
+        if(mounted)
         context.push(
           "/verifyChangeEmailProfileScreen",
           extra: [widget.profileData, newEmail],
         );
       },
     );
+    if(mounted)
     setState(() {
       isLoading = false;
       _enableForm = true;

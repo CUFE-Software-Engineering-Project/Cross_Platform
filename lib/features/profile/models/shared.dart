@@ -1,12 +1,10 @@
-import 'dart:ffi';
-
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lite_x/core/providers/current_user_provider.dart';
-import 'package:lite_x/features/media/download_media.dart';
+import 'package:lite_x/features/home/models/tweet_model.dart';
 import 'package:lite_x/features/media/view_model/providers.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
 import 'package:lite_x/features/profile/models/profile_tweet_model.dart';
@@ -86,7 +84,7 @@ Future<bool> showUnFollowDialog(
     },
   );
 
-  return result;
+  return result != null ? result : false;
 }
 
 enum EditProfileStatus { changedSuccessfully, unChanged, failedToChange }
@@ -212,7 +210,7 @@ ProfileTweet getCorrectTweetType(
 ) {
   TweetType type = tweetModel.type;
 
-  if (type == TweetType.ReTweet)
+  if (tweetModel.retweeterUserName.isNotEmpty)
     return ProfileRetweetWidget(profileModel: pm, tweetModel: tweetModel);
 
   if (type == TweetType.Quote)
@@ -314,10 +312,10 @@ class BuildSmallProfileImage extends ConsumerStatefulWidget {
     required this.radius,
     super.key,
     this.mediaId,
-    this.userId,
+    this.username,
   });
   String? mediaId;
-  String? userId;
+  String? username;
   double radius;
 
   @override
@@ -348,8 +346,8 @@ class _BuildSmallProfileImageState
           },
         ),
       );
-    } else if (widget.userId != null) {
-      final profileData = ref.watch(profileDataProvider(widget.userId!));
+    } else if (widget.username != null) {
+      final profileData = ref.watch(profileDataProvider(widget.username!));
       return CircleAvatar(
         backgroundColor: Colors.grey,
         radius: widget.radius,
@@ -396,7 +394,7 @@ class _BuildSmallProfileImageState
 }
 
 const String unkownUserAvatar =
-    "https://icon-library.com/images/unknown-person-icon/unknown-person-icon-4.jpg";
+    "https://img.myloview.com/posters/default-avatar-profile-flat-icon-social-media-user-vector-portrait-of-unknown-a-human-image-700-209987471.jpg";
 
 class InterActionsRowOfTweet extends ConsumerStatefulWidget {
   const InterActionsRowOfTweet({super.key, required this.tweet});
@@ -467,12 +465,13 @@ class _InterActionsRowOfTweetState
                   retweet(widget.tweet.id).then((res) {
                     res.fold(
                       (l) {
-                        showSmallPopUpMessage(
-                          context: context,
-                          message: l.message,
-                          borderColor: Colors.red,
-                          icon: Icon(Icons.error, color: Colors.red),
-                        );
+                        if (mounted)
+                          showSmallPopUpMessage(
+                            context: context,
+                            message: l.message,
+                            borderColor: Colors.red,
+                            icon: Icon(Icons.error, color: Colors.red),
+                          );
                       },
                       (r) {
                         if (mounted)
@@ -482,6 +481,9 @@ class _InterActionsRowOfTweetState
                             borderColor: Colors.blue,
                             icon: Icon(Icons.check_circle, color: Colors.blue),
                           );
+                        final currUser = ref.watch(currentUserProvider);
+                        if (currUser != null)
+                          ref.refresh(profilePostsProvider(currUser.username));
                         if (mounted)
                           // ignore: unused_result
                           ref.refresh(
@@ -508,12 +510,13 @@ class _InterActionsRowOfTweetState
                   unretweet(widget.tweet.id).then((res) {
                     res.fold(
                       (l) {
-                        showSmallPopUpMessage(
-                          context: context,
-                          message: l.message,
-                          borderColor: Colors.red,
-                          icon: Icon(Icons.error, color: Colors.red),
-                        );
+                        if (mounted)
+                          showSmallPopUpMessage(
+                            context: context,
+                            message: l.message,
+                            borderColor: Colors.red,
+                            icon: Icon(Icons.error, color: Colors.red),
+                          );
                       },
                       (r) {
                         if (mounted)
@@ -523,6 +526,10 @@ class _InterActionsRowOfTweetState
                             borderColor: Colors.blue,
                             icon: Icon(Icons.check_circle, color: Colors.blue),
                           );
+                        final currUser = ref.watch(currentUserProvider);
+                        if (currUser != null)
+                          // ignore: unused_result
+                          ref.refresh(profilePostsProvider(currUser.username));
                         if (mounted)
                           // ignore: unused_result
                           ref.refresh(
@@ -573,32 +580,58 @@ class _InterActionsRowOfTweetState
               if (isLikedByMeLocal) {
                 final unlike = ref.watch(unlikeTweetProvider);
                 unlike(widget.tweet.id).then((res) {
-                  res.fold((l) {
-                    isLikedByMeLocal = true;
-                    likesCount += 1;
-                    showSmallPopUpMessage(
-                      context: context,
-                      message: l.message,
-                      borderColor: Colors.red,
-                      icon: Icon(Icons.error, color: Colors.red),
-                    );
-                    if (mounted) setState(() {});
-                  }, (r) {});
+                  res.fold(
+                    (l) {
+                      isLikedByMeLocal = true;
+                      likesCount += 1;
+                      if (mounted)
+                        showSmallPopUpMessage(
+                          context: context,
+                          message: l.message,
+                          borderColor: Colors.red,
+                          icon: Icon(Icons.error, color: Colors.red),
+                        );
+                      if (mounted) setState(() {});
+                    },
+                    (r) {
+                      // ref.refresh(
+                      //   profilePostsProvider(widget.tweet.userUserName),
+                      // );
+                      // final currUser = ref.watch(currentUserProvider);
+                      // if (currUser != null) {
+                      //   ref.refresh(profilePostsProvider(currUser.username));
+                      // }
+                    },
+                  );
                 });
               } else {
                 final like = ref.watch(likeTweetProvider);
                 like(widget.tweet.id).then((res) {
-                  res.fold((l) {
-                    isLikedByMeLocal = false;
-                    likesCount -= 1;
-                    showSmallPopUpMessage(
-                      context: context,
-                      message: l.message,
-                      borderColor: Colors.red,
-                      icon: Icon(Icons.error, color: Colors.red),
-                    );
-                    if (mounted) setState(() {});
-                  }, (r) {});
+                  res.fold(
+                    (l) {
+                      isLikedByMeLocal = false;
+                      likesCount -= 1;
+                      if (mounted)
+                        showSmallPopUpMessage(
+                          context: context,
+                          message: l.message,
+                          borderColor: Colors.red,
+                          icon: Icon(Icons.error, color: Colors.red),
+                        );
+                      if (mounted) setState(() {});
+                    },
+                    (r) {
+                      if (mounted) {
+                        ref.refresh(
+                          profilePostsProvider(widget.tweet.userUserName),
+                        );
+                        final currUser = ref.watch(currentUserProvider);
+                        if (currUser != null) {
+                          ref.refresh(profilePostsProvider(currUser.username));
+                        }
+                      }
+                    },
+                  );
                 });
               }
               if (mounted)
@@ -667,24 +700,26 @@ class _InterActionsRowOfTweetState
                       res.fold(
                         (l) {
                           isSavedByMeLocal = true;
-                          showSmallPopUpMessage(
-                            context: context,
-                            message: l.message,
-                            borderColor: Colors.red,
-                            icon: Icon(Icons.error, color: Colors.red),
-                          );
+                          if (mounted)
+                            showSmallPopUpMessage(
+                              context: context,
+                              message: l.message,
+                              borderColor: Colors.red,
+                              icon: Icon(Icons.error, color: Colors.red),
+                            );
                           if (mounted) setState(() {});
                         },
                         (r) {
-                          showSmallPopUpMessage(
-                            context: context,
-                            message: "Post removed from your Bookmarks",
-                            borderColor: Colors.blue,
-                            icon: Icon(
-                              Icons.bookmark_remove,
-                              color: Colors.blue,
-                            ),
-                          );
+                          if (mounted)
+                            showSmallPopUpMessage(
+                              context: context,
+                              message: "Post removed from your Bookmarks",
+                              borderColor: Colors.blue,
+                              icon: Icon(
+                                Icons.bookmark_remove,
+                                color: Colors.blue,
+                              ),
+                            );
                         },
                       );
                     });
@@ -694,21 +729,26 @@ class _InterActionsRowOfTweetState
                       res.fold(
                         (l) {
                           isSavedByMeLocal = false;
-                          showSmallPopUpMessage(
-                            context: context,
-                            message: l.message,
-                            borderColor: Colors.red,
-                            icon: Icon(Icons.error, color: Colors.red),
-                          );
+                          if (mounted)
+                            showSmallPopUpMessage(
+                              context: context,
+                              message: l.message,
+                              borderColor: Colors.red,
+                              icon: Icon(Icons.error, color: Colors.red),
+                            );
                           if (mounted) setState(() {});
                         },
                         (r) {
-                          showSmallPopUpMessage(
-                            context: context,
-                            message: "Post added to your Bookmarks",
-                            borderColor: Colors.blue,
-                            icon: Icon(Icons.bookmark_add, color: Colors.blue),
-                          );
+                          if (mounted)
+                            showSmallPopUpMessage(
+                              context: context,
+                              message: "Post added to your Bookmarks",
+                              borderColor: Colors.blue,
+                              icon: Icon(
+                                Icons.bookmark_add,
+                                color: Colors.blue,
+                              ),
+                            );
                         },
                       );
                     });
@@ -842,6 +882,7 @@ class _BuildProfileBannerState extends ConsumerState<BuildProfileBanner> {
                       return res.isNotEmpty ? res : "";
                     },
                     error: (err, _) {
+                      ref.refresh(mediaUrlProvider(widget.bannerId));
                       return "";
                     },
                     loading: () {
@@ -883,6 +924,7 @@ class _BuildProfileImageState extends ConsumerState<BuildProfileImage> {
               return res.isNotEmpty ? res : unkownUserAvatar;
             },
             error: (err, _) {
+              ref.read(mediaUrlProvider(widget.avatarId));
               return unkownUserAvatar;
             },
             loading: () {
@@ -894,4 +936,97 @@ class _BuildProfileImageState extends ConsumerState<BuildProfileImage> {
       ),
     );
   }
+}
+
+List<ProfileTweetModel> convertJsonListToTweetList(
+  List<dynamic> jsonList,
+  bool getReplies,
+) {
+  List<ProfileTweetModel> tweets = [];
+  for (int i = 0; i < jsonList.length; i++) {
+    print(jsonList[i]);
+    final Map<String, dynamic> json = jsonList[i] as Map<String, dynamic>;
+    if (json["tweetType"]?.toLowerCase() == "reply" && !getReplies) continue;
+
+    final String profilePhotoId = json["user"]?["profileMedia"]?["id"] ?? "";
+
+    final List<dynamic> tweetMediaIdsDynamic = json["tweetMedia"] ?? [];
+    final List<String> tweetMediaIds = tweetMediaIdsDynamic
+        .map((media) => media["media"]?["id"] as String)
+        .toList();
+
+    // get timeAgo
+    final String createTime = json["createdAt"] ?? "";
+    final String timeAgo = getTimeAgo(createTime);
+
+    json["profileMediaId"] = profilePhotoId;
+    json["mediaIds"] = tweetMediaIds;
+    json["timeAgo"] = timeAgo;
+
+    tweets.add(ProfileTweetModel.fromJson(json));
+  }
+  return tweets;
+}
+
+abstract class TrendsCategoriesTabs {
+  static String Global = "global";
+  static String News = "news";
+  static String Sports = "Sports";
+  static String Entertainment = "entertainment";
+}
+
+TweetModel fromProfileTweetModel(ProfileTweetModel profileTweet) {
+  // Helper to extract media URLs from mediaIds
+  List<String> _extractMediaUrlsFromIds(List<String> mediaIds) {
+    // You need to implement this based on your media storage
+    return mediaIds.map((id) => id).toList();
+  }
+
+  // Parse timeAgo to DateTime (simplified - you might need a proper parser)
+  DateTime _parseTimeAgo(String timeAgo) {
+    // This is a simplified parser - implement based on your timeAgo format
+    if (timeAgo.contains('h')) {
+      int hours = int.tryParse(timeAgo.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+      return DateTime.now().subtract(Duration(hours: hours));
+    }
+    // Add more cases for days, minutes, etc.
+    return DateTime.now();
+  }
+
+  String _normalizeTweetTypeFromProfile(ProfileTweetModel pt) {
+    if (pt.type == TweetType.Tweet) return "TWEET";
+    if (pt.type == TweetType.Quote) return "QUOTE";
+    if (pt.type == TweetType.Reply)
+      return "REPLY";
+    else
+      return "TWEET";
+  }
+
+  return TweetModel(
+    id: profileTweet.id,
+    content: profileTweet.text,
+    authorName: profileTweet.userDisplayName,
+    authorUsername: profileTweet.userUserName,
+    authorAvatar: profileTweet.profileMediaId, // Or convert to URL
+    createdAt: _parseTimeAgo(profileTweet.timeAgo),
+    likes: profileTweet.likes,
+    retweets: profileTweet.retweets,
+    replies: profileTweet.replies,
+    images: _extractMediaUrlsFromIds(profileTweet.mediaIds),
+    isLiked: profileTweet.isLikedByMe,
+    isRetweeted: profileTweet.isRepostedWithMe,
+    replyToId: profileTweet.type == TweetType.Reply
+        ? profileTweet.parentId
+        : null,
+    replyIds: [], // Not available in ProfileTweetModel
+    isBookmarked: profileTweet.isSavedByMe,
+    quotedTweetId: profileTweet.type == TweetType.Quote
+        ? profileTweet.parentId
+        : null,
+    quotedTweet: null, // Not available
+    quotes: profileTweet.quotesCount.toInt(),
+    bookmarks: 0, // Not available
+    userId: profileTweet.userId,
+    tweetType: _normalizeTweetTypeFromProfile(profileTweet),
+  );
 }
