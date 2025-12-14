@@ -58,6 +58,7 @@ void main() {
         authLocalRepositoryProvider.overrideWithValue(mockLocalRepository),
       ],
     );
+    container.read(authViewModelProvider);
   });
 
   tearDown(() {

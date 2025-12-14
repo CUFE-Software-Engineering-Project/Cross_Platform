@@ -9,9 +9,15 @@ RUN flutter pub get
 # Copy source code
 COPY . .
 
+RUN yes | sdkmanager --licenses
 
+RUN sdkmanager \
+    "platform-tools" \
+    "platforms;android-34" \
+    "build-tools;34.0.0" \
+    "cmdline-tools;latest"
 # ---------------- LINT STAGE ----------------
-FROM ghcr.io/cirruslabs/flutter:3.35.5 AS lint
+FROM base AS lint
 WORKDIR /app
 
 COPY pubspec.* ./
@@ -25,13 +31,7 @@ RUN flutter analyze
 FROM base AS build-apk
 
 # Install Android SDK components early for caching
-RUN yes | sdkmanager --licenses
 
-RUN sdkmanager \
-    "platform-tools" \
-    "platforms;android-34" \
-    "build-tools;34.0.0" \
-    "cmdline-tools;latest"
 
 # Now build release APK
 RUN flutter build apk --release
