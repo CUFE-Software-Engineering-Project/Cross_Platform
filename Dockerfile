@@ -22,8 +22,8 @@ RUN flutter analyze || true
 FROM base AS test
 WORKDIR /app
 
-# Run unit/widget tests
-RUN flutter test --no-pub
+RUN flutter test
+
 
 # ---------------- BUILD APK STAGE ----------------
 FROM base AS build-apk
