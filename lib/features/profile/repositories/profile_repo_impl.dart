@@ -348,6 +348,7 @@ class ProfileRepoImpl implements ProfileRepo {
       await _dio.post("api/blocks/$username");
       final myUsername = ref.read(myUserNameProvider);
       ref.refresh(getBlockedUsersProvider(myUsername));
+      ref.refresh(profileDataProvider(username));
 
       return const Right(());
     } catch (e) {
@@ -360,6 +361,7 @@ class ProfileRepoImpl implements ProfileRepo {
       await _dio.delete("api/blocks/$username");
       final myUsername = ref.read(myUserNameProvider);
       ref.refresh(getBlockedUsersProvider(myUsername));
+      ref.refresh(profileDataProvider(username));
       return const Right(());
     } catch (e) {
       return Left(Failure("couldn't unblock user"));
@@ -796,17 +798,19 @@ class ProfileRepoImpl implements ProfileRepo {
       res = await _dio.get("api/explore", queryParameters: queryParams);
 
       final List<dynamic> jsonList = res.data["data"] ?? [];
-      final String? nextCursor = res.data["cursor"] as String?;
-
+      final dynamic nextCursor = res.data["cursor"];
       final tweets = convertJsonListToTweetList(jsonList, false);
 
-      print("cursor: " + cursor.toString() + "999999999999999999");
-
-      return Right(PaginatedTweets(tweets: tweets, nextCursor: nextCursor));
-    } catch (e) {
-      print(
-        "fail-----------------------------------------------____ + ${e.toString()}",
+      return Right(
+        PaginatedTweets(
+          tweets: tweets,
+          nextCursor: nextCursor == null || nextCursor == 0 ? null : nextCursor,
+        ),
       );
+    } catch (e) {
+      // print(
+      //   "fail-----------------------------------------------____ + ${e.toString()}",
+      // );
       return Left(Failure('Failed to load ${categoryName} tweets'));
     }
   }

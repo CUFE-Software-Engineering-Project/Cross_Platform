@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:lite_x/core/providers/current_user_provider.dart';
 import 'package:lite_x/features/home/models/tweet_model.dart';
@@ -78,15 +79,7 @@ class _TweetDetailScreenState extends ConsumerState<TweetDetailScreen> {
 
   void _openHashtagPosts({required String hashtagId, required String tagText}) {
     try {
-      print(
-        '🏷️ Opening temp hashtag screen: id="$hashtagId", text="$tagText"',
-      );
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) =>
-              TempHashtagScreen(hashtagId: hashtagId, hashtagText: tagText),
-        ),
-      );
+      context.push("/hashtagTweetsScreen", extra: [hashtagId, tagText]);
     } catch (e, stackTrace) {
       print('❌ Error opening hashtag screen: $e');
       print('Stack trace: $stackTrace');

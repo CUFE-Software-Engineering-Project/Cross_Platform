@@ -41,7 +41,10 @@ class _ExploreProfileScreenState extends ConsumerState<ExploreProfileScreen> {
             ),
             title: GestureDetector(
               onTap: () {
-                context.push("/searchScreen",extra: <String, dynamic>{'showResults': false});
+                context.push(
+                  "/searchScreen",
+                  extra: <String, dynamic>{'showResults': false},
+                );
               },
               child: Row(
                 children: [

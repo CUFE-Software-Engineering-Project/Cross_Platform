@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lite_x/core/providers/current_user_provider.dart';
@@ -47,43 +49,88 @@ class _ExploreprofilescreenbodyState
             );
           },
           (pm) {
-            return DefaultTabController(
-              length: 6,
-              child: Scaffold(
-                appBar: TabBar(
-                  indicatorColor: Color(0xFF1DA1F2),
-                  indicatorSize: TabBarIndicatorSize.label,
-                  isScrollable: true,
-                  tabAlignment: TabAlignment.start,
-                  dividerHeight: 0.25,
-                  labelColor: Colors.white,
-                  unselectedLabelStyle: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                  labelStyle: TextStyle(fontWeight: FontWeight.bold),
-                  unselectedLabelColor: Colors.grey,
-                  tabs: [
-                    Tab(text: 'For You'),
-                    Tab(text: 'Trending'),
-                    Tab(text: 'Global'),
-                    Tab(text: 'News'),
-                    Tab(text: 'Sports'),
-                    Tab(text: 'Entertainment'),
-                  ],
-                ),
-                body: TabBarView(
-                  children: [
-                    _BuildForYouTab(pm),
-                    _BuildTrendingTab(pm),
-                    _BuildGlobalTab(pm),
-                    _BuildNewsTab(pm),
-                    _BuildSportsTab(pm),
-                    _BuildEntertainmentTab(pm),
-                  ],
-                ),
-              ),
-            );
+            return Platform.isAndroid
+                ? DefaultTabController(
+                    length: 6,
+                    child: Scaffold(
+                      appBar: TabBar(
+                        indicatorColor: Color(0xFF1DA1F2),
+                        indicatorSize: TabBarIndicatorSize.label,
+                        isScrollable: true,
+                        tabAlignment: TabAlignment.start,
+                        dividerHeight: 0.25,
+                        labelColor: Colors.white,
+                        unselectedLabelStyle: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                        labelStyle: TextStyle(fontWeight: FontWeight.bold),
+                        unselectedLabelColor: Colors.grey,
+                        tabs: [
+                          Tab(text: 'For You'),
+                          Tab(text: 'Trending'),
+                          Tab(text: 'Global'),
+                          Tab(text: 'News'),
+                          Tab(text: 'Sports'),
+                          Tab(text: 'Entertainment'),
+                        ],
+                      ),
+                      body: TabBarView(
+                        children: [
+                          _BuildForYouTab(pm),
+                          _BuildTrendingTab(pm),
+                          _BuildGlobalTab(pm),
+                          _BuildNewsTab(pm),
+                          _BuildSportsTab(pm),
+                          _BuildEntertainmentTab(pm),
+                        ],
+                      ),
+                    ),
+                  )
+                : DefaultTabController(
+                    length: 6,
+                    child: Column(
+                      children: [
+                        Material(
+                          color: Theme.of(context).scaffoldBackgroundColor,
+                          child: TabBar(
+                            indicatorColor: Color(0xFF1DA1F2),
+                            indicatorSize: TabBarIndicatorSize.label,
+                            isScrollable: true,
+                            tabAlignment: TabAlignment.start,
+                            dividerHeight: 0.25,
+                            labelColor: Colors.white,
+                            unselectedLabelStyle: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                            labelStyle: TextStyle(fontWeight: FontWeight.bold),
+                            unselectedLabelColor: Colors.grey,
+                            tabs: [
+                              Tab(text: 'For You'),
+                              Tab(text: 'Trending'),
+                              Tab(text: 'Global'),
+                              Tab(text: 'News'),
+                              Tab(text: 'Sports'),
+                              Tab(text: 'Entertainment'),
+                            ],
+                          ),
+                        ),
+                        Expanded(
+                          child: TabBarView(
+                            children: [
+                              _BuildForYouTab(pm),
+                              _BuildTrendingTab(pm),
+                              _BuildGlobalTab(pm),
+                              _BuildNewsTab(pm),
+                              _BuildSportsTab(pm),
+                              _BuildEntertainmentTab(pm),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
           },
         );
       },

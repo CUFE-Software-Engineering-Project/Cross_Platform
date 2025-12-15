@@ -24,7 +24,14 @@ class _ExploreScreenState extends ConsumerState<RealExploreScreen> {
                 if (context.canPop()) context.pop();
               },
             ),
-            title: Text("Explore",style: TextStyle(color: Colors.white,fontSize: 18,fontWeight: FontWeight.w900),),
+            title: Text(
+              "Explore",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
             actions: [Icon(Icons.settings_outlined)],
             actionsPadding: EdgeInsets.only(right: 20),
           ),

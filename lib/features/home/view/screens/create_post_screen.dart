@@ -12,6 +12,7 @@ import 'package:lite_x/features/home/services/hashtag_service.dart';
 import 'package:lite_x/features/home/view/widgets/hashtag_suggestions_overlay.dart';
 import 'package:lite_x/features/home/view/widgets/mention_suggestion_overlay.dart';
 import 'package:lite_x/features/home/models/user_suggestion.dart';
+import 'package:lite_x/features/profile/view_model/providers.dart';
 
 enum PostPrivacy {
   everyone,
@@ -142,6 +143,8 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
           _textController.clear();
           _selectedMedia.clear();
         });
+        if (mounted)
+          ref.refresh(profilePostsProvider(ref.read(myUserNameProvider)));
         Navigator.pop(context, true);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
