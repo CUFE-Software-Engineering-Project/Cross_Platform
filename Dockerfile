@@ -24,4 +24,4 @@ RUN sdkmanager \
 
 # ---------------- BUILD APK STAGE ----------------
 FROM base AS build-apk
-RUN flutter build apk --release --split-per-abi
+RUN flutter build apk --release --target-platform android-arm64
