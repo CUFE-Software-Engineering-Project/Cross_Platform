@@ -63,6 +63,9 @@ abstract class ProfileRepo {
     String username,
   );
 
+  Future<Either<Failure, List<UserModel>>> getRetweeters(String tweetId);
+  Future<Either<Failure, List<UserModel>>> getLikers(String tweetId);
+
   Future<Either<Failure, ProfileTweetModel>> getProfileTweet(String tweetId);
   Future<Either<Failure, void>> createTweet(CreateTweetModel createTweetModel);
   Future<Either<Failure, List<TweetReplyModel>>> getTweetReplies(

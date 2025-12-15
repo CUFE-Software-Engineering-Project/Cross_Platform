@@ -15,14 +15,13 @@ class TrendsViewModel extends ChangeNotifier {
   }
 }
 
-
-
 class ExploreCategoryState {
   final List<ProfileTweetModel> tweets;
   final String? nextCursor;
   final bool isLoading;
   final bool isLoadingMore;
   final bool hasError;
+  final bool didInitialLoadAttempt;
 
   ExploreCategoryState({
     required this.tweets,
@@ -30,6 +29,7 @@ class ExploreCategoryState {
     required this.isLoading,
     required this.isLoadingMore,
     required this.hasError,
+    this.didInitialLoadAttempt = false,
   });
 
   ExploreCategoryState copyWith({
@@ -38,6 +38,7 @@ class ExploreCategoryState {
     bool? isLoading,
     bool? isLoadingMore,
     bool? hasError,
+    bool? didInitialLoadAttempt,
   }) {
     return ExploreCategoryState(
       tweets: tweets ?? this.tweets,
@@ -45,6 +46,8 @@ class ExploreCategoryState {
       isLoading: isLoading ?? this.isLoading,
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
       hasError: hasError ?? this.hasError,
+      didInitialLoadAttempt:
+          didInitialLoadAttempt ?? this.didInitialLoadAttempt,
     );
   }
 }
@@ -81,6 +84,7 @@ class ExploreCategoryNotifier extends StateNotifier<ExploreCategoryState> {
       hasError: false,
       tweets: [],
       nextCursor: null,
+      didInitialLoadAttempt: true,
     );
 
     try {
@@ -154,6 +158,7 @@ class ExploreCategoryNotifier extends StateNotifier<ExploreCategoryState> {
       isLoading: false,
       isLoadingMore: false,
       hasError: false,
+      didInitialLoadAttempt: false,
     );
     loadInitial();
   }

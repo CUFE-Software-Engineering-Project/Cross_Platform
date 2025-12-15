@@ -570,13 +570,12 @@ class _ReplyThreadScreenState extends ConsumerState<ReplyThreadScreen> {
                           hashtag,
                         );
                         if (matchingHashtag != null) {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => TempHashtagScreen(
-                                hashtagId: matchingHashtag.id,
-                                hashtagText: matchingHashtag.tagText,
-                              ),
-                            ),
+                          context.push(
+                            "/hashtagTweetsScreen",
+                            extra: [
+                              matchingHashtag.id,
+                              matchingHashtag.tagText,
+                            ],
                           );
                         }
                       },
@@ -710,13 +709,9 @@ class _ReplyThreadScreenState extends ConsumerState<ReplyThreadScreen> {
                         hashtag,
                       );
                       if (matchingHashtag != null) {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => TempHashtagScreen(
-                              hashtagId: matchingHashtag.id,
-                              hashtagText: matchingHashtag.tagText,
-                            ),
-                          ),
+                        context.push(
+                          "/hashtagTweetsScreen",
+                          extra: [matchingHashtag.id, matchingHashtag.tagText],
                         );
                       }
                     },
@@ -820,13 +815,9 @@ class _ReplyThreadScreenState extends ConsumerState<ReplyThreadScreen> {
                 hashtag,
               );
               if (matchingHashtag != null) {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => TempHashtagScreen(
-                      hashtagId: matchingHashtag.id,
-                      hashtagText: matchingHashtag.tagText,
-                    ),
-                  ),
+                context.push(
+                  "/hashtagTweetsScreen",
+                  extra: [matchingHashtag.id, matchingHashtag.tagText],
                 );
               }
             },

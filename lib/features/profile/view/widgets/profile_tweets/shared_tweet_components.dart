@@ -112,13 +112,20 @@ class BasicTweetWidget extends ConsumerWidget implements ProfileTweet {
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        SvgPicture.asset(
-                          "assets/svg/grok.svg",
-                          width: 20,
-                          height: 20,
-                          colorFilter: const ColorFilter.mode(
-                            Colors.grey,
-                            BlendMode.srcIn,
+                        GestureDetector(
+                          onTap: () {
+                            context.push(
+                              "/tweetDetailsScreen/${this.profilePostModel.id}",
+                            );
+                          },
+                          child: SvgPicture.asset(
+                            "assets/svg/grok.svg",
+                            width: 20,
+                            height: 20,
+                            colorFilter: const ColorFilter.mode(
+                              Colors.grey,
+                              BlendMode.srcIn,
+                            ),
                           ),
                         ),
                         SizedBox(width: 8),
@@ -719,18 +726,38 @@ class _ExpandableLinkedTextState extends State<ExpandableLinkedText> {
                   context.push("/profilescreen/${token.substring(1)}");
                 } catch (e) {}
               } else if (token.contains("#")) {
-                final hash_word = token.substring(1);
-                final hash_map = hashs.firstWhere(
-                  (h) => h["hashtagName"] == hash_word.toLowerCase(),
-                );
-                if (hash_map["id"] != null &&
-                    hash_map["hashtagName"] != null &&
-                    hash_map["id"]!.isNotEmpty &&
-                    hash_map["hashtagName"]!.isNotEmpty)
-                  context.push(
-                    "/hashtagTweetsScreen",
-                    extra: [hash_map["id"], hash_map["hashtagName"]],
+                try {
+                  final hash_word = token.substring(1);
+                  final hash_map = hashs.firstWhere(
+                    (h) => h["hashtagName"] == hash_word.toLowerCase(),
                   );
+                  if (hash_map != null &&
+                      hash_map["id"] != null &&
+                      hash_map["hashtagName"] != null &&
+                      hash_map["id"]!.isNotEmpty &&
+                      hash_map["hashtagName"]!.isNotEmpty)
+                    context.push(
+                      "/hashtagTweetsScreen",
+                      extra: [hash_map["id"], hash_map["hashtagName"]],
+                    );
+                  else {
+                    if (mounted)
+                      showSmallPopUpMessage(
+                        context: context,
+                        message: "hastag id isn't found",
+                        borderColor: Colors.red,
+                        icon: Icon(Icons.error),
+                      );
+                  }
+                } catch (e) {
+                  if (mounted)
+                    showSmallPopUpMessage(
+                      context: context,
+                      message: "hastag id isn't found",
+                      borderColor: Colors.red,
+                      icon: Icon(Icons.error),
+                    );
+                }
               }
             },
         ),

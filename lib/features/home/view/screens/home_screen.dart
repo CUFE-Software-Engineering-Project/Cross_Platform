@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lite_x/core/providers/current_user_provider.dart';
 import 'package:lite_x/core/view/screen/app_shell.dart';
 import 'package:lite_x/features/home/models/tweet_model.dart';
@@ -394,7 +395,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             ref.read(homeViewModelProvider.notifier).toggleLike(tweet.id);
           },
           onShare: () {},
-          onReach: () {},
+          onReach: () {
+            context.push("/likersRetweetersScreen/${tweet.id}");
+          },
           onSave: () {
             ref.read(homeViewModelProvider.notifier).toggleBookmark(tweet.id);
           },

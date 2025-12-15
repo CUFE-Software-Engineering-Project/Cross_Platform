@@ -19,9 +19,12 @@ class ExploreCategoryTab extends ConsumerWidget {
     final state = ref.watch(exploreCategoryProvider(categoryName));
     final notifier = ref.read(exploreCategoryProvider(categoryName).notifier);
 
-    // Load initial data on first build
+    // Load initial data on first build (only once)
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (state.tweets.isEmpty && !state.isLoading && !state.hasError) {
+      if (state.tweets.isEmpty &&
+          !state.isLoading &&
+          !state.hasError &&
+          !state.didInitialLoadAttempt) {
         notifier.loadInitial();
       }
     });

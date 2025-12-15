@@ -60,6 +60,24 @@ final followersProvider =
       return repo.getFollowers(username);
     });
 
+final likersProvider =
+    FutureProvider.family<Either<Failure, List<UserModel>>, String>((
+      ref,
+      tweetId,
+    ) async {
+      final repo = ref.watch(profileRepoProvider);
+      return repo.getLikers(tweetId);
+    });
+
+final retweetersProvider =
+    FutureProvider.family<Either<Failure, List<UserModel>>, String>((
+      ref,
+      tweetId,
+    ) async {
+      final repo = ref.watch(profileRepoProvider);
+      return repo.getRetweeters(tweetId);
+    });
+
 final followingsProvider =
     FutureProvider.family<Either<Failure, List<UserModel>>, String>((
       ref,

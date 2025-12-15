@@ -625,10 +625,6 @@ class _InterActionsRowOfTweetState
                         ref.refresh(
                           profilePostsProvider(widget.tweet.userUserName),
                         );
-                        final currUser = ref.watch(currentUserProvider);
-                        if (currUser != null) {
-                          ref.refresh(profilePostsProvider(currUser.username));
-                        }
                       }
                     },
                   );
@@ -672,21 +668,26 @@ class _InterActionsRowOfTweetState
             onTap: () {
               //   TODO: do activity action
             },
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SvgPicture.asset(
-                  "assets/svg/activity.svg",
-                  width: 20,
-                  height: 20,
-                  colorFilter: ColorFilter.mode(Colors.grey, BlendMode.srcIn),
-                ),
-                if (widget.tweet.activityNumber > 0)
-                  Text(
-                    Shared.formatCount(widget.tweet.activityNumber),
-                    style: TextStyle(color: Colors.grey, fontSize: 15),
+            child: GestureDetector(
+              onTap: () {
+                context.push("/likersRetweetersScreen/${widget.tweet.id}");
+              },
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SvgPicture.asset(
+                    "assets/svg/activity.svg",
+                    width: 20,
+                    height: 20,
+                    colorFilter: ColorFilter.mode(Colors.grey, BlendMode.srcIn),
                   ),
-              ],
+                  if (widget.tweet.activityNumber > 0)
+                    Text(
+                      Shared.formatCount(widget.tweet.activityNumber),
+                      style: TextStyle(color: Colors.grey, fontSize: 15),
+                    ),
+                ],
+              ),
             ),
           ),
           Row(

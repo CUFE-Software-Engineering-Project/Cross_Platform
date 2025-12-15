@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lite_x/core/providers/current_user_provider.dart';
@@ -42,31 +44,72 @@ class _ExploreScreenbodyState extends ConsumerState<ExploreScreenBody> {
             );
           },
           (pm) {
-            return DefaultTabController(
-              length: _tabs.length,
-              child: Scaffold(
-                appBar: TabBar(
-                  indicatorColor: Color(0xFF1DA1F2),
-                  indicatorSize: TabBarIndicatorSize.label,
-                  isScrollable: true,
-                  tabAlignment: TabAlignment.start,
-                  dividerHeight: 0.25,
-                  labelColor: Colors.white,
-                  unselectedLabelStyle: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                  labelStyle: TextStyle(fontWeight: FontWeight.bold),
-                  unselectedLabelColor: Colors.grey,
-                  tabs: _tabs.map((x) => Tab(text: x)).toList(),
-                ),
-                body: TabBarView(
-                  children: _tabs
-                      .map((x) => ExploreCategoryTab(categoryName: x, pm: pm))
-                      .toList(),
-                ),
-              ),
-            );
+            return Platform.isAndroid
+                ? DefaultTabController(
+                    length: _tabs.length,
+                    child: Scaffold(
+                      appBar: TabBar(
+                        indicatorColor: Color(0xFF1DA1F2),
+                        indicatorSize: TabBarIndicatorSize.label,
+                        isScrollable: true,
+                        tabAlignment: TabAlignment.start,
+                        dividerHeight: 0.25,
+                        labelColor: Colors.white,
+                        unselectedLabelStyle: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                        labelStyle: TextStyle(fontWeight: FontWeight.bold),
+                        unselectedLabelColor: Colors.grey,
+                        tabs: _tabs.map((x) => Tab(text: x)).toList(),
+                      ),
+                      body: TabBarView(
+                        children: _tabs
+                            .map(
+                              (x) =>
+                                  ExploreCategoryTab(categoryName: x, pm: pm),
+                            )
+                            .toList(),
+                      ),
+                    ),
+                  )
+                : DefaultTabController(
+                    length: _tabs.length,
+                    child: Column(
+                      children: [
+                        Material(
+                          color: Theme.of(context).scaffoldBackgroundColor,
+                          child: TabBar(
+                            indicatorColor: Color(0xFF1DA1F2),
+                            indicatorSize: TabBarIndicatorSize.label,
+                            isScrollable: true,
+                            tabAlignment: TabAlignment.start,
+                            dividerHeight: 0.25,
+                            labelColor: Colors.white,
+                            unselectedLabelStyle: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                            labelStyle: TextStyle(fontWeight: FontWeight.bold),
+                            unselectedLabelColor: Colors.grey,
+                            tabs: _tabs.map((x) => Tab(text: x)).toList(),
+                          ),
+                        ),
+                        Expanded(
+                          child: TabBarView(
+                            children: _tabs
+                                .map(
+                                  (x) => ExploreCategoryTab(
+                                    categoryName: x,
+                                    pm: pm,
+                                  ),
+                                )
+                                .toList(),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
           },
         );
       },

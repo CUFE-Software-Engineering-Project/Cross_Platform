@@ -44,7 +44,6 @@ class ProfileRepoImpl implements ProfileRepo {
 
       return Right(profileData);
     } on DioException catch (e) {
-      print("can't get profile data");
       if (userName == currentUsername) {
         await storageService.init();
         final localData = await storageService.getProfileData(currentUsername);
@@ -100,7 +99,6 @@ class ProfileRepoImpl implements ProfileRepo {
         "address": newModel.location,
         "dateOfBirth": dob,
       };
-      print(json.toString());
       final res = await _dio.patch("api/users/${newModel.id}", data: json);
 
       return Right(ProfileModel.fromJson(res.data));
@@ -130,7 +128,6 @@ class ProfileRepoImpl implements ProfileRepo {
     String tweetId,
   ) async {
     try {
-      // print("Start api ---------------------**");
       final res = await _dio.get("api/tweets/$tweetId");
 
       final Map<String, dynamic> json = res.data as Map<String, dynamic>;
@@ -207,8 +204,6 @@ class ProfileRepoImpl implements ProfileRepo {
   // user interactions
 
   Future<Either<Failure, List<UserModel>>> getFollowers(String userName) async {
-    // await Future.delayed(const Duration(seconds: 1));
-
     try {
       final response = await _dio.get("api/followers/$userName");
       List<dynamic> jsonList = response.data['users'] as List<dynamic>;
@@ -217,7 +212,6 @@ class ProfileRepoImpl implements ProfileRepo {
           .toList();
       return Right(usersList);
     } catch (e) {
-      // print("\n--------------\n$e\n-------------------\n");
       return Left(Failure("couldn't get user followers"));
     }
   }
@@ -232,7 +226,6 @@ class ProfileRepoImpl implements ProfileRepo {
           .map((p) {
             p["photo"] = p["profileMedia"]?["id"];
             p["isFollowing"] = p["isFollowed"];
-            print(p.toString());
             return UserModel.fromJson(p as Map<String, dynamic>);
           })
           .toList()
@@ -260,7 +253,6 @@ class ProfileRepoImpl implements ProfileRepo {
           .toList();
       return Right(usersList);
     } catch (e) {
-      // print("\n--------------\n$e\n-------------------\n");
       return Left(Failure("couldn't get user followings"));
     }
   }
@@ -279,7 +271,6 @@ class ProfileRepoImpl implements ProfileRepo {
           .toList();
       return Right(verified);
     } catch (e) {
-      // print("\n--------------\n$e\n-------------------\n");
       return Left(Failure("couldn't get user verified followers"));
     }
   }
@@ -299,7 +290,6 @@ class ProfileRepoImpl implements ProfileRepo {
           .toList();
       return Right(youKnow);
     } catch (e) {
-      // print("\n--------------\n$e\n-------------------\n");
       return Left(Failure("couldn't get user verified followers"));
     }
   }
@@ -348,6 +338,7 @@ class ProfileRepoImpl implements ProfileRepo {
       await _dio.post("api/blocks/$username");
       final myUsername = ref.read(myUserNameProvider);
       ref.refresh(getBlockedUsersProvider(myUsername));
+      ref.refresh(profileDataProvider(username));
 
       return const Right(());
     } catch (e) {
@@ -360,6 +351,7 @@ class ProfileRepoImpl implements ProfileRepo {
       await _dio.delete("api/blocks/$username");
       final myUsername = ref.read(myUserNameProvider);
       ref.refresh(getBlockedUsersProvider(myUsername));
+      ref.refresh(profileDataProvider(username));
       return const Right(());
     } catch (e) {
       return Left(Failure("couldn't unblock user"));
@@ -611,7 +603,6 @@ class ProfileRepoImpl implements ProfileRepo {
           ),
         );
     } catch (e) {
-      print(e);
       return Left(Failure("couldn't change email, Please try again later"));
     }
   }
@@ -621,8 +612,6 @@ class ProfileRepoImpl implements ProfileRepo {
     String code,
   ) async {
     try {
-      print(newEmail);
-      print(code);
       await _dio.post(
         "api/auth/verify-new-email",
         data: {"email": newEmail, "code": code.toString()},
@@ -654,13 +643,6 @@ class ProfileRepoImpl implements ProfileRepo {
     String confirmNewPassword,
   ) async {
     try {
-      print(
-        {
-          "oldPassword": oldPassword,
-          "newPassword": newPassword,
-          "confirmPassword": confirmNewPassword,
-        }.toString(),
-      );
       await _dio.post(
         "api/auth/change-password",
         data: {
@@ -692,7 +674,6 @@ class ProfileRepoImpl implements ProfileRepo {
           .map((p) {
             p["photo"] = p["profileMedia"]?["id"];
             p["isFollowing"] = p["isFollowed"];
-            print(p.toString());
             return UserModel.fromJson(p as Map<String, dynamic>);
           })
           .toList()
@@ -784,7 +765,6 @@ class ProfileRepoImpl implements ProfileRepo {
     try {
       Response<dynamic> res;
       final queryParams = <String, dynamic>{};
-      print("cursor: " + cursor.toString() + "999999999999999999");
       if (categoryName != "general") {
         queryParams['category'] = categoryName;
       }
@@ -796,18 +776,53 @@ class ProfileRepoImpl implements ProfileRepo {
       res = await _dio.get("api/explore", queryParameters: queryParams);
 
       final List<dynamic> jsonList = res.data["data"] ?? [];
-      final String? nextCursor = res.data["cursor"] as String?;
-
+      final dynamic nextCursor = res.data["cursor"];
       final tweets = convertJsonListToTweetList(jsonList, false);
 
-      print("cursor: " + cursor.toString() + "999999999999999999");
-
-      return Right(PaginatedTweets(tweets: tweets, nextCursor: nextCursor));
-    } catch (e) {
-      print(
-        "fail-----------------------------------------------____ + ${e.toString()}",
+      return Right(
+        PaginatedTweets(
+          tweets: tweets,
+          nextCursor: nextCursor == null || nextCursor == 0 ? null : nextCursor,
+        ),
       );
+    } catch (e) {
       return Left(Failure('Failed to load ${categoryName} tweets'));
+    }
+  }
+
+  Future<Either<Failure, List<UserModel>>> getLikers(String tweetId) async {
+    try {
+      final response = await _dio.get("api/tweets/${tweetId}/likes");
+      List<dynamic> jsonList = response.data['data'] as List<dynamic>;
+      final List<UserModel> peoplemodels = jsonList
+          .map((p) {
+            p["photo"] = p["profileMedia"]?["id"];
+            p["isFollowing"] = p["isFollowed"];
+            return UserModel.fromJson(p as Map<String, dynamic>);
+          })
+          .toList()
+          .cast<UserModel>();
+      return Right(peoplemodels);
+    } catch (e) {
+      return Left(Failure("couldn't get tweet likers"));
+    }
+  }
+
+  Future<Either<Failure, List<UserModel>>> getRetweeters(String tweetId) async {
+    try {
+      final response = await _dio.get("api/tweets/${tweetId}/retweets");
+      List<dynamic> jsonList = response.data['data'] as List<dynamic>;
+      final List<UserModel> peoplemodels = jsonList
+          .map((p) {
+            p["photo"] = p["profileMedia"]?["id"];
+            p["isFollowing"] = p["isFollowed"];
+            return UserModel.fromJson(p as Map<String, dynamic>);
+          })
+          .toList()
+          .cast<UserModel>();
+      return Right(peoplemodels);
+    } catch (e) {
+      return Left(Failure("couldn't get tweet retweeters"));
     }
   }
 }

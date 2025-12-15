@@ -26,6 +26,7 @@ import 'package:lite_x/features/chat/view/screens/conversations_screen.dart';
 import 'package:lite_x/features/explore/view/explore_screen.dart';
 import 'package:lite_x/features/home/models/tweet_model.dart';
 import 'package:lite_x/features/home/view/screens/quote_composer_screen.dart';
+import 'package:lite_x/features/profile/view/widgets/profile_tweets/likers_retweeters_screen.dart';
 import 'package:lite_x/features/trends/view/screens/explore_screen.dart';
 import 'package:lite_x/features/trends/view/screens/shatag_tweets_screen.dart';
 import 'package:lite_x/features/trends/view/screens/trends_screen.dart';
@@ -484,6 +485,16 @@ class Approuter {
         pageBuilder: (context, state) => CustomTransitionPage(
           child: MentionedTweetsScreen(
             username: state.pathParameters['username'] as String,
+          ),
+          transitionsBuilder: _slideRightTransitionBuilder,
+        ),
+      ),
+      GoRoute(
+        name: RouteConstants.LikersRetweetersScreen,
+        path: "/likersRetweetersScreen/:tweetId",
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: LikersRetweetersScreen(
+            tweetId: state.pathParameters["tweetId"] as String,
           ),
           transitionsBuilder: _slideRightTransitionBuilder,
         ),
