@@ -112,13 +112,20 @@ class BasicTweetWidget extends ConsumerWidget implements ProfileTweet {
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        SvgPicture.asset(
-                          "assets/svg/grok.svg",
-                          width: 20,
-                          height: 20,
-                          colorFilter: const ColorFilter.mode(
-                            Colors.grey,
-                            BlendMode.srcIn,
+                        GestureDetector(
+                          onTap: () {
+                            context.push(
+                              "/tweetDetailsScreen/${this.profilePostModel.id}",
+                            );
+                          },
+                          child: SvgPicture.asset(
+                            "assets/svg/grok.svg",
+                            width: 20,
+                            height: 20,
+                            colorFilter: const ColorFilter.mode(
+                              Colors.grey,
+                              BlendMode.srcIn,
+                            ),
                           ),
                         ),
                         SizedBox(width: 8),

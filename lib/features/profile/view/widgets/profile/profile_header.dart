@@ -215,26 +215,29 @@ class _ProfileAvatarRow extends ConsumerWidget {
             Padding(
               padding: const EdgeInsets.only(top: 60),
               child: GestureDetector(
-                onTap: () async {
-                  final result = await ref
+                onTap: () {
+                  ref
                       .read(conversationsViewModelProvider.notifier)
                       .createChat(
                         isDMChat: true,
                         recipientIds: [profileData.id],
-                      );
-                  result.fold((l) => print("Error"), (chatModel) {
-                    context.pushNamed(
-                      RouteConstants.ChatScreen,
-                      pathParameters: {'chatId': chatModel.id},
-                      extra: {
-                        'title': profileData.displayName,
-                        'subtitle': "${profileData.username}",
-                        'avatarUrl': profileData.avatarId,
-                        'isGroup': false,
-                        'recipientFollowersCount': profileData.followersCount,
-                      },
-                    );
-                  });
+                      )
+                      .then((result) {
+                        result.fold((l) => print("Error"), (chatModel) {
+                          context.pushNamed(
+                            RouteConstants.ChatScreen,
+                            pathParameters: {'chatId': chatModel.id},
+                            extra: {
+                              'title': profileData.displayName,
+                              'subtitle': "${profileData.username}",
+                              'avatarUrl': profileData.avatarId,
+                              'isGroup': false,
+                              'recipientFollowersCount':
+                                  profileData.followersCount,
+                            },
+                          );
+                        });
+                      });
                 },
                 child: Icon(Icons.mail_outline),
               ),

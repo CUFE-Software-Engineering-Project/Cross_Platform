@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lite_x/features/profile/view/screens/profile_screen.dart';
+import 'package:lite_x/features/profile/view_model/providers.dart';
 import 'expandable_text.dart';
 import 'media_gallery.dart';
 import '../../models/tweet_model.dart';
 
-class TweetWidget extends StatelessWidget {
+class TweetWidget extends ConsumerWidget {
   final String userDisplayName;
   final String username;
   final String timeAgo;
@@ -84,7 +87,7 @@ class TweetWidget extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return InkWell(
       onTap: onTap,
       child: Container(

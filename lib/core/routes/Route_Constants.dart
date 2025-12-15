@@ -61,4 +61,5 @@ class RouteConstants {
   static String WhoToFollowScreen = "WhoToFollowScreen";
   static String notifications = "notifications";
   static String MentionedTweetsScreen = "MentionedTweetsScreen";
+  static String LikersRetweetersScreen = "LikersRetweetersScreen";
 }
