@@ -80,11 +80,13 @@ EOF
               script {
                 try {
                   sh '''
-                    echo "Kaniko building lint target (no push, no cache)..."
+                    echo "Kaniko building lint target..."
                     /kaniko/executor \
                       --context=. \
                       --dockerfile=Dockerfile \
-                      --no-push \
+                      --destination=${DOCKER_IMAGE}:build-TEST \
+                      --cache=true \
+                      --cache-ttl=24h \
                       --target=lint 
                   '''
                 } catch (err) {
@@ -101,12 +103,14 @@ EOF
             container('kaniko') {
               script {
                 sh '''
-                  echo "Kaniko building test target (no push)..."
-                  #/kaniko/executor \
-                   # --context=. \
-                    #--dockerfile=Dockerfile \
-                    #--no-push \
-                    #--target=test
+                  echo "Kaniko building test target..."
+                  /kaniko/executor \
+                    --context=. \
+                    --dockerfile=Dockerfile \
+                    --destination=${DOCKER_IMAGE}:build-TEST \
+                    --cache=true \
+                    --cache-ttl=24h \
+                    --target=test
                 '''
               }
             }

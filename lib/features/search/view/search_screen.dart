@@ -4,13 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lite_x/core/routes/Route_Constants.dart';
-import 'package:lite_x/core/theme/palette.dart';
+import 'package:lite_x/core/theme/Palette.dart';
 import 'package:lite_x/features/search/providers/search_providers.dart';
 import 'package:lite_x/features/search/view/search_results_screen.dart';
 import 'package:lite_x/features/search/view/widgets/search_bar.dart';
 import 'package:lite_x/features/search/view/widgets/people_card.dart';
 import 'package:lite_x/features/profile/models/shared.dart';
-
 
 class SearchScreen extends ConsumerStatefulWidget {
   final Map<String, dynamic>? extra;
@@ -61,10 +60,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     ref.read(searchHistoryProvider.notifier).add(trimmed);
     context.pushNamed(
       RouteConstants.SearchScreen,
-      extra: <String, dynamic>{
-        'query': trimmed,
-        'showResults': true,
-      },
+      extra: <String, dynamic>{'query': trimmed, 'showResults': true},
     );
   }
 
@@ -91,19 +87,16 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           if (!hasQuery) ...[
             if (history.isEmpty)
               Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: Text(
-                      'Try searching for people, lists, or keywords',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey,
-                      ),
-                    ),
+                padding: const EdgeInsets.all(16),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: Text(
+                    'Try searching for people, lists, or keywords',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 16, color: Colors.grey),
                   ),
-                )
+                ),
+              )
             else ...[
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -135,8 +128,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                     if (!isUser) {
                       // Keyword/text recent — keep existing simple style
                       return ListTile(
-                        leading:
-                            const Icon(Icons.history, color: Palette.icons),
+                        leading: const Icon(
+                          Icons.history,
+                          color: Palette.icons,
+                        ),
                         title: Text(item),
                         trailing: IconButton(
                           icon: const Icon(Icons.close, size: 18),
@@ -152,16 +147,17 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
                     // User recent: show avatar, name, and @username like search results
                     final username = item.substring(1);
-                    final usersAsync =
-                        ref.watch(suggestionsProvider(username));
+                    final usersAsync = ref.watch(suggestionsProvider(username));
 
                     return usersAsync.when(
                       data: (users) {
                         if (users.isEmpty) {
                           // Fallback to simple tile if no user found
                           return ListTile(
-                            leading: const Icon(Icons.history,
-                                color: Palette.icons),
+                            leading: const Icon(
+                              Icons.history,
+                              color: Palette.icons,
+                            ),
                             title: Text(item),
                             trailing: IconButton(
                               icon: const Icon(Icons.close, size: 18),
@@ -184,15 +180,15 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
                         return ListTile(
                           leading: ClipOval(
-              child: SizedBox(
-                width: 40,
-                height: 40,
-                child: BuildSmallProfileImage(
-                  mediaId: user.avatarUrl,
-                  radius: 20,
-                ),
-              ),
-            ),
+                            child: SizedBox(
+                              width: 40,
+                              height: 40,
+                              child: BuildSmallProfileImage(
+                                mediaId: user.avatarUrl,
+                                radius: 20,
+                              ),
+                            ),
+                          ),
                           title: Text(
                             user.name,
                             overflow: TextOverflow.ellipsis,
@@ -217,13 +213,15 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                                 .remove(item),
                           ),
                           onTap: () {
-                            context.push(
-                                '/profilescreen/${user.userName}');
+                            context.push('/profilescreen/${user.userName}');
                           },
                         );
                       },
                       loading: () => ListTile(
-                        leading: const Icon(Icons.history, color: Palette.icons),
+                        leading: const Icon(
+                          Icons.history,
+                          color: Palette.icons,
+                        ),
                         title: Text(item),
                         trailing: IconButton(
                           icon: const Icon(Icons.close, size: 18),
@@ -236,7 +234,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                         },
                       ),
                       error: (e, s) => ListTile(
-                        leading: const Icon(Icons.history, color: Palette.icons),
+                        leading: const Icon(
+                          Icons.history,
+                          color: Palette.icons,
+                        ),
                         title: Text(item),
                         trailing: IconButton(
                           icon: const Icon(Icons.close, size: 18),
@@ -253,17 +254,19 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 ),
               ),
             ],
-          ]
-          else ...[
+          ] else ...[
             Expanded(
-              child: ref.watch(suggestionsProvider(trimmedQuery)).when(
+              child: ref
+                  .watch(suggestionsProvider(trimmedQuery))
+                  .when(
                     data: (users) {
                       if (users.isEmpty) {
                         return ListTile(
                           title: TextButton(
                             style: TextButton.styleFrom(
                               padding: EdgeInsets.zero, // removes extra padding
-                              alignment: Alignment.centerLeft, // aligns like normal list item
+                              alignment: Alignment
+                                  .centerLeft, // aligns like normal list item
                             ),
                             onPressed: () {
                               _onSubmitted(trimmedQuery);
@@ -296,9 +299,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                         },
                       );
                     },
-                    loading: () => const Center(
-                      child: CircularProgressIndicator(),
-                    ),
+                    loading: () =>
+                        const Center(child: CircularProgressIndicator()),
                     error: (e, s) => const Center(
                       child: Text(
                         'Something went wrong. Please try again.',

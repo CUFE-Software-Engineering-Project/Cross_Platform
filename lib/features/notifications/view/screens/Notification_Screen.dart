@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lite_x/core/theme/palette.dart';
+import 'package:lite_x/core/theme/Palette.dart';
 import 'package:lite_x/features/home/view/widgets/profile_side_drawer.dart';
 import '../widgets/notification_tabs.dart';
 import '../widgets/status_bar.dart';
@@ -24,9 +24,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
         child: Column(
           children: [
             Statusbar(scaffoldKey: _scaffoldKey),
-            const Expanded(
-              child: NotificationTabs(),
-            ),
+            const Expanded(child: NotificationTabs()),
           ],
         ),
       ),

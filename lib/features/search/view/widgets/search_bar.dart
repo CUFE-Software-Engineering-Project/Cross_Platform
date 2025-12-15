@@ -1,8 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:lite_x/core/theme/palette.dart';
-
+import 'package:lite_x/core/theme/Palette.dart';
 
 class AppSearchBar extends StatefulWidget implements PreferredSizeWidget {
   final String initialText;
@@ -81,56 +80,55 @@ class _AppSearchBarState extends State<AppSearchBar> {
         child: Row(
           children: [
             Expanded(
-                child: TextField(
-                  focusNode: _focusNode,
-                  controller: _controller,
-                  onTap: widget.onTap,
-                  onChanged: _onChanged,
-                  onSubmitted: (s) {
-                    if (_submitCooldown?.isActive ?? false) return;
-                    widget.onSubmitted(s);
-                    _submitCooldown =
-                        Timer(const Duration(milliseconds: 800), () {});
-                  },
-                  textInputAction: TextInputAction.search,
-                  style: const TextStyle(
-                    color: Palette.textPrimary, // your primary text color
+              child: TextField(
+                focusNode: _focusNode,
+                controller: _controller,
+                onTap: widget.onTap,
+                onChanged: _onChanged,
+                onSubmitted: (s) {
+                  if (_submitCooldown?.isActive ?? false) return;
+                  widget.onSubmitted(s);
+                  _submitCooldown = Timer(
+                    const Duration(milliseconds: 800),
+                    () {},
+                  );
+                },
+                textInputAction: TextInputAction.search,
+                style: const TextStyle(
+                  color: Palette.textPrimary, // your primary text color
+                  fontSize: 15,
+                ),
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: Palette.inputBackground, // background color
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
+                  prefixIcon: const Icon(
+                    Icons.search,
+                    size: 20,
+                    color: Palette.textSecondary,
+                  ),
+                  hintText: 'Search',
+                  hintStyle: const TextStyle(
+                    color: Palette.textSecondary,
                     fontSize: 15,
                   ),
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: Palette.inputBackground, // background color
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 10,
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    borderSide: BorderSide(
+                      color: isFocused ? Colors.blue : Colors.transparent,
+                      width: 1,
                     ),
-                    prefixIcon: const Icon(
-                      Icons.search,
-                      size: 20,
-                      color: Palette.textSecondary,
-                    ),
-                    hintText: 'Search',
-                    hintStyle: const TextStyle(
-                      color: Palette.textSecondary,
-                      fontSize: 15,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(20),
-                      borderSide: BorderSide(
-                        color: isFocused ? Colors.blue : Colors.transparent,
-                        width: 1,
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(20),
-                      borderSide: const BorderSide(
-                        color: Colors.blue,
-                        width: 2,
-                      ),
-                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    borderSide: const BorderSide(color: Colors.blue, width: 2),
                   ),
                 ),
               ),
+            ),
 
             const SizedBox(width: 16),
             Padding(

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
-import 'package:lite_x/core/theme/palette.dart';
+import 'package:lite_x/core/theme/Palette.dart';
 import 'package:lite_x/core/providers/dio_interceptor.dart';
 import 'package:lite_x/features/home/repositories/home_repository.dart';
 import 'package:lite_x/features/home/view/screens/quote_composer_screen.dart';
@@ -245,12 +245,7 @@ class _InteractionBarState extends ConsumerState<InteractionBar> {
             size: 18,
           ),
         ),
-        _buildButton(
-          Icons.ios_share_outlined,
-          0,
-          Palette.reply,
-          _handleQuote,
-        ),
+        _buildButton(Icons.ios_share_outlined, 0, Palette.reply, _handleQuote),
       ],
     );
   }

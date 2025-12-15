@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../notification_model.dart';
-import 'package:lite_x/core/theme/palette.dart';
+import 'package:lite_x/core/theme/Palette.dart';
 import '../empty/verified_empty.dart';
 
 class VerifiedTab extends StatefulWidget {
