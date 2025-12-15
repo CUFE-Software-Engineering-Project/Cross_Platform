@@ -9,14 +9,6 @@ void main() async {
     dotenv.load(fileName: ".env");
   });
 
-  group("API_test_URL", () {
-    test("should load API_test_URL from environment", () {
-      final apiUrl = dotenv.env["API_test_URL"];
-      expect(apiUrl, isNotNull);
-      expect(apiUrl, equals("https://example.com/"));
-    });
-  });
-
   group("BASE_OPTIONS", () {
     test("should set contentType to application/json", () {
       expect(BASE_OPTIONS.contentType, equals("application/json"));

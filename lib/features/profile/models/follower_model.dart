@@ -16,9 +16,9 @@ class FollowerModel {
   // JSON serialization
   factory FollowerModel.fromJson(Map<String, dynamic> json) {
     return FollowerModel(
-      user: UserModel.fromJson(
-        json['user'] ??
-            UserModel(
+      user: json['user'] != null
+          ? UserModel.fromMap(json['user'] as Map<String, dynamic>)
+          : UserModel(
               name: "",
               email: "",
               dob: "",
@@ -27,7 +27,6 @@ class FollowerModel {
               isEmailVerified: false,
               isVerified: false,
             ),
-      ),
       isFollowing: json['isFollowing'] ?? false,
       isFollower: json['isFollower'] ?? false,
       followedAt: json['followedAt'] != null

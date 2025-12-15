@@ -594,13 +594,13 @@ class _InterActionsRowOfTweetState
                       if (mounted) setState(() {});
                     },
                     (r) {
-                      // ref.refresh(
-                      //   profilePostsProvider(widget.tweet.userUserName),
-                      // );
-                      // final currUser = ref.watch(currentUserProvider);
-                      // if (currUser != null) {
-                      //   ref.refresh(profilePostsProvider(currUser.username));
-                      // }
+                      ref.refresh(
+                        profilePostsProvider(widget.tweet.userUserName),
+                      );
+                      final currUser = ref.watch(currentUserProvider);
+                      if (currUser != null) {
+                        ref.refresh(profilePostsProvider(currUser.username));
+                      }
                     },
                   );
                 });

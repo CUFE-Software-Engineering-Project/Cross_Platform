@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coverage Report</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #fff;
+            padding: 5px;
+            margin: 0;
+        }
+        
+        .container {
+            max-width: 100%;
+            margin: 0;
+            background: white;
+            overflow: hidden;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        thead {
+            background: #f8f9fa;
+        }
+        
+        th {
+            text-align: left;
+            padding: 6px 10px;
+            font-weight: 600;
+            color: #666;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            border-bottom: 2px solid #eee;
+        }
+        
+        td {
+            padding: 5px 10px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .file-path {
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 11px;
+            color: #333;
+        }
+        
+        .coverage-bar {
+            width: 100%;
+            height: 4px;
+            background: #e0e0e0;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 2px;
+        }
+        
+        .coverage-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+        
+        .coverage-high {
+            background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+        }
+        
+        .coverage-medium {
+            background: linear-gradient(90deg, #f59e0b 0%, #d97706 100%);
+        }
+        
+        .coverage-low {
+            background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%);
+        }
+        
+        .coverage-text {
+            font-weight: 600;
+            font-size: 11px;
+        }
+        
+        .high {
+            color: #10b981;
+        }
+        
+        .medium {
+            color: #f59e0b;
+        }
+        
+        .low {
+            color: #ef4444;
+        }
+        
+        .stats {
+            font-size: 10px;
+            color: #666;
+        }
+        
+        .feature-tag {
+            display: inline-block;
+            padding: 2px 5px;
+            border-radius: 2px;
+            font-size: 9px;
+            font-weight: 600;
+            margin-right: 5px;
+        }
+        
+        .tag-media {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .tag-profile {
+            background: #fce7f3;
+            color: #9f1239;
+        }
+        
+        .tag-trends {
+            background: #dcfce7;
+            color: #166534;
+        }
+        
+        .tag-settings {
+            background: #fef3c7;
+            color: #92400e;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <table>
+            <thead>
+                <tr>
+                    <th>File</th>
+                    <th style="text-align: center;">Coverage</th>
+                    <th style="text-align: center;">Lines</th>
+                </tr>
+            </thead>
+            <tbody>
+
+                <tr>
+                    <td>
+                        <span class="feature-tag tag-profile">PROFILE</span>
+                        <div class="file-path">lib/features/profile/view_model/providers.dart</div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="coverage-text high">88.4%</div>
+                        <div class="coverage-bar">
+                            <div class="coverage-fill coverage-high" style="width: 88.41463414634147%"></div>
+                        </div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="stats">145 / 164</div>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>
+                        <span class="feature-tag tag-profile">PROFILE</span>
+                        <div class="file-path">lib/features/profile/models/shared.dart</div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="coverage-text high">90.9%</div>
+                        <div class="coverage-bar">
+                            <div class="coverage-fill coverage-high" style="width: 90.8675799086758%"></div>
+                        </div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="stats">398 / 438</div>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>
+                        <span class="feature-tag tag-profile">PROFILE</span>
+                        <div class="file-path">lib/features/profile/repositories/profile_repo_impl.dart</div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="coverage-text high">98.6%</div>
+                        <div class="coverage-bar">
+                            <div class="coverage-fill coverage-high" style="width: 98.6449864498645%"></div>
+                        </div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="stats">364 / 369</div>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>
+                        <span class="feature-tag tag-media">MEDIA</span>
+                        <div class="file-path">lib/features/media/download_media.dart</div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="coverage-text high">100.0%</div>
+                        <div class="coverage-bar">
+                            <div class="coverage-fill coverage-high" style="width: 100.0%"></div>
+                        </div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="stats">7 / 7</div>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>
+                        <span class="feature-tag tag-media">MEDIA</span>
+                        <div class="file-path">lib/features/media/view_model/providers.dart</div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="coverage-text high">100.0%</div>
+                        <div class="coverage-bar">
+                            <div class="coverage-fill coverage-high" style="width: 100.0%"></div>
+                        </div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="stats">18 / 18</div>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>
+                        <span class="feature-tag tag-media">MEDIA</span>
+                        <div class="file-path">lib/features/media/models/confirm_upload_model.dart</div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="coverage-text high">100.0%</div>
+                        <div class="coverage-bar">
+                            <div class="coverage-fill coverage-high" style="width: 100.0%"></div>
+                        </div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="stats">9 / 9</div>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>
+                        <span class="feature-tag tag-media">MEDIA</span>
+                        <div class="file-path">lib/features/media/models/request_upload_model.dart</div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="coverage-text high">100.0%</div>
+                        <div class="coverage-bar">
+                            <div class="coverage-fill coverage-high" style="width: 100.0%"></div>
+                        </div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="stats">7 / 7</div>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>
+                        <span class="feature-tag tag-profile">PROFILE</span>
+                        <div class="file-path">lib/features/profile/models/follower_model.dart</div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="coverage-text high">100.0%</div>
+                        <div class="coverage-bar">
+                            <div class="coverage-fill coverage-high" style="width: 100.0%"></div>
+                        </div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="stats">25 / 25</div>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>
+                        <span class="feature-tag tag-media">MEDIA</span>
+                        <div class="file-path">lib/features/media/models/shared.dart</div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="coverage-text high">100.0%</div>
+                        <div class="coverage-bar">
+                            <div class="coverage-fill coverage-high" style="width: 100.0%"></div>
+                        </div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="stats">3 / 3</div>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>
+                        <span class="feature-tag tag-media">MEDIA</span>
+                        <div class="file-path">lib/features/media/repository/media_repo_impl.dart</div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="coverage-text high">100.0%</div>
+                        <div class="coverage-bar">
+                            <div class="coverage-fill coverage-high" style="width: 100.0%"></div>
+                        </div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="stats">32 / 32</div>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>
+                        <span class="feature-tag tag-profile">PROFILE</span>
+                        <div class="file-path">lib/features/profile/models/create_reply_model.dart</div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="coverage-text high">100.0%</div>
+                        <div class="coverage-bar">
+                            <div class="coverage-fill coverage-high" style="width: 100.0%"></div>
+                        </div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="stats">2 / 2</div>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>
+                        <span class="feature-tag tag-profile">PROFILE</span>
+                        <div class="file-path">lib/features/profile/models/create_tweet_model.dart</div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="coverage-text high">100.0%</div>
+                        <div class="coverage-bar">
+                            <div class="coverage-fill coverage-high" style="width: 100.0%"></div>
+                        </div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="stats">2 / 2</div>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>
+                        <span class="feature-tag tag-profile">PROFILE</span>
+                        <div class="file-path">lib/features/profile/models/profile_model.dart</div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="coverage-text high">100.0%</div>
+                        <div class="coverage-bar">
+                            <div class="coverage-fill coverage-high" style="width: 100.0%"></div>
+                        </div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="stats">73 / 73</div>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>
+                        <span class="feature-tag tag-profile">PROFILE</span>
+                        <div class="file-path">lib/features/profile/models/profile_tweet_model.dart</div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="coverage-text high">100.0%</div>
+                        <div class="coverage-bar">
+                            <div class="coverage-fill coverage-high" style="width: 100.0%"></div>
+                        </div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="stats">36 / 36</div>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>
+                        <span class="feature-tag tag-profile">PROFILE</span>
+                        <div class="file-path">lib/features/profile/models/search_user_model.dart</div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="coverage-text high">100.0%</div>
+                        <div class="coverage-bar">
+                            <div class="coverage-fill coverage-high" style="width: 100.0%"></div>
+                        </div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="stats">27 / 27</div>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>
+                        <span class="feature-tag tag-profile">PROFILE</span>
+                        <div class="file-path">lib/features/profile/view/widgets/profile_tweets/profile_normal_tweet_widget.dart</div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="coverage-text high">100.0%</div>
+                        <div class="coverage-bar">
+                            <div class="coverage-fill coverage-high" style="width: 100.0%"></div>
+                        </div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="stats">5 / 5</div>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>
+                        <span class="feature-tag tag-profile">PROFILE</span>
+                        <div class="file-path">lib/features/profile/view/widgets/profile_tweets/profile_quote_widget.dart</div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="coverage-text high">100.0%</div>
+                        <div class="coverage-bar">
+                            <div class="coverage-fill coverage-high" style="width: 100.0%"></div>
+                        </div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="stats">39 / 39</div>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>
+                        <span class="feature-tag tag-profile">PROFILE</span>
+                        <div class="file-path">lib/features/profile/view/widgets/profile_tweets/profile_retweet_widget.dart</div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="coverage-text high">100.0%</div>
+                        <div class="coverage-bar">
+                            <div class="coverage-fill coverage-high" style="width: 100.0%"></div>
+                        </div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="stats">23 / 23</div>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>
+                        <span class="feature-tag tag-profile">PROFILE</span>
+                        <div class="file-path">lib/features/profile/models/tweet_reply_model.dart</div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="coverage-text high">100.0%</div>
+                        <div class="coverage-bar">
+                            <div class="coverage-fill coverage-high" style="width: 100.0%"></div>
+                        </div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="stats">48 / 48</div>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>
+                        <span class="feature-tag tag-profile">PROFILE</span>
+                        <div class="file-path">lib/features/profile/models/user_model.dart</div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="coverage-text high">100.0%</div>
+                        <div class="coverage-bar">
+                            <div class="coverage-fill coverage-high" style="width: 100.0%"></div>
+                        </div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="stats">47 / 47</div>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>
+                        <span class="feature-tag tag-trends">TRENDS</span>
+                        <div class="file-path">lib/features/trends/models/for_you_response_model.dart</div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="coverage-text high">100.0%</div>
+                        <div class="coverage-bar">
+                            <div class="coverage-fill coverage-high" style="width: 100.0%"></div>
+                        </div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="stats">1 / 1</div>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>
+                        <span class="feature-tag tag-trends">TRENDS</span>
+                        <div class="file-path">lib/features/trends/models/paginated_tweets.dart</div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="coverage-text high">100.0%</div>
+                        <div class="coverage-bar">
+                            <div class="coverage-fill coverage-high" style="width: 100.0%"></div>
+                        </div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="stats">1 / 1</div>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>
+                        <span class="feature-tag tag-trends">TRENDS</span>
+                        <div class="file-path">lib/features/trends/models/trend_category.dart</div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="coverage-text high">100.0%</div>
+                        <div class="coverage-bar">
+                            <div class="coverage-fill coverage-high" style="width: 100.0%"></div>
+                        </div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="stats">10 / 10</div>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>
+                        <span class="feature-tag tag-trends">TRENDS</span>
+                        <div class="file-path">lib/features/trends/models/trend_model.dart</div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="coverage-text high">100.0%</div>
+                        <div class="coverage-bar">
+                            <div class="coverage-fill coverage-high" style="width: 100.0%"></div>
+                        </div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="stats">8 / 8</div>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>
+                        <span class="feature-tag tag-profile">PROFILE</span>
+                        <div class="file-path">lib/features/profile/repositories/profile_storage_service.dart</div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="coverage-text high">100.0%</div>
+                        <div class="coverage-bar">
+                            <div class="coverage-fill coverage-high" style="width: 100.0%"></div>
+                        </div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="stats">17 / 17</div>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>
+                        <span class="feature-tag tag-profile">PROFILE</span>
+                        <div class="file-path">lib/features/profile/view/widgets/profile_tweets/shared_tweet_components.dart</div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="coverage-text high">100.0%</div>
+                        <div class="coverage-bar">
+                            <div class="coverage-fill coverage-high" style="width: 100.0%"></div>
+                        </div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="stats">329 / 329</div>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>
+                        <span class="feature-tag tag-profile">PROFILE</span>
+                        <div class="file-path">lib/features/profile/view/widgets/profile_tweets/profile_normar_tweet_quot.dart</div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="coverage-text high">100.0%</div>
+                        <div class="coverage-bar">
+                            <div class="coverage-fill coverage-high" style="width: 100.0%"></div>
+                        </div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="stats">5 / 5</div>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>
+                        <span class="feature-tag tag-media">MEDIA</span>
+                        <div class="file-path">lib/features/media/upload_media.dart</div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="coverage-text high">100.0%</div>
+                        <div class="coverage-bar">
+                            <div class="coverage-fill coverage-high" style="width: 100.0%"></div>
+                        </div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="stats">27 / 27</div>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>
+                        <span class="feature-tag tag-settings">SETTINGS</span>
+                        <div class="file-path">lib/features/settings/models/muted_users_response.dart</div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="coverage-text high">100.0%</div>
+                        <div class="coverage-bar">
+                            <div class="coverage-fill coverage-high" style="width: 100.0%"></div>
+                        </div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="stats">17 / 17</div>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>
+                        <span class="feature-tag tag-settings">SETTINGS</span>
+                        <div class="file-path">lib/features/settings/models/settings_model.dart</div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="coverage-text high">100.0%</div>
+                        <div class="coverage-bar">
+                            <div class="coverage-fill coverage-high" style="width: 100.0%"></div>
+                        </div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="stats">36 / 36</div>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>
+                        <span class="feature-tag tag-settings">SETTINGS</span>
+                        <div class="file-path">lib/features/settings/repositories/settings_repo_impl.dart</div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="coverage-text high">100.0%</div>
+                        <div class="coverage-bar">
+                            <div class="coverage-fill coverage-high" style="width: 100.0%"></div>
+                        </div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="stats">69 / 69</div>
+                    </td>
+                </tr>
+
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

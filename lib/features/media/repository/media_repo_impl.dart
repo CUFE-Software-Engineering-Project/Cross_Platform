@@ -41,10 +41,10 @@ class MediaRepoImpL implements MediaRepo {
     }
   }
 
-  Future<Either<Failure, void>> upload(String uploadUrl, File mediaFile) async {
+  Future<Either<Failure, void>> upload(String uploadUrl, File mediaFile, {Dio? dio}) async {
     try {
       List<int> fileBytes = await mediaFile.readAsBytes();
-      final localDio = Dio();
+      final localDio = dio ?? Dio();
       final res = await localDio.put(
         uploadUrl,
         data: Stream.fromIterable([fileBytes]),

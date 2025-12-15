@@ -6,8 +6,8 @@ import 'package:lite_x/features/media/models/request_upload_model.dart';
 import 'package:lite_x/features/media/models/shared.dart';
 import 'package:lite_x/features/media/view_model/providers.dart';
 
-Future<List<String>> upload_media(List<File> files) async {
-  final container = ProviderContainer();
+Future<List<String>> upload_media(List<File> files, {ProviderContainer? container}) async {
+  final _container = container ?? ProviderContainer();
   final limitedFiles = files.take(4).toList();
 
   // Process all files in parallel
@@ -18,7 +18,7 @@ Future<List<String>> upload_media(List<File> files) async {
 
     // request upload
 
-    final requestUpload = container.read(requestUploadProvider);
+    final requestUpload = _container.read(requestUploadProvider);
     final requestUploadResponse = await requestUpload(fileName, fileType);
     RequestUploadModel requestUploadModel = RequestUploadModel(
       url: "",
@@ -37,7 +37,7 @@ Future<List<String>> upload_media(List<File> files) async {
     }
 
     // upload
-    final upload = container.read(uploadProvider);
+    final upload = _container.read(uploadProvider);
     final uploadResponse = await upload(requestUploadModel.url, file);
     uploadResponse.fold((l) {
       fail = true;
@@ -47,7 +47,7 @@ Future<List<String>> upload_media(List<File> files) async {
     }
 
     // confirm upload
-    final confirmUpload = container.read(confirmUploadProvider);
+    final confirmUpload = _container.read(confirmUploadProvider);
     final confirmUploadResponse = await confirmUpload(
       requestUploadModel.keyName,
     );
@@ -75,6 +75,8 @@ Future<List<String>> upload_media(List<File> files) async {
   // Wait for all uploads to complete
   final ids = await Future.wait(uploadFutures);
 
-  container.dispose();
+  if (container == null) {
+    _container.dispose();
+  }
   return ids;
 }

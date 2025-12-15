@@ -1,3 +1,7 @@
 {
-    "cmake.sourceDirectory": "D:/ThirdYear/SWE/project/Cross_Platform/linux"
+    "cmake.sourceDirectory": "D:/ThirdYear/SWE/project/Cross_Platform/linux",
+    "dart.testAdditionalArgs": [
+        "--coverage"
+    ],
+    "dart.testPath": "test/features/trends/"
 }
