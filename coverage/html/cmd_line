@@ -1,0 +1,1 @@
+genhtml coverage/lcov_clean.info --prefix . --substitute s#\\#/#g -o coverage/html

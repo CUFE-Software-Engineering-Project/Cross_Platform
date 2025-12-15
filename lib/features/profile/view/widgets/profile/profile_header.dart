@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lite_x/core/routes/Route_Constants.dart';
+import 'package:lite_x/features/chat/view_model/conversions/Conversations_view_model.dart';
 import 'package:lite_x/features/profile/models/profile_model.dart';
 import 'package:lite_x/features/profile/models/shared.dart';
 import 'package:lite_x/features/profile/view/widgets/profile/block_button.dart';
@@ -205,7 +207,42 @@ class _ProfileAvatarRow extends ConsumerWidget {
     } else if (profileData.isBlockedByMe) {
       return BlockButton(profileData: profileData, showDataFunc: showDataFunc);
     } else {
-      return Follow_Following_Button(profileData: profileData);
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          if (!isMe)
+            Padding(
+              padding: const EdgeInsets.only(top: 60),
+              child: GestureDetector(
+                onTap: () async {
+                  final result = await ref
+                      .read(conversationsViewModelProvider.notifier)
+                      .createChat(
+                        isDMChat: true,
+                        recipientIds: [profileData.id],
+                      );
+                  result.fold((l) => print("Error"), (chatModel) {
+                    context.pushNamed(
+                      RouteConstants.ChatScreen,
+                      pathParameters: {'chatId': chatModel.id},
+                      extra: {
+                        'title': profileData.displayName,
+                        'subtitle': "${profileData.username}",
+                        'avatarUrl': profileData.avatarId,
+                        'isGroup': false,
+                        'recipientFollowersCount': profileData.followersCount,
+                      },
+                    );
+                  });
+                },
+                child: Icon(Icons.mail_outline),
+              ),
+            ),
+          if (!isMe) SizedBox(width: 10),
+          Follow_Following_Button(profileData: profileData),
+        ],
+      );
     }
   }
 

@@ -1,0 +1,131 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - lcov_clean.info - mnt/c/Users/premi/StudioProjects/modified/Cross_Platform/lib/features/chat/models/lib/features/chat/models/usersearchmodel.dart</title>
+  <link rel="stylesheet" type="text/css" href="../../../../../../../../../../../../../../../gcov.css">
+</head>
+
+<body>
+
+          <table width="100%" border=0 cellspacing=0 cellpadding=0>
+            <tr><td class="title">LCOV - code coverage report</td></tr>
+            <tr><td class="ruler"><img src="../../../../../../../../../../../../../../../glass.png" width=3 height=3 alt=""></td></tr>
+
+            <tr>
+              <td width="100%">
+                <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="10%" class="headerValue"><a href="../../../../../../../../../../../../../../../index.html">top level</a> - <a href="index.html">/mnt/c/Users/premi/StudioProjects/modified/Cross_Platform/lib/features/chat/models/lib/features/chat/models</a> - usersearchmodel.dart<span style="font-size: 80%;"> (source / <a href="usersearchmodel.dart.func-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="5%"></td>
+            <td width="5%" class="headerCovTableHead">Coverage</td>
+            <td width="5%" class="headerCovTableHead" title="Covered + Uncovered code">Total</td>
+            <td width="5%" class="headerCovTableHead" title="Exercised code only">Hit</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">lcov_clean.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
+            <td class="headerCovTableEntry">14</td>
+            <td class="headerCovTableEntry">14</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test Date:</td>
+            <td class="headerValue">2025-12-15 19:18:33</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntryHi">-</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">0</td>
+          </tr>
+                  <tr><td><img src="../../../../../../../../../../../../../../../glass.png" width=3 height=3 alt=""></td></tr>
+                </table>
+              </td>
+            </tr>
+
+            <tr><td class="ruler"><img src="../../../../../../../../../../../../../../../glass.png" width=3 height=3 alt=""></td></tr>
+          </table>
+
+          <table cellpadding=0 cellspacing=0 border=0>
+            <tr>
+              <td><br></td>
+            </tr>
+            <tr>
+              <td>
+<pre class="sourceHeading">            Line data    Source code</pre>
+<pre class="source">
+<span id="L1"><span class="lineNum">       1</span>              : import 'package:hive_ce/hive.dart';</span>
+<span id="L2"><span class="lineNum">       2</span>              : </span>
+<span id="L3"><span class="lineNum">       3</span>              : part &quot;usersearchmodel.g.dart&quot;;</span>
+<span id="L4"><span class="lineNum">       4</span>              : </span>
+<span id="L5"><span class="lineNum">       5</span>              : @HiveType(typeId: 4)</span>
+<span id="L6"><span class="lineNum">       6</span>              : class UserSearchModel extends HiveObject {</span>
+<span id="L7"><span class="lineNum">       7</span>              :   @HiveField(0)</span>
+<span id="L8"><span class="lineNum">       8</span>              :   final String id;</span>
+<span id="L9"><span class="lineNum">       9</span>              : </span>
+<span id="L10"><span class="lineNum">      10</span>              :   @HiveField(1)</span>
+<span id="L11"><span class="lineNum">      11</span>              :   final String username;</span>
+<span id="L12"><span class="lineNum">      12</span>              : </span>
+<span id="L13"><span class="lineNum">      13</span>              :   @HiveField(2)</span>
+<span id="L14"><span class="lineNum">      14</span>              :   final String name;</span>
+<span id="L15"><span class="lineNum">      15</span>              : </span>
+<span id="L16"><span class="lineNum">      16</span>              :   @HiveField(3)</span>
+<span id="L17"><span class="lineNum">      17</span>              :   final String? bio;</span>
+<span id="L18"><span class="lineNum">      18</span>              : </span>
+<span id="L19"><span class="lineNum">      19</span>              :   @HiveField(4)</span>
+<span id="L20"><span class="lineNum">      20</span>              :   final String? profileMedia;</span>
+<span id="L21"><span class="lineNum">      21</span>              : </span>
+<span id="L22"><span class="lineNum">      22</span>              :   @HiveField(5)</span>
+<span id="L23"><span class="lineNum">      23</span>              :   final int followers;</span>
+<span id="L24"><span class="lineNum">      24</span>              : </span>
+<span id="L25"><span class="lineNum">      25</span> <span class="tlaGNC tlaBgGNC">           3 :   UserSearchModel({</span></span>
+<span id="L26"><span class="lineNum">      26</span>              :     required this.id,</span>
+<span id="L27"><span class="lineNum">      27</span>              :     required this.username,</span>
+<span id="L28"><span class="lineNum">      28</span>              :     required this.name,</span>
+<span id="L29"><span class="lineNum">      29</span>              :     required this.bio,</span>
+<span id="L30"><span class="lineNum">      30</span>              :     required this.profileMedia,</span>
+<span id="L31"><span class="lineNum">      31</span>              :     required this.followers,</span>
+<span id="L32"><span class="lineNum">      32</span>              :   });</span>
+<span id="L33"><span class="lineNum">      33</span>              : </span>
+<span id="L34"><span class="lineNum">      34</span> <span class="tlaGNC">           2 :   factory UserSearchModel.fromMap(Map&lt;String, dynamic&gt; map) {</span></span>
+<span id="L35"><span class="lineNum">      35</span>              :     String? profileImage;</span>
+<span id="L36"><span class="lineNum">      36</span> <span class="tlaGNC">           2 :     if (map[&quot;profileMedia&quot;] != null) {</span></span>
+<span id="L37"><span class="lineNum">      37</span> <span class="tlaGNC">           4 :       if (map[&quot;profileMedia&quot;] is Map) {</span></span>
+<span id="L38"><span class="lineNum">      38</span> <span class="tlaGNC">           4 :         profileImage = map[&quot;profileMedia&quot;][&quot;keyName&quot;];</span></span>
+<span id="L39"><span class="lineNum">      39</span> <span class="tlaGNC">           4 :       } else if (map[&quot;profileMedia&quot;] is String) {</span></span>
+<span id="L40"><span class="lineNum">      40</span> <span class="tlaGNC">           2 :         profileImage = map[&quot;profileMedia&quot;];</span></span>
+<span id="L41"><span class="lineNum">      41</span>              :       }</span>
+<span id="L42"><span class="lineNum">      42</span>              :     }</span>
+<span id="L43"><span class="lineNum">      43</span>              : </span>
+<span id="L44"><span class="lineNum">      44</span> <span class="tlaGNC">           2 :     return UserSearchModel(</span></span>
+<span id="L45"><span class="lineNum">      45</span> <span class="tlaGNC">           2 :       id: map[&quot;id&quot;] ?? &quot;&quot;,</span></span>
+<span id="L46"><span class="lineNum">      46</span> <span class="tlaGNC">           2 :       username: map[&quot;username&quot;] ?? &quot;&quot;,</span></span>
+<span id="L47"><span class="lineNum">      47</span> <span class="tlaGNC">           2 :       name: map[&quot;name&quot;] ?? &quot;&quot;,</span></span>
+<span id="L48"><span class="lineNum">      48</span> <span class="tlaGNC">           2 :       bio: map[&quot;bio&quot;],</span></span>
+<span id="L49"><span class="lineNum">      49</span>              :       profileMedia: profileImage,</span>
+<span id="L50"><span class="lineNum">      50</span> <span class="tlaGNC">           6 :       followers: (map[&quot;_count&quot;] != null &amp;&amp; map[&quot;_count&quot;][&quot;followers&quot;] != null)</span></span>
+<span id="L51"><span class="lineNum">      51</span> <span class="tlaGNC">           4 :           ? map[&quot;_count&quot;][&quot;followers&quot;]</span></span>
+<span id="L52"><span class="lineNum">      52</span>              :           : 0,</span>
+<span id="L53"><span class="lineNum">      53</span>              :     );</span>
+<span id="L54"><span class="lineNum">      54</span>              :   }</span>
+<span id="L55"><span class="lineNum">      55</span>              : }</span>
+        </pre>
+              </td>
+            </tr>
+          </table>
+          <br>
+
+          <table width="100%" border=0 cellspacing=0 cellpadding=0>
+            <tr><td class="ruler"><img src="../../../../../../../../../../../../../../../glass.png" width=3 height=3 alt=""></td></tr>
+            <tr><td class="versionInfo">Generated by: <a href="https://github.com//linux-test-project/lcov" target="_parent">LCOV version 2.0-1</a></td></tr>
+          </table>
+          <br>
+
+</body>
+</html>

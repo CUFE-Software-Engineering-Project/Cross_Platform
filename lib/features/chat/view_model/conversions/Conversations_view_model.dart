@@ -150,7 +150,7 @@ class ConversationsViewModel extends _$ConversationsViewModel {
                 });
               });
         }
-        _sortConversations(currentConversations);
+        sortConversations(currentConversations);
 
         state = AsyncValue.data([...currentConversations]);
 
@@ -183,13 +183,13 @@ class ConversationsViewModel extends _$ConversationsViewModel {
 
       final updatedList = List<ConversationModel>.from(currentList);
       updatedList[index] = updatedChat;
-      _sortConversations(updatedList);
+      sortConversations(updatedList);
       state = AsyncValue.data([...updatedList]);
       _chatLocalRepository.upsertConversations([updatedChat]);
     }
   }
 
-  void _sortConversations(List<ConversationModel> list) {
+  void sortConversations(List<ConversationModel> list) {
     list.sort((a, b) {
       final aTime = a.lastMessageTime ?? a.updatedAt;
       final bTime = b.lastMessageTime ?? b.updatedAt;
@@ -282,7 +282,7 @@ class ConversationsViewModel extends _$ConversationsViewModel {
 
       final result = await _chatRemoteRepository.getuserchats(_currentUser!.id);
 
-      result.fold(
+      await result.fold(
         (failure) {
           print("Error loading conversations: ${failure.message}");
         },
@@ -296,7 +296,7 @@ class ConversationsViewModel extends _$ConversationsViewModel {
             }
           }
           await _chatLocalRepository.upsertConversations(serverConversations);
-          _sortConversations(serverConversations);
+          sortConversations(serverConversations);
           state = AsyncValue.data([...serverConversations]);
         },
       );

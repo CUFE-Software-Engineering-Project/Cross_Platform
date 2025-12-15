@@ -165,24 +165,6 @@ class ConversationModel extends HiveObject {
         other.lastMessageType == lastMessageType;
   }
 
-  @override
-  int get hashCode {
-    return id.hashCode ^
-        isDMChat.hashCode ^
-        createdAt.hashCode ^
-        updatedAt.hashCode ^
-        participantIds.hashCode ^
-        lastMessageContent.hashCode ^
-        lastMessageTime.hashCode ^
-        lastMessageSenderId.hashCode ^
-        unseenCount.hashCode ^
-        dmPartnerUserId.hashCode ^
-        dmPartnerName.hashCode ^
-        dmPartnerUsername.hashCode ^
-        dmPartnerProfileKey.hashCode ^
-        lastMessageType.hashCode;
-  }
-
   ConversationModel copyWith({
     String? id,
     bool? isDMChat,

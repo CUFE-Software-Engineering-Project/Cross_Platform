@@ -24,9 +24,83 @@ AuthRemoteRepository authRemoteRepository(Ref ref) {
   return AuthRemoteRepository(dio: dio);
 }
 
+class DeepLinkWrapper {
+  Future<Uri?> waitForLink() {
+    return DeepLinkService.waitForLink();
+  }
+}
+
 class AuthRemoteRepository {
   final Dio _dio;
-  AuthRemoteRepository({required Dio dio}) : _dio = dio;
+  final Dio? _downloadDio;
+  final Dio? _uploadDio;
+  final DeepLinkWrapper _deepLinkWrapper;
+  final http.Client _httpClient;
+  AuthRemoteRepository({
+    required Dio dio,
+    Dio? downloadDio,
+    Dio? uploadDio,
+    http.Client? httpClient,
+    DeepLinkWrapper? deepLinkWrapper,
+  }) : _dio = dio,
+       _downloadDio = downloadDio,
+       _uploadDio = uploadDio,
+       _deepLinkWrapper = deepLinkWrapper ?? DeepLinkWrapper(),
+       _httpClient = httpClient ?? http.Client();
+
+  //--------------------------------------------------------google-------------------------------------------------------------------//
+  final _googleSignIn = signIn.GoogleSignIn(
+    serverClientId:
+        "1096363232606-2fducjadk56bt4nsreqkj2jna7oiomga.apps.googleusercontent.com",
+    scopes: ['email', 'https://www.googleapis.com/auth/userinfo.profile'],
+  );
+
+  Future<Either<AppFailure, (UserModel user, TokensModel tokens, bool newuser)>>
+  signInWithGoogleAndroid() async {
+    try {
+      final String apiUrl = dotenv.env["API_URL"]!;
+
+      final googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) {
+        return left(AppFailure(message: "Google login canceled"));
+      }
+      final googleAuth = await googleUser.authentication;
+      // final email = googleUser.email;
+      // print("GOOGLE EMAIL = $email\n");
+
+      // final existsResult = await check_email(email: email);
+      // final exists = existsResult.fold((_) => false, (v) => v);
+
+      final idToken = googleAuth.idToken;
+      // debugPrint("GOOGLE ID TOKEN = $idToken");
+
+      final resp = await _httpClient.post(
+        Uri.parse("${apiUrl}oauth2/callback/android_google"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"idToken": idToken}),
+      );
+
+      if (resp.statusCode != 200) {
+        return left(AppFailure(message: resp.body));
+      }
+
+      final data = jsonDecode(resp.body);
+
+      final user = UserModel.fromMap(data["user"]);
+      final tokens = TokensModel(
+        accessToken: data["token"],
+        refreshToken: data["refreshToken"],
+        accessTokenExpiry: DateTime.now().add(const Duration(hours: 1)),
+        refreshTokenExpiry: DateTime.now().add(const Duration(days: 30)),
+      );
+      final newuser = data["user"]["newuser"]; //
+
+      return right((user, tokens, newuser));
+    } catch (e) {
+      return left(AppFailure(message: e.toString()));
+    }
+  }
+
   //---------------------------------------------------github------------------------------------------------------//
 
   Future<Either<AppFailure, (UserModel user, TokensModel tokens, bool newuser)>>
@@ -42,7 +116,7 @@ class AuthRemoteRepository {
       if (!opened) {
         return left(AppFailure(message: "Could not open browser"));
       }
-      final uri = await DeepLinkService.waitForLink();
+      final uri = await _deepLinkWrapper.waitForLink(); //
 
       if (uri == null) {
         return left(AppFailure(message: "Login cancelled by user"));
@@ -67,60 +141,6 @@ class AuthRemoteRepository {
         accessTokenExpiry: DateTime.now().add(const Duration(hours: 1)),
         refreshTokenExpiry: DateTime.now().add(const Duration(days: 30)),
       );
-
-      return right((user, tokens, newuser));
-    } catch (e) {
-      return left(AppFailure(message: e.toString()));
-    }
-  }
-
-  //--------------------------------------------------------google-------------------------------------------------------------------//
-
-  final _googleSignIn = signIn.GoogleSignIn(
-    serverClientId:
-        "1096363232606-2fducjadk56bt4nsreqkj2jna7oiomga.apps.googleusercontent.com",
-    scopes: ['email', 'https://www.googleapis.com/auth/userinfo.profile'],
-  );
-
-  Future<Either<AppFailure, (UserModel user, TokensModel tokens, bool newuser)>>
-  signInWithGoogleAndroid() async {
-    try {
-      final String apiUrl = dotenv.env["API_URL"]!;
-
-      final googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) {
-        return left(AppFailure(message: "Google login canceled"));
-      }
-      final googleAuth = await googleUser.authentication;
-      final email = googleUser.email;
-      print("GOOGLE EMAIL = $email\n");
-
-      // final existsResult = await check_email(email: email);
-      // final exists = existsResult.fold((_) => false, (v) => v);
-
-      final idToken = googleAuth.idToken;
-      debugPrint("GOOGLE ID TOKEN = $idToken");
-
-      final resp = await http.post(
-        Uri.parse("${apiUrl}oauth2/callback/android_google"),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({"idToken": idToken}),
-      );
-
-      if (resp.statusCode != 200) {
-        return left(AppFailure(message: resp.body));
-      }
-
-      final data = jsonDecode(resp.body);
-
-      final user = UserModel.fromMap(data["user"]);
-      final tokens = TokensModel(
-        accessToken: data["token"],
-        refreshToken: data["refreshToken"],
-        accessTokenExpiry: DateTime.now().add(const Duration(hours: 1)),
-        refreshTokenExpiry: DateTime.now().add(const Duration(days: 30)),
-      );
-      final newuser = data["user"]["newuser"]; //
 
       return right((user, tokens, newuser));
     } catch (e) {
@@ -170,7 +190,6 @@ class AuthRemoteRepository {
   }
 
   //--------------------------------------------SignUp---------------------------------------------------------//
-  // Register new user
   Future<Either<AppFailure, String>> create({
     required String name,
     required String email,
@@ -239,7 +258,7 @@ class AuthRemoteRepository {
     'gif': 'image/gif',
     'webp': 'image/webp',
   };
-  String _getMediaType(String filePath) {
+  String getMediaType(String filePath) {
     final extension = filePath.split('.').last.toLowerCase();
     return _mediaTypes[extension] ?? 'image/jpeg';
   }
@@ -252,7 +271,7 @@ class AuthRemoteRepository {
     }
     final file = pickedImage.file!;
     final fileName = pickedImage.name;
-    final fileType = _getMediaType(file.path);
+    final fileType = getMediaType(file.path);
     try {
       final requestResponse = await _dio.post(
         'api/media/upload-request',
@@ -263,14 +282,16 @@ class AuthRemoteRepository {
       final String keyName = requestResponse.data['keyName'];
       final fileBytes = await file.readAsBytes();
 
-      final newDio = Dio(
-        BaseOptions(
-          headers: {
-            'Content-Type': fileType,
-            'Content-Length': fileBytes.length,
-          },
-        ),
-      );
+      final newDio =
+          _uploadDio ??
+          Dio(
+            BaseOptions(
+              headers: {
+                'Content-Type': fileType,
+                'Content-Length': fileBytes.length,
+              },
+            ),
+          );
 
       await newDio.put(presignedUrl, data: Stream.fromIterable([fileBytes]));
 
@@ -299,7 +320,7 @@ class AuthRemoteRepository {
       final response = await _dio.get('api/media/download-request/$mediaId');
       final String downloadUrl = response.data['url'];
 
-      final newDio = Dio();
+      final newDio = _downloadDio ?? Dio();
       final imageResponse = await newDio.get(
         downloadUrl,
         options: Options(responseType: ResponseType.bytes),
@@ -407,7 +428,6 @@ class AuthRemoteRepository {
   }
 
   //-------------------------------------------------Login--------------------------------------------------------------------------------------//
-  // Login with email and password
   Future<Either<AppFailure, (UserModel, TokensModel)>> login({
     required String email,
     required String password,

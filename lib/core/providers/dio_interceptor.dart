@@ -1,3 +1,5 @@
+// ignore_for_file: unused_catch_stack, unused_catch_clause
+
 import 'dart:async';
 
 import 'package:dio/dio.dart';
@@ -35,15 +37,11 @@ class AuthInterceptor extends Interceptor {
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
-    // Some backend routes require a device identifier. Postman may include this
-    // via headers/environment, while the app may not.
-    // Send a stable per-install id on every request.
     try {
       final deviceId = await _getOrCreateDeviceId();
       options.headers[_deviceIdHeader] = deviceId;
     } catch (e) {
-      // Do not block network calls if persistence fails.
-      print('AuthInterceptor: Failed to set device id header - $e');
+      // print('AuthInterceptor: Failed to set device id header - $e');
     }
 
     if (_shouldSkipAuth(options.path)) {
@@ -53,12 +51,12 @@ class AuthInterceptor extends Interceptor {
     final authLocalRepository = _ref.read(authLocalRepositoryProvider);
     final tokens = authLocalRepository.getTokens();
     if (tokens == null) {
-      print("AuthInterceptor: No tokens found");
+      // print("AuthInterceptor: No tokens found");
       return handler.next(options);
     }
     if (tokens.isAccessTokenExpired) {
       if (tokens.isRefreshTokenExpired) {
-        print("AuthInterceptor: Refresh token expired");
+        // print("AuthInterceptor: Refresh token expired");
         await _handlelogout();
         return handler.reject(
           DioException(
@@ -71,7 +69,7 @@ class AuthInterceptor extends Interceptor {
       final refreshSuccess = await _waitForRefresh();
 
       if (!refreshSuccess) {
-        print("AuthInterceptor: Token refresh failed");
+        // print("AuthInterceptor: Token refresh failed");
         await _handlelogout();
         return handler.reject(
           DioException(
@@ -85,9 +83,9 @@ class AuthInterceptor extends Interceptor {
       if (updatedTokens != null && !updatedTokens.isAccessTokenExpired) {
         options.headers['Authorization'] =
             'Bearer ${updatedTokens.accessToken}';
-        print("AuthInterceptor: Using refreshed token");
+        // print("AuthInterceptor: Using refreshed token");
       } else {
-        print("AuthInterceptor: No valid tokens after refresh");
+        // print("AuthInterceptor: No valid tokens after refresh");
         await _handlelogout();
         return handler.reject(
           DioException(
@@ -122,26 +120,26 @@ class AuthInterceptor extends Interceptor {
     ErrorInterceptorHandler handler,
   ) async {
     if (err.response?.statusCode == 401) {
-      print("AuthInterceptor: 401 error detected");
+      // print("AuthInterceptor: 401 error detected");
 
       final authLocalRepository = _ref.read(authLocalRepositoryProvider);
       final tokens = authLocalRepository.getTokens();
       if (tokens == null || tokens.isRefreshTokenExpired) {
-        print("AuthInterceptor: Cannot refresh");
+        // print("AuthInterceptor: Cannot refresh");
         await _handlelogout();
         return handler.next(err);
       }
       final refreshSuccess = await _waitForRefresh();
 
       if (!refreshSuccess) {
-        print("AuthInterceptor: Retry failed");
+        // print("AuthInterceptor: Retry failed");
         await _handlelogout();
         return handler.next(err);
       }
 
       final updatedTokens = authLocalRepository.getTokens();
       if (updatedTokens != null && !updatedTokens.isAccessTokenExpired) {
-        print("AuthInterceptor: Retrying request");
+        // print("AuthInterceptor: Retrying request");
 
         try {
           final opts = err.requestOptions;
@@ -150,15 +148,15 @@ class AuthInterceptor extends Interceptor {
           final response = await retryDio.fetch(opts);
           return handler.resolve(response);
         } catch (e) {
-          print("AuthInterceptor: Retry request failed - $e");
+          // print("AuthInterceptor: Retry request failed - $e");
           if (e is DioException && e.response?.statusCode == 401) {
-            print("AuthInterceptor: Retry got 401, logging out");
+            // print("AuthInterceptor: Retry got 401, logging out");
             await _handlelogout();
           }
           return handler.next(err);
         }
       } else {
-        print("AuthInterceptor: No valid tokens after refresh");
+        // print("AuthInterceptor: No valid tokens after refresh");
         await _handlelogout();
         return handler.next(err);
       }
@@ -168,11 +166,11 @@ class AuthInterceptor extends Interceptor {
 
   Future<bool> _waitForRefresh() async {
     if (_isRefreshing) {
-      print("AuthInterceptor: Refresh in progress, waiting...");
+      // print("AuthInterceptor: Refresh in progress, waiting...");
       final completer = Completer<bool>();
       _refreshCompleters.add(completer);
       final result = await completer.future;
-      print("AuthInterceptor: Refresh completed with result: $result");
+      // print("AuthInterceptor: Refresh completed with result: $result");
       return result;
     } else {
       _isRefreshing = true;
@@ -194,18 +192,18 @@ class AuthInterceptor extends Interceptor {
   }
 
   Future<bool> _performRefresh() async {
-    print("AuthInterceptor: Starting token refresh...");
+    // print("AuthInterceptor: Starting token refresh...");
 
     final authLocalRepository = _ref.read(authLocalRepositoryProvider);
     final currentTokens = authLocalRepository.getTokens();
 
     if (currentTokens == null) {
-      print("AuthInterceptor: No tokens to refresh");
+      // print("AuthInterceptor: No tokens to refresh");
       return false;
     }
 
     if (currentTokens.isRefreshTokenExpired) {
-      print("AuthInterceptor: Refresh token expired");
+      // print("AuthInterceptor: Refresh token expired");
       await _handlelogout();
       return false;
     }
@@ -221,9 +219,9 @@ class AuthInterceptor extends Interceptor {
 
       final newAccessToken = response.data['access_token'] as String?;
       if (newAccessToken == null) {
-        print(
-          "AuthInterceptor: Refresh response did not contain new access token",
-        );
+        // print(
+        //   "AuthInterceptor: Refresh response did not contain new access token",
+        // );
         return false;
       }
 
@@ -237,14 +235,14 @@ class AuthInterceptor extends Interceptor {
       await authLocalRepository.saveTokens(newTokens);
       await Future.delayed(const Duration(milliseconds: 5000)); //
 
-      print("AuthInterceptor: Token refreshed successfully");
+      // print("AuthInterceptor: Token refreshed successfully");
       return true;
     } on DioException catch (e) {
-      print("AuthInterceptor: Refresh failed - ${e.message}");
+      // print("AuthInterceptor: Refresh failed - ${e.message}");
       await _handlelogout();
       return false;
     } catch (e) {
-      print("AuthInterceptor: Refresh failed - $e");
+      // print("AuthInterceptor: Refresh failed - $e");
       return false;
     }
   }
@@ -258,13 +256,13 @@ class AuthInterceptor extends Interceptor {
       try {
         _ref.read(authViewModelProvider.notifier).resetState();
       } catch (e) {
-        print("AuthInterceptor: Error resetting AuthViewModel state - $e");
+        // print("AuthInterceptor: Error resetting AuthViewModel state - $e");
       }
 
-      print("AuthInterceptor: User logged out");
+      // print("AuthInterceptor: User logged out");
     } catch (e, stackTrace) {
-      print("AuthInterceptor: Logout error - $e");
-      print("StackTrace: $stackTrace");
+      // print("AuthInterceptor: Logout error - $e");
+      // print("StackTrace: $stackTrace");
     }
   }
 

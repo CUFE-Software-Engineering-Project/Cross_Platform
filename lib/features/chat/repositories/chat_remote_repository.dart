@@ -221,22 +221,22 @@ class ChatRemoteRepository {
   }
 
   //-----------------------------------------------------------------get unseen count of all messages of all chats --------------------------------------------------------------------------//
-  Future<Either<AppFailure, int>> getUnseenCountAllChats() async {
-    try {
-      final response = await _dio.get("api/dm/chat/all-unseen-messages-count");
+  // Future<Either<AppFailure, int>> getUnseenCountAllChats() async {
+  //   try {
+  //     final response = await _dio.get("api/dm/chat/all-unseen-messages-count");
 
-      final data = response.data as Map<String, dynamic>;
-      final totalUnseenCount = data["totalUnseenMessages"] as int? ?? 0;
+  //     final data = response.data as Map<String, dynamic>;
+  //     final totalUnseenCount = data["totalUnseenMessages"] as int? ?? 0;
 
-      return Right(totalUnseenCount);
-    } on DioException catch (e) {
-      final errorMessage =
-          e.response?.data["message"] ??
-          e.response?.data["error"] ??
-          "Failed to get all unseen count";
-      return Left(AppFailure(message: errorMessage));
-    } catch (e) {
-      return Left(AppFailure(message: e.toString()));
-    }
-  }
+  //     return Right(totalUnseenCount);
+  //   } on DioException catch (e) {
+  //     final errorMessage =
+  //         e.response?.data["message"] ??
+  //         e.response?.data["error"] ??
+  //         "Failed to get all unseen count";
+  //     return Left(AppFailure(message: errorMessage));
+  //   } catch (e) {
+  //     return Left(AppFailure(message: e.toString()));
+  //   }
+  // }
 }

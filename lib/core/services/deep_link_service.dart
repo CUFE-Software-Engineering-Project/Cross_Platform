@@ -1,8 +1,8 @@
-// ignore_for_file: unnecessary_null_comparison
+// ignore_for_file: unnecessary_import
 
 import 'dart:async';
-import 'dart:developer';
 import 'package:app_links/app_links.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
 class DeepLinkService {
@@ -11,16 +11,15 @@ class DeepLinkService {
   DeepLinkService._internal();
 
   static Completer<Uri?>? _completer;
-  static final AppLinks _appLinks = AppLinks();
+  static AppLinks _appLinks = AppLinks();
+  @visibleForTesting
+  static set appLinksInstance(AppLinks instance) => _appLinks = instance;
 
   static final _AppLifecycleObserver _observer = _AppLifecycleObserver();
 
   static void init() {
     _appLinks.uriLinkStream.listen((uri) {
-      log("🔵 DeepLinkService received URI: $uri");
-
       if (uri != null && _completer != null && !_completer!.isCompleted) {
-        log("🟢 Completing deep link future with: $uri");
         _completer!.complete(uri);
       }
     });

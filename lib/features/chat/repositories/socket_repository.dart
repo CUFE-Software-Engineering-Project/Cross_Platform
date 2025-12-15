@@ -36,16 +36,22 @@ class SocketRepository {
   final Ref ref;
   io.Socket? _socket;
   final baseUrl = dotenv.env["API_URL"]!;
-  SocketRepository({required this.ref}) {
-    _initSocket();
-    _listenTokenChanges();
-    _listenToUnseenChats();
+  SocketRepository({required this.ref, io.Socket? socket}) : _socket = socket {
+    if (_socket != null) {
+      _setupListeners();
+      _listenTokenChanges();
+      _listenToUnseenChats();
+    } else {
+      _initSocket();
+      _listenTokenChanges();
+      _listenToUnseenChats();
+    }
   }
   void _listenTokenChanges() {
     ref.listen(tokenStreamProvider, (previous, next) {
       next.whenData((tokens) {
         if (tokens != null) {
-          print("Socket Token Updated via Stream");
+          //   print("Socket Token Updated via Stream");
           _updateSocketToken(tokens.accessToken);
         }
       });
@@ -93,23 +99,23 @@ class SocketRepository {
 
   void _setupListeners() {
     _socket?.onConnect((_) {
-      print("SOCKET CONNECTED: ${_socket?.id}\n");
+      // print("SOCKET CONNECTED: ${_socket?.id}\n");
     });
 
     _socket?.onConnectError((data) {
-      print("Socket connect error: $data\n");
+      // print("Socket connect error: $data\n");
     });
 
     _socket?.onDisconnect((_) {
-      print("Socket disconnected\n");
+      // print("Socket disconnected\n");
     });
 
     _socket?.on('authenticated', (data) {
-      print("Authenticated: $data\n");
+      // print("Authenticated: $data\n");
     });
 
     _socket?.on('auth-error', (data) {
-      print(" Auth error: $data\n");
+      // print(" Auth error: $data\n");
     });
 
     _socket?.on('new-message', (data) {

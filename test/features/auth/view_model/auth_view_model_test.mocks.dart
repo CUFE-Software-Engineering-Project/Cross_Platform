@@ -44,30 +44,6 @@ class MockAuthRemoteRepository extends _i1.Mock
 
   @override
   _i3.Future<_i4.Either<_i5.AppFailure, (_i6.UserModel, _i7.TokensModel, bool)>>
-  loginWithGithub() =>
-      (super.noSuchMethod(
-            Invocation.method(#loginWithGithub, []),
-            returnValue:
-                _i3.Future<
-                  _i4.Either<
-                    _i5.AppFailure,
-                    (_i6.UserModel, _i7.TokensModel, bool)
-                  >
-                >.value(
-                  _i8.dummyValue<
-                    _i4.Either<
-                      _i5.AppFailure,
-                      (_i6.UserModel, _i7.TokensModel, bool)
-                    >
-                  >(this, Invocation.method(#loginWithGithub, [])),
-                ),
-          )
-          as _i3.Future<
-            _i4.Either<_i5.AppFailure, (_i6.UserModel, _i7.TokensModel, bool)>
-          >);
-
-  @override
-  _i3.Future<_i4.Either<_i5.AppFailure, (_i6.UserModel, _i7.TokensModel, bool)>>
   signInWithGoogleAndroid() =>
       (super.noSuchMethod(
             Invocation.method(#signInWithGoogleAndroid, []),
@@ -84,6 +60,30 @@ class MockAuthRemoteRepository extends _i1.Mock
                       (_i6.UserModel, _i7.TokensModel, bool)
                     >
                   >(this, Invocation.method(#signInWithGoogleAndroid, [])),
+                ),
+          )
+          as _i3.Future<
+            _i4.Either<_i5.AppFailure, (_i6.UserModel, _i7.TokensModel, bool)>
+          >);
+
+  @override
+  _i3.Future<_i4.Either<_i5.AppFailure, (_i6.UserModel, _i7.TokensModel, bool)>>
+  loginWithGithub() =>
+      (super.noSuchMethod(
+            Invocation.method(#loginWithGithub, []),
+            returnValue:
+                _i3.Future<
+                  _i4.Either<
+                    _i5.AppFailure,
+                    (_i6.UserModel, _i7.TokensModel, bool)
+                  >
+                >.value(
+                  _i8.dummyValue<
+                    _i4.Either<
+                      _i5.AppFailure,
+                      (_i6.UserModel, _i7.TokensModel, bool)
+                    >
+                  >(this, Invocation.method(#loginWithGithub, [])),
                 ),
           )
           as _i3.Future<
@@ -208,6 +208,17 @@ class MockAuthRemoteRepository extends _i1.Mock
           as _i3.Future<
             _i4.Either<_i5.AppFailure, (_i6.UserModel, _i7.TokensModel)>
           >);
+
+  @override
+  String getMediaType(String? filePath) =>
+      (super.noSuchMethod(
+            Invocation.method(#getMediaType, [filePath]),
+            returnValue: _i8.dummyValue<String>(
+              this,
+              Invocation.method(#getMediaType, [filePath]),
+            ),
+          )
+          as String);
 
   @override
   _i3.Future<_i4.Either<_i5.AppFailure, Map<String, dynamic>>>

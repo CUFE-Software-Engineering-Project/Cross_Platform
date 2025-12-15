@@ -67,7 +67,7 @@ class ChatViewModel extends _$ChatViewModel {
     _setupSocketListeners();
 
     ref.onDispose(() {
-      print("Disposing ChatViewModel and cancelling subscriptions");
+      // print("Disposing ChatViewModel and cancelling subscriptions");
       _isDisposed = true;
       _msgSub?.cancel();
       _ackSub?.cancel();
@@ -82,7 +82,7 @@ class ChatViewModel extends _$ChatViewModel {
   void _setupSocketListeners() {
     _msgSub = _socketRepository.newMessageStream.listen((data) {
       if (_isDisposed) return;
-      print("New message received in ChatVM: $data");
+      //  print("New message received in ChatVM: $data");
       _handleIncomingMessage(data);
     });
 
@@ -138,7 +138,7 @@ class ChatViewModel extends _$ChatViewModel {
       (serverMessages) async {
         if (_isDisposed) return; //
         await _chatLocalRepository.saveInitialMessages(serverMessages);
-        await _reconcilePendingMessages(chatId, serverMessages);
+        await reconcilePendingMessages(chatId, serverMessages);
 
         final updatedCache = _chatLocalRepository.getCachedMessages(chatId);
         _loadedMessageIds.clear();
@@ -157,7 +157,7 @@ class ChatViewModel extends _$ChatViewModel {
     );
   }
 
-  Future<void> _reconcilePendingMessages(
+  Future<void> reconcilePendingMessages(
     String chatId,
     List<MessageModel> serverMessages,
   ) async {
@@ -165,7 +165,7 @@ class ChatViewModel extends _$ChatViewModel {
     if (pendingMessages.isEmpty) return;
 
     for (final pending in pendingMessages) {
-      final match = _findMatchingServerMessage(pending, serverMessages);
+      final match = findMatchingServerMessage(pending, serverMessages);
       if (match != null) {
         await _chatLocalRepository.replaceTempWithServerMessage(
           tempId: pending.id,
@@ -177,7 +177,7 @@ class ChatViewModel extends _$ChatViewModel {
     }
   }
 
-  MessageModel? _findMatchingServerMessage(
+  MessageModel? findMatchingServerMessage(
     MessageModel pending,
     List<MessageModel> serverMessages,
   ) {
@@ -269,7 +269,7 @@ class ChatViewModel extends _$ChatViewModel {
 
     await _chatLocalRepository.saveMessage(finalMsg);
 
-    print("is in chat ${isActiveChat}");
+    // print("is in chat ${isActiveChat}");
     if (isActiveChat) {
       final updatedMessages = [...state.messages, finalMsg];
       if (_isDisposed || _activeChatId != msg.chatId) return; //

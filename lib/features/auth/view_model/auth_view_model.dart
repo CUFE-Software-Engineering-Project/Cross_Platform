@@ -25,7 +25,9 @@ class AuthViewModel extends _$AuthViewModel {
     // _chatLocalRepository = ref.read(chatLocalRepositoryProvider);
     Future(() async {
       await Future.delayed(const Duration(milliseconds: 300));
-      await _checkAuthStatus();
+      if (ref.mounted) {
+        await _checkAuthStatus();
+      } //
     });
     return AuthState.loading();
   }
@@ -33,14 +35,17 @@ class AuthViewModel extends _$AuthViewModel {
   Future<void> _checkAuthStatus() async {
     try {
       await Future.delayed(const Duration(milliseconds: 100));
+      if (!ref.mounted) return; //
       final user = _authLocalRepository.getUser();
-      final tokens = _authLocalRepository.getTokens(); //
+      final tokens = _authLocalRepository.getTokens();
       if (user != null && tokens != null) {
         if (!tokens.isRefreshTokenExpired) {
           ref.read(currentUserProvider.notifier).adduser(user);
           state = AuthState.authenticated();
-          _registerFcmToken();
-          _listenForFcmTokenRefresh();
+          if (ref.mounted) {
+            registerFcmToken();
+            _listenForFcmTokenRefresh();
+          } //
         } else {
           await logout();
           state = AuthState.unauthenticated();
@@ -115,7 +120,7 @@ class AuthViewModel extends _$AuthViewModel {
         state = AuthState.authenticated('Signup successful');
 
         if (!Platform.environment.containsKey('FLUTTER_TEST')) {
-          _registerFcmToken();
+          registerFcmToken();
           _listenForFcmTokenRefresh();
         }
       },
@@ -190,7 +195,7 @@ class AuthViewModel extends _$AuthViewModel {
   }
 
   //----------------------------------------------------FCM Token Registration----------------------------------------------------------------------------------------//
-  Future<void> _registerFcmToken() async {
+  Future<void> registerFcmToken() async {
     try {
       FirebaseMessaging messaging = FirebaseMessaging.instance;
       NotificationSettings settings = await messaging.requestPermission(
@@ -223,7 +228,7 @@ class AuthViewModel extends _$AuthViewModel {
 
   void _listenForFcmTokenRefresh() {
     FirebaseMessaging.instance.onTokenRefresh.listen((newFcmToken) {
-      _registerFcmToken();
+      registerFcmToken();
     });
   }
 
@@ -261,7 +266,7 @@ class AuthViewModel extends _$AuthViewModel {
 
       state = AuthState.authenticated('Login successful');
       if (!Platform.environment.containsKey('FLUTTER_TEST')) {
-        _registerFcmToken();
+        registerFcmToken();
         _listenForFcmTokenRefresh();
       }
     });
@@ -576,8 +581,10 @@ class AuthViewModel extends _$AuthViewModel {
 
         if (newuser) {
           state = AuthState.authenticated("new_google_user");
-          _registerFcmToken();
-          _listenForFcmTokenRefresh();
+          if (!Platform.environment.containsKey('FLUTTER_TEST')) {
+            registerFcmToken();
+            _listenForFcmTokenRefresh();
+          }
           return;
         }
 
@@ -594,8 +601,10 @@ class AuthViewModel extends _$AuthViewModel {
         );
 
         state = AuthState.authenticated("google_login_success");
-        _registerFcmToken();
-        _listenForFcmTokenRefresh();
+        if (!Platform.environment.containsKey('FLUTTER_TEST')) {
+          registerFcmToken();
+          _listenForFcmTokenRefresh();
+        }
       },
     );
   }
@@ -616,8 +625,10 @@ class AuthViewModel extends _$AuthViewModel {
         ref.read(currentUserProvider.notifier).adduser(user);
         if (newuser) {
           state = AuthState.authenticated("new_github_user");
-          _registerFcmToken();
-          _listenForFcmTokenRefresh();
+          if (!Platform.environment.containsKey('FLUTTER_TEST')) {
+            registerFcmToken();
+            _listenForFcmTokenRefresh();
+          }
           return;
         }
 
@@ -634,8 +645,10 @@ class AuthViewModel extends _$AuthViewModel {
         );
 
         state = AuthState.authenticated('github_login_success');
-        _registerFcmToken();
-        _listenForFcmTokenRefresh();
+        if (!Platform.environment.containsKey('FLUTTER_TEST')) {
+          registerFcmToken();
+          _listenForFcmTokenRefresh();
+        }
       },
     );
   }
