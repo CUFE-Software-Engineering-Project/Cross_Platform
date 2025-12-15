@@ -1,20 +1,53 @@
-# Ignore build artifacts
-build
-.dart_tool
-.idea
-.vscode
+# Ignore all build artifacts
+build/
+# But keep the release APK
+!build/app/outputs/flutter-apk/app-release.apk
+!build/app/outputs/flutter-apk/
 
-# Android / iOS build cache
+# Dart/Flutter
+.dart_tool
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+pubspec.lock
+
+# Android build cache
+android/.gradle/
+android/app/build/
 android/.gradle
 android/app/build
+android/local.properties
+android/**/*.iml
+
+# iOS
+ios/Pods/
+ios/build/
+ios/.symlinks/
 ios/Pods
 ios/build
 ios/.symlinks
 
+# IDEs
+.idea/
+.vscode/
+.idea
+.vscode
+*.iml
+
 # System files
 .DS_Store
+**/.DS_Store
 
-# Git files
-.git
+# Git
+.git/
 .gitignore
+.git
 README.md
+
+# Gradle cache
+.gradle/
+**/.gradle/
+
+# Other large directories
+node_modules/
+coverage/

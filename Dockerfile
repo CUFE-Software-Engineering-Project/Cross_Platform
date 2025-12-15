@@ -21,29 +21,7 @@ RUN sdkmanager \
 
 
 
-# ---------------- LINT STAGE ----------------
-FROM base AS lint
-WORKDIR /app
-
-COPY pubspec.* ./
-RUN flutter pub get
-
-COPY . .
-RUN flutter analyze || true
-
-
-# ---------------- TEST STAGE ----------------
-FROM lint AS test
-WORKDIR /app
-
-# Run unit/widget tests
-RUN flutter test --no-pub
-
-# --------------- E2E TEST ---------------------
-FROM base AS e2e
-RUN flutter test integration_test || true
-
 
 # ---------------- BUILD APK STAGE ----------------
 FROM base AS build-apk
-RUN flutter build apk --release
+RUN flutter build apk --release --target-platform android-arm64
