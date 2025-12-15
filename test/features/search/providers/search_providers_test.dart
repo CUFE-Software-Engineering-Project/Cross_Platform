@@ -403,6 +403,55 @@ void main() {
       expect(notifier.state.tweets[0].isLiked, isTrue);
       expect(notifier.state.tweets[0].likes, equals(11));
     });
+
+    test('toggleLike handles server tweet not found in current state', () async {
+      final tweet = TweetModel(
+        id: '1',
+        content: 'Test',
+        authorName: 'Test Author',
+        authorUsername: 'testauthor',
+        authorAvatar: 'avatar.jpg',
+        createdAt: DateTime.now(),
+        isLiked: false,
+        likes: 10,
+      );
+
+      final params = SearchParams(query: 'test', tab: SearchTab.TOP);
+
+      when(mockRepository.searchTweets(
+        query: anyNamed('query'),
+        tab: anyNamed('tab'),
+        peopleFilter: anyNamed('peopleFilter'),
+        cursor: anyNamed('cursor'),
+        limit: anyNamed('limit'),
+      )).thenAnswer((_) async =>
+          TweetSearchPage(tweets: [tweet], nextCursor: null));
+
+      // Return a tweet with different ID than what's in state
+      final serverTweet = TweetModel(
+        id: '999',
+        content: 'Different tweet',
+        authorName: 'Different Author',
+        authorUsername: 'differentauthor',
+        authorAvatar: 'avatar2.jpg',
+        createdAt: DateTime.now(),
+        isLiked: true,
+        likes: 50,
+      );
+
+      when(mockRepository.toggleLike('1', false))
+          .thenAnswer((_) async => serverTweet);
+
+      final notifier = SearchResultsNotifier(mockRepository, params);
+      await Future.delayed(Duration.zero);
+
+      await notifier.toggleLike('1');
+
+      // Should keep optimistic update since serverIndex is -1
+      expect(notifier.state.tweets[0].id, '1');
+      expect(notifier.state.tweets[0].isLiked, isTrue);
+      expect(notifier.state.tweets[0].likes, equals(11));
+    });
   });
 
   group('SearchHistoryNotifier', () {
@@ -462,6 +511,26 @@ void main() {
       notifier.add('flutter');
       notifier.add('Flutter');
       expect(notifier.state[0], equals('Flutter'));
+    });
+
+    test('add ignores empty string', () {
+      final notifier = SearchHistoryNotifier();
+      notifier.add('');
+      expect(notifier.state, isEmpty);
+    });
+
+    test('add trims query before adding', () {
+      final notifier = SearchHistoryNotifier();
+      notifier.add('  flutter  ');
+      expect(notifier.state[0], equals('flutter'));
+    });
+
+    test('remove is case insensitive', () {
+      final notifier = SearchHistoryNotifier();
+      notifier.add('Flutter');
+      notifier.add('Dart');
+      notifier.remove('flutter'); // lowercase
+      expect(notifier.state, equals(['Dart']));
     });
   });
 
@@ -590,6 +659,38 @@ void main() {
       expect(result, hasLength(2));
       expect(result[0].id, equals('1'));
       expect(result[1].id, equals('2'));
+    });
+  });
+
+  group('Provider integration tests', () {
+    late MockSearchRepository mockRepository;
+    late ProviderContainer container;
+
+    setUp(() {
+      mockRepository = MockSearchRepository();
+      container = ProviderContainer(
+        overrides: [
+          searchRepositoryProvider.overrideWithValue(mockRepository),
+        ],
+      );
+    });
+
+    tearDown(() {
+      container.dispose();
+    });
+
+    test('searchResultsProvider creates notifier correctly', () async {
+      final params = SearchParams(query: 'test', tab: SearchTab.TOP);
+      when(mockRepository.searchTweets(
+        query: anyNamed('query'),
+        tab: anyNamed('tab'),
+        peopleFilter: anyNamed('peopleFilter'),
+        cursor: anyNamed('cursor'),
+        limit: anyNamed('limit'),
+      )).thenAnswer((_) async => const TweetSearchPage(tweets: [], nextCursor: null));
+
+      final notifier = container.read(searchResultsProvider(params).notifier);
+      expect(notifier, isA<SearchResultsNotifier>());
     });
   });
 }

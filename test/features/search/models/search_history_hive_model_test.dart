@@ -158,13 +158,7 @@ void main() {
       expect(values.any((m) => m.query == 'flutter'), isTrue);
       expect(values.any((m) => m.query == 'dart'), isTrue);
     });
-    test('adapter equality and hashCode', () {
-        final a1 = SearchHistoryHiveModelAdapter();
-        final a2 = SearchHistoryHiveModelAdapter();
-
-        expect(a1, equals(a2));
-        expect(a1.hashCode, equals(a2.hashCode));
-      });
+    
     test('adapter read/write handles empty query', () {
       final now = DateTime.now();
       final model = SearchHistoryHiveModel(

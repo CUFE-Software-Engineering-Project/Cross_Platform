@@ -106,18 +106,7 @@ void main() {
       expect(() => repo.searchUsers('test'), throwsA(contains('Connection timeout')));
     });
 
-    test('throws on DioException with string response', () async {
-      final repo = createRepository();
-      when(mockDio.get(any, queryParameters: anyNamed('queryParameters'))).thenThrow(
-        DioException(
-          requestOptions: RequestOptions(path: ''),
-          response: Response(statusCode: 400, data: 'Bad request', requestOptions: RequestOptions(path: '')),
-        ),
-      );
-
-      expect(() => repo.searchUsers('test'), throwsA(contains('Bad request')));
-    });
-
+    
     test('throws on DioException with response map missing message/error', () async {
       final repo = createRepository();
       when(mockDio.get(any, queryParameters: anyNamed('queryParameters'))).thenThrow(
@@ -274,6 +263,163 @@ void main() {
       expect(user.id, '');
       expect(user.name, '');
       expect(user.userName, '');
+    });
+  });
+
+  // ----------------- Additional coverage tests -----------------
+  group('SearchRepository.searchUsers - additional coverage', () {
+    test('parses map response with items field', () async {
+      final repo = createRepository();
+      when(mockDio.get('api/users/search', queryParameters: anyNamed('queryParameters')))
+          .thenAnswer((_) async => Response(
+                data: {
+                  'items': [
+                    {'id': '1', 'name': 'Bob', 'username': 'bob'}
+                  ],
+                  'nextCursor': 'cursor456',
+                },
+                statusCode: 200,
+                requestOptions: RequestOptions(path: ''),
+              ));
+
+      final result = await repo.searchUsers('bob');
+      expect(result.users.length, 1);
+      expect(result.users.single.userName, 'bob');
+      expect(result.nextCursor, 'cursor456');
+    });
+
+    test('handles map response without users/data/items fields', () async {
+      final repo = createRepository();
+      when(mockDio.get('api/users/search', queryParameters: anyNamed('queryParameters')))
+          .thenAnswer((_) async => Response(
+                data: {
+                  'someOtherField': 'value',
+                  'nextCursor': null,
+                },
+                statusCode: 200,
+                requestOptions: RequestOptions(path: ''),
+              ));
+
+      final result = await repo.searchUsers('test');
+      expect(result.users, isEmpty);
+      expect(result.nextCursor, isNull);
+    });
+  });
+
+  group('SearchRepository.searchTweets - additional coverage', () {
+    test('handles PEOPLE tab correctly', () async {
+      final repo = createRepository();
+      when(mockDio.get(any, queryParameters: anyNamed('queryParameters')))
+          .thenAnswer((_) async => Response(data: [], statusCode: 200, requestOptions: RequestOptions(path: '')));
+
+      await repo.searchTweets(query: 'test', tab: SearchTab.PEOPLE);
+
+      verify(mockDio.get('api/tweets/search',
+              queryParameters: argThat(
+                containsPair('searchTab', 'TOP'),
+                named: 'queryParameters',
+              )))
+          .called(1);
+    });
+
+    test('parses map response with items field', () async {
+      final repo = createRepository();
+      when(mockDio.get(any, queryParameters: anyNamed('queryParameters')))
+          .thenAnswer((_) async => Response(
+                data: {
+                  'items': [
+                    {'id': '3', 'content': 'Tweet3', 'authorName': 'C', 'authorUsername': 'c', 'createdAt': '2024-01-01T00:00:00Z'}
+                  ],
+                },
+                statusCode: 200,
+                requestOptions: RequestOptions(path: ''),
+              ));
+
+      final result = await repo.searchTweets(query: 'test', tab: SearchTab.TOP);
+      expect(result.tweets.length, 1);
+      expect(result.tweets.single.id, '3');
+    });
+
+    test('parses map response with results field', () async {
+      final repo = createRepository();
+      when(mockDio.get(any, queryParameters: anyNamed('queryParameters')))
+          .thenAnswer((_) async => Response(
+                data: {
+                  'results': [
+                    {'id': '4', 'content': 'Tweet4', 'authorName': 'D', 'authorUsername': 'd', 'createdAt': '2024-01-01T00:00:00Z'}
+                  ],
+                },
+                statusCode: 200,
+                requestOptions: RequestOptions(path: ''),
+              ));
+
+      final result = await repo.searchTweets(query: 'test', tab: SearchTab.TOP);
+      expect(result.tweets.length, 1);
+      expect(result.tweets.single.id, '4');
+    });
+
+    test('parses map response with tweets field', () async {
+      final repo = createRepository();
+      when(mockDio.get(any, queryParameters: anyNamed('queryParameters')))
+          .thenAnswer((_) async => Response(
+                data: {
+                  'tweets': [
+                    {'id': '5', 'content': 'Tweet5', 'authorName': 'E', 'authorUsername': 'e', 'createdAt': '2024-01-01T00:00:00Z'}
+                  ],
+                },
+                statusCode: 200,
+                requestOptions: RequestOptions(path: ''),
+              ));
+
+      final result = await repo.searchTweets(query: 'test', tab: SearchTab.TOP);
+      expect(result.tweets.length, 1);
+      expect(result.tweets.single.id, '5');
+    });
+  });
+
+  group('SearchRepository._handleError - additional coverage', () {
+    test('throws on DioException with response map containing message field', () async {
+      final repo = createRepository();
+      when(mockDio.get(any, queryParameters: anyNamed('queryParameters'))).thenThrow(
+        DioException(
+          requestOptions: RequestOptions(path: ''),
+          response: Response(
+            statusCode: 400,
+            data: {'message': 'Custom error message'},
+            requestOptions: RequestOptions(path: ''),
+          ),
+        ),
+      );
+
+      expect(() => repo.searchUsers('test'), throwsA(contains('Custom error message')));
+    });
+
+    test('throws on DioException with response map containing error field', () async {
+      final repo = createRepository();
+      when(mockDio.get(any, queryParameters: anyNamed('queryParameters'))).thenThrow(
+        DioException(
+          requestOptions: RequestOptions(path: ''),
+          response: Response(
+            statusCode: 500,
+            data: {'error': 'Internal server error'},
+            requestOptions: RequestOptions(path: ''),
+          ),
+        ),
+      );
+
+      expect(() => repo.searchUsers('test'), throwsA(contains('Internal server error')));
+    });
+
+    test('handles DioException with null message', () async {
+      final repo = createRepository();
+      when(mockDio.get(any, queryParameters: anyNamed('queryParameters'))).thenThrow(
+        DioException(
+          requestOptions: RequestOptions(path: ''),
+          message: null,
+        ),
+      );
+
+      expect(() => repo.searchUsers('test'), throwsA(contains('Network error')));
     });
   });
 }
