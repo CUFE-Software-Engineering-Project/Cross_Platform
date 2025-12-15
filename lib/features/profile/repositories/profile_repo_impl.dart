@@ -804,7 +804,9 @@ class ProfileRepoImpl implements ProfileRepo {
 
       return Right(PaginatedTweets(tweets: tweets, nextCursor: nextCursor));
     } catch (e) {
-      print("fail-----------------------------------------------____");
+      print(
+        "fail-----------------------------------------------____ + ${e.toString()}",
+      );
       return Left(Failure('Failed to load ${categoryName} tweets'));
     }
   }

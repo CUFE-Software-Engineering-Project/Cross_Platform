@@ -410,11 +410,15 @@ class _InterActionsRowOfTweetState
   late bool isLikedByMeLocal;
   late int likesCount;
   late bool isSavedByMeLocal;
+  late bool isRetweetedByMe;
+  late int retweeterCount;
   @override
   void initState() {
     isLikedByMeLocal = widget.tweet.isLikedByMe;
     likesCount = widget.tweet.likes;
     isSavedByMeLocal = widget.tweet.isSavedByMe;
+    isRetweetedByMe = widget.tweet.isRepostedWithMe;
+    retweeterCount = widget.tweet.retweets;
     super.initState();
   }
 
@@ -454,7 +458,7 @@ class _InterActionsRowOfTweetState
           GestureDetector(
             onTap: () async {
               //   TODO: do repost action
-              if (!widget.tweet.isRepostedWithMe) {
+              if (!isRetweetedByMe) {
                 final result = await showRetweetBottomSheet(
                   context,
                   "Retweet",
@@ -485,10 +489,15 @@ class _InterActionsRowOfTweetState
                         if (currUser != null)
                           ref.refresh(profilePostsProvider(currUser.username));
                         if (mounted)
-                          // ignore: unused_result
                           ref.refresh(
                             profilePostsProvider(widget.tweet.userUserName),
                           );
+                        if (mounted) {
+                          setState(() {
+                            isRetweetedByMe = true;
+                            retweeterCount += 1;
+                          });
+                        }
                       },
                     );
                   });
@@ -535,6 +544,12 @@ class _InterActionsRowOfTweetState
                           ref.refresh(
                             profilePostsProvider(widget.tweet.userUserName),
                           );
+                        if (mounted) {
+                          setState(() {
+                            isRetweetedByMe = false;
+                            retweeterCount -= 1;
+                          });
+                        }
                       },
                     );
                   });
@@ -555,19 +570,15 @@ class _InterActionsRowOfTweetState
                   width: 20,
                   height: 20,
                   colorFilter: ColorFilter.mode(
-                    widget.tweet.isRepostedWithMe
-                        ? Color(0XFF00B87B)
-                        : Colors.grey,
+                    isRetweetedByMe ? Color(0XFF00B87B) : Colors.grey,
                     BlendMode.srcIn,
                   ),
                 ),
-                if (widget.tweet.retweets > 0)
+                if (retweeterCount > 0)
                   Text(
-                    Shared.formatCount(widget.tweet.retweets),
+                    Shared.formatCount(retweeterCount),
                     style: TextStyle(
-                      color: widget.tweet.isRepostedWithMe
-                          ? Color(0XFF00B87B)
-                          : Colors.grey,
+                      color: isRetweetedByMe ? Color(0XFF00B87B) : Colors.grey,
                       fontSize: 15,
                     ),
                   ),
@@ -580,29 +591,18 @@ class _InterActionsRowOfTweetState
               if (isLikedByMeLocal) {
                 final unlike = ref.watch(unlikeTweetProvider);
                 unlike(widget.tweet.id).then((res) {
-                  res.fold(
-                    (l) {
-                      isLikedByMeLocal = true;
-                      likesCount += 1;
-                      if (mounted)
-                        showSmallPopUpMessage(
-                          context: context,
-                          message: l.message,
-                          borderColor: Colors.red,
-                          icon: Icon(Icons.error, color: Colors.red),
-                        );
-                      if (mounted) setState(() {});
-                    },
-                    (r) {
-                      // ref.refresh(
-                      //   profilePostsProvider(widget.tweet.userUserName),
-                      // );
-                      // final currUser = ref.watch(currentUserProvider);
-                      // if (currUser != null) {
-                      //   ref.refresh(profilePostsProvider(currUser.username));
-                      // }
-                    },
-                  );
+                  res.fold((l) {
+                    isLikedByMeLocal = true;
+                    likesCount += 1;
+                    if (mounted)
+                      showSmallPopUpMessage(
+                        context: context,
+                        message: l.message,
+                        borderColor: Colors.red,
+                        icon: Icon(Icons.error, color: Colors.red),
+                      );
+                    if (mounted) setState(() {});
+                  }, (r) {});
                 });
               } else {
                 final like = ref.watch(likeTweetProvider);
