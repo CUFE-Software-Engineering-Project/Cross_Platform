@@ -35,40 +35,51 @@ class TrendingProfileTab extends ConsumerWidget {
             );
           },
           (data) {
-            return RefreshIndicator(
-              onRefresh: () async {
-                // ignore: unused_result
-                await ref.refresh(profileTrendsProvider);
-              },
-              child: data.isNotEmpty
-                  ? ListView.builder(
-                      padding: EdgeInsets.only(left: 16),
-                      itemBuilder: (context, index) => InkWell(
-                        onTap: () {
-                          context.push(
-                            "/hashtagTweetsScreen",
-                            extra: [data[index].id, data[index].title],
-                          );
-                        },
-                        child: TrendTile(
-                          trend: data[index],
-                          trendCategory: "Egypt",
-                          showRank: true,
-                        ),
-                      ),
-                      itemCount: data.length,
-                    )
-                  : Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Text(
-                        "Nothing to see here -- yet.",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 35,
-                        ),
-                      ),
+            if (data.isNotEmpty)
+              return RefreshIndicator(
+                onRefresh: () async {
+                  // ignore: unused_result
+                  await ref.refresh(profileTrendsProvider);
+                },
+                child: ListView.builder(
+                  padding: EdgeInsets.only(left: 16),
+                  itemBuilder: (context, index) => InkWell(
+                    onTap: () {
+                      context.push(
+                        "/hashtagTweetsScreen",
+                        extra: [data[index].id, data[index].title],
+                      );
+                    },
+                    child: TrendTile(
+                      trend: data[index],
+                      trendCategory: "Egypt",
+                      showRank: true,
                     ),
+                  ),
+                  itemCount: data.length,
+                ),
+              );
+            return Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Text(
+                    "Nothing to see here -- yet.",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 35,
+                    ),
+                  ),
+                ),
+                SizedBox(height: 5),
+                GestureDetector(
+                  onTap: () {
+                    ref.refresh(profileTrendsProvider);
+                  },
+                  child: Icon(Icons.refresh),
+                ),
+              ],
             );
           },
         );
