@@ -7,33 +7,13 @@ pipeline {
         DOCKER_REGISTRY_CREDENTIALS = 'dockerhub-credentials'
         KUBE_CONFIG_CREDENTIALS = 'kubeconfig-file'
         EMAIL_RECIPIENTS = 'asxcchcv@gmail.com'
+        APK_PATH = "/app/build/app/outputs/flutter-apk/app-release.apk" 
         JENKINS_EMAIL = 'asxcchcv@gmail.com'
         GIT_CREDENTIALS = 'github-token'
     }
 
     stages {
-        stage('Get Commit Info') {
-            steps {
-                script {
-                    // Get the commit author's email
-                    def commitEmail = sh(
-                        script: "git --no-pager show -s --format='%ae' HEAD",
-                        returnStdout: true
-                    ).trim()
-                    
-                    // Validate email
-                    if (commitEmail && commitEmail.contains('@')) {
-                        env.COMMIT_EMAILS = commitEmail
-                    } else {
-                        echo "Warning: Could not get commit email, using default"
-                        env.COMMIT_EMAILS = env.JENKINS_EMAIL
-                    }
-                    
-                    echo "Email will be sent to: ${env.COMMIT_EMAILS}"
-                }
-            }
-        }
-
+        
         stage("SCM Checkout") {
             steps {
                 script {
@@ -49,6 +29,25 @@ pipeline {
                 sh '''
                     ls # for testing
                 ''' 
+            }
+        }
+
+
+        stage('Inject Android Secrets') {
+            steps {
+                withCredentials([
+                    file(credentialsId: 'android-release-jks', variable: 'RELEASE_JKS'),
+                    file(credentialsId: 'google-services-json', variable: 'GOOGLE_JSON'),
+                    file(credentialsId: 'android-key-properties', variable: 'KEY_PROPS'),
+                    file(credentialsId: 'android-debug-keystore', variable: 'DEBUG_KEYSTORE')
+                ]) {
+                sh '''
+                    cp "$RELEASE_JKS" android/app/release.jks
+                    cp "$GOOGLE_JSON" android/app/google-services.json
+                    cp "$KEY_PROPS" android/key.properties
+                    cp "$DEBUG_KEYSTORE" android/app/debug.keystore
+                '''
+                }
             }
         }
 
@@ -74,281 +73,206 @@ EOF
             }
         }
 
-        stage('Kaniko: Lint image') {
-          steps {
-            container('kaniko') {
-              script {
-                try {
-                  sh '''
-                    echo "Kaniko building lint target..."
-                    /kaniko/executor \
-                      --context=. \
-                      --dockerfile=Dockerfile \
-                      --destination=${DOCKER_IMAGE}:build-TEST \
-                      --cache=true \
-                      --cache-ttl=24h \
-                      --target=lint 
-                  '''
-                } catch (err) {
-                  echo "❌ Lint stage failed: ${err}"
-                  currentBuild.result = 'UNSTABLE'
+
+        stage('Docker: Build APK Image') {
+    steps {
+        container('docke') {
+            script {
+                // Add credentials binding
+                withCredentials([usernamePassword(
+                    credentialsId: "${DOCKER_REGISTRY_CREDENTIALS}", // Create this in Jenkins
+                    usernameVariable: 'DOCKER_USERNAME',
+                    passwordVariable: 'DOCKER_PASSWORD'
+                )]) {
+                    sh '''
+                        echo "🐳 Starting Docker daemon..."
+                        dockerd-entrypoint.sh &
+                        
+                        # Wait for Docker daemon to be ready
+                        echo "⏳ Waiting for Docker daemon..."
+                        for i in $(seq 1 60); do
+                            if docker info >/dev/null 2>&1; then
+                                echo "✅ Docker daemon is ready!"
+                                break
+                            fi
+                            echo "Waiting... ($i/60)"
+                            sleep 2
+                        done
+                        
+                        if ! docker info >/dev/null 2>&1; then
+                            echo "❌ Docker daemon failed to start"
+                            exit 1
+                        fi
+                        
+                        echo "🧹 Cleaning workspace..."
+                        if [ -f "build/app/outputs/flutter-apk/app-release.apk" ]; then
+                            cp build/app/outputs/flutter-apk/app-release.apk ./app-release.apk
+                            echo "✅ APK copied"
+                        fi
+                        rm -rf build/.dart_tool android/.gradle android/app/build || true
+                        
+                        echo "📊 Workspace size: $(du -sh . | cut -f1)"
+                        
+                        echo "🔐 Docker login..."
+                        echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin
+                        
+                        echo "🐳 Building Docker image..."
+                        docker build \
+                            --target=build-apk \
+                            --build-arg BUILD_TAG=${BUILD_TAG} \
+                            --tag ${DOCKER_IMAGE}:build-${BUILD_TAG} \
+                            --file Dockerfile \
+                            .
+                        
+                        echo "✅ Docker image built successfully!"
+                        
+                        echo "📤 Pushing image..."
+                        docker push ${DOCKER_IMAGE}:build-${BUILD_TAG}
+                        
+                        echo "✅ Complete!"
+                    '''
                 }
-              }
             }
-          }
         }
-        
-        stage('Kaniko: Test image') {
-          steps {
-            container('kaniko') {
-              script {
+    }
+}
+
+stage('Extract APK from Image') {
+    steps {
+        container('docke') {
+            script {
                 sh '''
-                  echo "Kaniko building test target..."
-                  /kaniko/executor \
-                    --context=. \
-                    --dockerfile=Dockerfile \
-                    --destination=${DOCKER_IMAGE}:build-TEST \
-                    --cache=true \
-                    --cache-ttl=24h \
-                    --target=test
+                    echo "📤 Extracting APK from Docker image..."
+                    
+                    # Create temporary container
+                    CONTAINER_ID=$(docker create ${DOCKER_IMAGE}:build-${BUILD_TAG})
+                    
+                    # Find APK in container
+                    echo "Searching for APK file in container..."
+                    APK_PATH=$(docker export ${CONTAINER_ID} | tar -t | grep -E "app-release\\.apk$" | head -n 1)
+                    
+                    if [ -z "$APK_PATH" ]; then
+                        echo "❌ No APK found in container!"
+                        echo "Available .apk files:"
+                        docker export ${CONTAINER_ID} | tar -t | grep "\\.apk$" || echo "No APK files found"
+                        docker rm ${CONTAINER_ID}
+                        exit 1
+                    fi
+                    
+                    echo "✅ Found APK at: ${APK_PATH}"
+                    
+                    # Copy APK from container
+                    docker cp ${CONTAINER_ID}:/${APK_PATH} ./app-release-${BUILD_TAG}.apk
+                    
+                    # Cleanup
+                    docker rm ${CONTAINER_ID}
+                    
+                    echo "✅ APK extracted successfully!"
+                    ls -lh ./app-release-${BUILD_TAG}.apk
                 '''
-              }
-            }
-          }
-        }
-
-
-        stage('Kaniko: Build-APK image (build & push)') {
-            steps {
-                container('kaniko') {
-                    script {
-                        sh '''
-                        echo "Kaniko building build-apk target and pushing..."
-                        /kaniko/executor \
-                            --context=. \
-                            --dockerfile=Dockerfile \
-                            --destination=${DOCKER_IMAGE}:build-${BUILD_TAG} \
-                            --tarPath=/workspace/image.tar \
-                            --cache=true \
-                            --cache-ttl=24h \
-                            --target=build-apk
-                        '''
-                    }
-                }
             }
         }
-        stage('Extract APK from Image') {
-            steps {
-                container('kaniko') {
-                    script {
-                        sh '''
-                            echo "📤 Extracting APK from Docker image..."
-                            
-                            # Create extraction directory
-                            mkdir -p /workspace/extracted
-                            cd /workspace/extracted
-                            
-                            # Extract the image tar
-                            echo "Extracting image layers..."
-                            tar -xf /workspace/image.tar
-                            
-                            # Find the layer containing the APK
-                            echo "Searching for APK in layers..."
-                            APK_FOUND=false
-                            
-                            for layer_dir in */; do
-                                if [ -f "${layer_dir}layer.tar" ]; then
-                                    echo "Checking layer: ${layer_dir}"
-                                    
-                                    # Check if this layer contains the APK
-                                    if tar -tf "${layer_dir}layer.tar" 2>/dev/null | grep -q "${APK_PATH}"; then
-                                        echo "✅ Found APK in layer: ${layer_dir}"
-                                        
-                                        # Extract the APK
-                                        tar -xf "${layer_dir}layer.tar" "${APK_PATH}"
-                                        
-                                        # Move to workspace with build tag
-                                        mv "${APK_PATH}" /workspace/app-release-${BUILD_TAG}.apk
-                                        
-                                        APK_FOUND=true
-                                        break
-                                    fi
-                                fi
-                            done
-                            
-                            if [ "$APK_FOUND" = false ]; then
-                                echo "❌ APK not found in any layer!"
-                                echo "Searching for any .apk files..."
-                                
-                                for layer_dir in */; do
-                                    if [ -f "${layer_dir}layer.tar" ]; then
-                                       tar -tf "${layer_dir}layer.tar" 2>/dev/null | grep "\\.apk$" || true
-                                    fi
-                                done
-                                
-                                exit 1
-                            fi
-                            
-                            # Verify APK was extracted
-                            if [ ! -f "/workspace/app-release-${BUILD_TAG}.apk" ]; then
-                                echo "❌ APK file not found after extraction!"
-                                exit 1
-                            fi
-                            
-                            echo "✅ APK extracted successfully!"
-                            ls -lh /workspace/app-release-${BUILD_TAG}.apk
-                            
-                            # Get APK size for reporting
-                            APK_SIZE=$(ls -lh /workspace/app-release-${BUILD_TAG}.apk | awk '{print $5}')
-                            echo "APK Size: ${APK_SIZE}"
-                            
-                            # Cleanup
-                            echo "Cleaning up temporary files..."
-                            cd /workspace
-                            rm -rf extracted image.tar
-                            
-                            echo "✅ Extraction complete!"
-                        '''
-                    }
-                }
-            }
-        }
+    }
+}
+ stage('Publish to GitHub Release') {
+    steps {
+        container('docke') {
+            script {
+                withCredentials([usernamePassword(
+                    credentialsId: "${GIT_CREDENTIALS}", 
+                    usernameVariable: 'GIT_USERNAME',
+                    passwordVariable: 'GITHUB_TOKEN'
+                )]) {
+                    sh '''
+                        echo "📤 Publishing APK to GitHub Releases..."
+                        
+                        # Install GitHub CLI
+                        echo "Installing GitHub CLI..."
+                        cd /tmp
+                        wget -q https://github.com/cli/cli/releases/download/v2.40.0/gh_2.40.0_linux_amd64.tar.gz
+                        tar -xzf gh_2.40.0_linux_amd64.tar.gz
+                        cp gh_2.40.0_linux_amd64/bin/gh /usr/local/bin/
+                        chmod +x /usr/local/bin/gh
+                        rm -rf gh_2.40.0_linux_amd64*
+                        
+                        cd ${WORKSPACE}
+                        
+                        # Verify APK exists
+                        if [ ! -f "app-release-${BUILD_TAG}.apk" ]; then
+                            echo "❌ APK file not found!"
+                            exit 1
+                        fi
+                        
+                        # Get APK info
+                        APK_SIZE=$(ls -lh app-release-${BUILD_TAG}.apk | awk '{print $5}')
+                        APK_SIZE_BYTES=$(stat -c%s app-release-${BUILD_TAG}.apk 2>/dev/null || stat -f%z app-release-${BUILD_TAG}.apk)
+                        
+                        echo "APK Details:"
+                        echo "  - File: app-release-${BUILD_TAG}.apk"
+                        echo "  - Size: ${APK_SIZE} (${APK_SIZE_BYTES} bytes)"
+                        
+                        # Get commit info
+                        COMMIT_SHA=$(git rev-parse HEAD 2>/dev/null || echo "Unknown")
+                        COMMIT_MSG=$(git log -1 --pretty=%B 2>/dev/null | head -n 1 || echo "No commit message")
+                        BUILD_DATE=$(date '+%Y-%m-%d %H:%M:%S UTC')
+                        
+                        echo "✅ GitHub authentication ready"
+                        
+                        # Create release notes
+                        cat > /tmp/release-notes.md << EOF
+## 📱 Flutter Mobile App - Build #${BUILD_TAG}
 
-        stage('Publish to GitHub Release') {
-            steps {
-                container('kaniko') {
-                    script {
-                        withCredentials([string(credentialsId: "${GIT_CREDENTIALS}", variable: 'GITHUB_TOKEN')]) {
-                            sh '''
-                                echo "📤 Publishing APK to GitHub Releases..."
-                                
-                                # Install GitHub CLI
-                                echo "Installing GitHub CLI..."
-                                cd /tmp
-                                wget -q https://github.com/cli/cli/releases/download/v2.40.0/gh_2.40.0_linux_amd64.tar.gz
-                                tar -xzf gh_2.40.0_linux_amd64.tar.gz
-                                cp gh_2.40.0_linux_amd64/bin/gh /usr/local/bin/
-                                chmod +x /usr/local/bin/gh
-                                rm -rf gh_2.40.0_linux_amd64*
-                                
-                                cd /workspace
-                                
-                                # Verify APK exists
-                                if [ ! -f "app-release-${BUILD_TAG}.apk" ]; then
-                                    echo "❌ APK file not found!"
-                                    exit 1
-                                fi
-                                
-                                # Get APK info
-                                APK_SIZE=$(ls -lh app-release-${BUILD_TAG}.apk | awk '{print $5}')
-                                APK_SIZE_BYTES=$(stat -f%z app-release-${BUILD_TAG}.apk 2>/dev/null || stat -c%s app-release-${BUILD_TAG}.apk)
-                                
-                                echo "APK Details:"
-                                echo "  - File: app-release-${BUILD_TAG}.apk"
-                                echo "  - Size: ${APK_SIZE} (${APK_SIZE_BYTES} bytes)"
-                                
-                                # Authenticate with GitHub
-                                echo "Authenticating with GitHub..."
-                                echo "${GITHUB_TOKEN}" | gh auth login --with-token
-                                
-                                # Create release notes
-                                RELEASE_NOTES="## 📱 Flutter Mobile App - Build #${BUILD_TAG}
-        
 ### 📥 Download APK
-Click below to download the latest version of the app:
 - **[app-release-${BUILD_TAG}.apk](https://github.com/CUFE-Software-Engineering-Project/Cross_Platform/releases/download/v${BUILD_TAG}/app-release-${BUILD_TAG}.apk)** (${APK_SIZE})
 
 ### 📊 Build Information
 | Item | Value |
 |------|-------|
-| **Build Number** | #${BUILD_TAG} |
-| **Build Date** | $(date '+%Y-%m-%d %H:%M:%S UTC') |
-| **Commit Hash** | \\`${COMMIT_SHA}\\` |
+| **Build Number** | ${BUILD_TAG} |
+| **Build Date** | ${BUILD_DATE} |
+| **Commit** | ${COMMIT_SHA} |
 | **APK Size** | ${APK_SIZE} |
-| **Docker Image** | \\`${DOCKER_IMAGE}:build-${BUILD_TAG}\\` |
 
 ### 📝 Commit Message
-\\`\\`\\`
 ${COMMIT_MSG}
-\\`\\`\\`
 
 ### 📲 Installation Instructions
 1. Download the APK file from the link above
-2. On your Android device, go to **Settings** → **Security** → Enable **Unknown Sources**
-3. Open the downloaded APK file
-4. Follow the on-screen prompts to install
-5. Launch the app and enjoy! 🚀
+2. Enable Unknown Sources on your Android device
+3. Install and enjoy! 🚀
 
 ### 🔗 Links
-- **Jenkins Build:** ${BUILD_URL}
-- **Docker Image:** \\`docker pull ${DOCKER_IMAGE}:build-${BUILD_TAG}\\`
-- **Repository:** https://github.com/CUFE-Software-Engineering-Project/Cross_Platform
+- Jenkins Build: ${BUILD_URL}
+- Docker Image: ${DOCKER_IMAGE}:build-${BUILD_TAG}
 
 ---
-*Built with ❤️ by Jenkins CI/CD Pipeline*"
+*Built with Jenkins CI/CD*
+EOF
                         
-                                # Create GitHub release
-                                echo "Creating GitHub release..."
-                                gh release create "v${BUILD_TAG}" \
+                        echo "Creating GitHub release..."
+                        gh release create "v${BUILD_TAG}" \
+                            app-release-${BUILD_TAG}.apk \
+                            --repo CUFE-Software-Engineering-Project/Cross_Platform \
+                            --title "v${BUILD_TAG} - Mobile App Release" \
+                            --notes-file /tmp/release-notes.md || {
+                                echo "⚠️ Release exists, uploading APK..."
+                                gh release upload "v${BUILD_TAG}" \
                                     app-release-${BUILD_TAG}.apk \
                                     --repo CUFE-Software-Engineering-Project/Cross_Platform \
-                                    --title "v${BUILD_TAG} - Mobile App Release" \
-                                    --notes "${RELEASE_NOTES}"
-                                
-                                echo "✅ APK published to GitHub Release!"
-                                echo "📦 Release URL: https://github.com/CUFE-Software-Engineering-Project/Cross_Platform/releases/tag/v${BUILD_TAG}"
-                                echo "📥 Direct Download: https://github.com/CUFE-Software-Engineering-Project/Cross_Platform/releases/download/v${BUILD_TAG}/app-release-${BUILD_TAG}.apk"
-                            '''
-                        }
-                    }
-                }
-            }
-        }
-        stage('Archive as Jenkins Artifact') {
-            steps {
-                container('kaniko') {
-                    script {
-                        // Copy APK to Jenkins workspace for archiving
-                        sh '''
-                            echo "Copying APK to Jenkins workspace..."
-                            cp /workspace/app-release-${BUILD_TAG}.apk ${WORKSPACE}/app-release-${BUILD_TAG}.apk
-                            ls -lh ${WORKSPACE}/*.apk
-                        '''
-                    }
-                }
-                // Archive the APK
-                script {
-                    archiveArtifacts artifacts: '*.apk', fingerprint: true, allowEmptyArchive: false
-                    echo "✅ APK archived at: ${env.BUILD_URL}artifact/app-release-${BUILD_TAG}.apk"
-                }
-            }
-        }
-
-        stage("E2E Testing") {
-            steps {
-                container('nodejs') {
-                    script {
-                        try {
-                            sh '''
-                                echo "Running Integration tests..."
-                                # put your actual E2E commands here
-                            '''
-                        } catch (Exception e) {
-                            echo "❌ E2E tests failed! Rolling back deployment..."
-                            container('kubectl') {
-                                withCredentials([file(credentialsId: "${KUBE_CONFIG_CREDENTIALS}", variable: 'KUBECONFIG')]) {
-                                    sh '''
-                                        kubectl rollout undo deployment/swe-react-deployment -n swe-twitter
-                                        kubectl rollout status deployment/swe-react-deployment -n swe-twitter --timeout=5m
-                                    '''
-                                }
+                                    --clobber
                             }
-                            error("E2E tests failed and deployment was rolled back")
-                        }
-                    }
+                        
+                        rm -f /tmp/release-notes.md
+                        
+                        echo "✅ APK published to GitHub Release!"
+                        echo "📦 https://github.com/CUFE-Software-Engineering-Project/Cross_Platform/releases/tag/v${BUILD_TAG}"
+                    '''
                 }
             }
         }
+    }
+}
+        
     }
 
     post {
