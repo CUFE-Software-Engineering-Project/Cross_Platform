@@ -1,87 +1,299 @@
-## Localization Setup
+# Lite X
 
-- Added `flutter_localizations` and `intl` to `pubspec.yaml`.
-- Created `l10n.yaml` to configure Flutter's gen-l10n.
-- Added ARB files in `lib/l10n/`:
-  - `app_en.arb`
-  - `app_ar.arb`
-- Wired delegates and supported locales in `lib/main.dart`.
+A full-featured Flutter mobile client for the X (Twitter-like) platform, built with Riverpod state management. Lite X provides a complete social media experience including timelines, tweet interactions, messaging, notifications, and more.
 
-### How to add strings
-- Edit ARB files under `lib/l10n/` and add new keys.
-- Keep the same keys across languages.
+<!-- Add a banner/logo image here -->
+<!-- ![Lite X Banner](assets/images/banner.png) -->
 
-### Generate localization code
-- Run:
-  
-  ```powershell
-  flutter gen-l10n
-  ```
+---
 
-- Import and use generated `AppLocalizations` in widgets:
+## Table of Contents
 
-  ```dart
-  import 'package:lite_x/l10n/app_localizations.dart';
+- [Features](#features)
+  - [Authentication](#authentication)
+  - [Home Feed & Tweets](#home-feed--tweets)
+  - [Profile](#profile)
+  - [Chat & Messaging](#chat--messaging)
+  - [Search](#search)
+  - [Explore](#explore)
+  - [Trends](#trends)
+  - [Notifications](#notifications)
+  - [Settings & Privacy](#settings--privacy)
+  - [Media](#media)
+- [Tech Stack](#tech-stack)
+- [Project Structure](#project-structure)
+- [Getting Started](#getting-started)
+- [Localization](#localization)
+- [Tests](#tests)
 
-  Text(AppLocalizations.of(context)!.trendsTitle)
-  ```
+---
 
-### Switching locales
-- By default, the app supports `en` and `ar` and follows system locale.
-- You can set a specific locale on `MaterialApp.router` by providing `locale: const Locale('ar')`.
-# lite_x
+## Features
 
-Lite X is a Flutter/Riverpod client for the X-like backend that exposes a complete Tweets API surface. The app now exercises every Tweets Interaction endpoint (create/update/delete, likes, retweets, bookmarks, replies, quotes, mentions, summaries, liked tweets, user timelines, and search) through dedicated repositories, view models, and screens.
+### Authentication
 
-## Highlights
+User registration, login, and OAuth-based sign-in flows. Supports Google Sign-In and Firebase Authentication.
 
-- **For You & Following feeds** powered by Riverpod state with cached timeline switching.
-- **Full tweet interactions**: like/unlike, bookmark, retweet/undo, reply, quote, delete, and edit.
-- **Insights tooling**: per-tweet engagement lists (likes/retweets/quotes/replies) and AI summary cards.
-- **Discovery surfaces**: global tweet search, per-user timelines, mentions feed, and liked-tweets feed.
-- **Profile drawer shortcuts** to mentions and liked tweets plus expandable FAB for composing posts.
+<!-- Add screenshots for the Authentication feature below -->
+<!-- ![Intro Screen](assets/screenshots/auth_intro.png) -->
+<!-- ![Login Screen](assets/screenshots/auth_login.png) -->
+<!-- ![Create Account Screen](assets/screenshots/auth_create_account.png) -->
 
-## Requirements
+---
 
-- Flutter 3.22+ with Dart 3.
-- A running backend that implements the `/api/tweets/**` endpoints referenced in `lib/features/home/repositories/home_repository.dart`.
-- For help getting started with Flutter development, view the
-  [online documentation](https://docs.flutter.dev/), which offers tutorials,
-  samples, guidance on mobile development, and a full API reference.
+### Home Feed & Tweets
 
-## Settings Feature Architecture
+The core timeline experience with **For You** and **Following** feeds powered by Riverpod state with cached timeline switching. Full tweet interactions including:
 
-The `features/settings` module mirrors the profile feature logic:
+- Create, edit, and delete tweets
+- Like / unlike and bookmark
+- Retweet / undo retweet
+- Reply to tweets and view reply threads
+- Quote tweets
+- View engagement lists (likes, retweets, quotes, replies)
+- Hashtag filtering and mentions feed
+- AI-powered tweet summary cards
 
-- `SettingsModel` holds persisted preference flags (privacy, messaging, ads, data sharing, spaces, muted words).
-- `SettingsBasicDataStates` follows the `ProfileBasicDataStates` pattern with `isLoading`, `errorMessage`, and `settingsData`.
-- `SettingsBasicDataNotifier` is a Riverpod `StateNotifier` responsible for loading and and updating settings via `SettingsRepo`.
-- `settingsBasicDataNotifierProvider` exposes a family provider keyed by username (autoDispose) similar to profile providers.
-- Reusable layout widgets extracted: `SettingsResponsiveScaffold` and `SettingsSearchBar` under `view/widgets/` for consistent mobile/web rendering.
+<!-- Add screenshots for the Home Feed & Tweets feature below -->
+<!-- ![Home Feed](assets/screenshots/home_feed.png) -->
+<!-- ![Create Post](assets/screenshots/home_create_post.png) -->
+<!-- ![Tweet Detail](assets/screenshots/home_tweet_detail.png) -->
+<!-- ![Reply Thread](assets/screenshots/home_reply_thread.png) -->
 
-Repository interface (`SettingsRepo`) now includes `getSettings` and `updateSettings` alongside blocked/muted account endpoints. Implementation uses placeholder REST paths (`api/settings/<username>`). Adjust endpoints if backend differs.
+---
 
-## Running the app
+### Profile
 
-```powershell
-cd "D:\athird_year\1st term\SW\project\v8\Cross_Platform"
+View and manage user profiles with full account customization:
+
+- View own profile and other users' profiles
+- Edit profile information, photos, and cover images
+- Followers and following lists
+- Change email with verification
+- User timeline and liked tweets
+
+<!-- Add screenshots for the Profile feature below -->
+<!-- ![Profile Screen](assets/screenshots/profile_view.png) -->
+<!-- ![Edit Profile](assets/screenshots/profile_edit.png) -->
+<!-- ![Followers / Following](assets/screenshots/profile_followers.png) -->
+
+---
+
+### Chat & Messaging
+
+Real-time direct messaging system powered by Socket.io:
+
+- One-on-one conversations
+- Group chat support
+- Search for users and groups to message
+
+<!-- Add screenshots for the Chat & Messaging feature below -->
+<!-- ![Conversations List](assets/screenshots/chat_conversations.png) -->
+<!-- ![Chat Screen](assets/screenshots/chat_conversation.png) -->
+
+---
+
+### Search
+
+Global search functionality for discovering tweets and users across the platform.
+
+<!-- Add screenshots for the Search feature below -->
+<!-- ![Search Screen](assets/screenshots/search_main.png) -->
+<!-- ![Search Results](assets/screenshots/search_results.png) -->
+
+---
+
+### Explore
+
+Discovery surface for finding new content, trending topics, and recommended users.
+
+<!-- Add screenshots for the Explore feature below -->
+<!-- ![Explore Screen](assets/screenshots/explore_main.png) -->
+
+---
+
+### Trends
+
+Stay up to date with what's happening:
+
+- Trending topics and hashtags
+- Hashtag-filtered tweet feeds
+- Who to follow recommendations
+
+<!-- Add screenshots for the Trends feature below -->
+<!-- ![Trends Screen](assets/screenshots/trends_main.png) -->
+<!-- ![Who to Follow](assets/screenshots/trends_who_to_follow.png) -->
+
+---
+
+### Notifications
+
+Stay informed with push notifications and mention alerts:
+
+- Firebase Cloud Messaging (FCM) integration
+- Mention notifications
+- Engagement alerts
+
+<!-- Add screenshots for the Notifications feature below -->
+<!-- ![Notifications Screen](assets/screenshots/notifications_main.png) -->
+
+---
+
+### Settings & Privacy
+
+Comprehensive settings and privacy controls:
+
+- Account information and username management
+- Password changes
+- Privacy and safety preferences
+- Mute and block management
+- Muted and blocked accounts lists
+
+<!-- Add screenshots for the Settings & Privacy feature below -->
+<!-- ![Settings Screen](assets/screenshots/settings_main.png) -->
+<!-- ![Privacy & Safety](assets/screenshots/settings_privacy.png) -->
+<!-- ![Mute & Block](assets/screenshots/settings_mute_block.png) -->
+
+---
+
+### Media
+
+Upload and download media for tweets and profiles:
+
+- Image and video uploads
+- Image cropping and editing
+- Media downloads
+
+<!-- Add screenshots for the Media feature below -->
+<!-- ![Media Upload](assets/screenshots/media_upload.png) -->
+
+---
+
+## Tech Stack
+
+| Category | Technologies |
+|---|---|
+| **Framework** | Flutter 3.22+, Dart 3 |
+| **State Management** | Riverpod 3.0, Riverpod Annotation, Code Generation |
+| **Networking** | Dio 5.9.0, HTTP |
+| **Real-time** | Socket.io Client |
+| **Local Storage** | Hive CE |
+| **Navigation** | GoRouter 17.0.0 |
+| **Authentication** | Google Sign-In, Firebase Auth |
+| **Push Notifications** | Firebase Cloud Messaging |
+| **Localization** | Flutter Localizations, intl (English & Arabic) |
+| **Media** | Image Picker, Image Cropper, Audio Waveforms, Just Audio |
+| **UI Extras** | Flutter SVG, Emoji Picker, Giphy GIF Picker |
+
+---
+
+## Project Structure
+
+```
+lib/
+├── core/                   # Shared app-wide utilities
+│   ├── classes/            # Base classes
+│   ├── constants/          # App constants
+│   ├── models/             # Shared data models
+│   ├── providers/          # Global Riverpod providers
+│   ├── routes/             # GoRouter navigation config
+│   ├── services/           # HTTP clients, auth services
+│   ├── theme/              # Material Design theming
+│   ├── utils/              # Helper utilities
+│   └── view/               # Core UI shells / layouts
+├── features/
+│   ├── auth/               # Authentication flows
+│   ├── home/               # Main feed & tweet management
+│   ├── chat/               # Direct messaging
+│   ├── profile/            # User profiles
+│   ├── search/             # Search functionality
+│   ├── explore/            # Content discovery
+│   ├── trends/             # Trending topics
+│   ├── notifications/      # Push notifications & mentions
+│   ├── settings/           # User preferences & privacy
+│   ├── media/              # Media upload / download
+│   └── shared/             # Shared feature utilities
+└── l10n/                   # Localization (ARB files)
+```
+
+Each feature follows a consistent architecture:
+
+```
+feature/
+├── models/                 # Data models
+├── repositories/           # API abstractions (Repository pattern)
+├── view_model/             # State management (Riverpod notifiers)
+└── view/
+    ├── screens/            # Full-page UI screens
+    └── widgets/            # Reusable UI components
+```
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+- Flutter 3.22+ with Dart 3
+- A running backend that implements the `/api/tweets/**` endpoints (see `lib/features/home/repositories/home_repository.dart`)
+
+For help getting started with Flutter, see the [official documentation](https://docs.flutter.dev/).
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/CUFE-Software-Engineering-Project/Lite_X-mobileApp.git
+cd Lite_X-mobileApp
+
+# Install dependencies
 flutter pub get
+
+# Run the app
 flutter run
 ```
 
+---
+
+## Localization
+
+The app supports **English** and **Arabic** and follows the system locale by default.
+
+### Adding new strings
+
+1. Edit the ARB files under `lib/l10n/`:
+   - `app_en.arb` (English)
+   - `app_ar.arb` (Arabic)
+2. Keep the same keys across both languages.
+
+### Generating localization code
+
+```bash
+flutter gen-l10n
+```
+
+### Using localized strings in widgets
+
+```dart
+import 'package:lite_x/l10n/app_localizations.dart';
+
+Text(AppLocalizations.of(context)!.trendsTitle)
+```
+
+### Switching locales manually
+
+Set a specific locale on `MaterialApp.router`:
+
+```dart
+locale: const Locale('ar')
+```
+
+---
+
 ## Tests
 
-```powershell
-flutter test test/widget_test.dart
+```bash
+flutter test
 ```
 
 > **Note:** The default Flutter counter test boots a `SplashScreen` without a `ProviderScope`, so it currently fails outside the application shell. Integrate a test-specific `ProviderScope` or replace the template test to make this suite pass.
-
-## Project structure
-
-- `lib/features/home/repositories/home_repository.dart` – strongly typed accessors for every Tweets endpoint (likes, retweets, quotes, replies, summary, search, user feeds, etc.).
-- `lib/features/home/view_model` – feed/state management plus new insight providers and tweet editing helpers.
-- `lib/features/home/view/screens` – UI screens (timeline, tweet detail, search, engagement lists, liked/mentioned/user feeds).
-- `lib/features/home/view/widgets` – shared UI components such as the tweet card, summary panel, and tab bar.
-
-Refer to in-line comments for endpoint-specific handling details.
